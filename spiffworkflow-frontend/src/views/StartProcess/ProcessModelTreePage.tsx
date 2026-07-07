@@ -541,6 +541,15 @@ function ModelRowActions({
   });
 
   const closeMenu = () => setAnchorEl(null);
+  const canEditModel = ability.can(
+    'PUT',
+    `/v1.0/process-models/${modifiedModelId}`,
+  );
+  const canDeleteModel = ability.can(
+    'DELETE',
+    `/v1.0/process-models/${modifiedModelId}`,
+  );
+  const hasMenuActions = canEditModel || canDeleteModel;
 
   return (
     <>
@@ -548,19 +557,24 @@ function ModelRowActions({
         size="small"
         title={t('more_actions')}
         data-testid={`process-model-actions-button-${modifiedModelId}`}
+        disabled={!hasMenuActions}
+        sx={{ visibility: hasMenuActions ? 'visible' : 'hidden' }}
         onClick={(e) => {
+          if (!hasMenuActions) {
+            return;
+          }
           e.stopPropagation();
           setAnchorEl(e.currentTarget);
         }}
       >
         <MoreVert fontSize="small" />
       </IconButton>
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu}>
-        <Can
-          I="PUT"
-          a={`/v1.0/process-models/${modifiedModelId}`}
-          ability={ability}
-        >
+      <Menu
+        anchorEl={anchorEl}
+        open={hasMenuActions && Boolean(anchorEl)}
+        onClose={closeMenu}
+      >
+        {canEditModel ? (
           <MenuItem
             component="a"
             href={`/process-models/${modifiedModelId}/edit`}
@@ -572,12 +586,8 @@ function ModelRowActions({
             </ListItemIcon>
             <ListItemText>{t('edit_process_model')}</ListItemText>
           </MenuItem>
-        </Can>
-        <Can
-          I="DELETE"
-          a={`/v1.0/process-models/${modifiedModelId}`}
-          ability={ability}
-        >
+        ) : null}
+        {canDeleteModel ? (
           <MenuItem
             data-testid={`delete-process-model-menu-item-${modifiedModelId}`}
             onClick={() => {
@@ -590,7 +600,7 @@ function ModelRowActions({
             </ListItemIcon>
             <ListItemText>{t('delete_process_model')}</ListItemText>
           </MenuItem>
-        </Can>
+        ) : null}
       </Menu>
       <DeleteConfirmationDialog />
     </>
