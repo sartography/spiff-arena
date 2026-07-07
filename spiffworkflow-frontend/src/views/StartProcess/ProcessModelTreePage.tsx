@@ -866,9 +866,15 @@ export default function ProcessModelTreePage({
       const flattened = flattenAllItems(processGroups || [], []);
       setFlatItems(flattened);
 
-      // If there are favorites, that's all we want to display, return.
+      const processGroupsLite: ProcessGroupLite[] =
+        processGroups.map(processGroupToLite);
+      const foundProcessGroup = findProcessGroupByPath(
+        processGroupsLite,
+        requestedProcessGroupId || '',
+      );
+      // If there are favorites and no requested group, that's all we want to display, return.
       const favorites = JSON.parse(getStorageValue(SPIFF_FAVORITES));
-      if (favorites.length) {
+      if (!requestedProcessGroupId && favorites.length) {
         // favorites currently do not work and flattened seems to be ProcessGroup[] and not models
         // setModels(flattened.filter((item) => favorites.includes(item.id)));
         setGroups([]);
@@ -877,12 +883,6 @@ export default function ProcessModelTreePage({
         setCrumbs([favoriteCrumb]);
         return;
       }
-      const processGroupsLite: ProcessGroupLite[] =
-        processGroups.map(processGroupToLite);
-      const foundProcessGroup = findProcessGroupByPath(
-        processGroupsLite,
-        requestedProcessGroupId || '',
-      );
       if (foundProcessGroup) {
         setGroups(foundProcessGroup.process_groups || null);
         setModels(foundProcessGroup.process_models || []);
