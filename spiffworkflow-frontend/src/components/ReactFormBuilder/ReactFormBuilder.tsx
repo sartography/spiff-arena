@@ -19,20 +19,21 @@ import {
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { useDebouncedCallback } from 'use-debounce';
-import { ErrorBoundary, useErrorBoundary } from 'react-error-boundary';
+import {
+  ErrorBoundary,
+  type FallbackProps,
+  useErrorBoundary,
+} from 'react-error-boundary';
 import HttpService from '../../services/HttpService';
 import ExamplesTable from './ExamplesTable';
 import CustomForm from '../CustomForm';
 import { Notification } from '../Notification';
 
-type ErrorProps = {
-  error: Error;
-};
-
-function FormErrorFallback({ error }: ErrorProps) {
+function FormErrorFallback({ error }: FallbackProps) {
   // This is displayed if the ErrorBoundary catches an error when rendering the form.
   const { resetBoundary } = useErrorBoundary();
   const { t } = useTranslation();
+  const errorMessage = error instanceof Error ? error.message : String(error);
 
   return (
     <Notification
@@ -41,7 +42,7 @@ function FormErrorFallback({ error }: ErrorProps) {
       type="error"
     >
       <p>{t('form_render_error_message')}</p>
-      <p>{error.message}</p>
+      <p>{errorMessage}</p>
       <Button onClick={resetBoundary}>{t('try_again')}</Button>
     </Notification>
   );
