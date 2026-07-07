@@ -175,7 +175,6 @@
   "failed_to_load_diagram": "Falha ao carregar o diagrama",
   "failure_details": "Detalhes da Falha:",
   "fault": "Falha",
-  "favorites": "Favoritos",
   "file": "Ficheiro",
   "file_contents_not_found": "Não foi possível encontrar o conteúdo do ficheiro: {{file}}",
   "file_name": "Nome do Ficheiro",

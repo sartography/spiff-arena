@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next';
 import { Subject, Subscription } from 'rxjs';
 import { modifyProcessIdentifierForPathParam } from '../../helpers';
 import { TimeAgo } from '../../helpers/timeago';
-import { getStorageValue } from '../../services/LocalStorageService';
 import { ProcessModel, ProcessModelStats } from '../../interfaces';
 import {
   processDescriptionSx,
@@ -52,7 +51,6 @@ export default function ProcessModelCard({
   const { t } = useTranslation();
   const [selectedStyle, setSelectedStyle] =
     useState<Record<string, any>>(defaultStyle);
-  const [isFavorite, setIsFavorite] = useState(false);
   const modelDescription = truncateProcessDescription(model.description);
 
   const navigate = useNavigate();
@@ -98,32 +96,6 @@ export default function ProcessModelCard({
 
     setSelectedStyle({ ...defaultStyle });
   };
-
-  /**
-   * If this becomes a favorite, add to localstorage list and return,
-   * otherwise remove.
-   */
-  // const handleFavoriteClick = (e: PointerEvent) => {
-  //   stopEventBubble(e);
-  //   const currentValue = JSON.parse(getStorageValue('spifffavorites') || '[]');
-  //   // Do not set this into state and immediately try to retrieve it.
-  //   const favorite = !isFavorite;
-  //   setIsFavorite(favorite);
-  //   if (favorite) {
-  //     // No duplicates
-  //     const set: Set<string> = new Set([...currentValue, model.id]);
-  //     setStorageValue('spifffavorites', JSON.stringify(Array.from(set)));
-  //     return;
-  //   }
-  //
-  //   const removed = currentValue.filter((id: string) => id !== model.id);
-  //   setStorageValue('spifffavorites', JSON.stringify(removed));
-  // };
-
-  useEffect(() => {
-    const favorites = JSON.parse(getStorageValue('spifffavorites'));
-    setIsFavorite(favorites.includes(model.id));
-  }, [isFavorite, model]);
 
   /**
    * Interesting one; when a group loads, it could be because the user

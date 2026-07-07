@@ -175,7 +175,6 @@
   "failed_to_load_diagram": "Nepodařilo se načíst diagram",
   "failure_details": "Podrobnosti o selhání:",
   "fault": "Chyba",
-  "favorites": "Oblíbené",
   "file": "Soubor",
   "file_contents_not_found": "Nelze nalézt obsah souboru pro soubor: {{file}}",
   "file_name": "Název souboru",
