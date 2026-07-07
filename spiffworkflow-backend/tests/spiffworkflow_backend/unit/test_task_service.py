@@ -51,6 +51,34 @@ class TestTaskService(BaseTest):
         assert task_service._find_existing_task_model("existing-task-guid") == db_task_model
         assert task_service.task_model_mapping == {"existing-task-guid": db_task_model}
 
+    def test_save_objects_to_database_does_not_bulk_insert_same_transient_task_twice(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        task_model = TaskModel(guid="new-task-guid")
+        bulk_saved_objects = []
+        task_service = TaskService.__new__(TaskService)
+        task_service.bpmn_processes = {}
+        task_service.task_models = {task_model.guid: task_model}
+        task_service.process_instance_events = {}
+        task_service.json_data_dicts = {}
+        task_service.dirty_bpmn_process_updates = {}
+
+        monkeypatch.setattr(
+            "spiffworkflow_backend.services.task_service.db.session.bulk_save_objects",
+            lambda objects: bulk_saved_objects.append(list(objects)),
+        )
+        monkeypatch.setattr(
+            "spiffworkflow_backend.services.task_service.JsonDataModel.insert_or_update_json_data_records",
+            lambda _json_data_dicts: None,
+        )
+
+        task_service.save_objects_to_database()
+        task_service.save_objects_to_database()
+
+        assert bulk_saved_objects[1] == [task_model]
+        assert bulk_saved_objects[4] == []
+
     def test_can_get_full_bpmn_process_path(
         self,
         app: Flask,

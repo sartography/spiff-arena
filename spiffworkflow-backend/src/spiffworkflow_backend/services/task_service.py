@@ -145,6 +145,8 @@ class TaskService:
         db.session.bulk_save_objects(self.bpmn_processes.values())
         new_task_models = [task_model for task_model in self.task_models.values() if not inspect(task_model).persistent]
         db.session.bulk_save_objects(new_task_models)
+        for task_model in new_task_models:
+            self.task_models.pop(task_model.guid, None)
         if save_process_instance_events:
             db.session.bulk_save_objects(self.process_instance_events.values())
         JsonDataModel.insert_or_update_json_data_records(self.json_data_dicts)
