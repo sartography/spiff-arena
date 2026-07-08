@@ -57,10 +57,11 @@ def connector_proxy_url() -> Any:
 
 
 def connector_proxy_api_key_headers() -> dict:
+    headers = {"User-Agent": "spiffworkflow-backend"}
     api_key = current_app.config.get("SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY")
     if api_key:
-        return {"Spiff-Connector-Proxy-Api-Key": api_key}
-    return {}
+        headers["Spiff-Connector-Proxy-Api-Key"] = api_key
+    return headers
 
 
 def connector_proxy_http_logging_enabled() -> bool:
