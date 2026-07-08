@@ -42,6 +42,7 @@ from spiff_arena_common.data_stores import JSONFileDataStore  # noqa: E402
 from SpiffWorkflow.bpmn import BpmnEvent  # noqa: E402
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # noqa: E402
 from SpiffWorkflow.bpmn.serializer import DefaultRegistry  # noqa: E402
+from SpiffWorkflow.bpmn.specs.event_definitions.timer import TimerEventDefinition  # noqa: E402
 from SpiffWorkflow.bpmn.specs.mixins.multiinstance_task import LoopTask  # noqa: E402
 from SpiffWorkflow.bpmn.parser.util import full_tag  # noqa: E402
 from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine, TaskDataEnvironment  # noqa: E402
@@ -610,6 +611,22 @@ def _advance_workflow(workflow, task, strategy_name, compress_response=False, se
                     task.data.update(expected["data"])
     return build_response(workflow, None, compress_response=compress_response, lazy_loads_result=lazy_loads_list, session_id=session_id)
 
+def _is_timer_event_task(task):
+    event_definition = getattr(task.task_spec, "event_definition", None)
+    return isinstance(event_definition, TimerEventDefinition)
+
+
+def _force_timer_event(task):
+    if not _is_timer_event_task(task):
+        raise Exception("Only waiting timer event tasks can be force-fired.")
+
+    if task.state != TaskState.WAITING:
+        raise Exception("Only waiting timer event tasks can be force-fired.")
+
+    task._set_internal_data(event_fired=True)
+    task.task_spec._update(task)
+
+
 def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_response=False, session_id=None, jump_to_step_idx=None):
     # If jumping to a specific step, restore state from step history cache
     if jump_to_step_idx is not None and session_id and session_id in _step_history_cache:
@@ -623,14 +640,18 @@ def advance_workflow(specs, state, completed_task, strategy_name, start_params, 
             task.data.update(start_params.get("data", {}))
             break
 
-    if completed_task:
-        task = workflow.get_task_from_id(uuid.UUID(completed_task["id"]))
-        if "data" in completed_task:
-            task.data.update(completed_task["data"])
-    else:
-        task = next_task(workflow, TaskState.READY)
-
     try:
+        if completed_task:
+            task = workflow.get_task_from_id(uuid.UUID(completed_task["id"]))
+            if completed_task.get("force_timer"):
+                _force_timer_event(task)
+            elif task.state == TaskState.WAITING and _is_timer_event_task(task):
+                raise Exception("Waiting timer event tasks require force_timer to be force-fired.")
+            if "data" in completed_task:
+                task.data.update(completed_task["data"])
+        else:
+            task = next_task(workflow, TaskState.READY)
+
         return _advance_workflow(workflow, task, strategy_name, compress_response=compress_response, session_id=session_id)
     except Exception as e:
         try:
