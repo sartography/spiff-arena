@@ -12,6 +12,7 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import NotAuthorizedError
 from spiffworkflow_backend.services.monitoring_service import ensure_prometheus_multiproc_dir
 from spiffworkflow_backend.services.monitoring_service import get_public_version_info_data
+from spiffworkflow_backend.services.monitoring_service import scrub_transaction_event
 from spiffworkflow_backend.services.monitoring_service import should_capture_exception_in_sentry
 from spiffworkflow_backend.services.monitoring_service import traces_sampler
 
@@ -71,6 +72,26 @@ class TestMonitoringService(unittest.TestCase):
         self.assertTrue(traces_sampler({"parent_sampled": True}, default_sample_rate=0.25))
         self.assertFalse(traces_sampler({"parent_sampled": False}, default_sample_rate=0.25))
 
+    def test_scrub_transaction_event_removes_url_tag_from_dict_tags(self) -> None:
+        event = {"type": "transaction", "tags": {"url": "https://example.com/tasks/1/abc", "environment": "prod"}}
+
+        scrubbed_event = scrub_transaction_event(event, {})
+
+        self.assertEqual({"environment": "prod"}, scrubbed_event["tags"])
+
+    def test_scrub_transaction_event_removes_url_tag_from_list_tags(self) -> None:
+        event = {
+            "type": "transaction",
+            "tags": [
+                {"key": "url", "value": "https://example.com/tasks/1/abc"},
+                {"key": "environment", "value": "prod"},
+            ],
+        }
+
+        scrubbed_event = scrub_transaction_event(event, {})
+
+        self.assertEqual([{"key": "environment", "value": "prod"}], scrubbed_event["tags"])
+
     def test_not_found_is_not_captured(self) -> None:
         self.assertFalse(should_capture_exception_in_sentry(NotFound()))
 
@@ -99,6 +120,17 @@ class TestMonitoringService(unittest.TestCase):
                 ApiError(
                     error_code="process_instance_cannot_be_found",
                     message="Process instance cannot be found: 16519",
+                    status_code=400,
+                )
+            )
+        )
+
+    def test_process_instance_validation_api_error_is_not_captured(self) -> None:
+        self.assertFalse(
+            should_capture_exception_in_sentry(
+                ApiError(
+                    error_code="process_instance_validation_error",
+                    message="Failed to parse the Workflow Specification.",
                     status_code=400,
                 )
             )

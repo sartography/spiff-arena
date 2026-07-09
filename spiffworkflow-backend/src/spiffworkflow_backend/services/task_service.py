@@ -405,9 +405,9 @@ class TaskService:
         spiff_task: SpiffTask,
     ) -> tuple[BpmnProcessModel | None, TaskModel]:
         spiff_task_guid = str(spiff_task.id)
-        task_model: TaskModel | None = None
+        task_model: TaskModel | None = self.task_model_mapping.get(spiff_task_guid)
         if self._should_query_task_models:
-            task_model = TaskModel.query.filter_by(guid=spiff_task_guid).first()
+            task_model = task_model or TaskModel.query.filter_by(guid=spiff_task_guid).first()
         bpmn_process = None
         if task_model is None:
             bpmn_process = self.task_bpmn_process(spiff_task)
@@ -561,9 +561,9 @@ class TaskService:
             if spiff_task.has_state(TaskState.PREDICTED_MASK):
                 self.__class__.remove_spiff_task_from_parent(spiff_task, self.task_models)
                 continue
-            task_model = None
+            task_model = self.task_model_mapping.get(task_id)
             if self._should_query_task_models:
-                task_model = TaskModel.query.filter_by(guid=task_id).first()
+                task_model = task_model or TaskModel.query.filter_by(guid=task_id).first()
             if task_model is None:
                 task_model = self.__class__._create_task(
                     bpmn_process,

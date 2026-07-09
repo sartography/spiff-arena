@@ -391,18 +391,19 @@ class TestServiceTaskDelegate(BaseTest):
         assert successful == 3
         assert failed == 1
 
-    def test_connector_proxy_api_key_headers_returns_empty_dict_when_not_configured(self, app: Flask) -> None:
+    def test_connector_proxy_api_key_headers_returns_empty_dict_when_not_configured(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY", None):
             result = connector_proxy_api_key_headers()
-            assert result == {"User-Agent": "spiffworkflow-backend"}
+            assert result == {}
 
-    def test_connector_proxy_api_key_headers_returns_header_when_configured(self, app: Flask) -> None:
+    def test_connector_proxy_api_key_headers_returns_header_when_configured(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY", "my-secret-key"):
             result = connector_proxy_api_key_headers()
-            assert result == {
-                "Spiff-Connector-Proxy-Api-Key": "my-secret-key",
-                "User-Agent": "spiffworkflow-backend",
-            }
+            assert result == {"Spiff-Connector-Proxy-Api-Key": "my-secret-key"}
 
     def test_connector_proxy_request_proxies_returns_none_when_not_configured(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
@@ -452,7 +453,6 @@ class TestServiceTaskDelegate(BaseTest):
                 ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task, process_instance.id)
                 _, call_kwargs = mock_post.call_args
                 assert call_kwargs.get("headers", {}).get("Spiff-Connector-Proxy-Api-Key") == "test-api-key"
-                assert call_kwargs.get("headers", {}).get("User-Agent") == "spiffworkflow-backend"
 
     def test_call_connector_uses_connector_proxy_http_proxy_when_configured(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None

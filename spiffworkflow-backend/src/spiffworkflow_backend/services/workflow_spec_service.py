@@ -63,7 +63,7 @@ class WorkflowSpecService:
         except ValidationException as ve:
             raise ApiError(
                 error_code="process_instance_validation_error",
-                message="Failed to parse the Workflow Specification. " + f"Error is '{str(ve)}.'",
+                message=f"Failed to parse the Workflow Specification. Error is '{ve}'.",
                 file_name=ve.file_name,
                 task_name=ve.name,
                 task_id=ve.id,
