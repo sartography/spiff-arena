@@ -256,6 +256,8 @@ def should_notify_sentry(exception: Exception) -> bool:
         # when someone is looking for a process instance that doesn't exist or that they don't have access to
         if exception.error_code == "process_instance_cannot_be_found":
             return False
+        if exception.error_code == "process_instance_has_error_tasks":
+            return False
     if isinstance(exception, NotAuthorizedError):
         return False
 
