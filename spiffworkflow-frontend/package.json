@@ -5,7 +5,7 @@
   "type": "module",
   "dependencies": {
     "@bpmn-io/properties-panel": "^3.41.2",
-    "@carbon/colors": "^11.38.0",
+    "@carbon/colors": "^11.53.0",
     "@carbon/icons-react": "^11.65.0",
     "@carbon/react": "^1.89.0",
     "@casl/ability": "^6.7.1",
