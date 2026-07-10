@@ -258,6 +258,8 @@ def should_notify_sentry(exception: Exception) -> bool:
             return False
         if exception.error_code == "process_instance_has_error_tasks":
             return False
+        if exception.error_code == "process_instance_validation_error":
+            return False
     if isinstance(exception, NotAuthorizedError):
         return False
 

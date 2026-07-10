@@ -115,6 +115,17 @@ class TestMonitoringService(unittest.TestCase):
             )
         )
 
+    def test_process_instance_validation_api_error_is_not_captured(self) -> None:
+        self.assertFalse(
+            should_capture_exception_in_sentry(
+                ApiError(
+                    error_code="process_instance_validation_error",
+                    message="Failed to parse the Workflow Specification.",
+                    status_code=400,
+                )
+            )
+        )
+
     def test_not_authorized_error_is_not_captured(self) -> None:
         self.assertFalse(should_capture_exception_in_sentry(NotAuthorizedError()))
 
