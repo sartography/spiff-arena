@@ -248,9 +248,7 @@ class TestTaskService(BaseTest):
 
         monkeypatch.setattr(TaskModel, "query", SimpleNamespace(filter_by=fail_filter_by))
 
-        bpmn_process, found_task_model = task_service.find_or_create_task_model_from_spiff_task(
-            SimpleNamespace(id="task-1")
-        )
+        bpmn_process, found_task_model = task_service.find_or_create_task_model_from_spiff_task(SimpleNamespace(id="task-1"))
 
         assert bpmn_process is None
         assert found_task_model is task_model
@@ -276,9 +274,7 @@ class TestTaskService(BaseTest):
 
         monkeypatch.setattr(TaskModel, "query", TaskModelQuery())
 
-        bpmn_process, found_task_model = task_service.find_or_create_task_model_from_spiff_task(
-            SimpleNamespace(id="task-1")
-        )
+        bpmn_process, found_task_model = task_service.find_or_create_task_model_from_spiff_task(SimpleNamespace(id="task-1"))
 
         assert filter_by_calls == [{"guid": "task-1"}]
         assert bpmn_process is None
