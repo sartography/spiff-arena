@@ -10,6 +10,7 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
 from sqlalchemy import asc
+from sqlalchemy import inspect as sqlalchemy_inspect
 
 from spiffworkflow_backend.exceptions.error import TaskMismatchError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -402,8 +403,11 @@ class TaskService:
 
     def _find_existing_task_model(self, task_guid: str) -> TaskModel | None:
         task_model = self.task_model_mapping.get(task_guid)
-        if task_model is None and self._should_query_task_models:
-            task_model = TaskModel.query.filter_by(guid=task_guid).first()
+        cached_model_has_identity = task_model is not None and sqlalchemy_inspect(task_model).has_identity
+        if self._should_query_task_models and not cached_model_has_identity:
+            persisted_task_model = TaskModel.query.filter_by(guid=task_guid).first()
+            if persisted_task_model is not None:
+                task_model = persisted_task_model
         return task_model
 
     def find_or_create_task_model_from_spiff_task(
