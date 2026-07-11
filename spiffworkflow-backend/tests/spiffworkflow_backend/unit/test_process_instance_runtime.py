@@ -721,13 +721,7 @@ class TestProcessInstanceRuntime(BaseTest):
     ) -> None:
         self.create_process_group("test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
-        finance_user_three = self.find_or_create_user("testuser3")
         assert initiator_user.principal is not None
-        assert finance_user_three.principal is not None
-        AuthorizationService.import_permissions_from_yaml_file()
-
-        finance_group = GroupModel.query.filter_by(identifier="Finance Team").first()
-        assert finance_group is not None
 
         process_model = load_test_spec(
             process_model_id="test_group/manual_task_with_subprocesses",
@@ -1070,13 +1064,7 @@ class TestProcessInstanceRuntime(BaseTest):
     ) -> None:
         self.create_process_group("test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
-        finance_user_three = self.find_or_create_user("testuser3")
         assert initiator_user.principal is not None
-        assert finance_user_three.principal is not None
-        AuthorizationService.import_permissions_from_yaml_file()
-
-        finance_group = GroupModel.query.filter_by(identifier="Finance Team").first()
-        assert finance_group is not None
 
         process_model = load_test_spec(
             process_model_id="test_group/manual_task_with_subprocesses",
@@ -1286,13 +1274,7 @@ class TestProcessInstanceRuntime(BaseTest):
     ) -> None:
         self.create_process_group("test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
-        finance_user_three = self.find_or_create_user("testuser3")
         assert initiator_user.principal is not None
-        assert finance_user_three.principal is not None
-        AuthorizationService.import_permissions_from_yaml_file()
-
-        finance_group = GroupModel.query.filter_by(identifier="Finance Team").first()
-        assert finance_group is not None
 
         process_model = load_test_spec(
             process_model_id="test_group/model_with_lanes",
@@ -1794,13 +1776,7 @@ class TestProcessInstanceRuntime(BaseTest):
     ) -> None:
         self.create_process_group("test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
-        finance_user_three = self.find_or_create_user("testuser3")
         assert initiator_user.principal is not None
-        assert finance_user_three.principal is not None
-        AuthorizationService.import_permissions_from_yaml_file()
-
-        finance_group = GroupModel.query.filter_by(identifier="Finance Team").first()
-        assert finance_group is not None
 
         process_model = load_test_spec(
             process_model_id="test_group/subprocess_with_manual_task",
