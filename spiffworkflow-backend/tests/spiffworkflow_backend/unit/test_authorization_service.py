@@ -560,10 +560,22 @@ class TestAuthorizationService(BaseTest):
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         user = self.find_or_create_user(username="user_one")
         user_two = self.find_or_create_user(username="user_two")
         admin_user = self.find_or_create_user(username="testadmin1")
+
+        monkeypatch.setattr(
+            AuthorizationService,
+            "load_permissions_yaml",
+            lambda: {
+                "groups": {"admin": {"users": ["testadmin1"]}},
+                "permissions": {
+                    "admin-all": {"uri": "ALL", "actions": ["create"], "groups": ["admin"]},
+                },
+            },
+        )
 
         # this group is not mentioned so it will get deleted
         UserService.find_or_create_group("group_two")
@@ -745,10 +757,21 @@ class TestAuthorizationService(BaseTest):
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         user_regex = "REGEX:^user_.*"
+        persistent_user_regex = "REGEX:^persistent_.*"
         user = self.find_or_create_user(username="user_one")
         user_two = self.find_or_create_user(username="second_user_to_not_match_regex")
+
+        monkeypatch.setattr(
+            AuthorizationService,
+            "load_permissions_yaml",
+            lambda: {
+                "groups": {"persistent_group": {"users": [persistent_user_regex]}},
+                "permissions": {},
+            },
+        )
 
         # this group is not mentioned so it will get deleted
         UserService.find_or_create_group("group_two")
@@ -813,7 +836,7 @@ class TestAuthorizationService(BaseTest):
 
         waiting_assignments = UserGroupAssignmentWaitingModel.query.all()
         # ensure we didn't delete all of the user group assignments
-        assert len(waiting_assignments) > 0
+        assert [assignment.username for assignment in waiting_assignments] == [persistent_user_regex]
 
     def test_can_deny_access_with_permission(
         self,
