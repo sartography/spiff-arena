@@ -58,11 +58,20 @@ class TestAuthorizationService(BaseTest):
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.principal is not None
         # to ensure there is a user that can be assigned to the task
         self.find_or_create_user("testuser1")
+        monkeypatch.setattr(
+            AuthorizationService,
+            "load_permissions_yaml",
+            lambda: {
+                "groups": {"Finance Team": {"users": ["testuser1", "testuser2"]}},
+                "permissions": {},
+            },
+        )
         AuthorizationService.import_permissions_from_yaml_file()
 
         process_model = load_test_spec(
@@ -97,8 +106,6 @@ class TestAuthorizationService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         initiator_user = self.find_or_create_user("initiator_user")
-        self.find_or_create_user("testuser1")
-        AuthorizationService.import_permissions_from_yaml_file()
 
         process_model = load_test_spec(
             process_model_id="test_group/model_with_lanes",
