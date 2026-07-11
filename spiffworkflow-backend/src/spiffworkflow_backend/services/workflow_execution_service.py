@@ -764,7 +764,8 @@ class WorkflowExecutionService:
                     event = spiff_task.task_spec.event_definition.details(spiff_task)
                     if "Time" in event.event_type:
                         time_string = event.value
-                        run_at_in_seconds = round(datetime.fromisoformat(time_string).timestamp())
+                        if time_string is not None:
+                            run_at_in_seconds = round(datetime.fromisoformat(time_string).timestamp())
 
                 if run_at_in_seconds is None and "spiff__retry_at" in spiff_task.internal_data:
                     run_at_in_seconds = spiff_task.internal_data["spiff__retry_at"]
