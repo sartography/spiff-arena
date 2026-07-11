@@ -18,8 +18,32 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestAuthorizationService(BaseTest):
-    def test_does_not_fail_if_user_not_created(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
+    def test_does_not_fail_if_user_not_created(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        missing_username = "not-created"
+        monkeypatch.setattr(
+            AuthorizationService,
+            "load_permissions_yaml",
+            lambda: {
+                "groups": {"missing-user-group": {"users": [missing_username]}},
+                "permissions": {
+                    "group-read": {
+                        "uri": "PG:missing-user-group",
+                        "actions": ["read"],
+                        "groups": ["missing-user-group"],
+                    },
+                },
+            },
+        )
+
         AuthorizationService.import_permissions_from_yaml_file()
+
+        waiting_assignment = UserGroupAssignmentWaitingModel.query.filter_by(username=missing_username).one()
+        assert waiting_assignment.group.identifier == "missing-user-group"
 
     def test_can_import_permissions_from_yaml(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         usernames = [

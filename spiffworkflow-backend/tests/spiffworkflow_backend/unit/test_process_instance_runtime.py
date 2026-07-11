@@ -90,12 +90,21 @@ class TestProcessInstanceRuntime(BaseTest):
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         self.create_process_group("test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
         finance_user = self.find_or_create_user("testuser2")
         assert initiator_user.principal is not None
         assert finance_user.principal is not None
+        monkeypatch.setattr(
+            AuthorizationService,
+            "load_permissions_yaml",
+            lambda: {
+                "groups": {"Finance Team": {"users": ["testuser2"]}},
+                "permissions": {},
+            },
+        )
         AuthorizationService.import_permissions_from_yaml_file()
 
         finance_group = GroupModel.query.filter_by(identifier="Finance Team").first()
@@ -212,6 +221,7 @@ class TestProcessInstanceRuntime(BaseTest):
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test that human task assignments update when YAML config changes add user to group.
 
@@ -230,6 +240,14 @@ class TestProcessInstanceRuntime(BaseTest):
         # Create testuser1 who is NOT in Finance Team yet
         # Note: find_or_create_user creates a user with service="internal" and service_id=username
         testuser1 = self.find_or_create_user("testuser1")
+        monkeypatch.setattr(
+            AuthorizationService,
+            "load_permissions_yaml",
+            lambda: {
+                "groups": {"Finance Team": {"users": ["testuser1"]}},
+                "permissions": {},
+            },
+        )
 
         process_model = load_test_spec(
             process_model_id="test_group/model_with_lanes",
@@ -558,10 +576,8 @@ class TestProcessInstanceRuntime(BaseTest):
         testadmin1 = self.find_or_create_user("testadmin1")
         assert initiator_user.principal is not None
         assert finance_user_three.principal is not None
-        AuthorizationService.import_permissions_from_yaml_file()
 
-        finance_group = GroupModel.query.filter_by(identifier="Finance Team").first()
-        assert finance_group is not None
+        UserService.find_or_create_group("Finance Team")
 
         process_model = load_test_spec(
             process_model_id="test_group/model_with_lanes",
@@ -657,13 +673,7 @@ class TestProcessInstanceRuntime(BaseTest):
     ) -> None:
         self.create_process_group("test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
-        finance_user_three = self.find_or_create_user("testuser3")
         assert initiator_user.principal is not None
-        assert finance_user_three.principal is not None
-        AuthorizationService.import_permissions_from_yaml_file()
-
-        finance_group = GroupModel.query.filter_by(identifier="Finance Team").first()
-        assert finance_group is not None
 
         process_model = load_test_spec(
             process_model_id="test_group/manual_task",
