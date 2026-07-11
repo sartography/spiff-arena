@@ -15,6 +15,7 @@ from spiffworkflow_backend.services.workflow_execution_service import EngineStep
 from spiffworkflow_backend.services.workflow_execution_service import QueueInstructionsForEndUserExecutionStrategy
 from spiffworkflow_backend.services.workflow_execution_service import TaskModelSavingDelegate
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class FakeDelegate(EngineStepDelegate):
@@ -70,42 +71,48 @@ def task_model_saving_strategy() -> QueueInstructionsForEndUserExecutionStrategy
     )
 
 
-def test_queue_instruction_strategy_breaks_after_max_tasks(app: Flask) -> None:
-    app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS"] = 3
-    app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS"] = 999
-    strategy = QueueInstructionsForEndUserExecutionStrategy(FakeDelegate())
+class TestWorkflowExecutionStrategy(BaseTest):
+    def test_queue_instruction_strategy_breaks_after_max_tasks(self, app: Flask) -> None:
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS", 3),
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS", 999),
+        ):
+            strategy = QueueInstructionsForEndUserExecutionStrategy(FakeDelegate())
 
-    assert strategy.should_break_after([object(), object()]) is False
-    assert strategy.should_break_after([object()]) is True
+            assert strategy.should_break_after([object(), object()]) is False
+            assert strategy.should_break_after([object()]) is True
 
+    def test_queue_instruction_strategy_breaks_after_max_seconds(self, app: Flask, monkeypatch: Any) -> None:
+        times = iter([100.0, 103.0])
+        monkeypatch.setattr("spiffworkflow_backend.services.workflow_execution_service.time.monotonic", lambda: next(times))
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS", 999),
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS", 3),
+        ):
+            strategy = QueueInstructionsForEndUserExecutionStrategy(FakeDelegate())
 
-def test_queue_instruction_strategy_breaks_after_max_seconds(app: Flask, monkeypatch: Any) -> None:
-    times = iter([100.0, 103.0])
-    monkeypatch.setattr("spiffworkflow_backend.services.workflow_execution_service.time.monotonic", lambda: next(times))
-    app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS"] = 999
-    app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS"] = 3
-    strategy = QueueInstructionsForEndUserExecutionStrategy(FakeDelegate())
+            assert strategy.should_break_after([object()]) is True
 
-    assert strategy.should_break_after([object()]) is True
+    def test_queue_instruction_strategy_reports_no_ready_tasks_after_autosave(self, app: Flask, monkeypatch: Any) -> None:
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS", 1),
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS", 999),
+        ):
+            strategy = QueueInstructionsForEndUserExecutionStrategy(FakeDelegate())
+            engine_step_batches = iter([[SimpleNamespace(task_spec=SimpleNamespace(extensions={}))], []])
+            monkeypatch.setattr(strategy, "get_ready_engine_steps", lambda bpmn_process_instance: next(engine_step_batches))
+            monkeypatch.setattr(strategy, "_run_and_did_complete", lambda spiff_task: None)
 
+            task_runnability = strategy.spiff_run(FakeWorkflow(), cast(ProcessInstanceModel, SimpleNamespace(id=1)))
 
-def test_queue_instruction_strategy_reports_no_ready_tasks_after_autosave(app: Flask, monkeypatch: Any) -> None:
-    app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS"] = 1
-    app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS"] = 999
-    strategy = QueueInstructionsForEndUserExecutionStrategy(FakeDelegate())
-    engine_step_batches = iter([[SimpleNamespace(task_spec=SimpleNamespace(extensions={}))], []])
-    monkeypatch.setattr(strategy, "get_ready_engine_steps", lambda bpmn_process_instance: next(engine_step_batches))
-    monkeypatch.setattr(strategy, "_run_and_did_complete", lambda spiff_task: None)
+            assert task_runnability == TaskRunnability.no_ready_tasks
 
-    task_runnability = strategy.spiff_run(FakeWorkflow(), cast(ProcessInstanceModel, SimpleNamespace(id=1)))
+    def test_queue_instruction_strategy_caps_ready_batch_at_max_tasks(self, app: Flask) -> None:
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS", 3),
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS", 999),
+        ):
+            strategy = task_model_saving_strategy()
+            ready_tasks = [spiff_task(str(i)) for i in range(5)]
 
-    assert task_runnability == TaskRunnability.no_ready_tasks
-
-
-def test_queue_instruction_strategy_caps_ready_batch_at_max_tasks(app: Flask) -> None:
-    app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS"] = 3
-    app.config["SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS"] = 999
-    strategy = task_model_saving_strategy()
-    ready_tasks = [spiff_task(str(i)) for i in range(5)]
-
-    assert strategy.engine_steps_to_run(ready_tasks) == ready_tasks[:3]
+            assert strategy.engine_steps_to_run(ready_tasks) == ready_tasks[:3]
