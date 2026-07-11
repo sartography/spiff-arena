@@ -47,38 +47,33 @@ class TestApiLogging(BaseTest):
         def test_function() -> tuple[dict[str, str], int]:
             return {"result": "success"}, 200
 
-        with app.app_context():
+        with app.app_context(), self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", True):
             # Clear existing logs
             db.session.query(APILogModel).delete()
             db.session.commit()
 
-            # Enable API logging
-            app.config["SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED"] = True
             # Note: setup_deferred_logging is already called during app creation
 
-            try:
-                with app.test_request_context("/test", method="POST", json={"input": "data"}):
-                    result = test_function()
-                    assert result == ({"result": "success"}, 200)
+            with app.test_request_context("/test", method="POST", json={"input": "data"}):
+                result = test_function()
+                assert result == ({"result": "success"}, 200)
 
-                    # Process any queued logs (simulating teardown)
-                    if hasattr(g, "has_pending_api_logs") and g.has_pending_api_logs:
-                        _process_log_queue()
+                # Process any queued logs (simulating teardown)
+                if hasattr(g, "has_pending_api_logs") and g.has_pending_api_logs:
+                    _process_log_queue()
 
-                # Should create a log entry
-                logs = db.session.query(APILogModel).all()
-                assert len(logs) == 1
+            # Should create a log entry
+            logs = db.session.query(APILogModel).all()
+            assert len(logs) == 1
 
-                log = logs[0]
-                assert log.endpoint == "/test"
-                assert log.method == "POST"
-                assert log.status_code == 200
-                assert log.request_body == {"input": "data"}
-                assert log.response_body == {"result": "success"}
-                assert log.duration_ms >= 0
-                assert log.query_params == {}  # Verify empty query params default
-            finally:
-                app.config["SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED"] = False
+            log = logs[0]
+            assert log.endpoint == "/test"
+            assert log.method == "POST"
+            assert log.status_code == 200
+            assert log.request_body == {"input": "data"}
+            assert log.response_body == {"result": "success"}
+            assert log.duration_ms >= 0
+            assert log.query_params == {}  # Verify empty query params default
 
     def test_decorator_logs_exceptions(self, app: Flask) -> None:
         """Test that the decorator logs when the decorated function raises exceptions."""
@@ -87,35 +82,30 @@ class TestApiLogging(BaseTest):
         def test_function() -> None:
             raise ValueError("Test error")
 
-        with app.app_context():
+        with app.app_context(), self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", True):
             # Clear existing logs
             db.session.query(APILogModel).delete()
             db.session.commit()
 
-            # Enable API logging
-            app.config["SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED"] = True
             # Note: setup_deferred_logging is already called during app creation
 
-            try:
-                with app.test_request_context("/test", method="GET"):
-                    with pytest.raises(ValueError, match="Test error"):
-                        test_function()
+            with app.test_request_context("/test", method="GET"):
+                with pytest.raises(ValueError, match="Test error"):
+                    test_function()
 
-                    # Process any queued logs
-                    if hasattr(g, "has_pending_api_logs") and g.has_pending_api_logs:
-                        _process_log_queue()
+                # Process any queued logs
+                if hasattr(g, "has_pending_api_logs") and g.has_pending_api_logs:
+                    _process_log_queue()
 
-                # Should still create a log entry for the failed request
-                logs = db.session.query(APILogModel).all()
-                assert len(logs) == 1
+            # Should still create a log entry for the failed request
+            logs = db.session.query(APILogModel).all()
+            assert len(logs) == 1
 
-                log = logs[0]
-                assert log.endpoint == "/test"
-                assert log.method == "GET"
-                assert log.status_code == 500  # Default error status
-                assert log.duration_ms >= 0
-            finally:
-                app.config["SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED"] = False
+            log = logs[0]
+            assert log.endpoint == "/test"
+            assert log.method == "GET"
+            assert log.status_code == 500  # Default error status
+            assert log.duration_ms >= 0
 
     def test_decorator_extracts_api_error_details(self, app: Flask) -> None:
         """Test that the decorator extracts details from API errors."""
@@ -126,33 +116,28 @@ class TestApiLogging(BaseTest):
             error = ApiError("TEST001", "Test error message", status_code=422)
             raise error
 
-        with app.app_context():
+        with app.app_context(), self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", True):
             # Clear existing logs
             db.session.query(APILogModel).delete()
             db.session.commit()
 
-            # Enable API logging
-            app.config["SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED"] = True
             # Note: setup_deferred_logging is already called during app creation
 
-            try:
-                with app.test_request_context("/test", method="POST"):
-                    with pytest.raises(ApiError):
-                        test_function()
+            with app.test_request_context("/test", method="POST"):
+                with pytest.raises(ApiError):
+                    test_function()
 
-                    # Process any queued logs
-                    if hasattr(g, "has_pending_api_logs") and g.has_pending_api_logs:
-                        _process_log_queue()
+                # Process any queued logs
+                if hasattr(g, "has_pending_api_logs") and g.has_pending_api_logs:
+                    _process_log_queue()
 
-                # Should create a log entry with API error details
-                logs = db.session.query(APILogModel).all()
-                assert len(logs) == 1
+            # Should create a log entry with API error details
+            logs = db.session.query(APILogModel).all()
+            assert len(logs) == 1
 
-                log = logs[0]
-                assert log.status_code == 422
-                assert log.response_body is not None  # Should contain error details
-            finally:
-                app.config["SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED"] = False
+            log = logs[0]
+            assert log.status_code == 422
+            assert log.response_body is not None  # Should contain error details
 
     def test_process_instance_id_extraction(self, app: Flask) -> None:
         """Test extraction of process_instance_id from various sources."""
@@ -161,32 +146,27 @@ class TestApiLogging(BaseTest):
         def test_function_with_kwargs(process_instance_id: int | None = None) -> tuple[dict[str, dict[str, int]], int]:
             return {"process_instance": {"id": 456}}, 200
 
-        with app.app_context():
+        with app.app_context(), self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", True):
             # Clear existing logs
             db.session.query(APILogModel).delete()
             db.session.commit()
 
-            # Enable API logging
-            app.config["SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED"] = True
             # Note: setup_deferred_logging is already called during app creation
 
-            try:
-                with app.test_request_context("/test"):
-                    # Test extraction from kwargs
-                    test_function_with_kwargs(process_instance_id=123)
+            with app.test_request_context("/test"):
+                # Test extraction from kwargs
+                test_function_with_kwargs(process_instance_id=123)
 
-                    # Process any queued logs
-                    if hasattr(g, "has_pending_api_logs") and g.has_pending_api_logs:
-                        _process_log_queue()
+                # Process any queued logs
+                if hasattr(g, "has_pending_api_logs") and g.has_pending_api_logs:
+                    _process_log_queue()
 
-                logs = db.session.query(APILogModel).all()
-                assert len(logs) == 1
+            logs = db.session.query(APILogModel).all()
+            assert len(logs) == 1
 
-                log = logs[0]
-                # Should prefer response body over kwargs (456 vs 123)
-                assert log.process_instance_id == 456
-            finally:
-                app.config["SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED"] = False
+            log = logs[0]
+            # Should prefer response body over kwargs (456 vs 123)
+            assert log.process_instance_id == 456
 
     def test_queue_processing_outside_flask_context(self, app: Flask) -> None:
         """Test that queueing works outside Flask request context."""
@@ -288,29 +268,23 @@ class TestApiLogging(BaseTest):
         def test_function() -> tuple[dict[str, str], int]:
             return {"result": "success"}, 200
 
-        with app.app_context():
+        with app.app_context(), self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", True):
             # Clear existing logs
             db.session.query(APILogModel).delete()
             db.session.commit()
 
-            # Enable API logging
-            app.config["SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED"] = True
+            # Test with query params
+            with app.test_request_context("/test?param1=value1&param2=123", method="GET"):
+                test_function()
 
-            try:
-                # Test with query params
-                with app.test_request_context("/test?param1=value1&param2=123", method="GET"):
-                    test_function()
+                if hasattr(g, "has_pending_api_logs") and g.has_pending_api_logs:
+                    _process_log_queue()
 
-                    if hasattr(g, "has_pending_api_logs") and g.has_pending_api_logs:
-                        _process_log_queue()
-
-                # Verify log entry
-                logs = db.session.query(APILogModel).all()
-                assert len(logs) == 1
-                log = logs[0]
-                assert log.query_params == {"param1": "value1", "param2": "123"}
-            finally:
-                app.config["SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED"] = False
+            # Verify log entry
+            logs = db.session.query(APILogModel).all()
+            assert len(logs) == 1
+            log = logs[0]
+            assert log.query_params == {"param1": "value1", "param2": "123"}
 
     def test_global_logging_creates_log_entry(self, app: Flask) -> None:
         """Test that the global logging functionality creates log entries with proper data."""
