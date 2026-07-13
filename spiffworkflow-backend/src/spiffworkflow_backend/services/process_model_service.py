@@ -803,12 +803,12 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def __scan_process_groups(cls, process_group_id: str | None = None) -> list[ProcessGroup]:
-        if not os.path.exists(FileSystemService.root_path()):
-            return []  # Nothing to scan yet.  There are no files.
+        scan_path = FileSystemService.root_path()
         if process_group_id is not None:
             scan_path = os.path.join(FileSystemService.root_path(), process_group_id)
-        else:
-            scan_path = FileSystemService.root_path()
+
+        if not os.path.exists(scan_path):
+            return []  # Nothing to scan yet.  There are no files.
 
         with os.scandir(scan_path) as directory_items:
             process_groups = []
