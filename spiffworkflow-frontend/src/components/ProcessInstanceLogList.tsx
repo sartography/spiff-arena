@@ -39,6 +39,7 @@ import {
   errorForDisplayFromProcessInstanceErrorDetail,
 } from './ErrorDisplay';
 import DateAndTimeService from '../services/DateAndTimeService';
+import FormattedDateTime from './FormattedDateTime';
 
 type OwnProps = {
   variant: string; // 'all' or 'for-me'
@@ -331,9 +332,7 @@ export default function ProcessInstanceLogList({
 
     let timestampComponent = (
       <TableCell>
-        {DateAndTimeService.convertSecondsToFormattedDateTime(
-          logEntry.timestamp,
-        )}
+        <FormattedDateTime seconds={logEntry.timestamp} />
       </TableCell>
     );
     if (logEntry.spiff_task_guid && logEntry.event_type !== 'task_cancelled') {
