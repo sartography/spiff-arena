@@ -17,6 +17,18 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessModelService(BaseTest):
+    def test_get_process_groups_returns_empty_when_process_group_id_is_a_file(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        os.makedirs(ProcessModelService.root_path(), exist_ok=True)
+        file_valued_process_group_id = "file_valued_process_group"
+        with open(os.path.join(ProcessModelService.root_path(), file_valued_process_group_id), "w"):
+            pass
+
+        assert ProcessModelService.get_process_groups(file_valued_process_group_id) == []
+
     def test_get_process_groups_user_has_permissions_to_avoids_quadratic_permission_scans(
         self,
         app: Flask,

@@ -807,7 +807,7 @@ class ProcessModelService(FileSystemService):
         if process_group_id is not None:
             scan_path = os.path.join(FileSystemService.root_path(), process_group_id)
 
-        if not os.path.exists(scan_path):
+        if not os.path.isdir(scan_path):
             return []  # Nothing to scan yet.  There are no files.
 
         with os.scandir(scan_path) as directory_items:
