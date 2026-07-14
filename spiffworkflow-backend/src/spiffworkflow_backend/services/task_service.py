@@ -1,7 +1,5 @@
 import copy
-import json
 import time
-from hashlib import sha256
 from typing import TypedDict
 from uuid import UUID
 
@@ -32,7 +30,7 @@ from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.task_draft_data import TaskDraftDataModel
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
+from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
 
 
 class StartAndEndTimes(TypedDict):
@@ -285,7 +283,7 @@ class TaskService:
             (
                 process_instance_event,
                 _process_instance_error_detail,
-            ) = ProcessInstanceTmpService.add_event_to_process_instance(
+            ) = ProcessInstanceEventService.add_event_to_process_instance(
                 self.process_instance,
                 event_type,
                 task_guid=task_model.guid,
@@ -649,9 +647,8 @@ class TaskService:
             data_dict_to_use = self.serializer.to_dict(bpmn_process_instance.data)
         if data_dict_to_use is None:
             data_dict_to_use = {}
-        bpmn_process_data_json = json.dumps(data_dict_to_use, sort_keys=True)
-        bpmn_process_data_hash: str = sha256(bpmn_process_data_json.encode("utf8")).hexdigest()
-        json_data_dict: JsonDataDict = {"hash": bpmn_process_data_hash, "data": data_dict_to_use}
+        json_data_dict = JsonDataModel.json_data_dict_from_dict(data_dict_to_use)
+        bpmn_process_data_hash = json_data_dict["hash"]
         if bpmn_process.json_data_hash != bpmn_process_data_hash:
             bpmn_process.json_data_hash = bpmn_process_data_hash
             self.json_data_dicts[bpmn_process_data_hash] = json_data_dict

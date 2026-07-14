@@ -34,7 +34,7 @@ else
     export SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT="1"
 
     # this line blocks
-    exec uv run uvicorn spiff_web_server:connexion_app \
+    exec uv run uvicorn spiff_web_server:asgi_app \
       --reload \
       --host "0.0.0.0" \
       --port "$PORT" \

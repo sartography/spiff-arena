@@ -2,7 +2,7 @@ from flask.app import Flask
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.task import TaskModel
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -32,8 +32,8 @@ class TestDebugController(BaseTest):
             process_model_source_directory="data_stores",
         )
         process_instance1 = self.create_process_instance_from_process_model(process_model1)
-        processor1 = ProcessInstanceProcessor(process_instance1)
-        processor1.do_engine_steps(save=True)
+        runtime1 = ProcessInstanceRuntime(process_instance1)
+        runtime1.do_engine_steps(save=True)
 
         # Create another process model with more tasks
         process_model2 = load_test_spec(
@@ -42,15 +42,16 @@ class TestDebugController(BaseTest):
             process_model_source_directory="manual_task",
         )
         process_instance2 = self.create_process_instance_from_process_model(process_model2)
-        processor2 = ProcessInstanceProcessor(process_instance2)
-        processor2.do_engine_steps(save=True)
+        runtime2 = ProcessInstanceRuntime(process_instance2)
+        runtime2.do_engine_steps(save=True)
         task_count = TaskModel.query.filter_by(process_instance_id=process_instance2.id).count()
 
         # Create a few more instances with fewer tasks to make sure our endpoint works correctly
+        latest_process_instance = process_instance2
         for _ in range(2):
-            process_instance = self.create_process_instance_from_process_model(process_model1)
-            processor = ProcessInstanceProcessor(process_instance)
-            processor.do_engine_steps(save=True)
+            latest_process_instance = self.create_process_instance_from_process_model(process_model1)
+            runtime = ProcessInstanceRuntime(latest_process_instance)
+            runtime.do_engine_steps(save=True)
 
         # Call the endpoint and check the response
         response = client.get(
@@ -61,7 +62,12 @@ class TestDebugController(BaseTest):
 
         assert "process_instance_id" in response.json()
         assert "task_count" in response.json()
+        assert response.json()["scope"] == {
+            "global": False,
+            "process_instance_id_window": 10000,
+            "min_process_instance_id": max(latest_process_instance.id - 10000, 0),
+        }
 
-        # Verify that the endpoint returns the process instance with the most tasks
+        # Verify that the endpoint returns the recent process instance with the most tasks.
         assert response.json()["process_instance_id"] == process_instance2.id
         assert response.json()["task_count"] == task_count

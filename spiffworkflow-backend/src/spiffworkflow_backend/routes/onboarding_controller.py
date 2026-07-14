@@ -10,7 +10,7 @@ from spiffworkflow_backend.exceptions.process_entity_not_found_error import Proc
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.services.jinja_service import JinjaService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 
 
 def get_onboarding() -> Response:
@@ -28,17 +28,17 @@ def get_onboarding() -> Response:
             process_model_display_name="On Boarding",
             persistence_level=persistence_level,
         )
-        processor = ProcessInstanceProcessor(process_instance)
+        runtime = ProcessInstanceRuntime(process_instance)
     except ProcessEntityNotFoundError:
         # The process doesn't exist, so bail out without an error
         return make_response(result, 200)
     try:
-        processor.do_engine_steps(save=False, execution_strategy_name="greedy")
-        bpmn_process = processor.bpmn_process_instance
+        runtime.do_engine_steps(save=False, execution_strategy_name="greedy")
+        bpmn_process = runtime.bpmn_process_instance
         if bpmn_process.is_completed():
             workflow_data = bpmn_process.data
             result = workflow_data.get("onboarding", {})
-        task = processor.next_task()
+        task = runtime.next_task()
         if task:
             result["task_id"] = task.id
             result["instructions"] = JinjaService.render_instructions_for_end_user(task)

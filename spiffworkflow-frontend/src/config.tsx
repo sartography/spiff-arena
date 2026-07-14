@@ -7,6 +7,14 @@ let protocol = 'https';
 
 const CONFIGURATION_ERRORS: string[] = [];
 
+const isLocalDevelopmentHostname = (host: string) => {
+  return (
+    /^\d+\./.test(host) ||
+    host === 'localhost' ||
+    (host.length > 0 && !host.includes('.'))
+  );
+};
+
 declare global {
   interface SpiffworkflowFrontendJsenvObject {
     [key: string]: string;
@@ -62,7 +70,7 @@ if (!backendBaseUrl) {
     throw new Error(`Invalid app routing strategy: ${appRoutingStrategy}`);
   }
 
-  if (/^\d+\./.test(hostname) || hostname === 'localhost') {
+  if (isLocalDevelopmentHostname(hostname)) {
     let serverPort = 7000;
     if (!Number.isNaN(Number(port))) {
       serverPort = Number(port) - 1;

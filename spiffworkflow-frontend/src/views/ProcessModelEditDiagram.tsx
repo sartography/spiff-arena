@@ -38,7 +38,6 @@ import { indentUnit } from '@codemirror/language';
 import { EditorView, Decoration, type DecorationSet } from '@codemirror/view';
 import { EditorState, StateField, StateEffect } from '@codemirror/state';
 
-import { Can } from '@casl/react';
 import MDEditor from '@uiw/react-md-editor';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -1101,7 +1100,7 @@ export default function ProcessModelEditDiagram() {
       buildProcessFilePath,
       buildDmnListPath: (processModelId) =>
         generatePath('/process-models/:process_model_id/files', {
-          process_model_id: processModelId || null,
+          process_model_id: processModelId || '',
         }) + '?file_type=dmn',
     });
 
@@ -1202,6 +1201,12 @@ export default function ProcessModelEditDiagram() {
     return searchParams.get('file_type') === 'dmn' || fileName.endsWith('.dmn');
   };
 
+  const unsavedChangesSaveTooltip = diagramHasChanges
+    ? `${t('diagram_notifications_unsaved_changes_title')} ${t(
+        'diagram_notifications_unsaved_changes_message',
+      )}`
+    : undefined;
+
   const appropriateEditor = () => {
     if (isDmn()) {
       return (
@@ -1209,9 +1214,11 @@ export default function ProcessModelEditDiagram() {
           diagramType="dmn"
           diagramXML={bpmnXmlForDiagramRendering}
           fileName={params.file_name}
+          hasUnsavedChanges={diagramHasChanges}
           onDeleteFile={onDeleteFile}
           modifiedProcessModelId={modifiedProcessModelId || ''}
           saveDiagram={saveDiagram}
+          saveTooltip={unsavedChangesSaveTooltip}
           navigationStack={navigationStack}
           onNavigate={(index) => {
             const item = navigationStack[index];
@@ -1243,6 +1250,7 @@ export default function ProcessModelEditDiagram() {
         diagramType="bpmn"
         diagramXML={bpmnXmlForDiagramRendering}
         disableSaveButton={!diagramHasChanges}
+        hasUnsavedChanges={diagramHasChanges}
         fileName={params.file_name}
         isPrimaryFile={params.file_name === processModel?.primary_file_name}
         processModel={processModel}
@@ -1265,6 +1273,7 @@ export default function ProcessModelEditDiagram() {
         onSetPrimaryFile={onSetPrimaryFileCallback}
         modifiedProcessModelId={modifiedProcessModelId || ''}
         saveDiagram={saveDiagram}
+        saveTooltip={unsavedChangesSaveTooltip}
         navigationStack={navigationStack}
         onNavigate={(index) => {
           const item = navigationStack[index];
@@ -1289,25 +1298,6 @@ export default function ProcessModelEditDiagram() {
         >
           {t('file_saved_message')}
         </Notification>
-      );
-    }
-    return null;
-  };
-
-  const unsavedChangesMessage = () => {
-    if (diagramHasChanges) {
-      return (
-        <Can I="PUT" a={targetUris.processModelFileShowPath} ability={ability}>
-          <Notification
-            title={t('diagram_notifications_unsaved_changes_title')}
-            type="error"
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            data-testid="process-model-file-changed"
-            hideCloseButton
-          >
-            {t('diagram_notifications_unsaved_changes_message')}
-          </Notification>
-        </Can>
       );
     }
     return null;
@@ -1406,7 +1396,6 @@ export default function ProcessModelEditDiagram() {
 
         {pageModals()}
 
-        {unsavedChangesMessage()}
         {messageModelWarning()}
         {saveFileMessage()}
         {appropriateEditor()}

@@ -227,6 +227,93 @@ class TestAuthentication(BaseTest):
 
         assert response.status_code == 200
 
+    def test_login_with_access_token_adopts_existing_user_with_matching_email(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        user = UserService.create_user("samwise", "local_open_id", "samwise", email="samwise@example.com")
+        access_token = user.encode_auth_token(
+            {
+                "iss": app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"],
+                "sub": "keycloak-samwise",
+                "aud": "spiffworkflow-backend",
+                "preferred_username": "samwise",
+                "email": "samwise@example.com",
+            }
+        )
+
+        response = client.post(
+            "/v1.0/login_with_access_token?authentication_identifier=default",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        assert response.status_code == 200
+        user = UserModel.query.filter_by(username="samwise").one()
+        assert user.email == "samwise@example.com"
+        assert user.service == app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
+        assert user.service_id == "keycloak-samwise"
+
+    def test_login_with_access_token_adopts_first_existing_user_with_matching_email(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        older_user = UserService.create_user("older_duplicate", "local_open_id", "older", email="duplicate@example.com")
+        newer_user = UserService.create_user("newer_duplicate", "local_open_id", "newer", email="duplicate@example.com")
+        older_user_id = older_user.id
+        newer_user_id = newer_user.id
+        access_token = older_user.encode_auth_token(
+            {
+                "iss": app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"],
+                "sub": "keycloak-duplicate",
+                "aud": "spiffworkflow-backend",
+                "preferred_username": "duplicate-login",
+                "email": "duplicate@example.com",
+            }
+        )
+
+        response = client.post(
+            "/v1.0/login_with_access_token?authentication_identifier=default",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        assert response.status_code == 200
+        adopted_user = UserModel.query.filter_by(username="duplicate-login").one()
+        assert adopted_user.id == older_user_id
+        assert adopted_user.service == app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
+        assert adopted_user.service_id == "keycloak-duplicate"
+        assert UserModel.query.filter_by(id=newer_user_id).one().username == "newer_duplicate"
+
+    def test_additional_valid_client_ids_are_valid_token_audiences(self, app: Flask) -> None:
+        auth_configs = [
+            {
+                **app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0],
+                "additional_valid_client_ids": "spiffworks-ed, other-client",
+            }
+        ]
+        now = round(time.time())
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS", auth_configs):
+            assert AuthenticationService.valid_audiences("default") == [
+                auth_configs[0]["client_id"],
+                "spiffworks-ed",
+                "other-client",
+                "account",
+            ]
+            assert AuthenticationService.validate_decoded_token(
+                {
+                    "iss": auth_configs[0]["uri"],
+                    "sub": "samwise",
+                    "aud": "spiffworks-ed",
+                    "azp": "spiffworks-ed",
+                    "iat": now,
+                    "exp": now + 60,
+                },
+                "default",
+            )
+
     def test_does_not_remove_permissions_from_service_accounts_on_refresh(
         self,
         app: Flask,
@@ -281,6 +368,54 @@ class TestAuthentication(BaseTest):
         assert redirect_location.startswith(auth_uri)
         assert re.search(r"\bredirect_uri=" + re.escape(login_return_uri), redirect_location) is not None
 
+    def test_can_login_with_local_development_frontend_hostname_alias(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        redirect_uri = "http://spiff-dev-host:7001/test-redirect-dne"
+        auth_uri = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
+
+        class_method_mock = mocker.patch(
+            "spiffworkflow_backend.services.authentication_service.AuthenticationService.open_id_endpoint_for_name",
+            return_value=auth_uri,
+        )
+
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", "http://localhost:7001"),
+            self.app_config_mock(
+                app,
+                "SPIFFWORKFLOW_BACKEND_ALLOWED_REDIRECT_HOST_ALIASES",
+                "localhost,spiff-dev-host",
+            ),
+        ):
+            response = client.get(
+                f"/v1.0/login?redirect_url={redirect_uri}&authentication_identifier=default",
+            )
+
+        assert class_method_mock.call_count == 1
+        assert response.status_code == 302
+        assert response.has_redirect_location
+        assert response.headers["location"].startswith(auth_uri)
+
+    def test_rejects_unconfigured_local_development_frontend_hostname_alias(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        redirect_uri = "http://unconfigured-dev-host:7001/test-redirect-dne"
+
+        response = client.get(
+            f"/v1.0/login?redirect_url={redirect_uri}&authentication_identifier=DOES_NOT_MATTER",
+        )
+
+        assert response.status_code == 500
+        assert response.json() is not None
+        assert response.json()["message"].startswith("InvalidRedirectUrlError:")
+
     def test_raises_error_if_invalid_redirect_url(
         self,
         app: Flask,
@@ -288,6 +423,20 @@ class TestAuthentication(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         redirect_url = "http://www.bad_url.com/test-redirect-dne"
+        response = client.get(
+            f"/v1.0/login?redirect_url={redirect_url}&authentication_identifier=DOES_NOT_MATTER",
+        )
+        assert response.status_code == 500
+        assert response.json() is not None
+        assert response.json()["message"].startswith("InvalidRedirectUrlError:")
+
+    def test_raises_error_if_redirect_url_only_has_frontend_url_as_host_prefix(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        redirect_url = f"{app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}.bad_url.com/test-redirect-dne"
         response = client.get(
             f"/v1.0/login?redirect_url={redirect_url}&authentication_identifier=DOES_NOT_MATTER",
         )
@@ -340,6 +489,33 @@ class TestAuthentication(BaseTest):
             headers={"Authorization": "Bearer " + access_token.split("=")[1]},
         )
         assert response.status_code == 403
+
+    def test_local_development_frontend_hostname_uses_host_only_cookie(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        group_info: list[GroupPermissionsDict] = [
+            {
+                "users": [],
+                "name": app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_PUBLIC_USER_GROUP"],
+                "permissions": [{"actions": ["create", "read"], "uri": "/public/*"}],
+            }
+        ]
+        AuthorizationService.refresh_permissions(group_info, group_permissions_only=True)
+        process_model = load_test_spec(
+            process_model_id="test_group/message-start-event-with-form",
+            process_model_source_directory="message-start-event-with-form",
+        )
+        process_group_identifier, _ = process_model.modified_process_model_identifier().rsplit(":", 1)
+
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", "http://spiff-dev-host:7001"):
+            response = client.get(f"/v1.0/public/messages/form/{process_group_identifier}:bounty_start")
+
+        assert response.status_code == 200
+        assert "Set-Cookie" in response.headers
+        assert "Domain=" not in response.headers["Set-Cookie"]
 
     def test_login_return_with_error(
         self,

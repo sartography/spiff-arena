@@ -13,11 +13,11 @@ from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 
@@ -85,7 +85,7 @@ def celery_task_process_instance_run(self, process_instance_id: int, task_guid: 
     skipped_mesage = None
     if process_instance is None:
         skipped_mesage = "Skipped because the process instance no longer exists in the database. It could have been deleted."
-    elif task_guid is None and ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(process_instance):
+    elif task_guid is None and ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
         skipped_mesage = "Skipped because the process instance is set to run in the future."
     if skipped_mesage is not None:
         return {
@@ -101,17 +101,17 @@ def celery_task_process_instance_run(self, process_instance_id: int, task_guid: 
         with ProcessInstanceQueueService.dequeued(process_instance):
             # run ready tasks to force them to run in case they have instructions on them since queue_instructions_for_end_user
             # has a should_break_before that will exit if there are instructions.
-            ProcessInstanceService.run_process_instance_with_processor(
+            ProcessInstanceService.run_process_instance_with_runtime(
                 process_instance, execution_strategy_name="run_current_ready_tasks", should_schedule_waiting_timer_events=False
             )
             # we need to save instructions to the db so the frontend progress page can view them,
             # and this is the only way to do it
-            _processor, task_runnability = ProcessInstanceService.run_process_instance_with_processor(
+            _runtime, task_runnability = ProcessInstanceService.run_process_instance_with_runtime(
                 process_instance,
                 execution_strategy_name="queue_instructions_for_end_user",
             )
             # currently, whenever we get a task_guid, that means that that task, which was a future task, is ready to run.
-            # there is an assumption that it was successfully processed by run_process_instance_with_processor above.
+            # there is an assumption that it was successfully processed by run_process_instance_with_runtime above.
             # we might want to check that assumption.
             if task_guid is not None:
                 completed_task_model = (
@@ -145,4 +145,29 @@ def celery_task_process_instance_run(self, process_instance_id: int, task_guid: 
         )
         db.session.add(process_instance)
         db.session.commit()
+        raise SpiffCeleryWorkerError(error_message) from exception
+
+
+@shared_task(ignore_result=False, time_limit=TEN_MINUTES, bind=True)
+def celery_task_process_instance_start_from_model(
+    self: Any,
+    process_model_identifier: str,
+    task_guid: str,
+    user_id: int,
+) -> dict:
+    try:
+        process_model = ProcessModelService.get_process_model(process_model_identifier)
+        user = UserModel.query.filter_by(id=user_id).first()
+        if user is None:
+            raise SpiffCeleryWorkerError(f"Could not find user with id {user_id}")
+
+        process_instance = ProcessInstanceService.create_and_run_process_instance(
+            process_model,
+            persistence_level="full",
+            data_to_inject={"task_guid": task_guid},
+            user=user,
+        ).process_instance_model
+        return {"ok": True, "process_instance_id": process_instance.id, "task_guid": task_guid}
+    except Exception as exception:
+        error_message = f"Error in celery_task_process_instance_start_from_model: {str(exception)}"
         raise SpiffCeleryWorkerError(error_message) from exception

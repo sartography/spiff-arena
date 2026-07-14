@@ -4,7 +4,8 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend.data_migrations.data_migration_base import DataMigrationBase
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_persistence_service import ProcessInstancePersistenceService
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.task_service import TaskService
 
 
@@ -16,12 +17,12 @@ class Version4(DataMigrationBase):
     @classmethod
     def run(cls, process_instance: ProcessInstanceModel, should_raise_on_error: bool = False) -> None:
         try:
-            processor = ProcessInstanceProcessor(
+            runtime = ProcessInstanceRuntime(
                 process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
             )
-            bpmn_process_dict = processor.serialize()
+            bpmn_process_dict = runtime.serialize()
             update_data_objects(bpmn_process_dict)
-            ProcessInstanceProcessor.persist_bpmn_process_dict(
+            ProcessInstancePersistenceService.persist_bpmn_process_dict(
                 bpmn_process_dict,
                 bpmn_definition_to_task_definitions_mappings={},
                 process_instance_model=process_instance,

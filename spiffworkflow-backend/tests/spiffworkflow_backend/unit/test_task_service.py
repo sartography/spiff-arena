@@ -8,7 +8,7 @@ from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -45,8 +45,8 @@ class TestTaskService(BaseTest):
             bpmn_file_name="call_activity_nested",
         )
         process_instance = self.create_process_instance_from_process_model(process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
         assert process_instance.status == "complete"
 
         bpmn_process_level_2b = (
@@ -91,8 +91,8 @@ class TestTaskService(BaseTest):
             bpmn_file_name="call_activity_nested",
         )
         process_instance = self.create_process_instance_from_process_model(process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
         assert process_instance.status == "complete"
 
         task_model_level_2b = (
@@ -145,8 +145,8 @@ class TestTaskService(BaseTest):
             bpmn_file_name="call_activity_nested",
         )
         process_instance = self.create_process_instance_from_process_model(process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
         assert process_instance.status == "complete"
 
         task_model_level_2b = (
@@ -177,9 +177,9 @@ class TestTaskService(BaseTest):
             bpmn_file_name="signal_event_extensions",
         )
         process_instance = self.create_process_instance_from_process_model(process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier("my_manual_task", processor.bpmn_process_instance)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
+        spiff_task = runtime.__class__.get_task_by_bpmn_identifier("my_manual_task", runtime.bpmn_process_instance)
         assert spiff_task is not None
 
         events = TaskService.get_ready_signals_with_button_labels(process_instance.id, str(spiff_task.id))

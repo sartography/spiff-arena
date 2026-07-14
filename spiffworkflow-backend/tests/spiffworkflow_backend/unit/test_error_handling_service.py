@@ -7,7 +7,7 @@ from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -22,7 +22,7 @@ class TestErrorHandlingService(BaseTest):
 
     def run_process_model_and_handle_error(self, process_model: ProcessModelInfo) -> ProcessInstanceModel:
         process_instance = self.create_process_instance_from_process_model(process_model)
-        pip = ProcessInstanceProcessor(process_instance)
+        pip = ProcessInstanceRuntime(process_instance)
 
         # the error handler will be called from dequeued within do_engine_steps now
         with pytest.raises(WorkflowExecutionServiceError):

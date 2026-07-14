@@ -11,6 +11,9 @@ from spiffworkflow_backend.background_processing import CELERY_TASK_EVENT_NOTIFI
 from spiffworkflow_backend.background_processing.background_processing_service import BackgroundProcessingService
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import SpiffCeleryWorkerError
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import celery_task_event_notifier_run
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import (
+    celery_task_process_instance_start_from_model,
+)
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
@@ -19,8 +22,8 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -32,6 +35,15 @@ class SupportsCeleryEventNotifierTaskRun(Protocol):
         updated_process_instance_id: int,
         process_model_identifier: str,
         event_type: str,
+    ) -> dict[str, Any]: ...
+
+
+class SupportsCeleryStartFromModelTaskRun(Protocol):
+    def run(
+        self,
+        process_model_identifier: str,
+        task_guid: str,
+        user_id: int,
     ) -> dict[str, Any]: ...
 
 
@@ -84,8 +96,8 @@ class TestBackgroundProcessingService(BaseTest):
             # the next time do_process_future_tasks runs, it will not consider this task, which is nice
             future_tasks = BackgroundProcessingService.imminent_future_tasks(99999999999999999)
             assert len(future_tasks) == 0
-            processor = ProcessInstanceProcessor(process_instance)
-            processor.resume()
+            runtime = ProcessInstanceRuntime(process_instance)
+            runtime.resume()
             future_tasks = BackgroundProcessingService.imminent_future_tasks(99999999999999999)
             assert len(future_tasks) == 1
 
@@ -172,8 +184,8 @@ class TestBackgroundProcessingService(BaseTest):
                     process_model_source_directory="multiinstance_manual_task",
                 )
                 process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-                processor = ProcessInstanceProcessor(process_instance)
-                processor.do_engine_steps(save=True)
+                runtime = ProcessInstanceRuntime(process_instance)
+                runtime.do_engine_steps(save=True)
                 mock.assert_called_with(
                     CELERY_TASK_EVENT_NOTIFIER,
                     (process_instance.id, process_instance.process_model_identifier, "human_tasks_changed"),
@@ -196,8 +208,8 @@ class TestBackgroundProcessingService(BaseTest):
                 process_instance = self.create_process_instance_from_process_model(
                     process_model=process_model, save_start_and_end_times=False
                 )
-                processor = ProcessInstanceProcessor(process_instance)
-                processor.do_engine_steps(save=True)
+                runtime = ProcessInstanceRuntime(process_instance)
+                runtime.do_engine_steps(save=True)
                 mock.assert_called_with(
                     CELERY_TASK_EVENT_NOTIFIER,
                     (process_instance.id, process_instance.process_model_identifier, "process_instance_complete"),
@@ -224,6 +236,21 @@ class TestBackgroundProcessingService(BaseTest):
         assert isinstance(exception.value.__cause__, ProcessEntityNotFoundError)
         assert not isinstance(exception.value.__cause__, ApiError)
 
+    def test_process_instance_start_from_model_worker_wraps_missing_process_model_without_api_error(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        with pytest.raises(SpiffCeleryWorkerError) as exception:
+            cast(SupportsCeleryStartFromModelTaskRun, celery_task_process_instance_start_from_model).run(
+                "missing/start-from-model",
+                "task-guid",
+                1,
+            )
+
+        assert isinstance(exception.value.__cause__, ProcessEntityNotFoundError)
+        assert not isinstance(exception.value.__cause__, ApiError)
+
     def _load_up_a_future_task_and_return_instance(
         self, process_model: ProcessModelInfo | None = None, should_schedule_waiting_timer_events: bool = True
     ) -> ProcessInstanceModel:
@@ -235,8 +262,8 @@ class TestBackgroundProcessingService(BaseTest):
                 bpmn_file_name="user_task_with_timer.bpmn",
             )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model_to_use)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, should_schedule_waiting_timer_events=should_schedule_waiting_timer_events)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, should_schedule_waiting_timer_events=should_schedule_waiting_timer_events)
 
         assert process_instance.status == "user_input_required"
 

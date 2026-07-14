@@ -4,7 +4,7 @@ import sys
 from spiffworkflow_backend import create_app
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_persistence_service import ProcessInstancePersistenceService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.user_service import UserService
@@ -38,7 +38,7 @@ def main(process_model_identifier: str, filepath: str, process_instance_id: int 
                     "If you want to reset a process_instance then please pass in its id."
                 )
 
-        ProcessInstanceProcessor.persist_bpmn_process_dict(
+        ProcessInstancePersistenceService.persist_bpmn_process_dict(
             bpmn_process_dict, bpmn_definition_to_task_definitions_mappings={}, process_instance_model=process_instance
         )
         print(process_instance.id)

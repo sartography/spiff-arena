@@ -49,11 +49,9 @@ class WorkflowSpecService:
                     message=f"'{file.name}' is not a valid xml file." + str(xse),
                 ) from xse
         if process_id is None or process_id == "":
-            raise (
-                ApiError(
-                    error_code="no_primary_bpmn_error",
-                    message=f"There is no primary BPMN process id defined for process_model {process_model_info.id}",
-                )
+            raise ApiError(
+                error_code="no_primary_bpmn_error",
+                message=f"There is no primary BPMN process id defined for process_model {process_model_info.id}",
             )
         cls.update_spiff_parser_with_all_process_dependency_files(parser)
 
@@ -81,16 +79,16 @@ class WorkflowSpecService:
     ) -> None:
         if processed_identifiers is None:
             processed_identifiers = set()
-        processor_dependencies = parser.get_process_dependencies()
+        runtime_dependencies = parser.get_process_dependencies()
 
         # since get_process_dependencies() returns a set with None sometimes, we need to remove it
-        processor_dependencies = processor_dependencies - {None}
+        runtime_dependencies = runtime_dependencies - {None}
 
-        processor_dependencies_new = processor_dependencies - processed_identifiers
+        runtime_dependencies_new = runtime_dependencies - processed_identifiers
         bpmn_process_identifiers_in_parser = parser.get_process_ids()
 
         new_bpmn_files = set()
-        for bpmn_process_identifier in processor_dependencies_new:
+        for bpmn_process_identifier in runtime_dependencies_new:
             # ignore identifiers that spiff already knows about
             if bpmn_process_identifier in bpmn_process_identifiers_in_parser:
                 continue
@@ -123,11 +121,9 @@ class WorkflowSpecService:
                 spec_reference.relative_path(),
             )
         if bpmn_file_full_path is None:
-            raise (
-                ApiError(
-                    error_code="could_not_find_bpmn_process_identifier",
-                    message=f"Could not find the the given bpmn process identifier from any sources: {bpmn_process_identifier}",
-                )
+            raise ApiError(
+                error_code="could_not_find_bpmn_process_identifier",
+                message=f"Could not find the the given bpmn process identifier from any sources: {bpmn_process_identifier}",
             )
         return os.path.abspath(bpmn_file_full_path)
 

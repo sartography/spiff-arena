@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ast-grep/ast-grep/main/schemas/rule.json
+
+id: no-raise-with-parens
+language: Python
+severity: error
+message: "Use `raise Foo()` not `raise (Foo())`; parens are misleading here."
+rule:
+  pattern: ($ERR)
+  follows:
+    pattern: raise
+fix: $ERR

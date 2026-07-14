@@ -1,7 +1,8 @@
 from flask.app import Flask
 from starlette.testclient import TestClient
 
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_persistence_service import ProcessInstancePersistenceService
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.script_unit_test_runner import PythonScriptContext
 from spiffworkflow_backend.services.script_unit_test_runner import ScriptUnitTestRunner
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -25,8 +26,10 @@ class TestScriptUnitTestRunner(BaseTest):
             bpmn_file_name=process_model_id,
             process_model_source_directory=process_model_id,
         )
-        bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(process_model_identifier)
-        task = ProcessInstanceProcessor.get_task_by_bpmn_identifier("Activity_CalculateNewData", bpmn_process_instance)
+        bpmn_process_instance = ProcessInstancePersistenceService.get_bpmn_process_instance_from_process_model(
+            process_model_identifier
+        )
+        task = ProcessInstanceRuntime.get_task_by_bpmn_identifier("Activity_CalculateNewData", bpmn_process_instance)
         assert task is not None
 
         input_context: PythonScriptContext = {"a": 1}
@@ -56,8 +59,10 @@ class TestScriptUnitTestRunner(BaseTest):
             bpmn_file_name=process_model_id,
             process_model_source_directory=process_model_id,
         )
-        bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(process_model_identifier)
-        task = ProcessInstanceProcessor.get_task_by_bpmn_identifier("Activity_CalculateNewData", bpmn_process_instance)
+        bpmn_process_instance = ProcessInstancePersistenceService.get_bpmn_process_instance_from_process_model(
+            process_model_identifier
+        )
+        task = ProcessInstanceRuntime.get_task_by_bpmn_identifier("Activity_CalculateNewData", bpmn_process_instance)
         assert task is not None
 
         input_context: PythonScriptContext = {"a": 1}
@@ -87,8 +92,10 @@ class TestScriptUnitTestRunner(BaseTest):
             bpmn_file_name=process_model_id,
             process_model_source_directory=process_model_id,
         )
-        bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(process_model_identifier)
-        task = ProcessInstanceProcessor.get_task_by_bpmn_identifier("script_with_unit_test_id", bpmn_process_instance)
+        bpmn_process_instance = ProcessInstancePersistenceService.get_bpmn_process_instance_from_process_model(
+            process_model_identifier
+        )
+        task = ProcessInstanceRuntime.get_task_by_bpmn_identifier("script_with_unit_test_id", bpmn_process_instance)
         assert task is not None
 
         expected_output_context: PythonScriptContext = {"hey": True}
@@ -115,8 +122,10 @@ class TestScriptUnitTestRunner(BaseTest):
             bpmn_file_name=process_model_id,
             process_model_source_directory=process_model_id,
         )
-        bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(process_model_identifier)
-        task = ProcessInstanceProcessor.get_task_by_bpmn_identifier("script_with_unit_test_id", bpmn_process_instance)
+        bpmn_process_instance = ProcessInstancePersistenceService.get_bpmn_process_instance_from_process_model(
+            process_model_identifier
+        )
+        task = ProcessInstanceRuntime.get_task_by_bpmn_identifier("script_with_unit_test_id", bpmn_process_instance)
         assert task is not None
 
         expected_output_context: PythonScriptContext = {"something_else": True}

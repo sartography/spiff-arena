@@ -1,6 +1,7 @@
 from playwright.sync_api import expect, Page
 from helpers.login import login, logout, BASE_URL
 from helpers.debug import print_page_details
+from helpers.process_groups import switch_to_card_view
 
 PROCESS_GROUP = "Shared Resources"
 PROCESS_MODEL = "task-with-guest-form"
@@ -10,6 +11,7 @@ def start_process_and_get_public_link(page: Page) -> str:
     # 1. Login and navigate to process group
     login(page, base_url=BASE_URL)
     page.goto(f"{BASE_URL}/process-groups")
+    switch_to_card_view(page)
     page.get_by_text(PROCESS_GROUP, exact=False).first.click()
     expect(page.get_by_test_id(f"process-group-breadcrumb-{PROCESS_GROUP}"))
 

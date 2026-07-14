@@ -5,8 +5,8 @@ Revises: 7f3a2c1d9b8e
 Create Date: 2026-05-18 14:33:49.144747
 
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
@@ -14,6 +14,21 @@ revision = 'd9d54e36c69f'
 down_revision = '7f3a2c1d9b8e'
 branch_labels = None
 depends_on = None
+
+
+def _process_caller_cache_table_options(dialect_name):
+    if dialect_name == 'mysql':
+        return (
+            mysql.INTEGER(),
+            lambda: mysql.VARCHAR(collation='utf8mb4_0900_as_cs', length=255),
+            {
+                'mysql_collate': 'utf8mb4_0900_as_cs',
+                'mysql_default_charset': 'utf8mb4',
+                'mysql_engine': 'InnoDB',
+            },
+        )
+
+    return (sa.Integer(), lambda: sa.String(length=255), {})
 
 
 def upgrade():
@@ -33,14 +48,14 @@ def downgrade():
     with op.batch_alter_table('message', schema=None) as batch_op:
         batch_op.drop_column('process_model_identifiers')
 
+    id_column, varchar_column, table_kwargs = _process_caller_cache_table_options(op.get_bind().dialect.name)
+
     op.create_table('process_caller_cache',
-    sa.Column('id', mysql.INTEGER(), autoincrement=True, nullable=False),
-    sa.Column('process_identifier', mysql.VARCHAR(collation='utf8mb4_0900_as_cs', length=255), nullable=True),
-    sa.Column('calling_process_identifier', mysql.VARCHAR(collation='utf8mb4_0900_as_cs', length=255), nullable=True),
+    sa.Column('id', id_column, autoincrement=True, nullable=False),
+    sa.Column('process_identifier', varchar_column(), nullable=True),
+    sa.Column('calling_process_identifier', varchar_column(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
-    mysql_collate='utf8mb4_0900_as_cs',
-    mysql_default_charset='utf8mb4',
-    mysql_engine='InnoDB'
+    **table_kwargs
     )
     with op.batch_alter_table('process_caller_cache', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_process_caller_cache_process_identifier'), ['process_identifier'], unique=False)

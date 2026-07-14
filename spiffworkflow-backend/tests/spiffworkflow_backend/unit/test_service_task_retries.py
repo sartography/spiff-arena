@@ -13,11 +13,14 @@ from spiffworkflow_backend.background_processing.celery_tasks.process_instance_t
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.task import TaskModel
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.routes.process_instances_controller import process_instance_resume
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.service_task_delegate import UncaughtServiceTaskError
+from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -44,19 +47,19 @@ class TestServiceTaskRetries(BaseTest):
             return matches
         return []
 
-    def load_retry_processor(self, bpmn_file_name: str = "retries.bpmn") -> tuple[ProcessInstanceProcessor, ProcessInstanceModel]:
+    def load_retry_runtime(self, bpmn_file_name: str = "retries.bpmn") -> tuple[ProcessInstanceRuntime, ProcessInstanceModel]:
         process_model = load_test_spec(
             process_model_id="test_group/retries",
             bpmn_file_name=bpmn_file_name,
             process_model_source_directory="retries",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.bpmn_process_instance.data["process_instance_id"] = process_instance.id
-        return processor, process_instance
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.bpmn_process_instance.data["process_instance_id"] = process_instance.id
+        return runtime, process_instance
 
-    def get_service_task(self, processor: ProcessInstanceProcessor) -> SpiffTask:
-        tasks = processor.bpmn_process_instance.get_tasks()
+    def get_service_task(self, runtime: ProcessInstanceRuntime) -> SpiffTask:
+        tasks = runtime.bpmn_process_instance.get_tasks()
         return [t for t in tasks if t.task_spec.bpmn_id == "ServiceTask_1"][0]
 
     def patch_retry_time(self) -> tuple[Any, Any]:
@@ -89,8 +92,8 @@ class TestServiceTaskRetries(BaseTest):
         )
 
     def test_service_task_retry_settings_are_serialized(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
-        processor, _process_instance = self.load_retry_processor()
-        service_task_specs = self.service_task_specs_in(processor.serialize())
+        runtime, _process_instance = self.load_retry_runtime()
+        service_task_specs = self.service_task_specs_in(runtime.serialize())
 
         assert len(service_task_specs) == 1
         assert service_task_specs[0]["retries"] == 3
@@ -99,9 +102,9 @@ class TestServiceTaskRetries(BaseTest):
     def test_service_task_retry_backoff_base_can_be_overridden_in_bpmn(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:
-        processor, process_instance = self.load_retry_processor("retries_backoff_override.bpmn")
+        runtime, process_instance = self.load_retry_runtime("retries_backoff_override.bpmn")
 
-        service_task_specs = self.service_task_specs_in(processor.serialize())
+        service_task_specs = self.service_task_specs_in(runtime.serialize())
         assert len(service_task_specs) == 1
         assert service_task_specs[0]["retry_backoff_base"] == 2
 
@@ -111,15 +114,15 @@ class TestServiceTaskRetries(BaseTest):
             with custom_service_task_time, workflow_execution_service_time:
                 with patch("celery.current_app.send_task"):
                     with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
-                        processor.do_engine_steps(save=True)
+                        runtime.do_engine_steps(save=True)
 
-        service_task = self.get_service_task(processor)
+        service_task = self.get_service_task(runtime)
         assert service_task.internal_data.get("spiff__retries_attempted") == 0
         assert service_task.internal_data.get("spiff__retry_at") == self.fake_now + 2
         assert process_instance.spiffworkflow_fully_initialized()
 
     def test_service_task_retries_on_failure(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
-        processor, _process_instance = self.load_retry_processor()
+        runtime, _process_instance = self.load_retry_runtime()
 
         with patch("requests.get") as mock_get, patch("spiffworkflow_backend.services.custom_service_task.logger") as logger:
             self.transient_failure_response(mock_get)
@@ -127,9 +130,9 @@ class TestServiceTaskRetries(BaseTest):
             with custom_service_task_time, workflow_execution_service_time:
                 with patch("celery.current_app.send_task"):
                     with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
-                        processor.do_engine_steps(save=True)
+                        runtime.do_engine_steps(save=True)
 
-        service_task = self.get_service_task(processor)
+        service_task = self.get_service_task(runtime)
         assert service_task.state == TaskState.STARTED
         assert service_task.internal_data.get("spiff__retries_attempted") == 0
         assert service_task.internal_data.get("spiff__retry_at") == self.fake_now + 3
@@ -154,7 +157,7 @@ class TestServiceTaskRetries(BaseTest):
     def test_service_task_retries_on_upstream_failure_in_successful_proxy_response(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:
-        processor, _process_instance = self.load_retry_processor()
+        runtime, _process_instance = self.load_retry_runtime()
 
         with patch("requests.post") as mock_post:
             self.proxy_success_with_upstream_failure_response(mock_post.return_value)
@@ -165,9 +168,9 @@ class TestServiceTaskRetries(BaseTest):
                     patch("spiffworkflow_backend.services.service_task_delegate.http_connector.does", return_value=False),
                 ):
                     with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
-                        processor.do_engine_steps(save=True)
+                        runtime.do_engine_steps(save=True)
 
-        service_task = self.get_service_task(processor)
+        service_task = self.get_service_task(runtime)
         assert service_task.state == TaskState.STARTED
         assert service_task.internal_data.get("spiff__retries_attempted") == 0
         assert service_task.internal_data.get("spiff__retry_at") == self.fake_now + 3
@@ -179,15 +182,15 @@ class TestServiceTaskRetries(BaseTest):
     def test_builtin_http_connector_retries_downstream_debug_endpoint_500(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:
-        processor, process_instance = self.load_retry_processor("builtin_http_debug_error.bpmn")
+        runtime, process_instance = self.load_retry_runtime("builtin_http_debug_error.bpmn")
 
         custom_service_task_time, workflow_execution_service_time = self.patch_retry_time()
         with custom_service_task_time, workflow_execution_service_time:
             with patch("celery.current_app.send_task"):
                 with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
-                    processor.do_engine_steps(save=True)
+                    runtime.do_engine_steps(save=True)
 
-        service_task = self.get_service_task(processor)
+        service_task = self.get_service_task(runtime)
         assert service_task.state == TaskState.STARTED
         assert service_task.internal_data.get("spiff__retries_attempted") == 0
         assert service_task.internal_data.get("spiff__retry_at") == self.fake_now + 3
@@ -198,7 +201,7 @@ class TestServiceTaskRetries(BaseTest):
         assert process_instance.spiffworkflow_fully_initialized()
 
     def test_service_task_retries_when_retry_at_is_due(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
-        processor, process_instance = self.load_retry_processor()
+        runtime, process_instance = self.load_retry_runtime()
 
         with patch("requests.get") as mock_get:
             self.transient_failure_response(mock_get)
@@ -206,14 +209,14 @@ class TestServiceTaskRetries(BaseTest):
             with custom_service_task_time, workflow_execution_service_time:
                 with patch("celery.current_app.send_task"):
                     with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
-                        processor.do_engine_steps(save=True)
+                        runtime.do_engine_steps(save=True)
 
                     assert process_instance.spiffworkflow_fully_initialized()
 
                     db.session.expire_all()
                     reloaded_process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).one()
-                    processor = ProcessInstanceProcessor(reloaded_process_instance)
-                    service_task = self.get_service_task(processor)
+                    runtime = ProcessInstanceRuntime(reloaded_process_instance)
+                    service_task = self.get_service_task(runtime)
                     assert service_task.state == TaskState.STARTED
                     assert service_task.task_spec.retries == 3
                     assert service_task.task_spec.retry_backoff_base is None
@@ -222,7 +225,7 @@ class TestServiceTaskRetries(BaseTest):
                     service_task.internal_data["spiff__retry_at"] = self.fake_now - 1
 
                     with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
-                        processor.do_engine_steps(save=True)
+                        runtime.do_engine_steps(save=True)
 
         assert mock_get.call_count == 2
         assert service_task.state == TaskState.STARTED
@@ -232,7 +235,7 @@ class TestServiceTaskRetries(BaseTest):
     def test_service_task_worker_does_not_immediately_requeue_rescheduled_retry(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:
-        processor, process_instance = self.load_retry_processor()
+        runtime, process_instance = self.load_retry_runtime()
 
         with patch("requests.get") as mock_get:
             self.transient_failure_response(mock_get)
@@ -240,9 +243,9 @@ class TestServiceTaskRetries(BaseTest):
             with custom_service_task_time, workflow_execution_service_time:
                 with patch("celery.current_app.send_task"):
                     with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
-                        processor.do_engine_steps(save=True)
+                        runtime.do_engine_steps(save=True)
 
-            service_task = self.get_service_task(processor)
+            service_task = self.get_service_task(runtime)
             assert service_task.internal_data.get("spiff__retry_at") == self.fake_now + 3
 
             db.session.expire_all()
@@ -268,8 +271,8 @@ class TestServiceTaskRetries(BaseTest):
 
         assert mock_get.call_count == 2
 
-        reloaded_processor = ProcessInstanceProcessor(ProcessInstanceModel.query.filter_by(id=process_instance.id).one())
-        reloaded_service_task = self.get_service_task(reloaded_processor)
+        reloaded_runtime = ProcessInstanceRuntime(ProcessInstanceModel.query.filter_by(id=process_instance.id).one())
+        reloaded_service_task = self.get_service_task(reloaded_runtime)
         assert reloaded_service_task.state == TaskState.STARTED
         assert reloaded_service_task.internal_data.get("spiff__retries_attempted") == 1
         assert reloaded_service_task.internal_data.get("spiff__retry_at") == self.fake_now + 12
@@ -278,7 +281,7 @@ class TestServiceTaskRetries(BaseTest):
         assert send_task.call_args.kwargs["countdown"] == 10
 
     def test_service_task_fails_after_exhausting_retries(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
-        processor, _process_instance = self.load_retry_processor()
+        runtime, _process_instance = self.load_retry_runtime()
 
         with patch("requests.get") as mock_get:
             self.transient_failure_response(mock_get)
@@ -286,21 +289,21 @@ class TestServiceTaskRetries(BaseTest):
             with custom_service_task_time, workflow_execution_service_time:
                 with patch("celery.current_app.send_task"):
                     with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
-                        processor.do_engine_steps(save=True)
+                        runtime.do_engine_steps(save=True)
 
-                    service_task = self.get_service_task(processor)
+                    service_task = self.get_service_task(runtime)
                     assert service_task.internal_data.get("spiff__retries_attempted") == 0
                     assert service_task.internal_data.get("spiff__retry_at") == self.fake_now + 3
 
                     service_task.internal_data["spiff__retry_at"] = self.fake_now - 1
                     with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
-                        processor.do_engine_steps(save=True)
+                        runtime.do_engine_steps(save=True)
                     assert service_task.internal_data.get("spiff__retries_attempted") == 1
                     assert service_task.internal_data.get("spiff__retry_at") == self.fake_now + 9
 
                     service_task.internal_data["spiff__retry_at"] = self.fake_now - 1
                     with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
-                        processor.do_engine_steps(save=True)
+                        runtime.do_engine_steps(save=True)
                     assert service_task.internal_data.get("spiff__retries_attempted") == 2
                     assert service_task.internal_data.get("spiff__retry_at") == self.fake_now + 27
 
@@ -308,14 +311,14 @@ class TestServiceTaskRetries(BaseTest):
                     from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 
                     with pytest.raises((UncaughtServiceTaskError, WorkflowExecutionServiceError)):
-                        processor.do_engine_steps(save=True)
+                        runtime.do_engine_steps(save=True)
 
         assert service_task.state == TaskState.ERROR
         assert service_task.internal_data.get("spiff__retries_attempted") == 3
         assert "spiff__retry_at" not in service_task.internal_data
 
     def test_service_task_does_not_retry_on_permanent_failure(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
-        processor, _process_instance = self.load_retry_processor()
+        runtime, _process_instance = self.load_retry_runtime()
 
         with patch("requests.get") as mock_get, patch("spiffworkflow_backend.services.custom_service_task.logger") as logger:
             mock_get.return_value.status_code = 400
@@ -332,9 +335,9 @@ class TestServiceTaskRetries(BaseTest):
             from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 
             with pytest.raises((UncaughtServiceTaskError, WorkflowExecutionServiceError)):
-                processor.do_engine_steps(save=True)
+                runtime.do_engine_steps(save=True)
 
-        service_task = self.get_service_task(processor)
+        service_task = self.get_service_task(runtime)
         assert service_task.state == TaskState.ERROR
         assert "spiff__retries_attempted" not in service_task.internal_data
         assert logger.error.call_count == 1
@@ -342,3 +345,167 @@ class TestServiceTaskRetries(BaseTest):
         assert logger.error.call_args.args[2] == _process_instance.id
         assert logger.error.call_args.args[5] == "not_retryable"
         assert logger.exception.call_count == 0
+
+    def test_manually_executing_failed_service_task_calls_service_and_can_resume(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        runtime, process_instance = self.load_retry_runtime()
+
+        with patch("requests.get") as mock_get:
+            mock_get.return_value.status_code = 400
+            mock_get.return_value.headers = {"Content-Type": "application/json"}
+            mock_get.return_value.ok = False
+            mock_get.return_value.text = json.dumps(
+                {
+                    "command_response": {"body": "{}", "http_status": 400},
+                    "command_response_version": 2,
+                    "error": {"error_code": "HttpError400", "message": "Bad Request"},
+                }
+            )
+
+            with pytest.raises((UncaughtServiceTaskError, WorkflowExecutionServiceError)):
+                runtime.do_engine_steps(save=True)
+
+        service_task = self.get_service_task(runtime)
+        assert service_task.state == TaskState.ERROR
+
+        runtime.suspend()
+        suspended_event_count_before_manual_execute = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance.id,
+            event_type=ProcessInstanceEventType.process_instance_suspended.value,
+        ).count()
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        runtime = ProcessInstanceRuntime(process_instance)
+        with patch("requests.get") as mock_get:
+            mock_get.return_value.status_code = 200
+            mock_get.return_value.headers = {"Content-Type": "application/json"}
+            mock_get.return_value.ok = True
+            mock_get.return_value.text = "{}"
+            runtime.manual_complete_task(str(service_task.id), execute=True, user=process_instance.process_initiator)
+
+        assert mock_get.call_count == 1
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        completed_events = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance.id,
+            task_guid=str(service_task.id),
+            event_type=ProcessInstanceEventType.task_completed.value,
+        ).all()
+        assert len(completed_events) == 1
+        assert completed_events[0].user_id == process_instance.process_initiator_id
+
+        manually_executed_events = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance.id,
+            task_guid=str(service_task.id),
+            event_type=ProcessInstanceEventType.task_executed_manually.value,
+        ).all()
+        assert len(manually_executed_events) == 1
+
+        suspended_event_count_after_manual_execute = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance.id,
+            event_type=ProcessInstanceEventType.process_instance_suspended.value,
+        ).count()
+        assert suspended_event_count_after_manual_execute == suspended_event_count_before_manual_execute
+        runtime = ProcessInstanceRuntime(process_instance)
+        ready_tasks = runtime.get_all_ready_or_waiting_tasks()
+        assert process_instance.status == ProcessInstanceStatus.suspended.value
+        assert len(ready_tasks) == 1
+        assert ready_tasks[0].task_spec.name == "EndEvent_1"
+
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True),
+            patch("celery.current_app.send_task") as send_task,
+            patch(
+                "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
+            ) as current_process,
+        ):
+            current_process.return_value.index = 0
+            response = process_instance_resume(process_instance.id, "test_group/retries")
+            assert response.status_code == 200
+            assert send_task.call_count == 1
+
+            worker_response = cast(SupportsCeleryTaskRun, celery_task_process_instance_run).run(process_instance.id)
+
+        assert worker_response["ok"] is True
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        assert process_instance.status == ProcessInstanceStatus.complete.value
+
+    def test_rewinding_failed_service_task_and_resuming_records_events_in_execution_order(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        runtime, process_instance = self.load_retry_runtime()
+
+        with patch("requests.get") as mock_get:
+            mock_get.return_value.status_code = 400
+            mock_get.return_value.headers = {"Content-Type": "application/json"}
+            mock_get.return_value.ok = False
+            mock_get.return_value.text = json.dumps(
+                {
+                    "command_response": {"body": "{}", "http_status": 400},
+                    "command_response_version": 2,
+                    "error": {"error_code": "HttpError400", "message": "Bad Request"},
+                }
+            )
+
+            with pytest.raises((UncaughtServiceTaskError, WorkflowExecutionServiceError)):
+                runtime.do_engine_steps(save=True)
+
+        failed_service_task = self.get_service_task(runtime)
+        assert failed_service_task.state == TaskState.ERROR
+
+        runtime.suspend()
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        ProcessInstanceRuntime.reset_process(process_instance, str(failed_service_task.id))
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        assert process_instance.status == ProcessInstanceStatus.suspended.value
+
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True),
+            patch("celery.current_app.send_task") as send_task,
+            patch("requests.get") as mock_get,
+            patch(
+                "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
+            ) as current_process,
+        ):
+            mock_get.return_value.status_code = 200
+            mock_get.return_value.headers = {"Content-Type": "application/json"}
+            mock_get.return_value.ok = True
+            mock_get.return_value.text = "{}"
+            current_process.return_value.index = 0
+
+            response = process_instance_resume(process_instance.id, "test_group/retries")
+            assert response.status_code == 200
+            assert send_task.call_count == 1
+
+            worker_response = cast(SupportsCeleryTaskRun, celery_task_process_instance_run).run(process_instance.id)
+
+        assert worker_response["ok"] is True
+        assert mock_get.call_count == 1
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        assert process_instance.status == ProcessInstanceStatus.complete.value
+
+        tasks_by_guid = {
+            task.guid: task.task_definition.bpmn_identifier
+            for task in TaskModel.query.filter_by(process_instance_id=process_instance.id).all()
+        }
+        events = (
+            ProcessInstanceEventModel.query.filter_by(process_instance_id=process_instance.id)
+            .order_by(ProcessInstanceEventModel.timestamp, ProcessInstanceEventModel.id)
+            .all()
+        )
+        event_labels = [(event.event_type, tasks_by_guid.get(event.task_guid)) for event in events]
+
+        rewind_index = event_labels.index((ProcessInstanceEventType.process_instance_rewound_to_task.value, "ServiceTask_1"))
+        service_completed_index = event_labels.index((ProcessInstanceEventType.task_completed.value, "ServiceTask_1"))
+        end_completed_indexes = [
+            index
+            for index, event_label in enumerate(event_labels)
+            if event_label == (ProcessInstanceEventType.task_completed.value, "EndEvent_1")
+        ]
+
+        assert rewind_index < service_completed_index, event_labels
+        assert len(end_completed_indexes) == 1, event_labels
+        assert service_completed_index < end_completed_indexes[0], event_labels

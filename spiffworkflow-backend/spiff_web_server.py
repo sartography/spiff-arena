@@ -1,5 +1,7 @@
 import os
 
+from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
+
 from spiffworkflow_backend import create_app
 from spiffworkflow_backend.middleware.asgi_proxy_fix import ASGIProxyFix
 from spiffworkflow_backend.services.acceptance_test_fixtures import load_acceptance_test_fixtures
@@ -24,3 +26,5 @@ if num_proxies > 0:
 if os.environ.get("SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA") == "true":
     with connexion_app.app.app_context():
         load_acceptance_test_fixtures()
+
+asgi_app = SentryAsgiMiddleware(connexion_app)

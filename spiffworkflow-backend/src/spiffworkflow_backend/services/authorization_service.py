@@ -413,18 +413,22 @@ class AuthorizationService:
         task_guid: str,
         user: UserModel,
     ) -> bool:
-        human_task = HumanTaskModel.query.filter_by(
+        human_task_query = HumanTaskModel.query.filter_by(
             task_id=task_guid,
             process_instance_id=process_instance_id,
-        ).first()
-        if human_task is None:
-            raise HumanTaskNotFoundError(
-                f"Could find an human task with task guid '{task_guid}' for process instance '{process_instance_id}'"
-            )
+        )
 
-        if human_task.completed:
-            raise HumanTaskAlreadyCompletedError(
-                f"Human task with task guid '{task_guid}' for process instance '{process_instance_id}' has already been completed"
+        human_task = human_task_query.filter_by(completed=False).first()
+        if human_task is None:
+            completed_human_task = human_task_query.filter_by(completed=True).first()
+            if completed_human_task is not None:
+                message = (
+                    f"Human task with task guid '{task_guid}' for process instance "
+                    f"'{process_instance_id}' has already been completed"
+                )
+                raise HumanTaskAlreadyCompletedError(message)
+            raise HumanTaskNotFoundError(
+                f"Could find a human task with task guid '{task_guid}' for process instance '{process_instance_id}'"
             )
 
         if user not in human_task.potential_owners:
@@ -484,6 +488,8 @@ class AuthorizationService:
             .filter(UserModel.service_id == user_attributes["service_id"])
             .first()
         )
+        if user_model is None and user_attributes.get("email"):
+            user_model = UserModel.query.filter(UserModel.email == user_attributes["email"]).order_by(UserModel.id).first()
         if user_model is None:
             current_app.logger.debug("create_user in login_return")
             user_model = UserService().create_user(**user_attributes)
@@ -840,10 +846,8 @@ class AuthorizationService:
     @classmethod
     def load_permissions_yaml(cls) -> Any:
         if current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH"] is None:
-            raise (
-                PermissionsFileNotSetError(
-                    "SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH needs to be set in order to import permissions"
-                )
+            raise PermissionsFileNotSetError(
+                "SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH needs to be set in order to import permissions"
             )
 
         with open(current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH"]) as file:

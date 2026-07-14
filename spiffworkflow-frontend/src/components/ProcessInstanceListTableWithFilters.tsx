@@ -84,6 +84,8 @@ import { Can } from '../contexts/Can';
 import Filters from './Filters';
 import DateAndTimeService from '../services/DateAndTimeService';
 import ProcessInstanceListTable from './ProcessInstanceListTable';
+import ProcessInstanceGroupByModel from './ProcessInstanceGroupByModel';
+import QuickFilterChips from './QuickFilterChips';
 
 type OwnProps = {
   filtersEnabled?: boolean;
@@ -146,6 +148,10 @@ export default function ProcessInstanceListTableWithFilters({
   const [reportMetadata, setReportMetadata] = useState<ReportMetadata | null>(
     null,
   );
+  const [groupBy, setGroupBy] = useState<'none' | 'process_group'>('none');
+  const [activeQuickFilterByField, setActiveQuickFilterByField] = useState<
+    Record<string, string>
+  >({});
 
   const MAX_ITEMS_IN_DROPDOWN_FOR_USABILITY = 15;
 
@@ -293,6 +299,7 @@ export default function ProcessInstanceListTableWithFilters({
   const processModelSelectionItemsForUseEffect = useRef<ProcessModel[]>([]);
 
   const clearFilters = useCallback(() => {
+    setActiveQuickFilterByField({});
     setEndFromDate('');
     setEndFromTime('');
     setEndToDate('');
@@ -602,6 +609,63 @@ export default function ProcessInstanceListTableWithFilters({
     setReportMetadata(reportMetadataCopy);
   };
 
+  const syncWidgetStateForField = (fieldName: string, fieldValue: any) => {
+    if (fieldName === 'process_status') {
+      setProcessStatusSelection(
+        fieldValue ? String(fieldValue).split(',') : [],
+      );
+    } else if (dateParametersToAlwaysFilterBy[fieldName]) {
+      const [setDate, setTime] = dateParametersToAlwaysFilterBy[fieldName];
+      if (fieldValue) {
+        setDate(
+          DateAndTimeService.convertSecondsToFormattedDateString(fieldValue),
+        );
+        setTime(
+          DateAndTimeService.convertSecondsToFormattedTimeHoursMinutes(
+            fieldValue,
+          ),
+        );
+      } else {
+        setDate('');
+        setTime('');
+      }
+    }
+  };
+
+  const applyQuickFilter = (
+    addFilters: ReportFilter[],
+    clearFieldNames: string[],
+    presetId: string,
+    isActive: boolean,
+  ) => {
+    if (!reportMetadata) {
+      return;
+    }
+    setActiveQuickFilterByField((current) => {
+      const next = { ...current };
+      clearFieldNames.forEach((fieldName) => {
+        delete next[fieldName];
+        if (!isActive) {
+          next[fieldName] = presetId;
+        }
+      });
+      return next;
+    });
+    const next = { ...reportMetadata };
+    next.filter_by = reportMetadata.filter_by.filter(
+      (f: ReportFilter) => !clearFieldNames.includes(f.field_name),
+    );
+    clearFieldNames.forEach((fieldName) =>
+      syncWidgetStateForField(fieldName, null),
+    );
+    addFilters.forEach((f) => {
+      next.filter_by.push({ ...f });
+      syncWidgetStateForField(f.field_name, f.field_value);
+    });
+    validateStartAndEndSeconds(next.filter_by);
+    setReportMetadata(next);
+  };
+
   const handleProcessInstanceInitiatorSearchResult = (
     result: any,
     inputText: string,
@@ -690,26 +754,35 @@ export default function ProcessInstanceListTableWithFilters({
   // re-rendered while the user is still typing. NOTE that we also prevented rerendering
   // with the use of the setErrorMessageSafely function. we are not sure why the context not
   // changing still causes things to rerender when we call its setter without our extra check.
-  const validateStartAndEndSeconds = () => {
-    const startFromSeconds =
-      DateAndTimeService.convertDateAndTimeStringsToSeconds(
-        startFromDate,
-        startFromTime || '00:00:00',
-      );
-    const startToSeconds =
-      DateAndTimeService.convertDateAndTimeStringsToSeconds(
-        startToDate,
-        startToTime || '00:00:00',
-      );
-    const endFromSeconds =
-      DateAndTimeService.convertDateAndTimeStringsToSeconds(
-        endFromDate,
-        endFromTime || '00:00:00',
-      );
-    const endToSeconds = DateAndTimeService.convertDateAndTimeStringsToSeconds(
-      endToDate,
-      endToTime || '00:00:00',
-    );
+  const filterValue = (filterBy: ReportFilter[], fieldName: string) => {
+    return filterBy.find((f) => f.field_name === fieldName)?.field_value;
+  };
+
+  const validateStartAndEndSeconds = (filterBy?: ReportFilter[]) => {
+    const startFromSeconds = filterBy
+      ? filterValue(filterBy, 'start_from')
+      : DateAndTimeService.convertDateAndTimeStringsToSeconds(
+          startFromDate,
+          startFromTime || '00:00:00',
+        );
+    const startToSeconds = filterBy
+      ? filterValue(filterBy, 'start_to')
+      : DateAndTimeService.convertDateAndTimeStringsToSeconds(
+          startToDate,
+          startToTime || '00:00:00',
+        );
+    const endFromSeconds = filterBy
+      ? filterValue(filterBy, 'end_from')
+      : DateAndTimeService.convertDateAndTimeStringsToSeconds(
+          endFromDate,
+          endFromTime || '00:00:00',
+        );
+    const endToSeconds = filterBy
+      ? filterValue(filterBy, 'end_to')
+      : DateAndTimeService.convertDateAndTimeStringsToSeconds(
+          endToDate,
+          endToTime || '00:00:00',
+        );
 
     let message = '';
     if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
@@ -768,6 +841,10 @@ export default function ProcessInstanceListTableWithFilters({
             autocomplete="off"
             allowInput={false}
             onChange={(dateChangeEvent: any) => {
+              const newDateValue = dateChangeEvent.srcElement.value;
+              if (!newDateValue && initialDate) {
+                return;
+              }
               if (!initialDate && !initialTime) {
                 onChangeTimeFunction(
                   DateAndTimeService.convertDateObjectToFormattedHoursMinutes(
@@ -777,7 +854,7 @@ export default function ProcessInstanceListTableWithFilters({
               }
               const newValue =
                 DateAndTimeService.convertDateAndTimeStringsToSeconds(
-                  dateChangeEvent.srcElement.value,
+                  newDateValue,
                   initialTime || '00:00:00',
                 );
               insertOrUpdateFieldInReportMetadata(
@@ -785,7 +862,7 @@ export default function ProcessInstanceListTableWithFilters({
                 propNameUnderscored,
                 newValue,
               );
-              onChangeDateFunction(dateChangeEvent.srcElement.value);
+              onChangeDateFunction(newDateValue);
               validateStartAndEndSeconds();
             }}
             value={initialDate}
@@ -798,6 +875,10 @@ export default function ProcessInstanceListTableWithFilters({
           pattern="^([01]\d|2[0-3]):?([0-5]\d)$"
           value={initialTime}
           onChange={(event: any) => {
+            const newTimeValue = event.srcElement.value;
+            if (!newTimeValue && initialTime) {
+              return;
+            }
             if (event.srcElement.validity.valid) {
               setTimeInvalid(false);
             } else {
@@ -806,14 +887,14 @@ export default function ProcessInstanceListTableWithFilters({
             const newValue =
               DateAndTimeService.convertDateAndTimeStringsToSeconds(
                 initialDate,
-                event.srcElement.value,
+                newTimeValue,
               );
             insertOrUpdateFieldInReportMetadata(
               reportMetadata,
               propNameUnderscored,
               newValue,
             );
-            onChangeTimeFunction(event.srcElement.value);
+            onChangeTimeFunction(newTimeValue);
             validateStartAndEndSeconds();
           }}
         />
@@ -837,6 +918,11 @@ export default function ProcessInstanceListTableWithFilters({
         titleText={t('status')}
         items={processStatusAllOptions}
         onChange={(selection: any) => {
+          setActiveQuickFilterByField((current) => {
+            const next = { ...current };
+            delete next.process_status;
+            return next;
+          });
           insertOrUpdateFieldInReportMetadata(
             reportMetadata,
             'process_status',
@@ -1547,6 +1633,23 @@ export default function ProcessInstanceListTableWithFilters({
     );
   };
 
+  const groupByControl = (
+    <FormControl size="small" sx={{ minWidth: 180 }}>
+      <InputLabel id="group-by-label">{t('group_by')}</InputLabel>
+      <Select
+        labelId="group-by-label"
+        label={t('group_by')}
+        value={groupBy}
+        data-testid="process-instance-group-by"
+        sx={{ textAlign: 'left', '.MuiSelect-select': { textAlign: 'left' } }}
+        onChange={(e) => setGroupBy(e.target.value as 'none' | 'process_group')}
+      >
+        <MenuItem value="none">{t('group_by_none')}</MenuItem>
+        <MenuItem value="process_group">{t('group_by_process_group')}</MenuItem>
+      </Select>
+    </FormControl>
+  );
+
   const filterOptions = () => {
     if (!showFilterOptions || !reportMetadata) {
       return null;
@@ -1760,6 +1863,19 @@ export default function ProcessInstanceListTableWithFilters({
     return null;
   };
 
+  const quickFilterChips = () => {
+    if (!filtersEnabled || !reportMetadata) {
+      return null;
+    }
+    return (
+      <QuickFilterChips
+        activePresetIds={Object.values(activeQuickFilterByField)}
+        reportMetadata={reportMetadata}
+        onApplyPreset={applyQuickFilter}
+      />
+    );
+  };
+
   const onProcessInstanceTableListUpdate = useCallback(
     (result: any) => {
       // mostly for pagination so we do not set the page to 1 if the report did not change
@@ -1805,6 +1921,8 @@ export default function ProcessInstanceListTableWithFilters({
             reportSearchComponent={reportSearchComponent}
             filtersEnabled={filtersEnabled}
             reportHash={reportHash}
+            controlsStart={quickFilterChips()}
+            controlsBeforeFilterButton={filtersEnabled ? groupByControl : null}
           />
         </Column>
       </Grid>
@@ -1817,23 +1935,33 @@ export default function ProcessInstanceListTableWithFilters({
     resultsTable = (
       <>
         {refilterTextComponent}
-        <ProcessInstanceListTable
-          autoReload={autoReloadEnabled}
-          canCompleteAllTasks={canCompleteAllTasks}
-          filterComponent={filterComponent}
-          header={header}
-          onProcessInstanceTableListUpdate={onProcessInstanceTableListUpdate}
-          paginationClassName={paginationClassName}
-          paginationQueryParamPrefix={paginationQueryParamPrefix}
-          perPageOptions={perPageOptions}
-          reportMetadata={reportMetadata}
-          showActionsColumn={showActionsColumn}
-          showLinkToReport={showLinkToReport}
-          showRefreshButton
-          tableHtmlId={tableHtmlId}
-          textToShowIfEmpty={textToShowIfEmpty}
-          variant={variant}
-        />
+        {groupBy === 'process_group' ? (
+          <>
+            {filterComponent()}
+            <ProcessInstanceGroupByModel
+              reportMetadata={reportMetadata}
+              variant={variant}
+            />
+          </>
+        ) : (
+          <ProcessInstanceListTable
+            autoReload={autoReloadEnabled}
+            canCompleteAllTasks={canCompleteAllTasks}
+            filterComponent={filterComponent}
+            header={header}
+            onProcessInstanceTableListUpdate={onProcessInstanceTableListUpdate}
+            paginationClassName={paginationClassName}
+            paginationQueryParamPrefix={paginationQueryParamPrefix}
+            perPageOptions={perPageOptions}
+            reportMetadata={reportMetadata}
+            showActionsColumn={showActionsColumn}
+            showLinkToReport={showLinkToReport}
+            showRefreshButton
+            tableHtmlId={tableHtmlId}
+            textToShowIfEmpty={textToShowIfEmpty}
+            variant={variant}
+          />
+        )}
       </>
     );
   }

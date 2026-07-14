@@ -12,8 +12,12 @@ import { PointerEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Subject, Subscription } from 'rxjs';
 import { modifyProcessIdentifierForPathParam } from '../../helpers';
-import { getStorageValue } from '../../services/LocalStorageService';
-import { ProcessModel } from '../../interfaces';
+import { TimeAgo } from '../../helpers/timeago';
+import { ProcessModel, ProcessModelStats } from '../../interfaces';
+import {
+  processDescriptionSx,
+  truncateProcessDescription,
+} from './processDescription';
 
 const defaultStyle = {
   ':hover': {
@@ -29,30 +33,25 @@ const defaultStyle = {
   borderRadius: 2,
 };
 
-/**
- * Displays the Process Model info.
- * Note that Models and Groups may seem similar, but
- * some of the event handling and stream info is different.
- * Eventually might refactor to a common component, but at this time
- * it's useful to keep them separate.
- */
 export default function ProcessModelCard({
   model,
   stream,
   lastSelected,
   onStartProcess,
   onViewProcess,
+  stats,
 }: {
   model: ProcessModel;
   stream?: Subject<Record<string, any>>;
   lastSelected?: Record<string, any>;
   onStartProcess?: () => void;
   onViewProcess?: () => void;
+  stats?: ProcessModelStats;
 }) {
   const { t } = useTranslation();
   const [selectedStyle, setSelectedStyle] =
     useState<Record<string, any>>(defaultStyle);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const modelDescription = truncateProcessDescription(model.description);
 
   const navigate = useNavigate();
 
@@ -97,32 +96,6 @@ export default function ProcessModelCard({
 
     setSelectedStyle({ ...defaultStyle });
   };
-
-  /**
-   * If this becomes a favorite, add to localstorage list and return,
-   * otherwise remove.
-   */
-  // const handleFavoriteClick = (e: PointerEvent) => {
-  //   stopEventBubble(e);
-  //   const currentValue = JSON.parse(getStorageValue('spifffavorites') || '[]');
-  //   // Do not set this into state and immediately try to retrieve it.
-  //   const favorite = !isFavorite;
-  //   setIsFavorite(favorite);
-  //   if (favorite) {
-  //     // No duplicates
-  //     const set: Set<string> = new Set([...currentValue, model.id]);
-  //     setStorageValue('spifffavorites', JSON.stringify(Array.from(set)));
-  //     return;
-  //   }
-  //
-  //   const removed = currentValue.filter((id: string) => id !== model.id);
-  //   setStorageValue('spifffavorites', JSON.stringify(removed));
-  // };
-
-  useEffect(() => {
-    const favorites = JSON.parse(getStorageValue('spifffavorites'));
-    setIsFavorite(favorites.includes(model.id));
-  }, [isFavorite, model]);
 
   /**
    * Interesting one; when a group loads, it could be because the user
@@ -172,10 +145,28 @@ export default function ProcessModelCard({
             </Typography>
             <Typography
               variant="caption"
-              sx={{ fontWeight: 700, color: 'text.secondary' }}
+              title={model.description || undefined}
+              sx={{
+                ...processDescriptionSx,
+                fontWeight: 700,
+                color: 'text.secondary',
+              }}
             >
-              {model.description || '--'}
+              {modelDescription || '--'}
             </Typography>
+            {stats && (
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.disabled', mt: 0.5 }}
+              >
+                {t('n_runs', { count: stats.instance_count })}
+                {stats.last_run_in_seconds
+                  ? ` · ${t('last_updated')} ${TimeAgo.inWords(
+                      stats.last_run_in_seconds,
+                    )}`
+                  : ''}
+              </Typography>
+            )}
           </Stack>
         </CardContent>
       </CardActionArea>

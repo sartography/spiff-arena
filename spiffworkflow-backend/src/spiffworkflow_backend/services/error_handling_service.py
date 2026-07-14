@@ -6,7 +6,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
+from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
@@ -68,8 +68,8 @@ class ErrorHandlingService:
 
         # importing here to avoid circular imports since these imports are only needed here at runtime.
         # we were not able to figure out which specific import was causing the issue.
-        from spiffworkflow_backend.models.message_instance import MessageInstanceModel
-        from spiffworkflow_backend.services.message_service import MessageService
+        from spiffworkflow_backend.models.message_instance import MessageInstanceModel  # noqa: PLC0415
+        from spiffworkflow_backend.services.message_service import MessageService  # noqa: PLC0415
 
         message_text = (
             f"There was an exception running process model {process_instance.process_model_identifier} for instance"
@@ -100,6 +100,6 @@ class ErrorHandlingService:
         process_instance.status = status
         db.session.add(process_instance)
         if status == ProcessInstanceStatus.suspended.value:
-            ProcessInstanceTmpService.add_event_to_process_instance(
+            ProcessInstanceEventService.add_event_to_process_instance(
                 process_instance, ProcessInstanceEventType.process_instance_suspended_for_error.value, add_to_db_session=True
             )

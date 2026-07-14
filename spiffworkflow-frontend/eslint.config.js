@@ -51,6 +51,7 @@ export default tseslint.config(
       // according to https://github.com/typescript-eslint/typescript-eslint/issues/2621, You should turn off the eslint core rule and turn on the typescript-eslint rule
       // but not sure which of the above "extends" statements is maybe bringing in eslint core
       'max-len': ['error', { code: 200, ignoreUrls: true }],
+      'max-lines': ['warn', 2160],
       'no-shadow': 'off',
       '@typescript-eslint/no-shadow': ['error'],
       'jest/expect-expect': 'off',

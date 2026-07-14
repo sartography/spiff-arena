@@ -1,4 +1,5 @@
 import logging
+from unittest.mock import patch
 from uuid import UUID
 
 from flask.app import Flask
@@ -7,7 +8,9 @@ from starlette.testclient import TestClient
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.logging_service import SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR
+from spiffworkflow_backend.services.logging_service import SpiffLogHandler
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -18,6 +21,31 @@ class TestLoggingService(BaseTest):
         logger = logging.getLogger("spiffworkflow_backend.services.service_task_delegate")
         assert logger.handlers
         assert logger.propagate is False
+
+    def test_spiff_log_handler_skips_internal_diagnostic_records(self, app: Flask) -> None:
+        handler = SpiffLogHandler(app)
+        record = logging.LogRecord(
+            name="spiff.event",
+            level=logging.WARNING,
+            pathname=__file__,
+            lineno=0,
+            msg="diagnostic",
+            args=(),
+            exc_info=None,
+        )
+        setattr(record, SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR, True)
+
+        assert handler.filter(record) is False
+
+    def test_socket_failure_warning_marks_record_to_skip_spiff_log_handler(self, app: Flask) -> None:
+        handler = SpiffLogHandler(app)
+
+        with patch.object(app.logger, "warning") as warning:
+            handler.log_socket_failure(OSError("event stream unavailable"), None)
+
+        warning.assert_called_once()
+        extra = warning.call_args.kwargs["extra"]
+        assert extra[SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR] is True
 
     def test_logging_service_detailed_logs(
         self,
@@ -35,16 +63,16 @@ class TestLoggingService(BaseTest):
             process_model_source_directory="simple_form",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
 
         assert len(process_instance.active_human_tasks) == 1
         human_task = process_instance.active_human_tasks[0]
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == initiator_user
 
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
-        ProcessInstanceService.complete_form_task(processor, spiff_task, {"name": "HEY"}, initiator_user, human_task)
+        spiff_task = runtime.__class__.get_task_by_bpmn_identifier(human_task.task_name, runtime.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(runtime, spiff_task, {"name": "HEY"}, initiator_user, human_task)
 
         headers = self.logged_in_headers(with_super_admin_user)
         log_response = client.get(
@@ -89,22 +117,22 @@ class TestLoggingService(BaseTest):
             process_model_source_directory="simple_form",
         )
         process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
 
         assert len(process_instance.active_human_tasks) == 1
         human_task = process_instance.active_human_tasks[0]
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == initiator_user
 
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(human_task.task_name, processor.bpmn_process_instance)
-        ProcessInstanceService.complete_form_task(processor, spiff_task, {"name": "HEY"}, initiator_user, human_task)
+        spiff_task = runtime.__class__.get_task_by_bpmn_identifier(human_task.task_name, runtime.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(runtime, spiff_task, {"name": "HEY"}, initiator_user, human_task)
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
-        processor = ProcessInstanceProcessor(process_instance)
+        runtime = ProcessInstanceRuntime(process_instance)
         human_task_one = process_instance.active_human_tasks[0]
-        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
-        ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
+        spiff_manual_task = runtime.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        ProcessInstanceService.complete_form_task(runtime, spiff_manual_task, {}, initiator_user, human_task_one)
 
         headers = self.logged_in_headers(with_super_admin_user)
         log_response = client.get(

@@ -1,39 +1,22 @@
-# TODO: clean up this service for a clear distinction between it and the process_instance_service
-#   where this points to the pi service
-import _strptime  # type: ignore
-import calendar
 import copy
-import decimal
 import json
 import logging
-import os
-import random
 import re
 import time
-import uuid
 from collections.abc import Callable
 from contextlib import suppress
-from datetime import datetime
-from datetime import timedelta
 from typing import Any
 from typing import NewType
 from uuid import UUID
 from uuid import uuid4
 
-import dateparser
-import pytz
 from flask import current_app
-from RestrictedPython import safe_globals  # type: ignore
 from SpiffWorkflow.bpmn import BpmnEvent  # type: ignore
-from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
-from SpiffWorkflow.bpmn.script_engine import BasePythonScriptEngineEnvironment  # type: ignore
-from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine
-from SpiffWorkflow.bpmn.script_engine import TaskDataEnvironment
+from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine  # type: ignore
 from SpiffWorkflow.bpmn.serializer.helpers.registry import DefaultRegistry  # type: ignore
 from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.util.diff import WorkflowDiff  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
-from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 
@@ -47,6 +30,9 @@ from sqlalchemy import or_
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_event_notifier_if_appropriate,
+)
+from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
+    queue_start_process_instance_if_appropriate,
 )
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -71,19 +57,16 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
-from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
-from spiffworkflow_backend.services.jinja_service import JinjaHelpers
 from spiffworkflow_backend.services.logging_service import LoggingService
+from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
+from spiffworkflow_backend.services.process_instance_persistence_service import ProcessInstancePersistenceService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
+from spiffworkflow_backend.services.process_instance_script_engine import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from spiffworkflow_backend.services.service_task_delegate import ServiceTaskDelegate
-from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
 from spiffworkflow_backend.services.workflow_execution_service import ExecutionStrategy
@@ -95,15 +78,8 @@ from spiffworkflow_backend.services.workflow_execution_service import WorkflowEx
 from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
 from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcessSpecMapping
 
-# Sorry about all this crap.  I wanted to move this thing to another file, but
-# importing a bunch of types causes circular imports.
-
 WorkflowCompletedHandler = Callable[[ProcessInstanceModel], None]
-
-
-def _import(name: str, glbls: dict[str, Any], *args: Any) -> None:
-    if name not in glbls:
-        raise ImportError(f"Import not allowed: {name}", name=name)
+SubprocessUuidToWorkflowDiffMapping = NewType("SubprocessUuidToWorkflowDiffMapping", dict[UUID, WorkflowDiff])
 
 
 # This number is a little arbitrary but seems like a good number.
@@ -119,7 +95,7 @@ class ProcessInstanceTaskCountExceededError(Exception):
     """
 
 
-class ProcessInstanceProcessorError(Exception):
+class ProcessInstanceRuntimeError(Exception):
     pass
 
 
@@ -135,286 +111,7 @@ class MissingProcessInfoError(Exception):
     pass
 
 
-class BaseCustomScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
-    def user_defined_state(self, external_context: dict[str, Any] | None = None) -> dict[str, Any]:
-        return {}
-
-    def last_result(self) -> dict[str, Any]:
-        return dict(self._last_result.items())
-
-    def clear_state(self) -> None:
-        pass
-
-    def pop_state(self, data: dict[str, Any]) -> dict[str, Any]:
-        return {}
-
-    def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        pass
-
-    def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        pass
-
-    def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        pass
-
-    def revise_state_with_task_data(self, task: SpiffTask) -> None:
-        pass
-
-
-class TaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment, TaskDataEnvironment):  # type: ignore
-    def __init__(self, environment_globals: dict[str, Any]):
-        self._last_result: dict[str, Any] = {}
-        self._non_user_defined_keys = {"__annotations__"}
-        super().__init__(environment_globals)
-
-    def execute(
-        self,
-        script: str,
-        context: dict[str, Any],
-        external_context: dict[str, Any] | None = None,
-    ) -> bool:
-        super().execute(script, context, external_context)
-        for key in self._non_user_defined_keys:
-            if key in context:
-                context.pop(key)
-        self._last_result = context
-        return True
-
-
-class NonTaskDataBasedScriptEngineEnvironment(BaseCustomScriptEngineEnvironment):
-    PYTHON_ENVIRONMENT_STATE_KEY = "spiff__python_env_state"
-
-    def __init__(self, environment_globals: dict[str, Any]):
-        self.state: dict[str, Any] = {}
-        self.non_user_defined_keys = set([*environment_globals.keys()] + ["__builtins__", "__annotations__"])
-        super().__init__(environment_globals)
-
-    def evaluate(
-        self,
-        expression: str,
-        context: dict[str, Any],
-        external_context: dict[str, Any] | None = None,
-    ) -> Any:
-        state = {}
-        state.update(self.globals)
-        state.update(external_context or {})
-        state.update(self.state)
-        state.update(context)
-        return eval(expression, state)  # noqa
-
-    def execute(
-        self,
-        script: str,
-        context: dict[str, Any],
-        external_context: dict[str, Any] | None = None,
-    ) -> bool:
-        self.state.update(self.globals)
-        self.state.update(external_context or {})
-        self.state.update(context)
-        try:
-            exec(script, self.state)  # noqa
-            return True
-        finally:
-            # since the task data is not directly mutated when the script executes, need to determine which keys
-            # have been deleted from the environment and remove them from task data if present.
-            context_keys_to_drop = context.keys() - self.state.keys()
-
-            for key_to_drop in context_keys_to_drop:
-                context.pop(key_to_drop)
-
-            self.state = self.user_defined_state(external_context)
-
-            # the task data needs to be updated with the current state so data references can be resolved properly.
-            # the state will be removed later once the task is completed.
-            context.update(self.state)
-
-    def user_defined_state(self, external_context: dict[str, Any] | None = None) -> dict[str, Any]:
-        keys_to_filter = self.non_user_defined_keys
-        if external_context is not None:
-            keys_to_filter |= set(external_context.keys())
-
-        return {k: v for k, v in self.state.items() if k not in keys_to_filter and not callable(v)}
-
-    def last_result(self) -> dict[str, Any]:
-        return dict(self.state.items())
-
-    def clear_state(self) -> None:
-        self.state = {}
-
-    def pop_state(self, data: dict[str, Any]) -> dict[str, Any]:
-        key = self.PYTHON_ENVIRONMENT_STATE_KEY
-        return data.pop(key, {})  # type: ignore
-
-    def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        key = self.PYTHON_ENVIRONMENT_STATE_KEY
-        state = self.user_defined_state()
-        bpmn_process_instance.data[key] = state
-
-    def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        key = self.PYTHON_ENVIRONMENT_STATE_KEY
-        self.state = bpmn_process_instance.data.get(key, {})
-
-    def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        bpmn_process_instance.data.update(self.user_defined_state())
-
-    def revise_state_with_task_data(self, task: SpiffTask) -> None:
-        state_keys = set(self.state.keys())
-        task_data_keys = set(task.data.keys())
-        state_keys_to_remove = state_keys - task_data_keys
-        task_data_keys_to_keep = task_data_keys - state_keys
-
-        self.state = {k: v for k, v in self.state.items() if k not in state_keys_to_remove}
-        task.data = {k: v for k, v in task.data.items() if k in task_data_keys_to_keep}
-
-        if hasattr(task.task_spec, "_result_variable"):
-            result_variable = task.task_spec._result_variable(task)
-            if result_variable in task.data:
-                self.state[result_variable] = task.data.pop(result_variable)
-
-
-class CustomScriptEngineEnvironment:
-    @staticmethod
-    def create(environment_globals: dict[str, Any]) -> BaseCustomScriptEngineEnvironment:
-        if os.environ.get("SPIFFWORKFLOW_BACKEND_USE_NON_TASK_DATA_BASED_SCRIPT_ENGINE_ENVIRONMENT") == "true":
-            return NonTaskDataBasedScriptEngineEnvironment(environment_globals)
-
-        return TaskDataBasedScriptEngineEnvironment(environment_globals)
-
-
-class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
-    """This is a custom script processor that can be easily injected into Spiff Workflow.
-
-    It will execute python code read in from the bpmn.  It will also make any scripts in the
-    scripts directory available for execution.
-    """
-
-    def __init__(self, use_restricted_script_engine: bool = True) -> None:
-        default_globals = {
-            "_strptime": _strptime,
-            "all": all,
-            "any": any,
-            "calendar": calendar,
-            "dateparser": dateparser,
-            "datetime": datetime,
-            "decimal": decimal,
-            "dict": dict,
-            "enumerate": enumerate,
-            "filter": filter,
-            "format": format,
-            "json": json,
-            "list": list,
-            "map": map,
-            "max": max,
-            "min": min,
-            "pytz": pytz,
-            "random": random,
-            "re": re,
-            "set": set,
-            "sum": sum,
-            "time": time,
-            "timedelta": timedelta,
-            "uuid": uuid,
-            **JinjaHelpers.get_helper_mapping(),
-        }
-
-        if os.environ.get("SPIFFWORKFLOW_BACKEND_USE_RESTRICTED_SCRIPT_ENGINE") == "false":
-            use_restricted_script_engine = False
-
-        if use_restricted_script_engine:
-            # This will overwrite the standard builtins
-            default_globals.update(safe_globals)
-            default_globals["__builtins__"]["__import__"] = _import
-
-        environment = CustomScriptEngineEnvironment.create(default_globals)
-        super().__init__(environment=environment)
-
-    def __get_process_instance_id(self) -> Any | None:
-        tld = current_app.config.get("THREAD_LOCAL_DATA")
-        process_instance_id = None
-        if tld:
-            if hasattr(tld, "process_instance_id"):
-                process_instance_id = tld.process_instance_id
-        return process_instance_id
-
-    def __get_process_model_identifier(self) -> Any | None:
-        tld = current_app.config.get("THREAD_LOCAL_DATA")
-        process_model_identifier = None
-        if tld:
-            if hasattr(tld, "process_model_identifier"):
-                process_model_identifier = tld.process_model_identifier
-        return process_model_identifier
-
-    def __get_augment_methods(self, task: SpiffTask | None) -> dict[str, Callable]:
-        script_attributes_context = ScriptAttributesContext(
-            task=task,
-            environment_identifier=current_app.config["ENV_IDENTIFIER"],
-            process_instance_id=self.__get_process_instance_id(),
-            process_model_identifier=self.__get_process_model_identifier(),
-        )
-        return Script.generate_augmented_list(script_attributes_context)
-
-    def evaluate(self, task: SpiffTask, expression: str, external_context: dict[str, Any] | None = None) -> Any:
-        """Evaluate the given expression, within the context of the given task and return the result."""
-        methods = self.__get_augment_methods(task)
-        if external_context:
-            methods.update(external_context)
-
-        try:
-            return super().evaluate(task, expression, external_context=methods)
-        except Exception as exception:
-            if task is None:
-                raise WorkflowException(
-                    f"Error evaluating expression: '{expression}', {str(exception)}",
-                ) from exception
-            else:
-                raise WorkflowTaskException(
-                    f"Error evaluating expression '{expression}', {str(exception)}",
-                    task=task,
-                    exception=exception,
-                ) from exception
-
-    def execute(self, task: SpiffTask, script: str, external_context: Any = None) -> bool:
-        try:
-            # reset failing task just in case
-            methods = self.__get_augment_methods(task)
-            if external_context:
-                methods.update(external_context)
-
-            # Debug logs for script execution
-            task_name = task.task_spec.bpmn_name if hasattr(task.task_spec, "bpmn_name") else task.task_spec.name
-            task_id = str(task.id)
-            current_app.logger.debug(f"SCRIPT TASK EXECUTION - START: {task_name} (ID: {task_id})")
-
-            # do not run script if it is blank
-            if script:
-                current_app.logger.debug(f"SCRIPT TASK EXECUTION - Running script for: {task_name} (ID: {task_id})")
-                super().execute(task, script, methods)
-                current_app.logger.debug(f"SCRIPT TASK EXECUTION - COMPLETED: {task_name} (ID: {task_id})")
-            return True
-        except WorkflowException:
-            raise
-        except Exception as e:
-            raise self.create_task_exec_exception(task, script, e) from e
-
-    def call_service(
-        self,
-        operation_name: str,
-        operation_params: dict[str, Any],
-        spiff_task: SpiffTask,
-    ) -> str:
-        return ServiceTaskDelegate.call_connector(
-            operation_name,
-            operation_params,
-            spiff_task,
-            self.__get_process_instance_id(),
-            self.__get_process_model_identifier(),
-        )
-
-
-SubprocessUuidToWorkflowDiffMapping = NewType("SubprocessUuidToWorkflowDiffMapping", dict[UUID, WorkflowDiff])
-
-
-class ProcessInstanceProcessor:
+class ProcessInstanceRuntime:
     _default_script_engine = CustomBpmnScriptEngine()
 
     PROCESS_INSTANCE_ID_KEY = "process_instance_id"
@@ -431,17 +128,18 @@ class ProcessInstanceProcessor:
         include_task_data_for_completed_tasks: bool = False,
         include_completed_subprocesses: bool = False,
     ) -> None:
-        """Create a Workflow Processor based on the serialized information available in the process_instance model."""
+        """Create a Workflow Runtime based on the serialized information available in the process_instance model."""
         self._script_engine = script_engine or self.__class__._default_script_engine
         self._workflow_completed_handler = workflow_completed_handler
-        self.setup_processor_with_process_instance(
+        self._pending_task_available_process_model_triggers: list[tuple[str, str]] = []
+        self.setup_runtime_with_process_instance(
             process_instance_model=process_instance_model,
             process_id_to_run=process_id_to_run,
             include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
             include_completed_subprocesses=include_completed_subprocesses,
         )
 
-    def setup_processor_with_process_instance(
+    def setup_runtime_with_process_instance(
         self,
         process_instance_model: ProcessInstanceModel,
         process_id_to_run: str | None = None,
@@ -491,7 +189,7 @@ class ProcessInstanceProcessor:
                 task_model_mapping=self.task_model_mapping,
                 bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
             )
-            self.set_script_engine(self.bpmn_process_instance, self._script_engine)
+            ProcessInstancePersistenceService.set_script_engine(self.bpmn_process_instance, self._script_engine)
 
         except MissingSpecError as ke:
             raise ApiError(
@@ -501,249 +199,6 @@ class ProcessInstanceProcessor:
                     f" missing task '{str(ke)}'"
                 ),
             ) from ke
-
-    @classmethod
-    def persist_bpmn_process_dict(
-        cls,
-        bpmn_process_dict: dict,
-        bpmn_definition_to_task_definitions_mappings: dict,
-        process_instance_model: ProcessInstanceModel,
-        store_process_instance_events: bool = True,
-        bpmn_process_instance: BpmnWorkflow | None = None,
-    ) -> None:
-        # NOTE: the first add_bpmn_process_definitions is to save the objects to the database and the second
-        # is to load them so we can get the db id's.
-        # We could potentially do this at save time by recreating the mappings var after getting the new id.
-        process_instance_model.bpmn_process_definition = BpmnProcessService.add_bpmn_process_definitions(
-            bpmn_process_dict,
-            bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
-        )
-        BpmnProcessService.save_to_database(
-            bpmn_definition_to_task_definitions_mappings,
-            bpmn_process_definition_parent=process_instance_model.bpmn_process_definition,
-        )
-        bpmn_definition_to_task_definitions_mappings = {}
-        process_instance_model.bpmn_process_definition = BpmnProcessService.add_bpmn_process_definitions(
-            bpmn_process_dict,
-            bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
-        )
-
-        if bpmn_process_instance is None:
-            bpmn_process_instance = cls.initialize_bpmn_process_instance(bpmn_process_dict)
-
-        task_model_mapping, bpmn_subprocess_mapping = cls.get_db_mappings_from_bpmn_process_dict(bpmn_process_dict)
-
-        task_service = TaskService(
-            process_instance=process_instance_model,
-            serializer=BpmnProcessService.serializer,
-            bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
-            force_update_definitions=True,
-            task_model_mapping=task_model_mapping,
-            bpmn_subprocess_mapping=bpmn_subprocess_mapping,
-        )
-
-        for spiff_task in bpmn_process_instance.get_tasks():
-            start_and_end_times: StartAndEndTimes | None = None
-            if spiff_task.has_state(TaskState.COMPLETED | TaskState.ERROR):
-                start_and_end_times = {
-                    "start_in_seconds": spiff_task.last_state_change,
-                    "end_in_seconds": spiff_task.last_state_change,
-                }
-            task_service.update_task_model_with_spiff_task(
-                spiff_task, store_process_instance_events=store_process_instance_events, start_and_end_times=start_and_end_times
-            )
-        task_service.save_objects_to_database()
-        db.session.commit()
-
-    @classmethod
-    def initialize_bpmn_process_instance(cls, bpmn_process_dict: dict) -> BpmnWorkflow:
-        process_copy = copy.deepcopy(bpmn_process_dict)
-        bpmn_process_instance = BpmnProcessService.serializer.from_dict(process_copy)
-        bpmn_process_instance.script_engine = cls._default_script_engine
-        return bpmn_process_instance
-
-    @classmethod
-    def get_db_mappings_from_bpmn_process_dict(
-        cls, bpmn_process_dict: dict
-    ) -> tuple[dict[str, TaskModel], dict[str, BpmnProcessModel]]:
-        task_guids = set(bpmn_process_dict["tasks"].keys())
-        bpmn_process_guids = set()
-        for subproc_guid, subproc_dict in bpmn_process_dict["subprocesses"].items():
-            new_set = set(subproc_dict["tasks"].keys())
-            task_guids.union(new_set)
-            bpmn_process_guids.add(subproc_guid)
-        task_models = TaskModel.query.filter(TaskModel.guid.in_(task_guids)).all()  # type: ignore
-        bpmn_process_models = BpmnProcessModel.query.filter(BpmnProcessModel.guid.in_(bpmn_process_guids)).all()  # type: ignore
-        task_model_mapping = {t.guid: t for t in task_models}
-        bpmn_subprocess_mapping = {b.guid: b for b in bpmn_process_models}
-        return (task_model_mapping, bpmn_subprocess_mapping)
-
-    @classmethod
-    def get_bpmn_process_instance_from_process_model(cls, process_model_identifier: str) -> BpmnWorkflow:
-        (bpmn_process_spec, subprocesses) = BpmnProcessService.get_process_model_and_subprocesses(
-            process_model_identifier,
-        )
-        bpmn_process_instance = BpmnProcessService.get_bpmn_process_instance_from_workflow_spec(bpmn_process_spec, subprocesses)
-        cls.set_script_engine(bpmn_process_instance)
-        return bpmn_process_instance
-
-    @staticmethod
-    def set_script_engine(bpmn_process_instance: BpmnWorkflow, script_engine: PythonScriptEngine | None = None) -> None:
-        script_engine_to_use = script_engine or ProcessInstanceProcessor._default_script_engine
-        script_engine_to_use.environment.restore_state(bpmn_process_instance)
-        bpmn_process_instance.script_engine = script_engine_to_use
-
-    @classmethod
-    def _get_bpmn_process_dict(
-        cls,
-        bpmn_process: BpmnProcessModel,
-        task_model_mapping: dict[str, TaskModel],
-        get_tasks: bool = False,
-        include_task_data_for_completed_tasks: bool = False,
-    ) -> dict:
-        json_data = JsonDataModel.query.filter_by(hash=bpmn_process.json_data_hash).first()
-        bpmn_process_dict = {"data": json_data.data, "tasks": {}}
-        bpmn_process_dict.update(bpmn_process.properties_json)
-        if get_tasks:
-            tasks = TaskModel.query.filter_by(bpmn_process_id=bpmn_process.id).all()
-            cls._get_tasks_dict(
-                tasks,
-                bpmn_process_dict,
-                include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
-                task_model_mapping=task_model_mapping,
-            )
-        return bpmn_process_dict
-
-    @classmethod
-    def _get_tasks_dict(
-        cls,
-        tasks: list[TaskModel],
-        spiff_bpmn_process_dict: dict,
-        task_model_mapping: dict[str, TaskModel],
-        bpmn_subprocess_id_to_guid_mappings: dict | None = None,
-        include_task_data_for_completed_tasks: bool = False,
-    ) -> None:
-        json_data_hashes = set()
-        states_to_exclude_from_rehydration: list[str] = []
-        if not include_task_data_for_completed_tasks:
-            # load CANCELLED task data for Gateways since they are marked as CANCELLED
-            # and we need the task data from their parents
-            states_to_exclude_from_rehydration = ["COMPLETED", "ERROR"]
-
-        task_list_by_hash = {t.guid: t for t in tasks}
-        task_guids_to_add = set()
-        for task in tasks:
-            parent_guid = task.parent_guid()
-            if task.state not in states_to_exclude_from_rehydration:
-                json_data_hashes.add(task.json_data_hash)
-                task_guids_to_add.add(task.guid)
-
-                # load parent task data to avoid certain issues that can arise from parallel branches
-                if (
-                    parent_guid in task_list_by_hash
-                    and task_list_by_hash[parent_guid].state in states_to_exclude_from_rehydration
-                ):
-                    json_data_hashes.add(task_list_by_hash[parent_guid].json_data_hash)
-                    task_guids_to_add.add(parent_guid)
-            elif (
-                parent_guid in task_list_by_hash
-                and "instance_map" in (task_list_by_hash[parent_guid].runtime_info or {})
-                and task_list_by_hash[parent_guid] not in states_to_exclude_from_rehydration
-            ):
-                # make sure we add task data for multi-instance tasks as well
-                json_data_hashes.add(task.json_data_hash)
-                task_guids_to_add.add(task.guid)
-
-        json_data_records = JsonDataModel.query.filter(JsonDataModel.hash.in_(json_data_hashes)).all()  # type: ignore
-        json_data_mappings = {}
-        for json_data_record in json_data_records:
-            json_data_mappings[json_data_record.hash] = json_data_record.data
-        for task in tasks:
-            tasks_dict = spiff_bpmn_process_dict["tasks"]
-            if bpmn_subprocess_id_to_guid_mappings:
-                bpmn_subprocess_guid = bpmn_subprocess_id_to_guid_mappings[task.bpmn_process_id]
-                tasks_dict = spiff_bpmn_process_dict["subprocesses"][bpmn_subprocess_guid]["tasks"]
-            tasks_dict[task.guid] = task.properties_json
-            task_data = {}
-            if task.guid in task_guids_to_add:
-                task_data = json_data_mappings[task.json_data_hash]
-            tasks_dict[task.guid]["data"] = task_data
-            task_model_mapping[task.guid] = task
-
-    @classmethod
-    def _get_full_bpmn_process_dict(
-        cls,
-        bpmn_definition_to_task_definitions_mappings: dict,
-        bpmn_subprocess_mapping: dict[str, BpmnProcessModel],
-        task_model_mapping: dict[str, TaskModel],
-        spiff_serializer_version: str | None = None,
-        bpmn_process_definition: BpmnProcessDefinitionModel | None = None,
-        bpmn_process: BpmnProcessModel | None = None,
-        bpmn_process_definition_id: int | None = None,
-        include_task_data_for_completed_tasks: bool = False,
-        include_completed_subprocesses: bool = False,
-    ) -> dict:
-        if bpmn_process_definition_id is None:
-            return {}
-
-        spiff_bpmn_process_dict: dict = {
-            "serializer_version": spiff_serializer_version,
-            "spec": {},
-            "subprocess_specs": {},
-            "subprocesses": {},
-        }
-
-        if bpmn_process_definition is not None:
-            spiff_bpmn_process_dict["spec"] = BpmnProcessService.get_definition_dict_for_bpmn_process_definition(
-                bpmn_process_definition,
-                bpmn_definition_to_task_definitions_mappings,
-            )
-            BpmnProcessService.set_definition_dict_for_bpmn_subprocess_definitions(
-                bpmn_process_definition,
-                spiff_bpmn_process_dict,
-                bpmn_definition_to_task_definitions_mappings,
-            )
-
-            if bpmn_process is not None:
-                single_bpmn_process_dict = cls._get_bpmn_process_dict(
-                    bpmn_process,
-                    get_tasks=True,
-                    include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
-                    task_model_mapping=task_model_mapping,
-                )
-                spiff_bpmn_process_dict.update(single_bpmn_process_dict)
-
-                bpmn_subprocesses_query = BpmnProcessModel.query.filter_by(top_level_process_id=bpmn_process.id)
-                if not include_completed_subprocesses:
-                    bpmn_subprocesses_query = bpmn_subprocesses_query.join(
-                        TaskModel, TaskModel.guid == BpmnProcessModel.guid
-                    ).filter(
-                        TaskModel.state.not_in(["COMPLETED", "ERROR", "CANCELLED"])  # type: ignore
-                    )
-                bpmn_subprocesses = bpmn_subprocesses_query.all()
-                bpmn_subprocess_id_to_guid_mappings = {}
-                for bpmn_subprocess in bpmn_subprocesses:
-                    subprocess_identifier = bpmn_subprocess.bpmn_process_definition.bpmn_identifier
-                    if subprocess_identifier not in spiff_bpmn_process_dict["subprocess_specs"]:
-                        current_app.logger.info(f"Deferring subprocess spec: '{subprocess_identifier}'")
-                        continue
-                    bpmn_subprocess_id_to_guid_mappings[bpmn_subprocess.id] = bpmn_subprocess.guid
-                    single_bpmn_process_dict = cls._get_bpmn_process_dict(bpmn_subprocess, task_model_mapping=task_model_mapping)
-                    spiff_bpmn_process_dict["subprocesses"][bpmn_subprocess.guid] = single_bpmn_process_dict
-                    bpmn_subprocess_mapping[bpmn_subprocess.guid] = bpmn_subprocess
-
-                tasks = TaskModel.query.filter(
-                    TaskModel.bpmn_process_id.in_(bpmn_subprocess_id_to_guid_mappings.keys())  # type: ignore
-                ).all()
-                cls._get_tasks_dict(
-                    tasks,
-                    spiff_bpmn_process_dict,
-                    bpmn_subprocess_id_to_guid_mappings=bpmn_subprocess_id_to_guid_mappings,
-                    include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
-                    task_model_mapping=task_model_mapping,
-                )
-
-        return spiff_bpmn_process_dict
 
     def current_user(self) -> Any:
         current_user = None
@@ -777,7 +232,7 @@ class ProcessInstanceProcessor:
             spiff_logger.setLevel(logging.WARNING)
 
             try:
-                full_bpmn_process_dict = ProcessInstanceProcessor._get_full_bpmn_process_dict(
+                full_bpmn_process_dict = ProcessInstancePersistenceService.get_full_bpmn_process_dict(
                     bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
                     include_completed_subprocesses=include_completed_subprocesses,
                     include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
@@ -944,7 +399,8 @@ class ProcessInstanceProcessor:
         return input_string[:max_length]
 
     def save(self) -> None:
-        """Saves the current state of this processor to the database."""
+        """Saves the current state of this runtime to the database."""
+        self._pending_task_available_process_model_triggers = []
         self._save_process_instance_state()
         self._initialize_process_start_time_if_needed()
 
@@ -954,6 +410,7 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
         self._process_human_tasks(metadata)
         db.session.commit()
+        self._dispatch_pending_task_available_process_model_triggers()
 
     def _save_process_instance_state(self) -> None:
         """Update process instance status and save BPMN process definition."""
@@ -1035,7 +492,7 @@ class ProcessInstanceProcessor:
         human_task = self._find_existing_human_task(ready_or_waiting_task, existing_human_tasks_no_longer_ready_or_waiting)
 
         if human_task is None:
-            return self._create_new_human_task(
+            human_task = self._create_new_human_task(
                 ready_or_waiting_task,
                 potential_owner_hash,
                 bpmn_process_identifier,
@@ -1043,7 +500,47 @@ class ProcessInstanceProcessor:
                 ui_form_file_name,
                 json_metadata,
             )
+            task_available_process_model_identifier = self._task_available_process_model_identifier(extensions)
+            if task_available_process_model_identifier is not None:
+                self._pending_task_available_process_model_triggers.append(
+                    (task_available_process_model_identifier, human_task.task_guid)
+                )
+            return human_task
         return None
+
+    def _task_available_process_model_identifier(self, extensions: dict) -> str | None:
+        task_available_process_model_identifier = extensions.get("processModelToStartOnTaskAvailable")
+        if isinstance(task_available_process_model_identifier, str) and task_available_process_model_identifier:
+            return task_available_process_model_identifier
+        return None
+
+    def _trigger_task_available_process_model(self, task_available_process_model_identifier: str, task_guid: str) -> None:
+        try:
+            if not queue_start_process_instance_if_appropriate(
+                task_available_process_model_identifier,
+                task_guid,
+                self.process_instance_model.process_initiator.id,
+            ):
+                current_app.logger.warning(
+                    f"Cannot trigger task-available process model '{task_available_process_model_identifier}' "
+                    f"for task {task_guid}: Celery is not enabled."
+                )
+        except Exception as exception:
+            current_app.logger.exception(
+                f"Failed to trigger task-available process model '{task_available_process_model_identifier}' "
+                f"from process instance {self.process_instance_model.id}, task {task_guid}"
+            )
+            ProcessInstanceEventService.add_event_to_process_instance(
+                self.process_instance_model,
+                ProcessInstanceEventType.process_instance_error.value,
+                exception=exception,
+            )
+
+    def _dispatch_pending_task_available_process_model_triggers(self) -> None:
+        pending_triggers = self._pending_task_available_process_model_triggers
+        self._pending_task_available_process_model_triggers = []
+        for task_available_process_model_identifier, task_guid in pending_triggers:
+            self._trigger_task_available_process_model(task_available_process_model_identifier, task_guid)
 
     def _extract_task_metadata_from_extensions(self, ready_or_waiting_task: SpiffTask, extensions: dict) -> dict:
         """Extract and evaluate task metadata from task extensions."""
@@ -1185,78 +682,114 @@ class ProcessInstanceProcessor:
             event_type = ProcessInstanceEventType.task_executed_manually.value
 
         start_time = time.time()
+        was_suspended = self.process_instance_model.status == ProcessInstanceStatus.suspended.value
 
+        try:
+            self._apply_manual_complete_task_action(spiff_task, task_id, execute, user, start_time)
+        finally:
+            ProcessInstanceEventService.add_event_to_process_instance(self.process_instance_model, event_type, task_guid=task_id)
+
+            self._save_and_restore_suspension_state(was_suspended)
+
+    def _apply_manual_complete_task_action(
+        self,
+        spiff_task: SpiffTask,
+        task_id: str,
+        execute: bool,
+        user: UserModel,
+        start_time: float,
+    ) -> None:
         # manual actually means any human task
         if spiff_task.task_spec.manual:
-            # Executing or not executing a human task results in the same state.
-            current_app.logger.info(
-                f"Manually skipping Human Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
-            )
-            human_task = HumanTaskModel.query.filter_by(task_id=task_id).first()
-            self.complete_task(spiff_task, user=user, human_task=human_task)
+            self._complete_human_task_manually(spiff_task, task_id, user)
         elif execute:
-            current_app.logger.info(
-                f"Manually executing Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
-            )
-            self.do_engine_steps(save=True, execution_strategy_name="run_current_ready_tasks", ignore_cannot_be_run_error=True)
+            self._execute_non_human_task_manually(spiff_task, user)
         else:
-            current_app.logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.collect_log_extras())
-            task_model_delegate = TaskModelSavingDelegate(
-                serializer=BpmnProcessService.serializer,
-                process_instance=self.process_instance_model,
-                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-            )
-            execution_strategy = SkipOneExecutionStrategy(task_model_delegate, {"spiff_task": spiff_task})
-            self.do_engine_steps(save=True, execution_strategy=execution_strategy, ignore_cannot_be_run_error=True)
+            self._skip_non_human_task(spiff_task, start_time)
+
+    def _complete_human_task_manually(self, spiff_task: SpiffTask, task_id: str, user: UserModel) -> None:
+        # Executing or not executing a human task results in the same state.
+        current_app.logger.info(
+            f"Manually skipping Human Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
+        )
+        human_task = HumanTaskModel.query.filter_by(
+            process_instance_id=self.process_instance_model.id,
+            task_id=task_id,
+            completed=False,
+        ).first()
+        self.complete_task(spiff_task, user=user, human_task=human_task)
+
+    def _execute_non_human_task_manually(self, spiff_task: SpiffTask, user: UserModel) -> None:
+        current_app.logger.info(
+            f"Manually executing Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
+        )
+        if spiff_task.state == TaskState.ERROR:
+            spiff_task._set_state(TaskState.READY)
+        self.complete_task(spiff_task, user=user)
+
+    def _skip_non_human_task(self, spiff_task: SpiffTask, start_time: float) -> None:
+        current_app.logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.collect_log_extras())
+        task_model_delegate = TaskModelSavingDelegate(
+            serializer=BpmnProcessService.serializer,
+            process_instance=self.process_instance_model,
+            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+            bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
+            task_model_mapping=self.task_model_mapping,
+        )
+        execution_strategy = SkipOneExecutionStrategy(task_model_delegate, {"spiff_task": spiff_task})
+        self.do_engine_steps(save=True, execution_strategy=execution_strategy, ignore_cannot_be_run_error=True)
+        task_model_mapping, bpmn_subprocess_mapping = task_model_delegate.get_guid_to_db_object_mappings()
 
         spiff_tasks = self.bpmn_process_instance.get_tasks()
         task_service = TaskService(
             process_instance=self.process_instance_model,
             serializer=BpmnProcessService.serializer,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-            bpmn_subprocess_mapping=self.bpmn_subprocess_mapping,
-            task_model_mapping=self.task_model_mapping,
+            bpmn_subprocess_mapping=bpmn_subprocess_mapping,
+            task_model_mapping=task_model_mapping,
         )
         task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, [], start_time)
-        ProcessInstanceTmpService.add_event_to_process_instance(self.process_instance_model, event_type, task_guid=task_id)
 
+    def _save_and_restore_suspension_state(self, was_suspended: bool) -> None:
         self.save()
-        # Saving the workflow seems to reset the status
-        self.suspend()
+        # Saving the workflow seems to reset the status.
+        if was_suspended:
+            self.process_instance_model.status = ProcessInstanceStatus.suspended.value
+            db.session.add(self.process_instance_model)
+            db.session.commit()
 
     @classmethod
     def reset_process(cls, process_instance: ProcessInstanceModel, to_task_guid: str) -> None:
         """Reset a process to an earlier state."""
         start_time = time.time()
+        was_suspended = process_instance.status == ProcessInstanceStatus.suspended.value
 
         # Log the event that we are moving back to a previous task.
-        ProcessInstanceTmpService.add_event_to_process_instance(
+        ProcessInstanceEventService.add_event_to_process_instance(
             process_instance, ProcessInstanceEventType.process_instance_rewound_to_task.value, task_guid=to_task_guid
         )
-        processor = ProcessInstanceProcessor(
+        runtime = ProcessInstanceRuntime(
             process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
         )
-        deleted_tasks = processor.bpmn_process_instance.reset_from_task_id(UUID(to_task_guid))
-        spiff_tasks = processor.bpmn_process_instance.get_tasks()
+        deleted_tasks = runtime.bpmn_process_instance.reset_from_task_id(UUID(to_task_guid))
+        spiff_tasks = runtime.bpmn_process_instance.get_tasks()
 
         for dt in deleted_tasks:
-            if str(dt.id) in processor.task_model_mapping:
-                del processor.task_model_mapping[str(dt.id)]
-            if str(dt.id) in processor.bpmn_subprocess_mapping:
-                del processor.bpmn_subprocess_mapping[str(dt.id)]
+            if str(dt.id) in runtime.task_model_mapping:
+                del runtime.task_model_mapping[str(dt.id)]
+            if str(dt.id) in runtime.bpmn_subprocess_mapping:
+                del runtime.bpmn_subprocess_mapping[str(dt.id)]
 
         task_service = TaskService(
-            process_instance=processor.process_instance_model,
+            process_instance=runtime.process_instance_model,
             serializer=BpmnProcessService.serializer,
-            bpmn_definition_to_task_definitions_mappings=processor.bpmn_definition_to_task_definitions_mappings,
-            task_model_mapping=processor.task_model_mapping,
-            bpmn_subprocess_mapping=processor.bpmn_subprocess_mapping,
+            bpmn_definition_to_task_definitions_mappings=runtime.bpmn_definition_to_task_definitions_mappings,
+            task_model_mapping=runtime.task_model_mapping,
+            bpmn_subprocess_mapping=runtime.bpmn_subprocess_mapping,
         )
         task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, deleted_tasks, start_time, to_task_guid=to_task_guid)
 
-        # Save the process
-        processor.save()
-        processor.suspend()
+        runtime._save_and_restore_suspension_state(was_suspended)
 
     @classmethod
     def update_guids_on_tasks(cls, bpmn_process_instance_dict: dict) -> None:
@@ -1419,7 +952,7 @@ class ProcessInstanceProcessor:
         )
         self.task_model_mapping, self.bpmn_subprocess_mapping = task_model_delegate.get_guid_to_db_object_mappings()
         if save and execution_service.new_waiting_message_names:
-            from spiffworkflow_backend.services.message_service import MessageService
+            from spiffworkflow_backend.services.message_service import MessageService  # noqa: PLC0415
 
             MessageService.correlate_ready_send_messages_for_process_instance(
                 execution_service.new_waiting_message_names,
@@ -1482,11 +1015,9 @@ class ProcessInstanceProcessor:
         task_data_limit = 1024**3
 
         if task_data_len > task_data_limit:
-            raise (
-                ApiError(
-                    error_code="task_data_size_exceeded",
-                    message=f"Maximum task data size of {task_data_limit} exceeded.",
-                )
+            raise ApiError(
+                error_code="task_data_size_exceeded",
+                message=f"Maximum task data size of {task_data_limit} exceeded.",
             )
 
     def serialize(self, serialize_script_engine_state: bool = True) -> dict:
@@ -1636,7 +1167,7 @@ class ProcessInstanceProcessor:
         task_service.update_task_model(task_model, spiff_task)
         JsonDataModel.insert_or_update_json_data_records(task_service.json_data_dicts)
 
-        ProcessInstanceTmpService.add_event_to_process_instance(
+        ProcessInstanceEventService.add_event_to_process_instance(
             self.process_instance_model,
             task_event,
             task_guid=task_model.guid,
@@ -1785,7 +1316,7 @@ class ProcessInstanceProcessor:
             self.remove_spiff_tasks_for_termination()
         self.process_instance_model.status = "terminated"
         db.session.add(self.process_instance_model)
-        ProcessInstanceTmpService.add_event_to_process_instance(
+        ProcessInstanceEventService.add_event_to_process_instance(
             self.process_instance_model, ProcessInstanceEventType.process_instance_terminated.value
         )
         db.session.commit()
@@ -1793,7 +1324,7 @@ class ProcessInstanceProcessor:
     def suspend(self) -> None:
         self.process_instance_model.status = ProcessInstanceStatus.suspended.value
         db.session.add(self.process_instance_model)
-        ProcessInstanceTmpService.add_event_to_process_instance(
+        ProcessInstanceEventService.add_event_to_process_instance(
             self.process_instance_model, ProcessInstanceEventType.process_instance_suspended.value
         )
         db.session.commit()
@@ -1809,10 +1340,21 @@ class ProcessInstanceProcessor:
             db.session.add(archived_future_task)
 
     def resume(self) -> None:
+        error_task = TaskModel.query.filter_by(
+            process_instance_id=self.process_instance_model.id,
+            state="ERROR",
+        ).first()
+        if error_task is not None:
+            raise ApiError(
+                error_code="process_instance_has_error_tasks",
+                message=("Cannot resume a process instance while it has errored tasks. Reset the errored task before resuming."),
+                status_code=400,
+            )
+
         self.process_instance_model.status = ProcessInstanceStatus.waiting.value
         db.session.add(self.process_instance_model)
         self.bring_archived_future_tasks_back_to_life()
-        ProcessInstanceTmpService.add_event_to_process_instance(
+        ProcessInstanceEventService.add_event_to_process_instance(
             self.process_instance_model, ProcessInstanceEventType.process_instance_resumed.value
         )
         db.session.commit()

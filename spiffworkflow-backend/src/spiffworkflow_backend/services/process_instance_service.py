@@ -71,18 +71,19 @@ from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.logging_service import LoggingService
 from spiffworkflow_backend.services.message_instrumentation_service import MessageSendInstrumentation
-from spiffworkflow_backend.services.process_instance_processor import CustomBpmnScriptEngine
-from spiffworkflow_backend.services.process_instance_processor import IdToBpmnProcessSpecMapping
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
-from spiffworkflow_backend.services.process_instance_processor import SubprocessUuidToWorkflowDiffMapping
+from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
+from spiffworkflow_backend.services.process_instance_persistence_service import ProcessInstancePersistenceService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
+from spiffworkflow_backend.services.process_instance_runtime import SubprocessUuidToWorkflowDiffMapping
+from spiffworkflow_backend.services.process_instance_script_engine import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 from spiffworkflow_backend.services.workflow_service import WorkflowService
+from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcessSpecMapping
 from spiffworkflow_backend.specs.start_event import StartConfiguration
 
 FileDataGenerator = Generator[tuple[dict | list, str | int, str], None, None]
@@ -117,9 +118,9 @@ class ProcessInstanceService:
     def next_start_event_configuration(process_instance_model: ProcessInstanceModel) -> StartConfiguration:
         try:
             # this is only called from create_process_instance so no need to worry about process instance migrations
-            processor = ProcessInstanceProcessor(process_instance_model)
+            runtime = ProcessInstanceRuntime(process_instance_model)
             start_configuration = WorkflowService.next_start_event_configuration(
-                processor.bpmn_process_instance, datetime.now(timezone.utc)
+                runtime.bpmn_process_instance, datetime.now(timezone.utc)
             )
         except Exception:
             start_configuration = None
@@ -200,7 +201,7 @@ class ProcessInstanceService:
         process_instance: ProcessInstanceModel,
         target_bpmn_process_hash: str | None = None,
     ) -> tuple[
-        ProcessInstanceProcessor, BpmnProcessSpec, IdToBpmnProcessSpecMapping, WorkflowDiff, SubprocessUuidToWorkflowDiffMapping
+        ProcessInstanceRuntime, BpmnProcessSpec, IdToBpmnProcessSpecMapping, WorkflowDiff, SubprocessUuidToWorkflowDiffMapping
     ]:
         if target_bpmn_process_hash is None:
             (target_bpmn_process_spec, target_subprocess_specs) = BpmnProcessService.get_process_model_and_subprocesses(
@@ -215,7 +216,7 @@ class ProcessInstanceService:
             bpmn_process_definition = BpmnProcessDefinitionModel.query.filter_by(
                 full_process_model_hash=target_bpmn_process_hash
             ).first()
-            full_bpmn_process_dict = ProcessInstanceProcessor._get_full_bpmn_process_dict(
+            full_bpmn_process_dict = ProcessInstancePersistenceService.get_full_bpmn_process_dict(
                 bpmn_definition_to_task_definitions_mappings={},
                 spiff_serializer_version=process_instance.spiff_serializer_version,
                 bpmn_process_definition=bpmn_process_definition,
@@ -232,14 +233,14 @@ class ProcessInstanceService:
             raise ProcessInstanceMigrationUnnecessaryError(
                 "Both target and current process model versions are the same. There is no need to migrate."
             )
-        processor = ProcessInstanceProcessor(
+        runtime = ProcessInstanceRuntime(
             process_instance, include_task_data_for_completed_tasks=True, include_completed_subprocesses=True
         )
 
         # tasks that were in the old workflow and are in the new one as well
         top_level_bpmn_process_diff, subprocesses_diffs = diff_workflow(
             BpmnProcessService.serializer.registry,
-            processor.bpmn_process_instance,
+            runtime.bpmn_process_instance,
             target_bpmn_process_spec,
             target_subprocess_specs,
         )
@@ -251,7 +252,7 @@ class ProcessInstanceService:
                 "to ensure a safe migration."
             )
         return (
-            processor,
+            runtime,
             target_bpmn_process_spec,
             target_subprocess_specs,
             top_level_bpmn_process_diff,
@@ -269,7 +270,7 @@ class ProcessInstanceService:
         initial_git_revision = process_instance.bpmn_version_control_identifier
         initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
         (
-            processor,
+            runtime,
             target_bpmn_process_spec,
             target_subprocess_specs,
             top_level_bpmn_process_diff,
@@ -280,11 +281,11 @@ class ProcessInstanceService:
 
         deleted_tasks = migrate_workflow(
             top_level_bpmn_process_diff,
-            processor.bpmn_process_instance,
+            runtime.bpmn_process_instance,
             target_bpmn_process_spec,
             reset_mask=migration_task_mask,
         )
-        for sp_id, sp in processor.bpmn_process_instance.subprocesses.items():
+        for sp_id, sp in runtime.bpmn_process_instance.subprocesses.items():
             deleted_tasks += migrate_workflow(
                 subprocesses_diffs[sp_id],
                 sp,
@@ -293,18 +294,18 @@ class ProcessInstanceService:
             )
             # make sure we change the subprocess_spiff_task state back to STARTED after the migration
             if not sp.is_completed():
-                subprocess_spiff_task = processor.bpmn_process_instance.get_task_from_id(sp_id)
+                subprocess_spiff_task = runtime.bpmn_process_instance.get_task_from_id(sp_id)
                 subprocess_spiff_task._set_state(TaskState.STARTED)
-        processor.bpmn_process_instance.subprocess_specs = target_subprocess_specs
+        runtime.bpmn_process_instance.subprocess_specs = target_subprocess_specs
 
         if preserve_old_process_instance:
             # TODO: write tests for this code path - no one has a requirement for it yet
-            bpmn_process_dict = processor.serialize()
-            ProcessInstanceProcessor.update_guids_on_tasks(bpmn_process_dict)
+            bpmn_process_dict = runtime.serialize()
+            ProcessInstanceRuntime.update_guids_on_tasks(bpmn_process_dict)
             new_process_instance, _ = cls.create_process_instance_from_process_model_identifier(
                 process_instance.process_model_identifier, user
             )
-            ProcessInstanceProcessor.persist_bpmn_process_dict(
+            ProcessInstancePersistenceService.persist_bpmn_process_dict(
                 bpmn_process_dict, bpmn_definition_to_task_definitions_mappings={}, process_instance_model=new_process_instance
             )
         else:
@@ -315,12 +316,12 @@ class ProcessInstanceService:
             for ft in future_tasks:
                 db.session.delete(ft)
 
-            bpmn_process_dict = processor.serialize()
-            ProcessInstanceProcessor.persist_bpmn_process_dict(
+            bpmn_process_dict = runtime.serialize()
+            ProcessInstancePersistenceService.persist_bpmn_process_dict(
                 bpmn_process_dict,
                 bpmn_definition_to_task_definitions_mappings={},
                 process_instance_model=process_instance,
-                bpmn_process_instance=processor.bpmn_process_instance,
+                bpmn_process_instance=runtime.bpmn_process_instance,
                 store_process_instance_events=False,
             )
             git_revision_to_use = cls.get_appropriate_git_revision(process_instance, target_bpmn_process_hash)
@@ -330,7 +331,7 @@ class ProcessInstanceService:
         target_git_revision = process_instance.bpmn_version_control_identifier
         if target_bpmn_process_hash is None:
             target_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
-        ProcessInstanceTmpService.add_event_to_process_instance(
+        ProcessInstanceEventService.add_event_to_process_instance(
             process_instance,
             ProcessInstanceEventType.process_instance_migrated.value,
             migration_details={
@@ -348,13 +349,13 @@ class ProcessInstanceService:
         for bpd in bpmn_processes_to_delete:
             db.session.delete(bpd)
 
-        user_spiff_tasks = processor.get_ready_user_tasks()
+        user_spiff_tasks = runtime.get_ready_user_tasks()
         user_task_guids = [str(t.id) for t in user_spiff_tasks]
         user_spiff_task_map = {str(t.id): t for t in user_spiff_tasks}
         ready_human_tasks = HumanTaskModel.query.filter(HumanTaskModel.task_guid.in_(user_task_guids)).all()  # type: ignore
         for human_task in ready_human_tasks:
-            spiff_task = processor.get_task_by_guid(human_task.task_guid)
-            potential_owner_hash = processor.get_potential_owners_from_task(spiff_task)
+            spiff_task = runtime.get_task_by_guid(human_task.task_guid)
+            potential_owner_hash = runtime.get_potential_owners_from_task(spiff_task)
             human_task.update_attributes_from_spiff_task(user_spiff_task_map[human_task.task_guid], potential_owner_hash)
             db.session.add(human_task)
             human_task_user_records = HumanTaskUserModel.query.filter_by(human_task=human_task).all()
@@ -515,8 +516,8 @@ class ProcessInstanceService:
         return True
 
     @classmethod
-    def ready_user_task_has_associated_timer(cls, processor: ProcessInstanceProcessor) -> bool:
-        for ready_user_task in processor.get_ready_user_tasks():
+    def ready_user_task_has_associated_timer(cls, runtime: ProcessInstanceRuntime) -> bool:
+        for ready_user_task in runtime.get_ready_user_tasks():
             if isinstance(ready_user_task.parent.task_spec, BoundaryEventSplit):
                 for boundary_event_child in ready_user_task.parent.children:
                     child_task_spec = boundary_event_child.task_spec
@@ -528,21 +529,21 @@ class ProcessInstanceService:
         return False
 
     @classmethod
-    def can_optimistically_skip(cls, processor: ProcessInstanceProcessor, status_value: str) -> bool:
+    def can_optimistically_skip(cls, runtime: ProcessInstanceRuntime, status_value: str) -> bool:
         if not current_app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_ALLOW_OPTIMISTIC_CHECKS"]:
             return False
 
-        if processor.process_instance_model.status != status_value:
+        if runtime.process_instance_model.status != status_value:
             return True
 
         if status_value == "user_input_required":
-            if cls.ready_user_task_has_associated_timer(processor):
-                return cls.all_waiting_events_can_be_skipped(processor.bpmn_process_instance.waiting_events())
+            if cls.ready_user_task_has_associated_timer(runtime):
+                return cls.all_waiting_events_can_be_skipped(runtime.bpmn_process_instance.waiting_events())
             return True
 
         return False
 
-    # this is only used from background processor
+    # this is only used from background runtime
     @classmethod
     def do_waiting(cls, status_value: str) -> None:
         run_at_in_seconds_threshold = round(time.time())
@@ -560,10 +561,10 @@ class ProcessInstanceService:
         )
         execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"]
         for process_instance in records:
-            current_app.logger.info(f"Processor {status_value}: Processing process_instance {process_instance.id}")
+            current_app.logger.info(f"Runtime {status_value}: Processing process_instance {process_instance.id}")
             try:
                 if not queue_process_instance_if_appropriate(process_instance):
-                    cls.run_process_instance_with_processor(
+                    cls.run_process_instance_with_runtime(
                         process_instance, status_value=status_value, execution_strategy_name=execution_strategy_name
                     )
             except ProcessInstanceIsAlreadyLockedError:
@@ -578,41 +579,41 @@ class ProcessInstanceService:
                 current_app.logger.exception(new_exception, stack_info=True)
 
     @classmethod
-    def run_process_instance_with_processor(
+    def run_process_instance_with_runtime(
         cls,
         process_instance: ProcessInstanceModel,
         status_value: str | None = None,
         execution_strategy_name: str | None = None,
         should_schedule_waiting_timer_events: bool = True,
-    ) -> tuple[ProcessInstanceProcessor | None, TaskRunnability]:
-        processor = None
+    ) -> tuple[ProcessInstanceRuntime | None, TaskRunnability]:
+        runtime = None
         task_runnability = TaskRunnability.unknown_if_ready_tasks
         with ProcessInstanceQueueService.dequeued(process_instance):
             ProcessInstanceMigrator.run(process_instance)
-            processor = ProcessInstanceProcessor(
+            runtime = ProcessInstanceRuntime(
                 process_instance,
                 workflow_completed_handler=cls.schedule_next_process_model_cycle,
             )
 
-        # if status_value is user_input_required (we are processing instances with that status from background processor),
+        # if status_value is user_input_required (we are processing instances with that status from background runtime),
         # the ONLY reason we need to do anything is if the task has a timer boundary event on it that has triggered.
         # otherwise, in all cases, we should optimistically skip it.
-        if status_value and cls.can_optimistically_skip(processor, status_value):
+        if status_value and cls.can_optimistically_skip(runtime, status_value):
             current_app.logger.info(f"Optimistically skipped process_instance {process_instance.id}")
-            return (processor, task_runnability)
+            return (runtime, task_runnability)
 
         db.session.refresh(process_instance)
         if status_value is None or process_instance.status == status_value:
-            task_runnability = processor.do_engine_steps(
+            task_runnability = runtime.do_engine_steps(
                 save=True,
                 execution_strategy_name=execution_strategy_name,
                 should_schedule_waiting_timer_events=should_schedule_waiting_timer_events,
             )
 
-        return (processor, task_runnability)
+        return (runtime, task_runnability)
 
     @staticmethod
-    def processor_to_process_instance_api(process_instance: ProcessInstanceModel) -> ProcessInstanceApi:
+    def runtime_to_process_instance_api(process_instance: ProcessInstanceModel) -> ProcessInstanceApi:
         """Returns an API model representing the state of the current process_instance."""
         process_instance_api = ProcessInstanceApi(
             id=process_instance.id,
@@ -629,8 +630,8 @@ class ProcessInstanceService:
         return result
 
     @staticmethod
-    def get_users_assigned_to_task(processor: ProcessInstanceProcessor, spiff_task: SpiffTask) -> list[int]:
-        if processor.process_instance_model.process_initiator_id is None:
+    def get_users_assigned_to_task(runtime: ProcessInstanceRuntime, spiff_task: SpiffTask) -> list[int]:
+        if runtime.process_instance_model.process_initiator_id is None:
             raise ApiError.from_task(
                 error_code="invalid_workflow",
                 message="A process instance must have a user_id.",
@@ -640,7 +641,7 @@ class ProcessInstanceService:
         # Workflow associated with a study - get all the users
         else:
             if not hasattr(spiff_task.task_spec, "lane") or spiff_task.task_spec.lane is None:
-                return [processor.process_instance_model.process_initiator_id]
+                return [runtime.process_instance_model.process_initiator_id]
 
             if spiff_task.task_spec.lane not in spiff_task.data:
                 return []  # No users are assignable to the task at this moment
@@ -822,7 +823,7 @@ class ProcessInstanceService:
     @classmethod
     def complete_form_task(
         cls,
-        processor: ProcessInstanceProcessor,
+        runtime: ProcessInstanceRuntime,
         spiff_task: SpiffTask,
         data: dict[str, Any],
         user: UserModel,
@@ -834,14 +835,14 @@ class ProcessInstanceService:
         Abstracted here because we need to do it multiple times when completing all tasks in
         a multi-instance task.
         """
-        ProcessInstanceService.update_form_task_data(processor.process_instance_model, spiff_task, data, user)
-        processor.complete_task(spiff_task, user=user, human_task=human_task)
+        ProcessInstanceService.update_form_task_data(runtime.process_instance_model, spiff_task, data, user)
+        runtime.complete_task(spiff_task, user=user, human_task=human_task)
 
         # the caller needs to handle the actual queueing of the process instance for better dequeueing ability
         if should_queue_process_instance(execution_mode):
-            tasks = processor.bpmn_process_instance.get_tasks(state=TaskState.WAITING | TaskState.READY)
-            JinjaService.add_instruction_for_end_user_if_appropriate(tasks, processor.process_instance_model.id, set())
-        elif not ProcessInstanceTmpService.is_enqueued_to_run_in_the_future(processor.process_instance_model):
+            tasks = runtime.bpmn_process_instance.get_tasks(state=TaskState.WAITING | TaskState.READY)
+            JinjaService.add_instruction_for_end_user_if_appropriate(tasks, runtime.process_instance_model.id, set())
+        elif not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(runtime.process_instance_model):
             with sentry_sdk.start_span(op="task", name="backend_do_engine_steps"):
                 execution_strategy_name = None
                 if execution_mode == ProcessInstanceExecutionMode.synchronous.value:
@@ -849,11 +850,11 @@ class ProcessInstanceService:
 
                 # maybe move this out once we have the interstitial page since this is
                 # here just so we can get the next human task
-                processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+                runtime.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
 
     @staticmethod
     def spiff_task_to_api_task(
-        processor: ProcessInstanceProcessor,
+        runtime: ProcessInstanceRuntime,
         spiff_task: SpiffTask,
     ) -> Task:
         task_type = spiff_task.task_spec.description
@@ -873,7 +874,7 @@ class ProcessInstanceService:
         # can complete it.
         can_complete = False
         try:
-            AuthorizationService.assert_user_can_complete_human_task(processor.process_instance_model.id, task_guid, g.user)
+            AuthorizationService.assert_user_can_complete_human_task(runtime.process_instance_model.id, task_guid, g.user)
             can_complete = True
         except HumanTaskAlreadyCompletedError:
             can_complete = False
@@ -914,7 +915,7 @@ class ProcessInstanceService:
         if spiff_task.parent:
             parent_id = spiff_task.parent.id
 
-        serialized_task_spec = processor.serialize_task_spec(spiff_task.task_spec)
+        serialized_task_spec = runtime.serialize_task_spec(spiff_task.task_spec)
 
         # Grab the last error message.
         error_message = None
@@ -933,9 +934,9 @@ class ProcessInstanceService:
             can_complete=can_complete,
             lane=lane,
             process_identifier=spiff_task.task_spec._wf_spec.name,
-            process_instance_id=processor.process_instance_model.id,
-            process_model_identifier=processor.process_model_identifier,
-            process_model_display_name=processor.process_model_display_name,
+            process_instance_id=runtime.process_instance_model.id,
+            process_model_identifier=runtime.process_model_identifier,
+            process_model_display_name=runtime.process_model_display_name,
             properties=props,
             parent=parent_id,
             event_definition=serialized_task_spec.get("event_definition"),
@@ -953,7 +954,7 @@ class ProcessInstanceService:
         data_to_inject: dict | None = None,
         process_id_to_run: str | None = None,
         user: UserModel | None = None,
-    ) -> ProcessInstanceProcessor:
+    ) -> ProcessInstanceRuntime:
         process_instance = None
         if persistence_level == "none":
             BpmnProcessService.persist_bpmn_process_definition(process_model.id)
@@ -972,20 +973,20 @@ class ProcessInstanceService:
                 process_model.id, user
             )
 
-        processor = None
+        runtime = None
         try:
             # this is only creates new process instances so no need to worry about process instance migrations
-            processor = ProcessInstanceProcessor(
+            runtime = ProcessInstanceRuntime(
                 process_instance,
                 script_engine=CustomBpmnScriptEngine(use_restricted_script_engine=False),
                 process_id_to_run=process_id_to_run,
             )
             save_to_db = process_instance.persistence_level != "none"
             if data_to_inject is not None:
-                processor.do_engine_steps(save=save_to_db, execution_strategy_name="run_current_ready_tasks")
-                next_task = processor.next_task()
+                runtime.do_engine_steps(save=save_to_db, execution_strategy_name="run_current_ready_tasks")
+                next_task = runtime.next_task()
                 DeepMerge.merge(next_task.data, data_to_inject)
-            processor.do_engine_steps(save=save_to_db, execution_strategy_name="greedy")
+            runtime.do_engine_steps(save=save_to_db, execution_strategy_name="greedy")
         except (
             ApiError,
             ProcessInstanceIsNotEnqueuedError,
@@ -998,8 +999,8 @@ class ProcessInstanceService:
             ErrorHandlingService.handle_error(process_instance, e)
             # FIXME: this is going to point someone to the wrong task - it's misinformation for errors in sub-processes.
             # we need to recurse through all last tasks if the last task is a call activity or subprocess.
-            if processor is not None:
-                task = processor.bpmn_process_instance.last_task
+            if runtime is not None:
+                task = runtime.bpmn_process_instance.last_task
                 if task is not None:
                     raise ApiError.from_task(
                         error_code="unknown_exception",
@@ -1008,7 +1009,7 @@ class ProcessInstanceService:
                         task=task,
                     ) from e
             raise e
-        return processor
+        return runtime
 
     @classmethod
     def can_migrate(cls, top_level_bpmn_process_diff: WorkflowDiff, subprocesses_diffs: dict[UUID, WorkflowDiff]) -> bool:

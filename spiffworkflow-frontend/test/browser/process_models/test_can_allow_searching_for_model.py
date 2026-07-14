@@ -1,8 +1,8 @@
 import re
-import pytest
 from playwright.sync_api import expect, Page
 
 from helpers.login import login, logout, BASE_URL
+from helpers.process_groups import switch_to_card_view
 
 
 def test_can_allow_searching_for_model(page: Page):
@@ -19,6 +19,7 @@ def test_can_allow_searching_for_model(page: Page):
     group_path = group_id.replace("/", ":")  # misc:acceptance-tests-group-one
     # Go to the group page
     page.goto(f"{BASE_URL}/process-groups/{group_path}")
+    switch_to_card_view(page)
 
     # Confirm group page loaded
     expect(

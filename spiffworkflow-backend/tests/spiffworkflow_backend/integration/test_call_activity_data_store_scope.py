@@ -9,7 +9,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data_store import JSONDataStoreModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -69,15 +69,15 @@ class TestCallActivityDataStoreScope(BaseTest):
             process_model=caller_model,
             user=with_super_admin_user,
         )
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
 
         assert process_instance.status == ProcessInstanceStatus.complete.value, (
             "UNEXPECTED: Call activity uses callee's own location (finance). "
             "Expected it to use caller's location (site-administration)."
         )
 
-        assert processor.bpmn_process_instance.data["result_value"] == "admin_value", (
+        assert runtime.bpmn_process_instance.data["result_value"] == "admin_value", (
             "Call activity accessed data store but got wrong value"
         )
 

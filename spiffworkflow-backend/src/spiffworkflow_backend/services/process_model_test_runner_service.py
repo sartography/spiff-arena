@@ -31,7 +31,7 @@ from spiffworkflow_backend.models.script_attributes_context import ScriptAttribu
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.jinja_service import JinjaHelpers
-from spiffworkflow_backend.services.process_instance_processor import CustomScriptEngineEnvironment
+from spiffworkflow_backend.services.process_instance_script_engine import CustomScriptEngineEnvironment
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 DEFAULT_NSMAP = {
@@ -120,9 +120,10 @@ class TestCaseResult:
     test_case_error_details: TestCaseErrorDetails | None = None
 
 
-def _import(name: str, glbls: dict[str, Any], *args: Any) -> None:
+def _import(name: str, glbls: dict[str, Any], *args: Any) -> Any:
     if name not in glbls:
         raise ImportError(f"Import not allowed: {name}", name=name)
+    return glbls[name]
 
 
 class ProcessModelTestRunnerScriptEngine(PythonScriptEngine):  # type: ignore

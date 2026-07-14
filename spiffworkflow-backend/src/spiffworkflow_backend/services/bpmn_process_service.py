@@ -226,11 +226,9 @@ class BpmnProcessService:
     ) -> tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
         process_model_info = ProcessModelService.get_process_model(process_model_identifier)
         if process_model_info is None:
-            raise (
-                ApiError(
-                    "process_model_not_found",
-                    f"The given process model was not found: {process_model_identifier}.",
-                )
+            raise ApiError(
+                "process_model_not_found",
+                f"The given process model was not found: {process_model_identifier}.",
             )
         spec_files = FileSystemService.get_files(process_model_info)
         return WorkflowSpecService.get_spec(spec_files, process_model_info, process_id_to_run=process_id_to_run)
@@ -339,16 +337,7 @@ class BpmnProcessService:
 
         if parent_id:
             for bpd_id in subprocess_ids:
-                bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel.query.filter_by(
-                    bpmn_process_definition_parent_id=parent_id,
-                    bpmn_process_definition_child_id=bpd_id,
-                ).first()
-                if bpmn_process_definition_relationship is None:
-                    bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel(
-                        bpmn_process_definition_parent_id=parent_id,
-                        bpmn_process_definition_child_id=bpd_id,
-                    )
-                    db.session.add(bpmn_process_definition_relationship)
+                BpmnProcessDefinitionRelationshipModel.insert_or_update_record(parent_id, bpd_id)
 
         db.session.commit()
 
@@ -440,7 +429,7 @@ class BpmnProcessService:
                     )
         elif store_bpmn_definition_mappings:
             # this should only ever happen when new process instances use a pre-existing bpmn process definitions
-            # otherwise this should get populated on processor initialization
+            # otherwise this should get populated on runtime initialization
             cls._update_bpmn_definition_mappings(
                 bpmn_definition_to_task_definitions_mappings,
                 process_bpmn_identifier,

@@ -392,7 +392,7 @@ By clicking on the filter icon, you'll be taken to a full-screen process view.
 
 To filter the list, click on the "Filter" option.
 This will expand the filter section where you will be able to provide details about the process instance.
-This allows you to enter various details, including the process model, start date, end date, and status.
+This allows you to enter various details, including the process model, start date, end date, status, quick filters such as errors only, and grouping by process group.
 To refine your search, you can enter multiple filter parameters.
 
 ![Filter](/images/Filter_2.png)

@@ -2,7 +2,6 @@ import json
 from hashlib import sha256
 from hmac import HMAC
 
-from connexion import FlaskApp
 from flask.app import Flask
 from starlette.testclient import TestClient
 
@@ -31,6 +30,12 @@ class TestWebhooksController(BaseTest):
         )
         assert response.status_code == 200
 
-    def _create_encoded_signature(self, app: FlaskApp, request_data: str) -> str:
-        secret = app.config["SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET"].encode()
-        return HMAC(key=secret, msg=request_data.encode(), digestmod=sha256).hexdigest()
+    def test_create_encoded_signature_respects_empty_secret_override(self, app: Flask) -> None:
+        assert self._create_encoded_signature(app, "data", secret="") == HMAC(key=b"", msg=b"data", digestmod=sha256).hexdigest()
+
+    def _create_encoded_signature(self, app: Flask, request_data: str, secret: str | None = None) -> str:
+        secret_value = app.config["SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET"] if secret is None else secret
+        if not isinstance(secret_value, str):
+            raise TypeError("SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET must be a string")
+        secret_bytes = secret_value.encode()
+        return HMAC(key=secret_bytes, msg=request_data.encode(), digestmod=sha256).hexdigest()

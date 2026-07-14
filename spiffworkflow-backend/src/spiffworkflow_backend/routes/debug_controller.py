@@ -11,9 +11,20 @@ from sqlalchemy import func
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.monitoring_service import get_version_info_data
+
+RECENT_PROCESS_INSTANCE_ID_WINDOW = 10_000
+
+
+def _recent_process_instance_scope(min_process_instance_id: int) -> dict[str, int | bool]:
+    return {
+        "global": False,
+        "process_instance_id_window": RECENT_PROCESS_INSTANCE_ID_WINDOW,
+        "min_process_instance_id": min_process_instance_id,
+    }
 
 
 def test_raise_error() -> Response:
@@ -42,8 +53,16 @@ def url_info() -> Response:
 
 
 def process_instance_with_most_tasks() -> Response:
+    raw_min_process_instance_id = db.session.query(
+        func.coalesce(func.max(ProcessInstanceModel.id), 0) - RECENT_PROCESS_INSTANCE_ID_WINDOW
+    ).scalar()  # type: ignore[no-untyped-call]
+    min_process_instance_id = max(
+        raw_min_process_instance_id or 0,
+        0,
+    )
     result = (
         db.session.query(TaskModel.process_instance_id, func.count(TaskModel.guid).label("task_count"))
+        .filter(TaskModel.process_instance_id >= min_process_instance_id)
         .group_by(TaskModel.process_instance_id)
         .order_by(func.count(TaskModel.guid).desc(), TaskModel.process_instance_id.desc())  # type: ignore
         .first()
@@ -56,12 +75,21 @@ def process_instance_with_most_tasks() -> Response:
                 {
                     "process_instance_id": process_instance_id,
                     "task_count": task_count,
+                    "scope": _recent_process_instance_scope(min_process_instance_id),
                 }
             ),
             200,
         )
     else:
-        return make_response(jsonify({"message": "No process instances with tasks found"}), 404)
+        return make_response(
+            jsonify(
+                {
+                    "message": "No recent process instances with tasks found",
+                    "scope": _recent_process_instance_scope(min_process_instance_id),
+                }
+            ),
+            404,
+        )
 
 
 def celery_backend_results(
@@ -75,7 +103,7 @@ def celery_backend_results(
             redis_client = redis.StrictRedis.from_url(backend_url)
             result_values = _get_redis_results(redis_client)
         elif backend_url.startswith("s3://"):
-            import boto3  # type: ignore
+            import boto3  # type: ignore  # noqa: PLC0415
 
             s3_client = boto3.client("s3")
             bucket_name = current_app.config["SPIFFWORKFLOW_BACKEND_CELERY_RESULT_S3_BUCKET"]
@@ -121,8 +149,8 @@ def _get_redis_results(redis_client: Any) -> Any:
 
 
 def _get_s3_results(s3_client: Any, bucket_name: Any) -> list:
-    from botocore.exceptions import BotoCoreError  # type: ignore
-    from botocore.exceptions import ClientError
+    from botocore.exceptions import BotoCoreError  # type: ignore  # noqa: PLC0415
+    from botocore.exceptions import ClientError  # noqa: PLC0415
 
     try:
         # This defaults to retrieving a maximum of 1000 items, if it

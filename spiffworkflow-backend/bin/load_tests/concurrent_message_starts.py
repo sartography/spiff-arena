@@ -316,6 +316,8 @@ def print_summary(results: list[MessageResult]) -> None:
     successes = [r for r in results if r.ok]
     failures = [r for r in results if not r.ok]
     elapsed_values = [r.elapsed_seconds for r in results]
+    process_instance_ids = [r.process_instance_id for r in successes if r.process_instance_id is not None]
+    unique_process_instance_ids = set(process_instance_ids)
 
     print("\nConcurrent Message Start Summary")
     print(f"Total: {len(results)}")
@@ -327,8 +329,10 @@ def print_summary(results: list[MessageResult]) -> None:
             f"{min(elapsed_values):.3f}s / {statistics.median(elapsed_values):.3f}s / {max(elapsed_values):.3f}s"
         )
 
-    process_instance_ids = [r.process_instance_id for r in successes if r.process_instance_id is not None]
-    print(f"Unique successful process instances: {len(set(process_instance_ids))}")
+    print(f"Unique successful process instances: {len(unique_process_instance_ids)}")
+    if len(unique_process_instance_ids) != len(successes):
+        duplicate_count = len(successes) - len(unique_process_instance_ids)
+        print(f"Duplicate successful process-instance IDs: {duplicate_count}")
 
     if failures:
         print("\nFailures:")
@@ -337,6 +341,11 @@ def print_summary(results: list[MessageResult]) -> None:
                 f"- request={result.index} http={result.status_code} status={result.process_instance_status} "
                 f"error={result.error_code} body={result.response_text}"
             )
+
+
+def all_message_starts_landed(results: list[MessageResult]) -> bool:
+    successful_process_instance_ids = [result.process_instance_id for result in results if result.ok]
+    return len(successful_process_instance_ids) == len(results) and len(set(successful_process_instance_ids)) == len(results)
 
 
 def parse_args() -> argparse.Namespace:
@@ -388,7 +397,7 @@ def main() -> int:
     group_id, message_name = ensure_process_model(session, args, headers)
     results = run_load(args, headers, group_id, message_name)
     print_summary(results)
-    return 0 if all(result.ok for result in results) else 1
+    return 0 if all_message_starts_landed(results) else 1
 
 
 if __name__ == "__main__":

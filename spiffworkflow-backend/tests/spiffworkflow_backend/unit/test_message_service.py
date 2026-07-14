@@ -19,7 +19,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.services.message_instrumentation_service import MessageSendInstrumentation
 from spiffworkflow_backend.services.message_service import MessageService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
@@ -107,7 +107,7 @@ class TestMessageService(BaseTest):
             message_instance: MessageInstanceModel,
             execution_mode: str | None = None,
             receiving_process_instance_id: int | None = None,
-            processor_receive: ProcessInstanceProcessor | None = None,
+            runtime_receive: ProcessInstanceRuntime | None = None,
             claim_message_instance: bool = True,
             instrumentation: MessageSendInstrumentation | None = None,
         ) -> MessageInstanceModel | None:
@@ -128,7 +128,7 @@ class TestMessageService(BaseTest):
                 message_instance,
                 execution_mode=execution_mode,
                 receiving_process_instance_id=receiving_process_instance_id,
-                processor_receive=processor_receive,
+                runtime_receive=runtime_receive,
                 claim_message_instance=claim_message_instance,
                 instrumentation=instrumentation,
             )
@@ -219,8 +219,8 @@ class TestMessageService(BaseTest):
         )
 
         process_instance = self.create_process_instance_from_process_model(process_model)
-        processor_send_receive = ProcessInstanceProcessor(process_instance)
-        processor_send_receive.do_engine_steps(save=True)
+        runtime_send_receive = ProcessInstanceRuntime(process_instance)
+        runtime_send_receive.do_engine_steps(save=True)
 
         # This is typically called in a background cron process, so we will manually call it
         # here in the tests
@@ -251,8 +251,8 @@ class TestMessageService(BaseTest):
         )
 
         process_instance = self.create_process_instance_from_process_model(process_model)
-        processor_send_receive = ProcessInstanceProcessor(process_instance)
-        processor_send_receive.do_engine_steps(save=True)
+        runtime_send_receive = ProcessInstanceRuntime(process_instance)
+        runtime_send_receive.do_engine_steps(save=True)
 
         # This is typically called in a background cron process, so we will manually call it
         MessageService.correlate_all_message_instances()
@@ -276,8 +276,8 @@ class TestMessageService(BaseTest):
         )
         user = self.find_or_create_user("initiator_user")
         process_instance = self.create_process_instance_from_process_model(process_model, user=user)
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
 
         # This is typically called in a background cron process, so we will manually call it
         MessageService.correlate_all_message_instances()
@@ -290,9 +290,9 @@ class TestMessageService(BaseTest):
         # Complete the manual task, which means the message should no longer be waiting.
         assert len(process_instance.active_human_tasks) == 1
         human_task_one = process_instance.active_human_tasks[0]
-        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        spiff_manual_task = runtime.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         assert len(process_instance.active_human_tasks) == 1, "expected 1 active human task"
-        ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, user, human_task_one)
+        ProcessInstanceService.complete_form_task(runtime, spiff_manual_task, {}, user, human_task_one)
 
         # Assure that we no longer have a message waiting.
         message_instances = MessageInstanceModel.query.filter_by(message_type="receive", status="ready").all()
@@ -442,9 +442,9 @@ class TestMessageService(BaseTest):
             process_model_sender.id, user
         )
 
-        processor_sender = ProcessInstanceProcessor(process_instance_sender)
-        processor_sender.do_engine_steps()
-        processor_sender.save()
+        runtime_sender = ProcessInstanceRuntime(process_instance_sender)
+        runtime_sender.do_engine_steps()
+        runtime_sender.save()
 
         # At this point, the message_sender process has fired two different messages but those
         # processes have not started, and it is now paused, waiting for to receive a message. so
@@ -556,11 +556,11 @@ class TestMessageService(BaseTest):
         message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(message_name="message_one").first()
         assert message_triggerable_process_model is not None
 
-        processor = ProcessInstanceService.create_and_run_process_instance(
+        runtime = ProcessInstanceService.create_and_run_process_instance(
             process_model=process_model_sender,
             persistence_level="none",
         )
-        assert processor.process_instance_model.process_model_identifier == "test_group/simple-message-send"
+        assert runtime.process_instance_model.process_model_identifier == "test_group/simple-message-send"
 
         # ensure we commit the message instances
         db.session.commit()
@@ -646,8 +646,8 @@ class TestMessageService(BaseTest):
             process_model_sender.id, user
         )
 
-        processor_sender = ProcessInstanceProcessor(process_instance)
-        processor_sender.do_engine_steps(save=True)
+        runtime_sender = ProcessInstanceRuntime(process_instance)
+        runtime_sender.do_engine_steps(save=True)
 
         # At this point, the message_sender process has fired two different messages but those
         # processes have not started, and it is now paused, waiting for to receive a message. so

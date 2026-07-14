@@ -70,7 +70,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX", default
 config_from_env("SPIFFWORKFLOW_BACKEND_GLOBAL_SCRIPTS_DIR", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED", default=False)
 
-### background processor
+### background runtime
 config_from_env("SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_ALLOW_OPTIMISTIC_CHECKS", default=True)
 config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_POLLING_INTERVAL_IN_SECONDS", default=10)
@@ -83,6 +83,8 @@ config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL", default="redis://loca
 config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_SQS_URL", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_S3_BUCKET", default=None)
+config_from_env("SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_TASKS", default=50)
+config_from_env("SPIFFWORKFLOW_BACKEND_AUTO_SAVE_MAX_SECONDS", default=10)
 config_from_env("SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED", default=False)
 
 # give a little overlap to ensure we do not miss items although the query will handle it either way
@@ -93,6 +95,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_EXECUTIO
 config_from_env("SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", default="http://localhost:7001")
 config_from_env("SPIFFWORKFLOW_BACKEND_URL", default="http://localhost:7000")
 config_from_env("SPIFFWORKFLOW_BACKEND_CHECK_FRONTEND_AND_BACKEND_URL_COMPATIBILITY", default=True)
+config_from_env("SPIFFWORKFLOW_BACKEND_ALLOWED_REDIRECT_HOST_ALIASES", default="localhost,127.0.0.1,::1")
 cors_allow_all = "*"
 SPIFFWORKFLOW_BACKEND_CORS_ALLOW_ORIGINS = re.split(
     r",\s*",

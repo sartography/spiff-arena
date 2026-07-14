@@ -46,6 +46,8 @@ def _add_jobs_for_celery_based_configuration(app: flask.app.Flask, scheduler: Ba
     scheduler.add_job(
         BackgroundProcessingService(app).process_future_tasks,
         "interval",
+        id="queue_future_tasks",
+        name="queue future timer tasks",
         seconds=future_task_execution_interval_in_seconds,
     )
 
@@ -64,16 +66,22 @@ def _add_jobs_for_non_celery_based_configuration(app: flask.app.Flask, scheduler
     scheduler.add_job(
         BackgroundProcessingService(app).process_waiting_process_instances,
         "interval",
+        id="process_waiting_instances",
+        name="process waiting instances",
         seconds=polling_interval_in_seconds,
     )
     scheduler.add_job(
         BackgroundProcessingService(app).process_running_process_instances,
         "interval",
+        id="process_running_instances",
+        name="process running instances",
         seconds=polling_interval_in_seconds,
     )
     scheduler.add_job(
         BackgroundProcessingService(app).process_user_input_required_process_instances,
         "interval",
+        id="process_user_input_required_instances",
+        name="process user-input-required instances",
         seconds=user_input_required_polling_interval_in_seconds,
     )
 
@@ -87,6 +95,8 @@ def _add_jobs_that_should_run_regardless_of_celery_config(app: flask.app.Flask, 
     scheduler.add_job(
         BackgroundProcessingService(app).process_message_instances_with_app_context,
         "interval",
+        id="correlate_message_instances",
+        name="correlate message instances",
         seconds=10,
     )
 
@@ -94,10 +104,14 @@ def _add_jobs_that_should_run_regardless_of_celery_config(app: flask.app.Flask, 
     scheduler.add_job(
         BackgroundProcessingService(app).process_not_started_process_instances,
         "interval",
+        id="process_not_started_instances",
+        name="process not-started instances",
         seconds=not_started_polling_interval_in_seconds,
     )
     scheduler.add_job(
         BackgroundProcessingService(app).remove_stale_locks,
         "interval",
+        id="remove_stale_locks",
+        name="remove stale process instance locks",
         seconds=app.config["MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"],
     )

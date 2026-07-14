@@ -9,6 +9,7 @@ import requests
 from flask import current_app
 from lxml import etree  # type: ignore
 
+from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -46,7 +47,263 @@ class ModelMarketplaceError(ImportError):
     """Exception raised when there are issues communicating with the model marketplace."""
 
 
+class InvalidFilestorePackageError(ImportError):
+    """Exception raised when a Files package cannot be imported."""
+
+
 class ProcessModelImportService:
+    @classmethod
+    def import_filestore_file_update(cls, payload: dict[str, Any], process_group_id: str) -> list[ProcessModelInfo]:
+        raw_file = payload.get("file")
+        file = raw_file if isinstance(raw_file, dict) else {}
+        path = file.get("path")
+        content = file.get("content")
+        if not isinstance(path, str) or content is None:
+            raise InvalidFilestorePackageError(
+                message="Files update payload must include file.path and file.content",
+                error_code="invalid_filestore_package",
+            )
+
+        return cls.import_from_filestore_package(
+            {
+                "project_id": payload.get("project_id"),
+                "project_name": payload.get("project_name"),
+                "process_model_id": payload.get("process_model_id"),
+                "files": [{"path": path, "content": str(content)}],
+            },
+            process_group_id,
+        )
+
+    @classmethod
+    def import_from_filestore_package(cls, package: dict[str, Any], process_group_id: str) -> list[ProcessModelInfo]:
+        process_group = cls._ensure_process_group(process_group_id)
+        files = cls._filestore_files_relative_to_explicit_model(cls._filestore_files(package), package)
+        model_dirs = cls._filestore_model_dirs(files)
+        process_models = []
+
+        for model_dir in model_dirs:
+            model_files = cls._filestore_files_for_model_dir(files, model_dir, model_dirs)
+            if not model_files:
+                continue
+
+            model_id = cls._filestore_model_id(package, model_dir)
+            full_process_model_id = f"{process_group.id}/{model_id}"
+            parent_group_id = "/".join(full_process_model_id.split("/")[:-1])
+            cls._ensure_process_group(parent_group_id)
+
+            existing_model = ProcessModelService.is_process_model_identifier(full_process_model_id)
+            has_model_json = "process_model.json" in model_files
+            model_info = cls._extract_process_model_info(model_files) if has_model_json or not existing_model else {}
+
+            if existing_model:
+                process_model = ProcessModelService.get_process_model(full_process_model_id)
+                if has_model_json:
+                    cls._update_process_model_from_filestore_info(process_model, model_info)
+            else:
+                display_name = model_info.get("display_name", cls._filestore_display_name(package, model_id, model_dir))
+                description = model_info.get(
+                    "description",
+                    f"Imported from Files project {package.get('project_id')} snapshot {package.get('snapshot_id')}",
+                )
+                process_model = ProcessModelInfo(
+                    id=full_process_model_id,
+                    display_name=display_name,
+                    description=description,
+                )
+                ProcessModelService.add_process_model(process_model)
+
+            for file_name, file_content in model_files.items():
+                if file_name == "process_model.json":
+                    continue
+                SpecFileService.update_file(process_model, file_name, file_content)
+
+            if not existing_model and model_info.get("primary_file_name"):
+                process_model.primary_file_name = model_info.get("primary_file_name")
+
+            if not existing_model and model_info.get("primary_process_id"):
+                process_model.primary_process_id = model_info.get("primary_process_id")
+
+            if not existing_model and model_info:
+                ProcessModelService.update_process_model(process_model, {})
+            process_models.append(process_model)
+
+        if not process_models:
+            raise InvalidFilestorePackageError(
+                message="Files package did not contain an importable process model",
+                error_code="invalid_filestore_package",
+            )
+
+        return process_models
+
+    @classmethod
+    def _update_process_model_from_filestore_info(
+        cls,
+        process_model: ProcessModelInfo,
+        model_info: dict[str, Any],
+    ) -> None:
+        updates = {}
+        for key in ("display_name", "description", "primary_file_name", "primary_process_id"):
+            if key in model_info and getattr(process_model, key) != model_info[key]:
+                updates[key] = model_info[key]
+
+        if updates:
+            ProcessModelService.update_process_model(process_model, updates)
+
+    @classmethod
+    def _ensure_process_group(cls, process_group_id: str) -> ProcessGroup:
+        if ProcessModelService.is_process_group_identifier(process_group_id):
+            return ProcessModelService.get_process_group(process_group_id)
+
+        parent_group_id = "/".join(process_group_id.split("/")[:-1])
+        if parent_group_id:
+            cls._ensure_process_group(parent_group_id)
+
+        return ProcessModelService.add_process_group(
+            ProcessGroup(
+                id=process_group_id,
+                display_name=process_group_id.rsplit("/", maxsplit=1)[-1].replace("-", " ").title(),
+            )
+        )
+
+    @classmethod
+    def _filestore_files(cls, package: dict[str, Any]) -> dict[str, bytes]:
+        raw_files = package.get("files")
+        if not isinstance(raw_files, list):
+            raise InvalidFilestorePackageError(
+                message="Files package must include a files array",
+                error_code="invalid_filestore_package",
+            )
+
+        files = {}
+        for raw_file in raw_files:
+            path = raw_file.get("path") if isinstance(raw_file, dict) else None
+            content = raw_file.get("content") if isinstance(raw_file, dict) else None
+            if not isinstance(path, str) or content is None:
+                continue
+            cls._validate_filestore_path(path)
+            files[path] = str(content).encode("utf-8")
+
+        if not files:
+            raise InvalidFilestorePackageError(
+                message="Files package did not include any files",
+                error_code="invalid_filestore_package",
+            )
+
+        return files
+
+    @classmethod
+    def _filestore_files_relative_to_explicit_model(
+        cls,
+        files: dict[str, bytes],
+        package: dict[str, Any],
+    ) -> dict[str, bytes]:
+        model_id = cls._explicit_filestore_model_id(package)
+        if not model_id:
+            return files
+
+        prefix = f"{model_id}/"
+        if not all(path.startswith(prefix) for path in files):
+            return files
+
+        return {path.removeprefix(prefix): content for path, content in files.items()}
+
+    @staticmethod
+    def _validate_filestore_path(path: str) -> None:
+        parts = path.split("/")
+        if path.startswith("/") or "" in parts or ".." in parts:
+            raise InvalidFilestorePackageError(
+                message=f"Invalid Files package path: {path}",
+                error_code="invalid_filestore_package",
+            )
+
+    @classmethod
+    def _filestore_model_dirs(cls, files: dict[str, bytes]) -> list[str]:
+        explicit_dirs = {
+            cls._dirname(path) for path in files if path.endswith("/process_model.json") or path == "process_model.json"
+        }
+        if explicit_dirs:
+            return sorted(explicit_dirs)
+
+        bpmn_dirs = {cls._dirname(path) for path in files if path.endswith(".bpmn")}
+        if not bpmn_dirs:
+            raise InvalidFilestorePackageError(
+                message="Files package must contain at least one BPMN file",
+                error_code="invalid_filestore_package",
+            )
+
+        if bpmn_dirs == {""}:
+            return [""]
+
+        return sorted(bpmn_dirs)
+
+    @staticmethod
+    def _dirname(path: str) -> str:
+        return path.rsplit("/", 1)[0] if "/" in path else ""
+
+    @classmethod
+    def _filestore_files_for_model_dir(
+        cls,
+        files: dict[str, bytes],
+        model_dir: str,
+        model_dirs: list[str],
+    ) -> dict[str, bytes]:
+        model_files = {}
+        for path, content in files.items():
+            owner = cls._filestore_owner_model_dir(path, model_dirs)
+            if owner != model_dir:
+                continue
+
+            file_name = path.removeprefix(f"{model_dir}/") if model_dir else path
+            if file_name == "process_group.json":
+                continue
+            model_files[file_name] = content
+
+        return model_files
+
+    @classmethod
+    def _filestore_owner_model_dir(cls, path: str, model_dirs: list[str]) -> str:
+        owners = [model_dir for model_dir in model_dirs if path == model_dir or path.startswith(f"{model_dir}/")]
+        if "" in model_dirs and "/" not in path:
+            owners.append("")
+        return max(owners, key=len) if owners else ""
+
+    @classmethod
+    def _filestore_model_id(cls, package: dict[str, Any], model_dir: str) -> str:
+        if model_dir:
+            return "/".join(cls._slug(segment) for segment in model_dir.split("/"))
+        process_model_id = cls._explicit_filestore_model_id(package)
+        if process_model_id:
+            return process_model_id
+        return cls._filestore_root_model_id(package)
+
+    @classmethod
+    def _explicit_filestore_model_id(cls, package: dict[str, Any]) -> str:
+        process_model_id = package.get("process_model_id")
+        if not isinstance(process_model_id, str) or not process_model_id.strip():
+            return ""
+        return "/".join(cls._slug(segment) for segment in process_model_id.split("/"))
+
+    @classmethod
+    def _filestore_root_model_id(cls, package: dict[str, Any]) -> str:
+        project_name = package.get("project_name")
+        if not isinstance(project_name, str) or not project_name.strip():
+            return cls._slug(str(package.get("label") or "filestore-project"))
+
+        return "/".join(cls._slug(segment) for segment in project_name.split("/"))
+
+    @classmethod
+    def _filestore_display_name(cls, package: dict[str, Any], model_id: str, model_dir: str) -> str:
+        project_name = package.get("project_name")
+        if not model_dir and isinstance(project_name, str) and project_name.strip():
+            return project_name.strip().rsplit("/", maxsplit=1)[-1]
+
+        return model_id.rsplit("/", maxsplit=1)[-1].replace("-", " ").title()
+
+    @staticmethod
+    def _slug(text: str) -> str:
+        slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", text).strip("-").lower()
+        return slug or "filestore-project"
+
     @classmethod
     def import_from_github_url(cls, url: str, process_group_id: str) -> ProcessModelInfo:
         process_group = ProcessModelService.get_process_group(process_group_id)

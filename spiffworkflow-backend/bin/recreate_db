@@ -70,6 +70,23 @@ function run_command_on_mysql_databases {
   done
 }
 
+function postgres_uri_for_database {
+  local database_name="$1"
+  sed -E "s#/${database_name_from_uri}$#/${database_name}#" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI"
+}
+
+function postgres_uri_is_available {
+  local database_uri="$1"
+  [[ -n "$database_uri" ]] || return 1
+  command -v psql >/dev/null || return 1
+  psql "$database_uri" -v ON_ERROR_STOP=1 -c "select 1" >/dev/null 2>&1
+}
+
+function clean_postgres_schema {
+  local database_uri="$1"
+  psql "$database_uri" -v ON_ERROR_STOP=1 -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;"
+}
+
 tasks=""
 if [[ "${1:-}" == "clean" ]]; then
   subcommand="${2:-}"
@@ -86,38 +103,48 @@ if [[ "${1:-}" == "clean" ]]; then
   elif [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "mysql" ]]; then
     run_command_on_mysql_databases "DROP DATABASE IF EXISTS"
   elif [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-}" == "postgres" ]]; then
-    # TODO: check to see if the db already exists and we can connect to it. also actually clean it up.
-    # start postgres in background with one db
-    container_name="postgres-spiff"
-    container_regex="^postgres-spiff$"
-    if [[ -n "$(docker ps -qa -f name=$container_regex)" ]]; then
-      echo ":: Found postgres container - $container_name"
-      if [[ -n "$(docker ps -q -f name=$container_regex)" ]]; then
-        echo ":: Stopping running container - $container_name"
-        docker stop $container_name
-      fi
-      echo ":: Removing stopped container - $container_name"
-      docker rm $container_name
-    fi
-    if ! docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "select 1"; then
-      docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
-      echo "Waiting for PostgreSQL to be ready..."
-      max_attempts=30 # Wait for up to 30 seconds
-      attempt_num=1
-      until docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "select 1" >/dev/null 2>&1; do
-        if [ "${attempt_num}" -ge "${max_attempts}" ]; then
-          echo >&2 "ERROR: PostgreSQL did not become ready after ${max_attempts} attempts."
-          exit 1
+    if postgres_uri_is_available "${SPIFFWORKFLOW_BACKEND_DATABASE_URI:-}"; then
+      echo ":: Using existing PostgreSQL from SPIFFWORKFLOW_BACKEND_DATABASE_URI"
+      clean_postgres_schema "$SPIFFWORKFLOW_BACKEND_DATABASE_URI"
+      if [[ "$database_name_from_uri" == "spiffworkflow_backend_local_development" ]]; then
+        unit_testing_uri="$(postgres_uri_for_database spiffworkflow_backend_unit_testing)"
+        if ! postgres_uri_is_available "$unit_testing_uri"; then
+          psql "$SPIFFWORKFLOW_BACKEND_DATABASE_URI" -v ON_ERROR_STOP=1 -c "CREATE DATABASE spiffworkflow_backend_unit_testing"
         fi
-        echo "PostgreSQL not ready yet, waiting 1 second... (Attempt ${attempt_num}/${max_attempts})"
-        sleep 1
-        attempt_num=$((attempt_num + 1))
-      done
-      echo "PostgreSQL is ready."
-    fi
-    if ! docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_local_development -c "select 1" >/dev/null 2>&1; then
-      # create other db. spiffworkflow_backend_unit_testing came with the docker run.
-      docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "create database spiffworkflow_backend_local_development;"
+        clean_postgres_schema "$unit_testing_uri"
+      fi
+    else
+      container_name="postgres-spiff"
+      container_regex="^postgres-spiff$"
+      if [[ -n "$(docker ps -qa -f name=$container_regex)" ]]; then
+        echo ":: Found postgres container - $container_name"
+        if [[ -n "$(docker ps -q -f name=$container_regex)" ]]; then
+          echo ":: Stopping running container - $container_name"
+          docker stop $container_name
+        fi
+        echo ":: Removing stopped container - $container_name"
+        docker rm $container_name
+      fi
+      if ! docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "select 1"; then
+        docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
+        echo "Waiting for PostgreSQL to be ready..."
+        max_attempts=30 # Wait for up to 30 seconds
+        attempt_num=1
+        until docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "select 1" >/dev/null 2>&1; do
+          if [ "${attempt_num}" -ge "${max_attempts}" ]; then
+            echo >&2 "ERROR: PostgreSQL did not become ready after ${max_attempts} attempts."
+            exit 1
+          fi
+          echo "PostgreSQL not ready yet, waiting 1 second... (Attempt ${attempt_num}/${max_attempts})"
+          sleep 1
+          attempt_num=$((attempt_num + 1))
+        done
+        echo "PostgreSQL is ready."
+      fi
+      if ! docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_local_development -c "select 1" >/dev/null 2>&1; then
+        # create other db. spiffworkflow_backend_unit_testing came with the docker run.
+        docker exec postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "create database spiffworkflow_backend_local_development;"
+      fi
     fi
   fi
   tasks="$tasks upgrade"

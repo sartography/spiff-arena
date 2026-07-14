@@ -4,7 +4,7 @@ import sys
 
 from spiffworkflow_backend import create_app
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 
 
 def main(process_instance_id: str) -> None:
@@ -16,10 +16,10 @@ def main(process_instance_id: str) -> None:
         if not process_instance:
             raise Exception(f"Could not find a process instance with id: {process_instance_id}")
 
-        processor = ProcessInstanceProcessor(
+        runtime = ProcessInstanceRuntime(
             process_instance, include_completed_subprocesses=True, include_task_data_for_completed_tasks=True
         )
-        processor.dump_to_disk(file_path)
+        runtime.dump_to_disk(file_path)
         print(f"Saved to {file_path}")
 
 
