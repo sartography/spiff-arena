@@ -135,7 +135,7 @@ export default function TaskTable({
             color="textSecondary"
             sx={{ display: 'flex', alignItems: 'center' }}
             title={
-              DateAndTimeService.convertSecondsToFormattedDateTime(
+              DateAndTimeService.convertSecondsToFormattedDateTimeWithTimezone(
                 entry.created_at_in_seconds,
               ) || '-'
             }
@@ -159,7 +159,7 @@ export default function TaskTable({
             color="textSecondary"
             sx={{ display: 'flex', alignItems: 'center' }}
             title={
-              DateAndTimeService.convertSecondsToFormattedDateTime(
+              DateAndTimeService.convertSecondsToFormattedDateTimeWithTimezone(
                 entry.updated_at_in_seconds,
               ) || '-'
             }

@@ -35,6 +35,7 @@ import {
   SpiffTableHeader,
 } from '../interfaces';
 import DateAndTimeService from '../services/DateAndTimeService';
+import FormattedDateTime from './FormattedDateTime';
 import HttpService from '../services/HttpService';
 import UserService from '../services/UserService';
 import PaginationForTable from './PaginationForTable';
@@ -321,7 +322,7 @@ export default function ProcessInstanceListTable({
   };
 
   const formatSecondsForDisplay = (_row: ProcessInstance, seconds: any) => {
-    return DateAndTimeService.convertSecondsToFormattedDateTime(seconds) || '-';
+    return <FormattedDateTime seconds={seconds} />;
   };
   const defaultFormatter = (_row: ProcessInstance, value: any) => {
     return value;
