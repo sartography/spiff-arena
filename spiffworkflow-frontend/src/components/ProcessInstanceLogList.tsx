@@ -342,7 +342,11 @@ export default function ProcessInstanceLogList({
             reloadDocument
             data-testid="process-instance-show-link"
             to={`${processInstanceShowPageBaseUrl}/${logEntry.process_instance_id}/${logEntry.spiff_task_guid}`}
-            title={t('view_state_when_task_was_completed')}
+            title={`${t('view_state_when_task_was_completed')} — ${
+              DateAndTimeService.convertSecondsToFormattedDateTimeWithTimezone(
+                logEntry.timestamp,
+              ) ?? ''
+            }`}
           >
             {DateAndTimeService.convertSecondsToFormattedDateTime(
               logEntry.timestamp,
