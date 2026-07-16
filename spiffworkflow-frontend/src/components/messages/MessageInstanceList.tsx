@@ -40,6 +40,7 @@ import HttpService from '../../services/HttpService';
 import { FormatProcessModelDisplayName } from '../MiniComponents';
 import { ProcessModel, MessageInstance, MessageModel } from '../../interfaces';
 import DateAndTimeService from '../../services/DateAndTimeService';
+import FormattedDateTime from '../FormattedDateTime';
 import SpiffTooltip from '../SpiffTooltip';
 
 import ProcessModelSearch from '../ProcessModelSearch';
@@ -446,9 +447,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
           </TableCell>
           <TableCell>{getProcessStatus(row.status)}</TableCell>
           <TableCell>
-            {DateAndTimeService.convertSecondsToFormattedDateTime(
-              row.created_at_in_seconds,
-            )}
+            <FormattedDateTime seconds={row.created_at_in_seconds} />
           </TableCell>
         </TableRow>
       );

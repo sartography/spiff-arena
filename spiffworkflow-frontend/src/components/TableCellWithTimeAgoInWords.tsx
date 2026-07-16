@@ -16,8 +16,9 @@ export default function TableCellWithTimeAgoInWords({
   return (
     <td
       title={
-        DateAndTimeService.convertSecondsToFormattedDateTime(timeInSeconds) ||
-        '-'
+        DateAndTimeService.convertSecondsToFormattedDateTimeWithTimezone(
+          timeInSeconds,
+        ) || '-'
       }
       onClick={onClick}
       onKeyDown={onKeyDown}

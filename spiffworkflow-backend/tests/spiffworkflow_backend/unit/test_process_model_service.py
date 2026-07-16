@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -9,6 +10,7 @@ from lxml import etree  # type: ignore
 
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.process_model_service import ProcessModelWithInstancesNotDeletableError
 from spiffworkflow_backend.services.user_service import UserService
@@ -17,6 +19,33 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessModelService(BaseTest):
+    def test_get_process_groups_rejects_paths_outside_root(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        root_path = tmp_path / "root"
+        escaped_group = tmp_path / "outside" / "escaped_group"
+        root_path.mkdir()
+        escaped_group.mkdir(parents=True)
+        (escaped_group / ProcessModelService.PROCESS_GROUP_JSON_FILE).write_text('{"display_name": "escaped"}')
+        monkeypatch.setattr(FileSystemService, "root_path", staticmethod(lambda: str(root_path)))
+
+        assert ProcessModelService.get_process_groups(str(tmp_path / "outside")) == []
+        assert ProcessModelService.get_process_groups(os.path.join("..", "outside")) == []
+
+    def test_get_process_groups_returns_empty_when_process_group_id_is_a_file(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        os.makedirs(ProcessModelService.root_path(), exist_ok=True)
+        file_valued_process_group_id = "file_valued_process_group"
+        with open(os.path.join(ProcessModelService.root_path(), file_valued_process_group_id), "w"):
+            pass
+
+        assert ProcessModelService.get_process_groups(file_valued_process_group_id) == []
+
     def test_get_process_groups_user_has_permissions_to_avoids_quadratic_permission_scans(
         self,
         app: Flask,
