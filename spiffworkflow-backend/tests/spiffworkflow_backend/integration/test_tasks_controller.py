@@ -13,14 +13,32 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial_stream
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.user_service import UserService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestTasksController(BaseTest):
+    @classmethod
+    def add_task_api_permissions(cls, *users: UserModel) -> None:
+        for user in users:
+            cls.add_permissions_to_user(
+                user,
+                target_uri="/tasks/%",
+                permission_names=["read", "update"],
+            )
+
+    @classmethod
+    def add_process_start_permissions(cls, user: UserModel, process_group_id: str) -> None:
+        process_identifier = f"{process_group_id}:%"
+        for target_uri in [
+            f"/process-instances/{process_identifier}",
+            f"/process-instance-run/{process_identifier}",
+        ]:
+            cls.add_permissions_to_user(user, target_uri=target_uri, permission_names=["create"])
+
     def test_task_show(
         self,
         app: Flask,
@@ -185,7 +203,8 @@ class TestTasksController(BaseTest):
         bpmn_file_location = "interstitial"
         # Assure we have someone in the finance team
         finance_user = self.find_or_create_user("testuser2")
-        AuthorizationService.import_permissions_from_yaml_file()
+        UserService.add_user_to_group_by_group_identifier(finance_user, "Finance Team")
+        self.add_task_api_permissions(finance_user)
         process_model = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
@@ -283,7 +302,9 @@ class TestTasksController(BaseTest):
         finance_user = self.find_or_create_user("testuser2")
         assert initiator_user.principal is not None
         assert finance_user.principal is not None
-        AuthorizationService.import_permissions_from_yaml_file()
+        UserService.add_user_to_group_by_group_identifier(finance_user, "Finance Team")
+        self.add_task_api_permissions(initiator_user, finance_user)
+        self.add_process_start_permissions(initiator_user, "finance")
 
         finance_group = GroupModel.query.filter_by(identifier="Finance Team").first()
         assert finance_group is not None
@@ -571,7 +592,9 @@ class TestTasksController(BaseTest):
         finance_user = self.find_or_create_user("testuser2")
         assert initiator_user.principal is not None
         assert finance_user.principal is not None
-        AuthorizationService.import_permissions_from_yaml_file()
+        UserService.add_user_to_group_by_group_identifier(finance_user, "Finance Team")
+        self.add_task_api_permissions(initiator_user, finance_user)
+        self.add_process_start_permissions(initiator_user, "finance")
 
         process_group_id = "finance"
         process_model_id = "model_with_lanes"
@@ -701,7 +724,9 @@ class TestTasksController(BaseTest):
         finance_user = self.find_or_create_user("testuser2")
         assert initiator_user.principal is not None
         assert finance_user.principal is not None
-        AuthorizationService.import_permissions_from_yaml_file()
+        UserService.add_user_to_group_by_group_identifier(finance_user, "Finance Team")
+        self.add_task_api_permissions(initiator_user)
+        self.add_process_start_permissions(initiator_user, "finance")
 
         process_group_id = "finance"
         process_model_id = "model_with_lanes"
