@@ -1609,20 +1609,24 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return (
       <>
         {taskInstancesToDisplay.map((task: BasicTask, index: number) => {
-          const buttonClass =
-            task.guid === taskToDisplay.guid ? 'selected-task-instance' : null;
+          const isSelectedTaskInstance = task.guid === taskToDisplay.guid;
+          const buttonClass = isSelectedTaskInstance
+            ? 'selected-task-instance'
+            : null;
           return (
-            <Grid container spacing={2}>
+            <Grid container spacing={2} key={task.guid}>
               <Grid size={{ xs: 1 }}>
-                <SpiffTooltip title="View">
-                  <IconButton
-                    onClick={() =>
-                      switchToTask(task.guid, taskInstancesToDisplay)
-                    }
-                  >
-                    <View />
-                  </IconButton>
-                </SpiffTooltip>
+                {isSelectedTaskInstance ? null : (
+                  <SpiffTooltip title="View">
+                    <IconButton
+                      onClick={() =>
+                        switchToTask(task.guid, taskInstancesToDisplay)
+                      }
+                    >
+                      <View />
+                    </IconButton>
+                  </SpiffTooltip>
+                )}
               </Grid>
               <Grid size={{ xs: 11 }}>
                 <div className={`task-instance-modal-row-item ${buttonClass}`}>
@@ -1674,7 +1678,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       taskInstancesToDisplay.length > 0
     ) {
       accordionItems.push(
-        <Accordion key="mi-task-instances">
+        <Accordion
+          key="mi-task-instances"
+          defaultExpanded={taskInstancesToDisplay.length <= 3}
+        >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             {t('task_instances')} ({taskInstancesToDisplay.length})
           </AccordionSummary>
