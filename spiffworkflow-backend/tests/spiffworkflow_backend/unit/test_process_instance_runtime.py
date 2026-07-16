@@ -46,7 +46,7 @@ class SupportsCeleryTaskRun(Protocol):
 
 
 class TestProcessInstanceRuntime(BaseTest):
-    def test_user_task_form_submission_replaces_prefilled_lists(
+    def test_user_task_form_submission_replaces_prefilled_values(
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
@@ -67,6 +67,7 @@ class TestProcessInstanceRuntime(BaseTest):
                 "removed": ["17", "16"],
                 "reordered": ["17", "16"],
                 "cleared": ["17"],
+                "nested": {"values": ["17"]},
             }
         )
         submitted_data = {
@@ -74,6 +75,7 @@ class TestProcessInstanceRuntime(BaseTest):
             "removed": ["16"],
             "reordered": ["16", "17"],
             "cleared": [],
+            "nested": {"values": ["16"]},
         }
 
         ProcessInstanceService.update_form_task_data(
@@ -84,6 +86,34 @@ class TestProcessInstanceRuntime(BaseTest):
         )
 
         assert {key: user_task.data[key] for key in submitted_data} == submitted_data
+
+    def test_user_task_form_submission_uses_configured_variable(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/simple_form",
+            bpmn_file_name="simple_form.bpmn",
+            process_model_source_directory="simple_form",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
+
+        user_task = runtime.get_all_ready_or_waiting_tasks()[0]
+        user_task.task_spec.variable = "hotVar3"
+        submitted_data = {"nested": {"values": ["16"]}}
+
+        ProcessInstanceService.update_form_task_data(
+            process_instance,
+            user_task,
+            submitted_data,
+            process_instance.process_initiator,
+        )
+
+        assert user_task.data["hotVar3"] == submitted_data
+        assert "nested" not in user_task.data
 
     def test_resume_fails_when_process_instance_has_error_tasks(self, monkeypatch: pytest.MonkeyPatch) -> None:
         error_task = SimpleNamespace(guid="error-task-guid")
