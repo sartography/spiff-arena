@@ -94,6 +94,15 @@ def should_capture_exception_in_sentry(exc_value: BaseException) -> bool:
     return should_notify_sentry(exc_value)
 
 
+def scrub_transaction_event(event: dict[str, Any], _hint: Any) -> dict[str, Any]:
+    tags = event.get("tags")
+    if isinstance(tags, dict):
+        tags.pop("url", None)
+    elif isinstance(tags, list):
+        event["tags"] = [tag for tag in tags if not (isinstance(tag, dict) and tag.get("key") == "url")]
+    return event
+
+
 def configure_sentry(app: flask.app.Flask) -> None:
     sentry_dsn = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_DSN")
 
@@ -140,6 +149,7 @@ def configure_sentry(app: flask.app.Flask) -> None:
         ),
         # The profiles_sample_rate setting is relative to the traces_sample_rate setting.
         "before_send": before_send,
+        "before_send_transaction": scrub_transaction_event,
     }
 
     # https://docs.sentry.io/platforms/python/configuration/releases
