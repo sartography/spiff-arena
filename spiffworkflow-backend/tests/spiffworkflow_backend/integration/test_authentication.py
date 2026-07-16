@@ -132,7 +132,11 @@ class TestAuthentication(BaseTest):
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        # This test covers group preservation during refresh, not the contents of
+        # the application's full permissions file.
+        monkeypatch.setattr(AuthorizationService, "load_permissions_yaml", lambda: {})
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", True):
             group_one = UserService.find_or_create_group("group_one")
             assert group_one.source_is_open_id is False
@@ -320,7 +324,10 @@ class TestAuthentication(BaseTest):
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        # Keep refresh real while limiting its unrelated YAML input.
+        monkeypatch.setattr(AuthorizationService, "load_permissions_yaml", lambda: {})
         service_account = ServiceAccountService.create_service_account("sa_api_key", with_super_admin_user)
         service_account_permissions_before = sorted(
             UserService.get_permission_targets_for_user(service_account.user, check_groups=False)
@@ -457,7 +464,7 @@ class TestAuthentication(BaseTest):
                 "permissions": [{"actions": ["create", "read"], "uri": "/public/*"}],
             }
         ]
-        AuthorizationService.refresh_permissions(group_info, group_permissions_only=True)
+        AuthorizationService.add_permissions_from_group_permissions(group_info, group_permissions_only=True)
         process_model = load_test_spec(
             process_model_id="test_group/message-start-event-with-form",
             process_model_source_directory="message-start-event-with-form",
@@ -503,7 +510,7 @@ class TestAuthentication(BaseTest):
                 "permissions": [{"actions": ["create", "read"], "uri": "/public/*"}],
             }
         ]
-        AuthorizationService.refresh_permissions(group_info, group_permissions_only=True)
+        AuthorizationService.add_permissions_from_group_permissions(group_info, group_permissions_only=True)
         process_model = load_test_spec(
             process_model_id="test_group/message-start-event-with-form",
             process_model_source_directory="message-start-event-with-form",
