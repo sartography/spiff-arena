@@ -315,6 +315,8 @@ Example:
 ```
 
 This configuration tells the SpiffWorkflow frontend to render a form based on `user_data_schema.json` and `user_data_uischema.json` when this User Task becomes active. The data submitted through this form becomes part of the task's data.
+By default, submitted fields are stored directly in the task data. If the User Task contains
+`<spiffworkflow:variableName>form_data</spiffworkflow:variableName>`, the submitted fields are instead stored together under `form_data`.
 
 Before the frontend receives a User Task form, Spiff Arena renders the referenced JSON Schema and UI Schema files through Jinja using the task data for that task.
 This allows process authors to build dynamic form labels, options, visibility settings, and schema fragments without using custom frontend code.
