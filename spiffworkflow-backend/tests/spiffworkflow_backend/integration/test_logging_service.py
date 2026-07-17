@@ -1,3 +1,4 @@
+import json
 import logging
 from unittest.mock import patch
 from uuid import UUID
@@ -46,6 +47,58 @@ class TestLoggingService(BaseTest):
         warning.assert_called_once()
         extra = warning.call_args.kwargs["extra"]
         assert extra[SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR] is True
+
+    def test_acknowledged_delivery_retries_same_event_until_committed(self, app: Flask) -> None:
+        handler = SpiffLogHandler(app)
+        handler.ack_enabled = True
+        record = logging.LogRecord(
+            name="spiff.event",
+            level=logging.INFO,
+            pathname=__file__,
+            lineno=0,
+            msg="process_instance_completed",
+            args=(),
+            exc_info=None,
+        )
+        record._spiff_data = {"process_instance_id": 42}
+        payloads: list[bytes] = []
+        attempts = 0
+
+        class Socket:
+            def __init__(self) -> None:
+                self.response = bytearray()
+
+            def sendall(self, payload: bytes) -> None:
+                nonlocal attempts
+                if payload == b"SPIFF-ANALYTICS/2\n":
+                    self.response.extend(b"READY\n")
+                    return
+                payloads.append(payload)
+                attempts += 1
+                if attempts > 1:
+                    self.response.extend(f"ACK {json.loads(payload)['id']}\n".encode())
+
+            def recv(self, _size: int) -> bytes:
+                if not self.response:
+                    return b""
+                return bytes([self.response.pop(0)])
+
+            def settimeout(self, _timeout: int) -> None:
+                pass
+
+            def close(self) -> None:
+                pass
+
+        sockets = [Socket(), Socket()]
+        with (
+            patch.object(handler, "makeSocket", side_effect=sockets),
+            patch("spiffworkflow_backend.services.logging_service.time.sleep"),
+            patch.object(app.logger, "warning"),
+        ):
+            handler.emit(record)
+
+        assert len(payloads) == 2
+        assert payloads[0] == payloads[1]
 
     def test_logging_service_detailed_logs(
         self,

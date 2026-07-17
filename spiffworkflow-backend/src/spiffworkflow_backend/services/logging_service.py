@@ -41,6 +41,8 @@ class SpiffLogHandler(SocketHandler):
             app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT"],
         )
         self.app = app
+        self.ack_enabled = app.config.get("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_ACK_ENABLED", False)
+        self.ack_timeout_seconds = app.config.get("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_ACK_TIMEOUT_SECONDS", 5)
         self.dropped_event_count = 0
         self.next_socket_warning_at = 0.0
         try:
@@ -173,32 +175,98 @@ class SpiffLogHandler(SocketHandler):
                 self.sock = None
                 self.log_socket_failure(exception, record)
 
+    def receive_protocol_line(self) -> bytes:
+        if self.sock is None:
+            raise ConnectionError("event stream socket is not connected")
+        response = bytearray()
+        while not response.endswith(b"\n"):
+            chunk = self.sock.recv(1)
+            if not chunk:
+                raise ConnectionError("event stream closed before acknowledging the event")
+            response.extend(chunk)
+            if len(response) > 512:
+                raise ConnectionError("event stream returned an oversized protocol response")
+        return bytes(response)
+
+    def connect_acknowledged_socket(self) -> None:
+        self.sock = self.makeSocket()
+        self.sock.settimeout(self.ack_timeout_seconds)
+        self.sock.sendall(b"SPIFF-ANALYTICS/2\n")
+        if self.receive_protocol_line() != b"READY\n":
+            raise ConnectionError("event stream does not support acknowledged delivery")
+
+    def send_acknowledged(self, payload: bytes, event_id: str, record: Any) -> None:
+        """Retry one immutable event until its durable PostgreSQL commit is acknowledged."""
+        retry_delay = 0.1
+        while True:
+            try:
+                if self.sock is None:
+                    self.connect_acknowledged_socket()
+                sock = self.sock
+                if sock is None:
+                    raise ConnectionError("event stream socket is not connected")
+                sock.sendall(payload)
+                response = self.receive_protocol_line()
+                if response == f"ACK {event_id}\n".encode("ascii"):
+                    return
+                if response.startswith(b"NACK "):
+                    raise ValueError(response.decode("utf-8", errors="replace").strip())
+                raise ConnectionError("event stream returned an invalid acknowledgement")
+            except ValueError:
+                if self.sock is not None:
+                    self.sock.close()
+                    self.sock = None
+                raise
+            except OSError as exception:
+                if self.sock is not None:
+                    self.sock.close()
+                    self.sock = None
+                self.log_socket_failure(exception, record, will_retry=True)
+                time.sleep(retry_delay)
+                retry_delay = min(retry_delay * 2, 5.0)
+
     def emit(self, record: Any) -> None:
         try:
             s = self.makePickle(record)
-            self.send(s, record)
+            if self.ack_enabled:
+                event_id = json.loads(s)["id"]
+                self.send_acknowledged(s, event_id, record)
+            else:
+                self.send(s, record)
         except Exception:
             self.handleError(record)
 
-    def log_socket_failure(self, exception: OSError | None, record: Any | None) -> None:
-        self.dropped_event_count += 1
+    def log_socket_failure(
+        self,
+        exception: OSError | None,
+        record: Any | None,
+        will_retry: bool = False,
+    ) -> None:
+        if not will_retry:
+            self.dropped_event_count += 1
         now = time.monotonic()
         if now < self.next_socket_warning_at:
             return
 
-        dropped_event_count = self.dropped_event_count
-        self.dropped_event_count = 0
+        affected_event_count = max(self.dropped_event_count, 1)
+        if not will_retry:
+            self.dropped_event_count = 0
         self.next_socket_warning_at = now + self.socket_warning_interval_seconds
 
         spiff_data = getattr(record, "_spiff_data", {}) if record is not None else {}
         self.app.logger.warning(
-            "Event stream socket logging failed; dropping Spiff event records.",
+            (
+                "Event stream delivery interrupted; retaining and retrying the Spiff event."
+                if will_retry
+                else "Event stream socket logging failed; dropping Spiff event records."
+            ),
             extra={
                 SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR: True,
                 "extras": {
                     "event_stream_host": self.host,
                     "event_stream_port": self.port,
-                    "dropped_event_count": dropped_event_count,
+                    "dropped_event_count": 0 if will_retry else affected_event_count,
+                    "delivery_will_retry": will_retry,
                     "event_logger_name": getattr(record, "name", None),
                     "event_message": getattr(record, "msg", None),
                     "process_instance_id": spiff_data.get("process_instance_id"),

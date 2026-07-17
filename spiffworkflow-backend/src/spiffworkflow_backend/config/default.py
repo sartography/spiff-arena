@@ -198,6 +198,8 @@ config_from_env("SPIFFWORKFLOW_BACKEND_LOG_MILESTONES", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_SOURCE", default="spiffworkflow.org")
+config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_ACK_ENABLED", default=False)
+config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_ACK_TIMEOUT_SECONDS", default=5)
 config_from_env("SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_API_LOG_ALL_ENDPOINTS", default=False)
 
