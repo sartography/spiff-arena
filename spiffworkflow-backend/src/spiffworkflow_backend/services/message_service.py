@@ -41,6 +41,7 @@ from spiffworkflow_backend.services.process_instance_runtime import ProcessInsta
 from spiffworkflow_backend.services.process_instance_script_engine import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.user_service import UserService
+from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 
 
 class MessageServiceError(Exception):
@@ -746,10 +747,16 @@ class MessageService:
                     runtime_receive,
                     execution_mode=ProcessInstanceExecutionMode.asynchronous.value,
                 )
-            queue_process_instance_if_appropriate(
-                receiving_process_instance,
-                execution_mode=ProcessInstanceExecutionMode.asynchronous.value,
-            )
+                task_runnability = runtime_receive.do_engine_steps(
+                    save=True,
+                    execution_strategy_name="queue_instructions_for_end_user",
+                    needs_dequeue=False,
+                )
+            if task_runnability == TaskRunnability.has_ready_tasks:
+                queue_process_instance_if_appropriate(
+                    receiving_process_instance,
+                    execution_mode=ProcessInstanceExecutionMode.asynchronous.value,
+                )
             return message_instance_receive
         except Exception as exception:
             cls._handle_correlation_failure(

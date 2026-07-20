@@ -221,16 +221,13 @@ class TestMessageService(BaseTest):
         receiver_message = MessageInstanceModel.query.filter_by(id=worker_result["receiver_message_instance_id"]).one()
         db.session.refresh(send_message)
         assert worker_result["process_instance_id"] == started_process_instance.id
-        assert started_process_instance.status == ProcessInstanceStatus.running.value
+        assert started_process_instance.status == ProcessInstanceStatus.complete.value
         assert started_process_instance.bpmn_process_definition_id is not None
         assert started_process_instance.bpmn_process_id is not None
         assert send_message.status == MessageStatuses.completed.value
         assert receiver_message.status == MessageStatuses.completed.value
         assert receiver_message.process_instance_id == started_process_instance.id
-        queue_process_instance.assert_called_once_with(
-            started_process_instance,
-            execution_mode=ProcessInstanceExecutionMode.asynchronous.value,
-        )
+        queue_process_instance.assert_not_called()
 
     def test_run_process_model_from_message_keeps_not_accepted_send_for_debugging(
         self,
