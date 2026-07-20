@@ -424,14 +424,6 @@ export interface PaginationObject {
   pages: number;
 }
 
-export interface CarbonComboBoxSelection {
-  selectedItem: any;
-}
-
-export interface CarbonComboBoxProcessSelection {
-  selectedItem: ProcessReference;
-}
-
 export interface PermissionsToCheck {
   [key: string]: string[];
 }

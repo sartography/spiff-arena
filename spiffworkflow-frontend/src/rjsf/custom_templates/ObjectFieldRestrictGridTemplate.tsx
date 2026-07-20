@@ -7,7 +7,7 @@ import {
 import ObjectFieldTemplate from './ObjectFieldTemplate';
 
 /*
- * Returns the ObjectFieldTemplate but with restricted column count for the carbon grid.
+ * Returns the ObjectFieldTemplate with a restricted grid column count.
  * Only affects rjsf object field type with the "ui:layout".
  */
 

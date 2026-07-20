@@ -66,6 +66,19 @@ def test_can_filter(page: Page):
     # 4. Expand filter section
     page.get_by_test_id("filter-section-expand-toggle").click()
 
+    first_column_chip = page.locator(".filter-tag").first
+    expect(first_column_chip).to_be_visible()
+    assert first_column_chip.bounding_box()["width"] <= 128
+
+    save_button = page.get_by_role("button", name="Save", exact=True)
+    clear_filters_button = page.get_by_role("button", name="Clear", exact=True)
+    advanced_button = page.get_by_test_id("advanced-options-filters")
+    expect(save_button).to_be_visible()
+    expect(clear_filters_button).to_be_visible()
+    expect(advanced_button).to_be_visible()
+    assert save_button.bounding_box()["x"] < clear_filters_button.bounding_box()["x"]
+    assert advanced_button.bounding_box()["x"] > clear_filters_button.bounding_box()["x"]
+
     # 5. Filter by each status except 'all' and 'waiting', verifying UI tag behavior
     statuses = [
         "complete", "error", "not_started", "running",
@@ -75,15 +88,19 @@ def test_can_filter(page: Page):
         # Open status dropdown and select the status
         select = page.locator("#process-instance-status-select")
         select.click()
-        select.get_by_text(titleize(status), exact=False).click()
-        # After selection, a tag '1' appears
-        tag = page.locator("#process-instance-status-select .cds--tag", has_text="1")
+        page.get_by_role("option", name=titleize(status), exact=True).click()
+        # After selection, a chip for the selected status appears
+        tag = page.locator(".MuiAutocomplete-tag")
         expect(tag).to_be_visible(timeout=5000)
+        expect(tag).to_contain_text(titleize(status))
         # Clear the status filter
-        clear_btn = page.locator('div[aria-label="Clear all selected items"]').first
+        status_autocomplete = select.locator(
+            "xpath=ancestor::div[contains(@class, 'MuiAutocomplete-root')]"
+        )
+        clear_btn = status_autocomplete.get_by_title("Clear")
         clear_btn.click()
-        # Confirm tag removed
-        expect(page.locator("#process-instance-status-select .cds--tag")).to_have_count(0)
+        # Confirm chip removed
+        expect(page.locator(".MuiAutocomplete-tag")).to_have_count(0)
 
     # 6. Filter to instances started in the last hour and expect results
     time_range_button = page.get_by_test_id("time-range-filter-button")

@@ -296,7 +296,8 @@ function SideNav({
           sx={{
             width: isCollapsed ? collapsedDrawerWidth : drawerWidth,
             flexShrink: 0,
-            borderRight: '1px solid #e0e0e0',
+            borderRight: '1px solid',
+            borderRightColor: 'divider',
             height: '100vh',
             bgcolor: 'background.nav',
             transition: 'width 0.3s',
@@ -434,7 +435,10 @@ function SideNav({
                 title={t('toggle_dark_mode')}
                 placement={isCollapsed ? 'right' : 'top'}
               >
-                <IconButton onClick={onToggleDarkMode}>
+                <IconButton
+                  aria-label={t('toggle_dark_mode')}
+                  onClick={onToggleDarkMode}
+                >
                   {isDark ? <Brightness7 /> : <Brightness4 />}
                 </IconButton>
               </SpiffTooltip>
