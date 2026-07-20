@@ -6,18 +6,18 @@
   <bpmn:process id="Process_message_start" isExecutable="true">
     <bpmn:startEvent id="message_start_event" name="Message start event" messageRef="[object Object]">
       <bpmn:outgoing>Flow_08cv33e</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_014kujv" messageRef="Message_0rcwl5q" />
+      <bpmn:messageEventDefinition id="MessageEventDefinition_014kujv" messageRef="Message_0rcwl5q">
+        <bpmn:extensionElements>
+          <spiffworkflow:messageVariable>the_message</spiffworkflow:messageVariable>
+        </bpmn:extensionElements>
+      </bpmn:messageEventDefinition>
     </bpmn:startEvent>
     <bpmn:sequenceFlow id="Flow_08cv33e" sourceRef="message_start_event" targetRef="Event_1bsjcsi" />
     <bpmn:endEvent id="Event_1bsjcsi">
       <bpmn:incoming>Flow_08cv33e</bpmn:incoming>
     </bpmn:endEvent>
   </bpmn:process>
-  <bpmn:message id="Message_0rcwl5q" name="message_one">
-    <bpmn:extensionElements>
-      <spiffworkflow:messageVariable>the_message</spiffworkflow:messageVariable>
-    </bpmn:extensionElements>
-  </bpmn:message>
+  <bpmn:message id="Message_0rcwl5q" name="message_one" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0vy9d1x">
       <bpmndi:BPMNShape id="Participant_12dcof4_di" bpmnElement="Participant_12dcof4" isHorizontal="true">

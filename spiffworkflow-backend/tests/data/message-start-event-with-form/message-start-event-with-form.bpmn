@@ -24,7 +24,11 @@ We hear you. Your name is **{{incoming_request['firstName']}}**.</spiffworkflow:
         </spiffworkflow:properties>
       </bpmn:extensionElements>
       <bpmn:outgoing>Flow_17db3yp</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_13ctnqx" messageRef="Message_1rfi4qj" />
+      <bpmn:messageEventDefinition id="MessageEventDefinition_13ctnqx" messageRef="Message_1rfi4qj">
+        <bpmn:extensionElements>
+          <spiffworkflow:messageVariable>incoming_request</spiffworkflow:messageVariable>
+        </bpmn:extensionElements>
+      </bpmn:messageEventDefinition>
     </bpmn:startEvent>
     <bpmn:scriptTask id="script_task_one" name="Script Task One">
       <bpmn:incoming>Flow_17db3yp</bpmn:incoming>
@@ -32,11 +36,7 @@ We hear you. Your name is **{{incoming_request['firstName']}}**.</spiffworkflow:
       <bpmn:script>a = 1</bpmn:script>
     </bpmn:scriptTask>
   </bpmn:process>
-  <bpmn:message id="Message_1rfi4qj" name="bounty_start">
-    <bpmn:extensionElements>
-      <spiffworkflow:messageVariable>incoming_request</spiffworkflow:messageVariable>
-    </bpmn:extensionElements>
-  </bpmn:message>
+  <bpmn:message id="Message_1rfi4qj" name="bounty_start" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1h79dxi">
       <bpmndi:BPMNShape id="Participant_04cn64m_di" bpmnElement="Participant_04cn64m" isHorizontal="true">

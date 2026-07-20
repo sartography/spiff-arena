@@ -18,12 +18,20 @@
     <bpmn:intermediateCatchEvent id="Event_0xbr8bu">
       <bpmn:incoming>Flow_0d35i06</bpmn:incoming>
       <bpmn:outgoing>Flow_1w3n49n</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_1aazu62" messageRef="message_1" />
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1aazu62" messageRef="message_1">
+        <bpmn:extensionElements>
+          <spiffworkflow:messageVariable>result</spiffworkflow:messageVariable>
+        </bpmn:extensionElements>
+      </bpmn:messageEventDefinition>
     </bpmn:intermediateCatchEvent>
     <bpmn:intermediateCatchEvent id="Event_0himdx6">
       <bpmn:incoming>Flow_0tzaigt</bpmn:incoming>
       <bpmn:outgoing>Flow_1q47ol8</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_0oersqt" messageRef="message_2" />
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0oersqt" messageRef="message_2">
+        <bpmn:extensionElements>
+          <spiffworkflow:messageVariable>result</spiffworkflow:messageVariable>
+        </bpmn:extensionElements>
+      </bpmn:messageEventDefinition>
     </bpmn:intermediateCatchEvent>
     <bpmn:sequenceFlow id="Flow_0tzaigt" sourceRef="Gateway_0n53kj7" targetRef="Event_0himdx6" />
     <bpmn:sequenceFlow id="Flow_1vld4r2" sourceRef="Gateway_0n53kj7" targetRef="Event_0e4owa3" />
@@ -55,16 +63,8 @@
       <bpmn:incoming>Flow_1vwnf3n</bpmn:incoming>
     </bpmn:endEvent>
   </bpmn:process>
-  <bpmn:message id="message_1" name="Message 1">
-    <bpmn:extensionElements>
-      <spiffworkflow:messageVariable>result</spiffworkflow:messageVariable>
-    </bpmn:extensionElements>
-  </bpmn:message>
-  <bpmn:message id="message_2" name="Message 2">
-    <bpmn:extensionElements>
-      <spiffworkflow:messageVariable>result</spiffworkflow:messageVariable>
-    </bpmn:extensionElements>
-  </bpmn:message>
+  <bpmn:message id="message_1" name="Message 1" />
+  <bpmn:message id="message_2" name="Message 2" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1022bxx">
       <bpmndi:BPMNShape id="Participant_1gfxnts_di" bpmnElement="Participant_1gfxnts" isHorizontal="true">

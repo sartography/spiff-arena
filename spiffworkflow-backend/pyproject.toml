@@ -65,6 +65,7 @@ dependencies = [
     "authlib>=1.6.11",
     "starlette>=0.47.2",
     "uvicorn-worker>=0.3.0",
+    "httpx2>=2.7.0",
 ]
 
 [dependency-groups]

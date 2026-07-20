@@ -3,7 +3,11 @@
   <bpmn:process id="message_start_service_task" isExecutable="true">
     <bpmn:startEvent id="message_start_event" name="Message start event">
       <bpmn:outgoing>Flow_start_to_service</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_quick_callback" messageRef="Message_quick_callback" />
+      <bpmn:messageEventDefinition id="MessageEventDefinition_quick_callback" messageRef="Message_quick_callback">
+        <bpmn:extensionElements>
+          <spiffworkflow:messageVariable>the_message</spiffworkflow:messageVariable>
+        </bpmn:extensionElements>
+      </bpmn:messageEventDefinition>
     </bpmn:startEvent>
     <bpmn:sequenceFlow id="Flow_start_to_service" sourceRef="message_start_event" targetRef="Task_quick_callback_service" />
     <bpmn:serviceTask id="Task_quick_callback_service" name="Quick callback service">
@@ -29,11 +33,7 @@
       <bpmn:incoming>Flow_script_to_end</bpmn:incoming>
     </bpmn:endEvent>
   </bpmn:process>
-  <bpmn:message id="Message_quick_callback" name="quick_callback_service_task">
-    <bpmn:extensionElements>
-      <spiffworkflow:messageVariable>the_message</spiffworkflow:messageVariable>
-    </bpmn:extensionElements>
-  </bpmn:message>
+  <bpmn:message id="Message_quick_callback" name="quick_callback_service_task" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="message_start_service_task">
       <bpmndi:BPMNShape id="StartEvent_di" bpmnElement="message_start_event">
