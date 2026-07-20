@@ -49,6 +49,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   Alert,
+  Link as MuiLink,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
@@ -496,13 +497,20 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
   const completionViewLink = (label: any, taskGuid: string) => {
     return (
-      <Link
+      <MuiLink
+        component={Link}
         reloadDocument
         data-testid="process-instance-step-link"
         to={`${processInstanceShowPageBaseUrl}/${taskGuid}${queryParams()}`}
+        sx={(theme) => ({
+          color:
+            theme.palette.mode === 'dark'
+              ? theme.palette.info.light
+              : theme.palette.primary.main,
+        })}
       >
         {label}
-      </Link>
+      </MuiLink>
     );
   };
   const returnToProcessInstance = () => {
