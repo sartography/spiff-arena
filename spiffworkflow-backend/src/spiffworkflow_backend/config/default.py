@@ -95,6 +95,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_EXECUTIO
 config_from_env("SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", default="http://localhost:7001")
 config_from_env("SPIFFWORKFLOW_BACKEND_URL", default="http://localhost:7000")
 config_from_env("SPIFFWORKFLOW_BACKEND_CHECK_FRONTEND_AND_BACKEND_URL_COMPATIBILITY", default=True)
+config_from_env("SPIFFWORKFLOW_BACKEND_ALLOWED_REDIRECT_HOST_ALIASES", default="localhost,127.0.0.1,::1")
 cors_allow_all = "*"
 SPIFFWORKFLOW_BACKEND_CORS_ALLOW_ORIGINS = re.split(
     r",\s*",

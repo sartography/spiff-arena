@@ -62,6 +62,7 @@ export default function SearchBar({
       sx={{
         width: '100%',
         maxWidth: 1200,
+        boxSizing: 'border-box',
         display: 'flex',
         gap: 2,
         flexWrap: 'wrap',
@@ -72,14 +73,11 @@ export default function SearchBar({
         alignItems: 'center',
       }}
     >
-      <Box sx={{ flexGrow: 1 }}>
+      <Box sx={{ flexGrow: 1, minWidth: { xs: '100%', sm: 240 } }}>
         <TextField
           size="small"
           sx={{
-            width: {
-              xs: 300,
-              sm: '100%',
-            },
+            width: '100%',
             backgroundColor: bgPaper,
           }}
           variant="outlined"
@@ -101,7 +99,10 @@ export default function SearchBar({
         label={t('sort_by')}
         value={sortBy}
         onChange={(e) => onSortChange(e.target.value as ProcessModelSortOption)}
-        sx={{ minWidth: 160, backgroundColor: bgPaper }}
+        sx={{
+          minWidth: { xs: '100%', sm: 160 },
+          backgroundColor: bgPaper,
+        }}
       >
         <MenuItem value="alphabetical">{t('alphabetical')}</MenuItem>
         <MenuItem value="recently_ran">{t('recently_ran')}</MenuItem>

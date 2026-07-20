@@ -17,7 +17,7 @@ export default function ProcessGroupNew() {
   const { t } = useTranslation();
 
   useEffect(() => {
-    setPageTitle([t('new_process_group')]);
+    setPageTitle([t('add_process_group')]);
   }, [t]);
 
   const hotCrumbs: HotCrumbItem[] = [[t('process_groups'), '/process-groups']];
@@ -33,7 +33,7 @@ export default function ProcessGroupNew() {
     <>
       <ProcessBreadcrumb hotCrumbs={hotCrumbs} />
       <Typography variant="h1" gutterBottom>
-        {t('new_process_group')}
+        {t('add_process_group')}
       </Typography>
       <ProcessGroupForm
         mode="new"

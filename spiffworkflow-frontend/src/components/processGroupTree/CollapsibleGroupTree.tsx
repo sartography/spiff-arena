@@ -19,6 +19,7 @@ interface CollapsibleGroupTreeProps {
   sortProcessModels?: (models: ProcessModel[]) => ProcessModel[];
   showEmptyGroupsAndModels?: boolean;
   defaultExpandedGroupIds?: string[];
+  renderGroupActions?: (group: ProcessGroup) => ReactNode;
   renderGroupMetadata?: (group: ProcessGroup, count: number) => ReactNode;
   emptyText?: string;
 }
@@ -33,6 +34,7 @@ export default function CollapsibleGroupTree({
   sortProcessModels,
   showEmptyGroupsAndModels = true,
   defaultExpandedGroupIds,
+  renderGroupActions,
   renderGroupMetadata,
   emptyText,
 }: CollapsibleGroupTreeProps) {
@@ -111,6 +113,7 @@ export default function CollapsibleGroupTree({
           ) : getGroupInstanceCount ? (
             <Chip size="small" label={count} />
           ) : null}
+          {renderGroupActions ? renderGroupActions(group) : null}
         </Box>
         <Collapse in={expanded} unmountOnExit>
           {childGroups.map((child) => renderGroup(child, depth + 1))}

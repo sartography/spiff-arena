@@ -5,18 +5,162 @@ to the API definitions. The tests will fail with 500 errors until the backend is
 restarted with the new API definitions.
 """
 
+from pathlib import Path
+from unittest.mock import MagicMock
 from unittest.mock import patch
 
+import pytest
 from flask.app import Flask
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.process_model_import_service import InvalidFilestorePackageError
 from spiffworkflow_backend.services.process_model_import_service import ProcessModelImportService
+from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessModelImportController(BaseTest):
+    def test_process_model_import_from_filestore_package_preserves_process_model_directories(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        bpmn = Path("tests/data/simple_script/simple_script.bpmn").read_text()
+        package = {
+            "project_id": "files-project",
+            "snapshot_id": "snapshot-1",
+            "files": [
+                {"path": "main/main.bpmn", "content": bpmn.replace("Process_SimpleScript", "main_process")},
+                {"path": "called/activity.bpmn", "content": bpmn.replace("Process_SimpleScript", "called_activity")},
+            ],
+        }
+
+        process_models = ProcessModelImportService.import_from_filestore_package(package, "filestore")
+
+        assert [process_model.id for process_model in process_models] == ["filestore/called", "filestore/main"]
+        assert FileSystemService.get_data(process_models[0], "activity.bpmn").decode().find("called_activity") > -1
+        assert FileSystemService.get_data(process_models[1], "main.bpmn").decode().find("main_process") > -1
+
+    def test_process_model_import_from_filestore_package_names_root_model_without_moving_files(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        bpmn = Path("tests/data/simple_script/simple_script.bpmn").read_text()
+        package = {
+            "project_id": "7638D555-2E7F-48F0-8036-0C7Cb58B9C5A",
+            "project_name": "Test4",
+            "snapshot_id": "snapshot-1",
+            "files": [
+                {"path": "test4.bpmn", "content": bpmn},
+            ],
+        }
+
+        process_models = ProcessModelImportService.import_from_filestore_package(package, "filestore")
+
+        assert len(process_models) == 1
+        assert process_models[0].id == "filestore/test4"
+        assert process_models[0].display_name == "Test4"
+        assert FileSystemService.get_data(process_models[0], "test4.bpmn").decode().find("Process_SimpleScript") > -1
+
+    def test_process_model_import_from_filestore_package_can_use_explicit_root_model_id(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        bpmn = Path("tests/data/simple_script/simple_script.bpmn").read_text()
+        package = {
+            "project_id": "files-project",
+            "project_name": "so/hot",
+            "process_model_id": "hot",
+            "snapshot_id": "snapshot-1",
+            "files": [
+                {"path": "hot/bam.bpmn", "content": bpmn},
+            ],
+        }
+
+        process_models = ProcessModelImportService.import_from_filestore_package(package, "so")
+
+        assert [process_model.id for process_model in process_models] == ["so/hot"]
+        assert process_models[0].display_name == "hot"
+        assert FileSystemService.get_data(process_models[0], "bam.bpmn").decode().find("Process_SimpleScript") > -1
+
+    def test_process_model_import_from_filestore_file_update_names_root_model(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        bpmn = Path("tests/data/simple_script/simple_script.bpmn").read_text()
+
+        process_models = ProcessModelImportService.import_filestore_file_update(
+            {
+                "project_id": "7638D555-2E7F-48F0-8036-0C7Cb58B9C5A",
+                "project_name": "Test4",
+                "file": {"path": "test4.bpmn", "content": bpmn},
+            },
+            "filestore",
+        )
+
+        assert [process_model.id for process_model in process_models] == ["filestore/test4"]
+        assert FileSystemService.get_data(process_models[0], "test4.bpmn").decode().find("Process_SimpleScript") > -1
+
+    def test_process_model_import_from_filestore_file_update_only_updates_that_file(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        bpmn = Path("tests/data/simple_script/simple_script.bpmn").read_text()
+        load_test_spec(
+            "playground/samwise/hello",
+            bpmn_file_name="simple_script.bpmn",
+            process_model_source_directory="simple_script",
+        )
+        load_test_spec(
+            "playground/gandalf/secret",
+            bpmn_file_name="hello_world.bpmn",
+            process_model_source_directory="hello_world",
+        )
+        update_file = MagicMock(wraps=SpecFileService.update_file)
+
+        monkeypatch.setattr(SpecFileService, "update_file", update_file)
+
+        process_models = ProcessModelImportService.import_filestore_file_update(
+            {
+                "project_id": "playground",
+                "file": {
+                    "path": "samwise/hello/simple_script.bpmn",
+                    "content": bpmn.replace("Process_SimpleScript", "Process_Hello_Samwise"),
+                },
+            },
+            "playground",
+        )
+
+        assert [process_model.id for process_model in process_models] == ["playground/samwise/hello"]
+        assert update_file.call_count == 1
+        assert update_file.call_args.args[0].id == "playground/samwise/hello"
+        assert update_file.call_args.args[1] == "simple_script.bpmn"
+
+    def test_process_model_import_from_filestore_file_update_requires_inline_content(
+        self,
+        app: Flask,
+    ) -> None:
+        with pytest.raises(InvalidFilestorePackageError) as exception_info:
+            ProcessModelImportService.import_filestore_file_update(
+                {
+                    "project_id": "playground",
+                    "path": "samwise/hello/simple_script.bpmn",
+                },
+                "playground",
+            )
+
+        assert exception_info.value.error_code == "invalid_filestore_package"
+        assert "file.path and file.content" in exception_info.value.message
+
     def test_process_model_import_from_github(
         self,
         app: Flask,

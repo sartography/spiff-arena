@@ -5,16 +5,23 @@ import {
   Box,
   Chip,
   Container,
+  Divider,
   IconButton,
   Stack,
   Typography,
   Breadcrumbs,
   Link,
+  ListItemIcon,
+  ListSubheader,
+  ListItemText,
   Card,
   CardContent,
   Button,
+  Menu,
+  MenuItem,
   ToggleButton,
   ToggleButtonGroup,
+  Tooltip,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import React, {
@@ -28,26 +35,24 @@ import React, {
 import { Can } from '@casl/react';
 import { Subject } from 'rxjs';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import StarRateIcon from '@mui/icons-material/StarRate';
 import {
   Delete,
   Edit,
   Add,
+  Folder,
   Home,
+  MoreVert,
+  PlayArrow,
   ViewList,
   ViewModule,
 } from '@mui/icons-material';
 import { useDebouncedCallback } from 'use-debounce';
 import { useParams, useNavigate } from 'react-router';
 import useProcessGroups from '../../hooks/useProcessGroups';
-import TreePanel, { TreeRef, SHOW_FAVORITES } from './TreePanel';
+import TreePanel, { TreeRef } from './TreePanel';
 import SearchBar from './SearchBar';
 import ProcessGroupCard from './ProcessGroupCard';
 import ProcessModelCard from './ProcessModelCard';
-import {
-  SPIFF_FAVORITES,
-  getStorageValue,
-} from '../../services/LocalStorageService';
 import {
   PermissionsToCheck,
   ProcessGroup,
@@ -74,6 +79,11 @@ import {
   buildGroupModelCountMap,
   filterProcessGroupTree,
 } from '../../components/processGroupTree/groupTreeHelpers';
+import { useConfirmationDialog } from '../../hooks/useConfirmationDialog';
+import {
+  processDescriptionSx,
+  truncateProcessDescription,
+} from './processDescription';
 
 const SPIFF_ID = 'spifftop';
 type Crumb = { id: string; displayName: string };
@@ -122,13 +132,13 @@ function ProcessModelTreeControls({
 
   return (
     <Stack
-      direction="row"
+      direction={{ xs: 'column', sm: 'row' }}
       gap={1}
       sx={{
         width: '100%',
         paddingTop: 2,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: { xs: 'stretch', sm: 'center' },
       }}
     >
       <SearchBar
@@ -149,6 +159,7 @@ function ProcessModelTreeControls({
           }
         }}
         aria-label={t('view_mode')}
+        sx={{ alignSelf: { xs: 'flex-end', sm: 'center' } }}
       >
         <ToggleButton
           value="list"
@@ -165,48 +176,6 @@ function ProcessModelTreeControls({
           <ViewModule fontSize="small" />
         </ToggleButton>
       </ToggleButtonGroup>
-    </Stack>
-  );
-}
-
-function FavoritesShortcut({
-  onClick,
-  treeCollapsed,
-}: {
-  onClick: () => void;
-  treeCollapsed: boolean;
-}) {
-  const { t } = useTranslation();
-
-  if (!treeCollapsed) {
-    return null;
-  }
-
-  return (
-    <Stack
-      direction="row"
-      gap={1}
-      sx={{
-        backgroundColor: 'background.paper',
-        border: '1px solid',
-        borderColor: 'borders.primary',
-        borderRadius: 1,
-        alignItems: 'center',
-        paddingRight: 2,
-        position: 'relative',
-        cursor: 'pointer',
-      }}
-      onClick={onClick}
-    >
-      <StarRateIcon
-        sx={{
-          transform: 'scale(.8)',
-          color: 'spotColors.goldStar',
-          position: 'relative',
-          top: -1,
-        }}
-      />
-      <Typography variant="caption">{t('favorites')}</Typography>
     </Stack>
   );
 }
@@ -256,6 +225,7 @@ function ProcessGroupHeader({
   currentProcessGroup,
   deleteProcessGroup,
   handleCrumbClick,
+  compact = false,
   targetUris,
 }: {
   ability: any;
@@ -263,6 +233,7 @@ function ProcessGroupHeader({
   currentProcessGroup: Record<string, any> | null;
   deleteProcessGroup: () => void;
   handleCrumbClick: (crumb: Crumb) => void;
+  compact?: boolean;
   targetUris: ReturnType<typeof useUriListForPermissions>['targetUris'];
 }) {
   const { t } = useTranslation();
@@ -273,11 +244,13 @@ function ProcessGroupHeader({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        mb: 3,
+        mb: compact ? 1 : 3,
+        p: compact ? 2 : 0,
+        pb: compact ? 1 : 0,
         width: '100%',
       }}
     >
-      <Breadcrumbs sx={{ mb: 3 }}>
+      <Breadcrumbs sx={{ mb: compact ? 0 : 3 }}>
         <Button
           sx={{ display: 'flex', alignItems: 'center' }}
           onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
@@ -335,6 +308,260 @@ function ProcessGroupHeader({
   );
 }
 
+function GroupRowActions({
+  ability,
+  currentProcessGroupId,
+  group,
+  onAddChildGroup,
+  onAddProcessModel,
+  onDeleteGroup,
+  onOpenGroup,
+}: {
+  ability: any;
+  currentProcessGroupId?: string;
+  group: ProcessGroup;
+  onAddChildGroup: (groupId: string) => void;
+  onAddProcessModel: (groupId: string) => void;
+  onDeleteGroup: (group: ProcessGroup) => void;
+  onOpenGroup: (groupId: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const modifiedGroupId = modifyProcessIdentifierForPathParam(group.id);
+  const {
+    openConfirmation: openDeleteConfirmation,
+    ConfirmationDialog: DeleteConfirmationDialog,
+  } = useConfirmationDialog(() => onDeleteGroup(group), {
+    description: t('delete_process_group_with_name', {
+      name: group.display_name,
+    }),
+    confirmText: t('delete'),
+    confirmColor: 'error',
+  });
+
+  const closeMenu = () => setAnchorEl(null);
+  const editProcessGroupLabel = `${t('edit')} ${t('process_group')}`;
+  const isCurrentProcessGroup = group.id === currentProcessGroupId;
+  const canAddChildGroup = ability.can('POST', '/v1.0/process-groups');
+  const canAddProcessModel = ability.can(
+    'POST',
+    `/v1.0/process-models/${modifiedGroupId}`,
+  );
+  const canAddInsideGroup = canAddChildGroup || canAddProcessModel;
+  const canEditGroup = ability.can(
+    'PUT',
+    `/v1.0/process-groups/${modifiedGroupId}`,
+  );
+  const canDeleteGroup = ability.can(
+    'DELETE',
+    `/v1.0/process-groups/${modifiedGroupId}`,
+  );
+  const canOpenGroup = !isCurrentProcessGroup;
+  const hasMenuActions =
+    canOpenGroup || canAddInsideGroup || canEditGroup || canDeleteGroup;
+  const shouldShowDividerAfterOpen =
+    canOpenGroup && (canAddInsideGroup || canEditGroup || canDeleteGroup);
+
+  return (
+    <>
+      <IconButton
+        size="small"
+        title={t('more_actions')}
+        data-testid={`process-group-actions-button-${modifiedGroupId}`}
+        disabled={!hasMenuActions}
+        sx={{ visibility: hasMenuActions ? 'visible' : 'hidden' }}
+        onClick={(e) => {
+          if (!hasMenuActions) {
+            return;
+          }
+          e.stopPropagation();
+          setAnchorEl(e.currentTarget);
+        }}
+      >
+        <MoreVert fontSize="small" />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={hasMenuActions && Boolean(anchorEl)}
+        onClose={closeMenu}
+      >
+        {canOpenGroup ? (
+          <>
+            <MenuItem
+              data-testid={`open-process-group-menu-item-${modifiedGroupId}`}
+              onClick={() => {
+                closeMenu();
+                onOpenGroup(group.id);
+              }}
+            >
+              <ListItemIcon>
+                <Folder fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>{t('open_process_group')}</ListItemText>
+            </MenuItem>
+            {shouldShowDividerAfterOpen ? <Divider /> : null}
+          </>
+        ) : null}
+        {canAddInsideGroup ? (
+          <ListSubheader>{t('add_inside_this_group')}</ListSubheader>
+        ) : null}
+        {canAddChildGroup ? (
+          <MenuItem
+            data-testid={`add-child-process-group-menu-item-${modifiedGroupId}`}
+            onClick={() => {
+              closeMenu();
+              onAddChildGroup(group.id);
+            }}
+          >
+            <ListItemIcon>
+              <Add fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{t('process_group')}</ListItemText>
+            <ListItemIcon sx={{ minWidth: 0, ml: 2 }}>
+              <Folder fontSize="small" />
+            </ListItemIcon>
+          </MenuItem>
+        ) : null}
+        {canAddProcessModel ? (
+          <MenuItem
+            data-testid={`add-process-model-menu-item-${modifiedGroupId}`}
+            onClick={() => {
+              closeMenu();
+              onAddProcessModel(group.id);
+            }}
+          >
+            <ListItemIcon>
+              <Add fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{t('process_model')}</ListItemText>
+          </MenuItem>
+        ) : null}
+        {canAddInsideGroup && (canEditGroup || canDeleteGroup) ? (
+          <Divider />
+        ) : null}
+        {canEditGroup ? (
+          <MenuItem
+            component="a"
+            href={`/process-groups/${modifiedGroupId}/edit`}
+            data-testid={`edit-process-group-menu-item-${modifiedGroupId}`}
+            onClick={closeMenu}
+          >
+            <ListItemIcon>
+              <Edit fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{editProcessGroupLabel}</ListItemText>
+          </MenuItem>
+        ) : null}
+        {canDeleteGroup ? (
+          <MenuItem
+            data-testid={`delete-process-group-menu-item-${modifiedGroupId}`}
+            onClick={() => {
+              closeMenu();
+              openDeleteConfirmation();
+            }}
+          >
+            <ListItemIcon>
+              <Delete fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{t('delete_process_group')}</ListItemText>
+          </MenuItem>
+        ) : null}
+      </Menu>
+      <DeleteConfirmationDialog />
+    </>
+  );
+}
+
+function ModelRowActions({
+  ability,
+  model,
+  onDeleteModel,
+}: {
+  ability: any;
+  model: ProcessModel;
+  onDeleteModel: (model: ProcessModel) => void;
+}) {
+  const { t } = useTranslation();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const modifiedModelId = modifyProcessIdentifierForPathParam(model.id);
+  const {
+    openConfirmation: openDeleteConfirmation,
+    ConfirmationDialog: DeleteConfirmationDialog,
+  } = useConfirmationDialog(() => onDeleteModel(model), {
+    description: t('delete_process_model_confirm', {
+      processModelName: model.display_name,
+    }),
+    confirmText: t('delete'),
+    confirmColor: 'error',
+  });
+
+  const closeMenu = () => setAnchorEl(null);
+  const canEditModel = ability.can(
+    'PUT',
+    `/v1.0/process-models/${modifiedModelId}`,
+  );
+  const canDeleteModel = ability.can(
+    'DELETE',
+    `/v1.0/process-models/${modifiedModelId}`,
+  );
+  const hasMenuActions = canEditModel || canDeleteModel;
+
+  return (
+    <>
+      <IconButton
+        size="small"
+        title={t('more_actions')}
+        data-testid={`process-model-actions-button-${modifiedModelId}`}
+        disabled={!hasMenuActions}
+        sx={{ visibility: hasMenuActions ? 'visible' : 'hidden' }}
+        onClick={(e) => {
+          if (!hasMenuActions) {
+            return;
+          }
+          e.stopPropagation();
+          setAnchorEl(e.currentTarget);
+        }}
+      >
+        <MoreVert fontSize="small" />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={hasMenuActions && Boolean(anchorEl)}
+        onClose={closeMenu}
+      >
+        {canEditModel ? (
+          <MenuItem
+            component="a"
+            href={`/process-models/${modifiedModelId}/edit`}
+            data-testid={`edit-process-model-menu-item-${modifiedModelId}`}
+            onClick={closeMenu}
+          >
+            <ListItemIcon>
+              <Edit fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{t('edit_process_model')}</ListItemText>
+          </MenuItem>
+        ) : null}
+        {canDeleteModel ? (
+          <MenuItem
+            data-testid={`delete-process-model-menu-item-${modifiedModelId}`}
+            onClick={() => {
+              closeMenu();
+              openDeleteConfirmation();
+            }}
+          >
+            <ListItemIcon>
+              <Delete fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{t('delete_process_model')}</ListItemText>
+          </MenuItem>
+        ) : null}
+      </Menu>
+      <DeleteConfirmationDialog />
+    </>
+  );
+}
+
 /**
  * Top level layout and control container for this view,
  * feeds various streams, data and callbacks to children.
@@ -362,17 +589,15 @@ export default function ProcessModelTreePage({
     any
   > | null>(null);
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
-  // const [treeCollapsed, setTreeCollapsed] = useState(false);
-  const [treeCollapsed] = useState(false);
   const [sortBy, setSortBy] = useState<ProcessModelSortOption>('alphabetical');
   const [showOnlyRun, setShowOnlyRun] = useState(false);
   const [modelStats, setModelStats] = useState<ProcessModelStatsMap>({});
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [searchText, setSearchText] = useState('');
+  const [processGroupNotFound, setProcessGroupNotFound] = useState(false);
   const treeRef = useRef<TreeRef>(null);
   // Use useRef to maintain a stable stream instance across re-renders
   const clickStream = useRef(new Subject<Record<string, any>>()).current;
-  const favoriteCrumb: Crumb = { id: 'favorites', displayName: t('favorites') };
   const gridProps = {
     display: 'grid',
     gridGap: 20, // Spacing between cards
@@ -385,12 +610,35 @@ export default function ProcessModelTreePage({
   };
 
   const { targetUris } = useUriListForPermissions();
-  const permissionRequestData: PermissionsToCheck = {
-    [targetUris.dataStoreListPath]: ['GET'],
-    [targetUris.processGroupListPath]: ['POST'],
-    [targetUris.processGroupShowPath]: ['PUT', 'DELETE'],
-    [targetUris.processModelCreatePath]: ['POST'],
-  };
+  const permissionRequestData: PermissionsToCheck = useMemo(() => {
+    const requests: PermissionsToCheck = {
+      [targetUris.dataStoreListPath]: ['GET'],
+      [targetUris.processGroupListPath]: ['POST'],
+      [targetUris.processGroupShowPath]: ['PUT', 'DELETE'],
+      [targetUris.processModelCreatePath]: ['POST'],
+    };
+
+    const addGroupPermissions = (group: ProcessGroup | ProcessGroupLite) => {
+      const modifiedGroupId = modifyProcessIdentifierForPathParam(group.id);
+      requests[`/v1.0/process-groups/${modifiedGroupId}`] = ['PUT', 'DELETE'];
+      requests[`/v1.0/process-models/${modifiedGroupId}`] = ['POST'];
+      (group.process_models || []).forEach((model: ProcessModel) => {
+        requests[
+          `/v1.0/process-models/${modifyProcessIdentifierForPathParam(model.id)}`
+        ] = ['PUT', 'DELETE'];
+      });
+      (group.process_groups || []).forEach(addGroupPermissions);
+    };
+
+    ((processGroups as ProcessGroup[]) || []).forEach(addGroupPermissions);
+    return requests;
+  }, [
+    processGroups,
+    targetUris.dataStoreListPath,
+    targetUris.processGroupListPath,
+    targetUris.processGroupShowPath,
+    targetUris.processModelCreatePath,
+  ]);
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData,
   );
@@ -401,6 +649,7 @@ export default function ProcessModelTreePage({
       successCallback: (result: ProcessModelStatsMap) => {
         setModelStats(result);
       },
+      onUnauthorized: () => setModelStats({}),
     });
   }, []);
 
@@ -480,6 +729,10 @@ export default function ProcessModelTreePage({
     });
     return currentGroup;
   }
+  const requestedProcessGroupId =
+    params.process_group_id && params.process_group_id !== 'undefined'
+      ? unModifyProcessIdentifierForPathParam(`${params.process_group_id}`)
+      : null;
 
   useEffect(() => {
     if (!clickedItem || !processGroups) {
@@ -553,7 +806,6 @@ export default function ProcessModelTreePage({
   }, [clickedItem, processGroups, navigate, flattenAllItems]);
 
   useEffect(() => {
-    // If no favorites, proceed with the normal process groups.
     if (processGroups && permissionsLoaded) {
       /**
        * Do this now and put it in state.
@@ -563,34 +815,23 @@ export default function ProcessModelTreePage({
       const flattened = flattenAllItems(processGroups || [], []);
       setFlatItems(flattened);
 
-      // If there are favorites, that's all we want to display, return.
-      const favorites = JSON.parse(getStorageValue(SPIFF_FAVORITES));
-      if (favorites.length) {
-        // favorites currently do not work and flattened seems to be ProcessGroup[] and not models
-        // setModels(flattened.filter((item) => favorites.includes(item.id)));
-        setGroups([]);
-        setModelsExpanded(true);
-        setGroupsExpanded(false);
-        setCrumbs([favoriteCrumb]);
-        return;
-      }
-      const unModifiedProcessGroupId = unModifyProcessIdentifierForPathParam(
-        `${params.process_group_id}`,
-      );
       const processGroupsLite: ProcessGroupLite[] =
         processGroups.map(processGroupToLite);
       const foundProcessGroup = findProcessGroupByPath(
         processGroupsLite,
-        unModifiedProcessGroupId,
+        requestedProcessGroupId || '',
       );
       if (foundProcessGroup) {
         setGroups(foundProcessGroup.process_groups || null);
         setModels(foundProcessGroup.process_models || []);
         setCrumbs(processCrumbs(foundProcessGroup, flattened));
         setCurrentProcessGroup(foundProcessGroup);
+        setProcessGroupNotFound(false);
       } else {
         setGroups(processGroupsLite);
         setCrumbs([]);
+        setCurrentProcessGroup(null);
+        setProcessGroupNotFound(!!requestedProcessGroupId);
       }
       setGroupsExpanded(!!processGroupsLite.length);
       if (ability.can('GET', targetUris.dataStoreListPath)) {
@@ -607,37 +848,18 @@ export default function ProcessModelTreePage({
             ref={treeRef}
             processGroups={processGroups}
             stream={clickStream}
-            // callback={() => handleFavorites({ text: SHOW_FAVORITES })}
           />,
         );
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [processGroups, permissionsLoaded, ability]);
+  }, [processGroups, permissionsLoaded, ability, requestedProcessGroupId]);
 
   useEffect(() => {
     if (clickStream) {
       clickStream.subscribe(handleClickStream);
     }
   }, [clickStream]);
-
-  /** Tree calls back here so we can imperatively rework groups etc. */
-  const handleFavorites = ({ text }: { text: string }) => {
-    if (text === SHOW_FAVORITES) {
-      const storage = JSON.parse(getStorageValue('spifffavorites'));
-      const favs = flatItems.filter((item: any) => storage.includes(item.id));
-      // If there's no favorites, the user is just left looking at nothing.
-      // Load the top level groups instead.
-      // Expand accordions accordingly (haha).
-      setGroups(favs.length ? [] : processGroups);
-      setModels(favs);
-      setModelsExpanded(!!favs.length);
-      setGroupsExpanded(!favs.length);
-      setCrumbs([favoriteCrumb]);
-    }
-
-    return false;
-  };
 
   // taken from ProcessModelSearch
   const getParentGroupsDisplayName = (
@@ -740,6 +962,7 @@ export default function ProcessModelTreePage({
       setGroupsExpanded(true);
       setCrumbs([]);
       setCurrentProcessGroup(null);
+      setProcessGroupNotFound(false);
       treeRef.current?.clearExpanded();
       navigate('/process-groups');
       return;
@@ -750,6 +973,7 @@ export default function ProcessModelTreePage({
       clickStream.next(found);
       const processEntityId = modifyProcessIdentifierForPathParam(crumb.id);
       setCurrentProcessGroup(found);
+      setProcessGroupNotFound(false);
       navigate(`/process-groups/${processEntityId}`);
     }
   };
@@ -765,33 +989,93 @@ export default function ProcessModelTreePage({
     },
   );
 
+  const parentProcessGroupId = (groupId: string): string | null => {
+    const modifiedGroupId = modifyProcessIdentifierForPathParam(groupId);
+    const modifiedParentGroupId = modifiedGroupId.replace(/:[^:]+$/, '');
+    if (modifiedParentGroupId === modifiedGroupId) {
+      return null;
+    }
+    return modifiedParentGroupId.replaceAll(':', '/');
+  };
+
+  const processGroupPath = (groupId: string | null) => {
+    return groupId
+      ? `/process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
+      : '/process-groups';
+  };
+
+  const goToParentAfterProcessGroupDelete = (groupId: string) => {
+    window.location.href = processGroupPath(parentProcessGroupId(groupId));
+  };
+
   const deleteProcessGroup = () => {
     if (currentProcessGroup) {
       const modifiedGroupId = modifyProcessIdentifierForPathParam(
         currentProcessGroup.id,
       );
-      let parendGroupId = modifiedGroupId.replace(/:[^:]+$/, '');
-      // this means it was a root group
-      if (parendGroupId === modifiedGroupId) {
-        parendGroupId = SPIFF_ID;
-      }
       HttpService.makeCallToBackend({
         path: `/process-groups/${modifiedGroupId}`,
-        successCallback: () => {
-          handleCrumbClick({
-            id: parendGroupId.replaceAll(':', '/'),
-            displayName: 'NOT_USED',
-          });
-        },
+        successCallback: () =>
+          goToParentAfterProcessGroupDelete(currentProcessGroup.id),
         httpMethod: 'DELETE',
       });
     }
   };
 
+  const deleteProcessGroupFromList = (group: ProcessGroup) => {
+    HttpService.makeCallToBackend({
+      path: `/process-groups/${modifyProcessIdentifierForPathParam(group.id)}`,
+      successCallback: () => {
+        if (group.id === currentProcessGroup?.id) {
+          goToParentAfterProcessGroupDelete(group.id);
+        } else {
+          window.location.reload();
+        }
+      },
+      httpMethod: 'DELETE',
+    });
+  };
+
+  const deleteProcessModelFromList = (model: ProcessModel) => {
+    HttpService.makeCallToBackend({
+      path: `/process-models/${modifyProcessIdentifierForPathParam(model.id)}`,
+      successCallback: () => window.location.reload(),
+      httpMethod: 'DELETE',
+    });
+  };
+
   const currentParentGroupIdSearchParam = () => {
     return currentProcessGroup
-      ? `?parentGroupId=${currentProcessGroup.id}`
+      ? `?parentGroupId=${encodeURIComponent(currentProcessGroup.id)}`
       : '';
+  };
+
+  const newProcessGroupPath = () => {
+    return `/process-groups/new${currentParentGroupIdSearchParam()}`;
+  };
+
+  const newProcessModelPath = (groupId: string) => {
+    return `/process-models/${modifyProcessIdentifierForPathParam(groupId)}/new`;
+  };
+
+  const navigateToNewChildProcessGroup = (groupId: string) => {
+    navigate(
+      `/process-groups/new?parentGroupId=${encodeURIComponent(groupId)}`,
+    );
+  };
+
+  const navigateToNewProcessModelInGroup = (groupId: string) => {
+    navigate(newProcessModelPath(groupId));
+  };
+  const navigateToFocusedProcessGroup = (groupId: string) => {
+    const found = flatItems.find(
+      (item: any) => item.id === groupId && 'process_groups' in item,
+    );
+    if (found) {
+      clickStream.next(found);
+      return;
+    }
+    navigate(`/process-groups/${modifyProcessIdentifierForPathParam(groupId)}`);
   };
 
   // ---- Nested collapsible list view (Odoo-style) ----
@@ -803,13 +1087,16 @@ export default function ProcessModelTreePage({
     () => buildGroupModelCountMap((processGroups as ProcessGroup[]) || []),
     [processGroups],
   );
-  const treeGroupsToDisplay = useMemo(
+  const treeRootGroups = useMemo(
     () =>
-      filterProcessGroupTree(
-        (processGroups as ProcessGroup[]) || [],
-        searchText,
-      ),
-    [processGroups, searchText],
+      currentProcessGroup
+        ? ([currentProcessGroup] as ProcessGroup[])
+        : (processGroups as ProcessGroup[]) || [],
+    [currentProcessGroup, processGroups],
+  );
+  const treeGroupsToDisplay = useMemo(
+    () => filterProcessGroupTree(treeRootGroups, searchText),
+    [treeRootGroups, searchText],
   );
   const collectGroupIds = useCallback((groupList: ProcessGroup[]): string[] => {
     const ids: string[] = [];
@@ -823,7 +1110,9 @@ export default function ProcessModelTreePage({
   // While searching, expand every matching group so results are visible.
   const treeExpandedIds = searchText
     ? collectGroupIds(treeGroupsToDisplay)
-    : [];
+    : currentProcessGroup
+      ? [currentProcessGroup.id]
+      : [];
 
   const navigateToViewModel = (model: ProcessModel) => {
     if (setNavElementCallback) {
@@ -842,6 +1131,8 @@ export default function ProcessModelTreePage({
 
   const renderCatalogModelRow = (model: ProcessModel, ctx: ModelRowContext) => {
     const stats = modelStats[model.id];
+    const modelDescription = truncateProcessDescription(model.description);
+
     return (
       <Box
         key={model.id}
@@ -868,22 +1159,45 @@ export default function ProcessModelTreePage({
           '&:hover': { backgroundColor: 'action.hover' },
         }}
       >
-        <Box sx={{ minWidth: 0 }}>
+        <Box sx={{ flex: '1 1 auto', minWidth: 0, maxWidth: '100%' }}>
           <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
             {model.display_name}
           </Typography>
-          {model.description ? (
-            <Typography variant="caption" color="text.secondary" noWrap>
-              {model.description}
+          {modelDescription ? (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              title={model.description || undefined}
+              sx={processDescriptionSx}
+            >
+              {modelDescription}
             </Typography>
           ) : null}
         </Box>
-        <Box sx={{ flexGrow: 1 }} />
         {stats && stats.instance_count > 0 ? (
-          <Typography variant="caption" color="text.disabled">
+          <Typography
+            variant="caption"
+            color="text.disabled"
+            noWrap
+            sx={{ flexShrink: 0 }}
+          >
             {t('n_runs', { count: stats.instance_count })}
           </Typography>
         ) : null}
+        <Tooltip title={t('start_process')}>
+          <IconButton
+            color="primary"
+            size="small"
+            aria-label={t('start_process')}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigateToStartModel(model);
+            }}
+            sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+          >
+            <PlayArrow fontSize="small" />
+          </IconButton>
+        </Tooltip>
         <Button
           variant="contained"
           size="small"
@@ -891,9 +1205,15 @@ export default function ProcessModelTreePage({
             e.stopPropagation();
             navigateToStartModel(model);
           }}
+          sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
         >
           {t('start_process')}
         </Button>
+        <ModelRowActions
+          ability={ability}
+          model={model}
+          onDeleteModel={deleteProcessModelFromList}
+        />
       </Box>
     );
   };
@@ -901,8 +1221,19 @@ export default function ProcessModelTreePage({
   const renderNestedListView = () => (
     <Card>
       <CardContent sx={{ p: 0 }}>
+        {currentProcessGroup ? (
+          <ProcessGroupHeader
+            ability={ability}
+            compact
+            crumbs={crumbs}
+            currentProcessGroup={currentProcessGroup}
+            deleteProcessGroup={deleteProcessGroup}
+            handleCrumbClick={handleCrumbClick}
+            targetUris={targetUris}
+          />
+        ) : null}
         <CollapsibleGroupTree
-          key={`tree-${searchText}`}
+          key={`tree-${currentProcessGroup?.id ?? 'root'}-${searchText}`}
           processGroups={treeGroupsToDisplay}
           renderModelRow={renderCatalogModelRow}
           getGroupInstanceCount={(id) => groupInstanceCountMap[id] ?? 0}
@@ -911,10 +1242,25 @@ export default function ProcessModelTreePage({
           showEmptyGroupsAndModels={!showOnlyRun}
           defaultExpandedGroupIds={treeExpandedIds}
           emptyText={t('no_results')}
+          renderGroupActions={(group) => (
+            <GroupRowActions
+              ability={ability}
+              currentProcessGroupId={currentProcessGroup?.id}
+              group={group}
+              onAddChildGroup={navigateToNewChildProcessGroup}
+              onAddProcessModel={navigateToNewProcessModelInGroup}
+              onDeleteGroup={deleteProcessGroupFromList}
+              onOpenGroup={navigateToFocusedProcessGroup}
+            />
+          )}
           renderGroupMetadata={(group, count) => (
             <Stack direction="row" gap={1} alignItems="center">
               {count > 0 ? (
-                <Chip size="small" label={t('n_runs', { count })} />
+                <Chip
+                  size="small"
+                  label={t('n_runs', { count })}
+                  sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+                />
               ) : null}
               <Chip
                 size="small"
@@ -932,198 +1278,238 @@ export default function ProcessModelTreePage({
 
   return (
     <Box id="process-model-tree-box" sx={{ margin: '0 auto', p: 0 }}>
-      <Typography variant="h1" sx={{ mb: 2 }}>
-        {t('processes')}
-      </Typography>
-      <Container
-        maxWidth={false}
-        sx={{
-          padding: '0px !important',
-          height: '100%',
-        }}
-        id="list-container"
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ xs: 'stretch', sm: 'center' }}
+        gap={1}
+        sx={{ mb: 2 }}
       >
-        <Stack
-          id="process-model-tree-stack"
-          gap={2}
+        <Typography variant="h1">{t('processes')}</Typography>
+        {processGroupNotFound ? null : (
+          <Stack direction="row" gap={1} justifyContent="flex-end">
+            <Can I="POST" a={targetUris.processGroupListPath} ability={ability}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<Add />}
+                data-testid="add-process-group-button"
+                href={newProcessGroupPath()}
+              >
+                {t('add_process_group')}
+              </Button>
+            </Can>
+          </Stack>
+        )}
+      </Stack>
+      {processGroupNotFound ? (
+        <Card>
+          <CardContent>
+            <Stack gap={2} alignItems="flex-start">
+              <Typography variant="h2">
+                {t('process_group_not_found_title')}
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                {t('process_group_not_found_message', {
+                  groupId: requestedProcessGroupId,
+                })}
+              </Typography>
+              <Button variant="contained" href="/process-groups">
+                {t('back_to_process_groups')}
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
+      ) : (
+        <Container
+          maxWidth={false}
           sx={{
-            width: '100%',
+            padding: '0px !important',
             height: '100%',
-            display: 'flex',
-            alignItems: 'center',
           }}
+          id="list-container"
         >
-          <ProcessModelTreeControls
-            clickStream={clickStream}
-            handleSearch={handleSearch}
-            onShowOnlyRunChange={setShowOnlyRun}
-            onSortChange={setSortBy}
-            onViewModeChange={setViewMode}
-            showOnlyRun={showOnlyRun}
-            sortBy={sortBy}
-            viewMode={viewMode}
-          />
-
           <Stack
+            id="process-model-tree-stack"
+            gap={2}
             sx={{
               width: '100%',
-              overflowY: 'auto',
-              overflowX: 'hidden',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
             }}
-            id="scrollable-process-card-area"
           >
-            <Stack direction="row" gap={1} sx={{ paddingBottom: 0.5 }}>
-              <FavoritesShortcut
-                treeCollapsed={treeCollapsed}
-                onClick={() => handleFavorites({ text: SHOW_FAVORITES })}
-              />
-            </Stack>
-            {viewMode === 'list' ? (
-              renderNestedListView()
-            ) : (
-              <Card>
-                <CardContent>
-                  <ProcessGroupHeader
-                    ability={ability}
-                    crumbs={crumbs}
-                    currentProcessGroup={currentProcessGroup}
-                    deleteProcessGroup={deleteProcessGroup}
-                    handleCrumbClick={handleCrumbClick}
-                    targetUris={targetUris}
-                  />
-                  {currentProcessGroup && (
-                    <Stack
-                      direction="row"
-                      sx={{
-                        width: '100%',
-                        paddingBottom: 2,
-                      }}
-                    >
-                      {currentProcessGroup.description}
-                    </Stack>
-                  )}
-                  <CatalogAccordion
-                    ariaControls="Process Models Accordion"
-                    expanded={modelsExpanded}
-                    onToggle={() => setModelsExpanded((prev) => !prev)}
-                    title={t('process_models_with_count', {
-                      count: displayedModels.length,
-                    })}
-                    action={
-                      currentProcessGroup ? (
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Can
-                            I="POST"
-                            a={targetUris.processModelCreatePath}
-                            ability={ability}
-                          >
-                            <IconButton
-                              size="small"
-                              onClick={(e) => e.stopPropagation()}
-                              data-testid="add-process-model-button"
-                              href={`/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/new`}
-                            >
-                              <Add />
-                            </IconButton>
-                          </Can>
-                        </Box>
-                      ) : null
-                    }
-                  >
-                    <Box sx={gridProps}>
-                      {displayedModels.map((model: ProcessModel) => (
-                        <ProcessModelCard
-                          key={model.id}
-                          model={model}
-                          stream={clickStream}
-                          lastSelected={currentProcessGroup || {}}
-                          stats={modelStats[model.id]}
-                          onStartProcess={() => {
-                            if (setNavElementCallback) {
-                              setNavElementCallback(null);
-                            }
-                          }}
-                          onViewProcess={() => {
-                            if (setNavElementCallback) {
-                              setNavElementCallback(null);
-                            }
-                          }}
-                        />
-                      ))}
-                    </Box>
-                  </CatalogAccordion>
-                  <CatalogAccordion
-                    ariaControls="Process Groups Accordion"
-                    expanded={groupsExpanded}
-                    onToggle={() => setGroupsExpanded((prev) => !prev)}
-                    title={`${t('process_groups')} (${groups?.length})`}
-                    action={
-                      <Can
-                        I="POST"
-                        a={targetUris.processGroupListPath}
-                        ability={ability}
+            <ProcessModelTreeControls
+              clickStream={clickStream}
+              handleSearch={handleSearch}
+              onShowOnlyRunChange={setShowOnlyRun}
+              onSortChange={setSortBy}
+              onViewModeChange={setViewMode}
+              showOnlyRun={showOnlyRun}
+              sortBy={sortBy}
+              viewMode={viewMode}
+            />
+
+            <Stack
+              sx={{
+                width: '100%',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+              }}
+              id="scrollable-process-card-area"
+            >
+              {viewMode === 'list' ? (
+                renderNestedListView()
+              ) : (
+                <Card>
+                  <CardContent>
+                    <ProcessGroupHeader
+                      ability={ability}
+                      crumbs={crumbs}
+                      currentProcessGroup={currentProcessGroup}
+                      deleteProcessGroup={deleteProcessGroup}
+                      handleCrumbClick={handleCrumbClick}
+                      targetUris={targetUris}
+                    />
+                    {currentProcessGroup && (
+                      <Typography
+                        variant="body2"
+                        title={currentProcessGroup.description || undefined}
+                        sx={{
+                          width: '100%',
+                          paddingBottom: 2,
+                          color: 'text.secondary',
+                          ...processDescriptionSx,
+                        }}
                       >
-                        <IconButton
-                          size="small"
-                          onClick={(e) => e.stopPropagation()}
-                          data-testid="add-process-group-button"
-                          href={`/process-groups/new${currentParentGroupIdSearchParam()}`}
-                        >
-                          <Add />
-                        </IconButton>
-                      </Can>
-                    }
-                  >
-                    <Box sx={gridProps}>
-                      {groups?.map((group: Record<string, any>) => (
-                        <ProcessGroupCard
-                          key={group.id}
-                          group={group}
-                          stream={clickStream}
-                          navigateToPage={navigateToPage}
-                        />
-                      ))}
-                    </Box>
-                  </CatalogAccordion>
-                  <Can
-                    I="GET"
-                    a={targetUris.dataStoreListPath}
-                    ability={ability}
-                  >
+                        {truncateProcessDescription(
+                          currentProcessGroup.description,
+                        )}
+                      </Typography>
+                    )}
                     <CatalogAccordion
-                      ariaControls="Data Store Accordion"
-                      expanded={dataStoreExpanded}
-                      onToggle={() => setDataStoreExpanded((prev) => !prev)}
-                      title={`${t('data_stores')} (${dataStoresForProcessGroup?.length})`}
+                      ariaControls="Process Models Accordion"
+                      expanded={modelsExpanded}
+                      onToggle={() => setModelsExpanded((prev) => !prev)}
+                      title={t('process_models_with_count', {
+                        count: displayedModels.length,
+                      })}
                       action={
-                        <IconButton
-                          size="small"
-                          onClick={(e) => e.stopPropagation()}
-                          data-testid="add-data-store-button"
-                          href={`/data-stores/new${currentParentGroupIdSearchParam()}`}
-                        >
-                          <Add />
-                        </IconButton>
+                        currentProcessGroup ? (
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Can
+                              I="POST"
+                              a={targetUris.processModelCreatePath}
+                              ability={ability}
+                            >
+                              <IconButton
+                                size="small"
+                                data-testid="add-process-model-button"
+                                aria-label={t('add_process_model')}
+                                onClick={(e) => e.stopPropagation()}
+                                href={`/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/new`}
+                              >
+                                <Add />
+                              </IconButton>
+                            </Can>
+                          </Box>
+                        ) : null
                       }
                     >
                       <Box sx={gridProps}>
-                        {dataStoresForProcessGroup?.map(
-                          (dataStore: DataStore) => (
-                            <DataStoreCard
-                              key={dataStore.id}
-                              dataStore={dataStore}
-                            />
-                          ),
-                        )}
+                        {displayedModels.map((model: ProcessModel) => (
+                          <ProcessModelCard
+                            key={model.id}
+                            model={model}
+                            stream={clickStream}
+                            lastSelected={currentProcessGroup || {}}
+                            stats={modelStats[model.id]}
+                            onStartProcess={() => {
+                              if (setNavElementCallback) {
+                                setNavElementCallback(null);
+                              }
+                            }}
+                            onViewProcess={() => {
+                              if (setNavElementCallback) {
+                                setNavElementCallback(null);
+                              }
+                            }}
+                          />
+                        ))}
                       </Box>
                     </CatalogAccordion>
-                  </Can>
-                </CardContent>
-              </Card>
-            )}
+                    <CatalogAccordion
+                      ariaControls="Process Groups Accordion"
+                      expanded={groupsExpanded}
+                      onToggle={() => setGroupsExpanded((prev) => !prev)}
+                      title={`${t('process_groups')} (${groups?.length})`}
+                      action={
+                        <Can
+                          I="POST"
+                          a={targetUris.processGroupListPath}
+                          ability={ability}
+                        >
+                          <IconButton
+                            size="small"
+                            onClick={(e) => e.stopPropagation()}
+                            href={`/process-groups/new${currentParentGroupIdSearchParam()}`}
+                          >
+                            <Add />
+                          </IconButton>
+                        </Can>
+                      }
+                    >
+                      <Box sx={gridProps}>
+                        {groups?.map((group: Record<string, any>) => (
+                          <ProcessGroupCard
+                            key={group.id}
+                            group={group}
+                            stream={clickStream}
+                            navigateToPage={navigateToPage}
+                          />
+                        ))}
+                      </Box>
+                    </CatalogAccordion>
+                    <Can
+                      I="GET"
+                      a={targetUris.dataStoreListPath}
+                      ability={ability}
+                    >
+                      <CatalogAccordion
+                        ariaControls="Data Store Accordion"
+                        expanded={dataStoreExpanded}
+                        onToggle={() => setDataStoreExpanded((prev) => !prev)}
+                        title={`${t('data_stores')} (${dataStoresForProcessGroup?.length})`}
+                        action={
+                          <IconButton
+                            size="small"
+                            onClick={(e) => e.stopPropagation()}
+                            data-testid="add-data-store-button"
+                            href={`/data-stores/new${currentParentGroupIdSearchParam()}`}
+                          >
+                            <Add />
+                          </IconButton>
+                        }
+                      >
+                        <Box sx={gridProps}>
+                          {dataStoresForProcessGroup?.map(
+                            (dataStore: DataStore) => (
+                              <DataStoreCard
+                                key={dataStore.id}
+                                dataStore={dataStore}
+                              />
+                            ),
+                          )}
+                        </Box>
+                      </CatalogAccordion>
+                    </Can>
+                  </CardContent>
+                </Card>
+              )}
+            </Stack>
           </Stack>
-        </Stack>
-      </Container>
+        </Container>
+      )}
     </Box>
   );
 }

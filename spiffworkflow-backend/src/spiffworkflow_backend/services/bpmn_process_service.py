@@ -337,16 +337,7 @@ class BpmnProcessService:
 
         if parent_id:
             for bpd_id in subprocess_ids:
-                bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel.query.filter_by(
-                    bpmn_process_definition_parent_id=parent_id,
-                    bpmn_process_definition_child_id=bpd_id,
-                ).first()
-                if bpmn_process_definition_relationship is None:
-                    bpmn_process_definition_relationship = BpmnProcessDefinitionRelationshipModel(
-                        bpmn_process_definition_parent_id=parent_id,
-                        bpmn_process_definition_child_id=bpd_id,
-                    )
-                    db.session.add(bpmn_process_definition_relationship)
+                BpmnProcessDefinitionRelationshipModel.insert_or_update_record(parent_id, bpd_id)
 
         db.session.commit()
 

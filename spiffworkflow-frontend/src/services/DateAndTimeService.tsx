@@ -119,6 +119,47 @@ const convertSecondsToFormattedDateTime = (seconds: number) => {
   return null;
 };
 
+// The name of the viewer's timezone, e.g. "Europe/Berlin".
+const getUserTimeZoneName = (): string => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+  } catch {
+    return '';
+  }
+};
+
+// The short GMT offset for a given moment, e.g. "GMT+2" (accounts for daylight saving).
+const getTimeZoneShortOffset = (dateObject: Date): string => {
+  try {
+    const parts = new Intl.DateTimeFormat(undefined, {
+      timeZoneName: 'shortOffset',
+    }).formatToParts(dateObject);
+    const timeZonePart = parts.find((part) => part.type === 'timeZoneName');
+    return timeZonePart ? timeZonePart.value : '';
+  } catch {
+    return '';
+  }
+};
+
+// Same formatted date/time as convertSecondsToFormattedDateTime, but with the
+// timezone spelled out explicitly, e.g. "2024-05-12 21:37:00 (Europe/Berlin, GMT+2)".
+// Used in hover tooltips so it is always obvious what timezone a datetime is in (issue #1546).
+const convertSecondsToFormattedDateTimeWithTimezone = (seconds: number) => {
+  const dateObject = convertSecondsToDateObject(seconds);
+  if (!dateObject) {
+    return null;
+  }
+  const formattedDateTime = format(dateObject, DATE_TIME_FORMAT);
+  const timeZoneParts = [
+    getUserTimeZoneName(),
+    getTimeZoneShortOffset(dateObject),
+  ].filter((part) => part !== '');
+  if (timeZoneParts.length === 0) {
+    return formattedDateTime;
+  }
+  return `${formattedDateTime} (${timeZoneParts.join(', ')})`;
+};
+
 const convertDateObjectToFormattedHoursMinutes = (dateObject: Date) => {
   if (dateObject) {
     return format(dateObject, TIME_FORMAT_HOURS_MINUTES);
@@ -262,6 +303,7 @@ const DateAndTimeService = {
   convertSecondsToDateObject,
   convertSecondsToFormattedDateString,
   convertSecondsToFormattedDateTime,
+  convertSecondsToFormattedDateTimeWithTimezone,
   convertSecondsToFormattedTimeHoursMinutes,
   convertStringToDate,
   dateStringToYMDFormat,

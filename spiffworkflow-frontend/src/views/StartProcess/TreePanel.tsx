@@ -5,8 +5,6 @@ import { Subject, Subscription } from 'rxjs';
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { ProcessGroup } from '../../interfaces';
 
-export const SHOW_FAVORITES = 'SHOW_FAVORITES';
-
 export type TreeRef = {
   clearExpanded: () => void;
 };
@@ -31,7 +29,6 @@ export default forwardRef(function TreePanel(
 ) {
   const [expanded, setExpanded] = useState<string[]>([]);
   const [lastSelected, setLastSelected] = useState<Record<string, any>>({});
-  // const [favoriteCount, setFavoriteCount] = useState(0);
   const isDark = useTheme().palette.mode === 'dark';
 
   const treeItemStyle = {
@@ -153,13 +150,6 @@ export default forwardRef(function TreePanel(
         setLastSelected({ ...item });
       });
     }
-
-    /**
-     * Any stream update could be adding a new favorite, so recalculate the count.
-     * TODO: Some form of this is a candidate for a hook.
-     */
-    // const favorites = JSON.parse(localStorage.getItem(SPIFF_FAVORITES) || '[]');
-    // setFavoriteCount(favorites.length);
   }, [stream]);
 
   /**
@@ -202,43 +192,6 @@ export default forwardRef(function TreePanel(
       }}
     >
       <Stack gap={2} sx={{ justifyContent: 'left' }}>
-        {/* <Box> */}
-        {/*   <Stack direction="row" sx={{ alignItems: 'center', paddingRight: 2 }}> */}
-        {/*     <MenuItem */}
-        {/*       data={{ */}
-        {/*         text: `Favorites`, */}
-        {/*         icon: ( */}
-        {/*           <StarRateIcon */}
-        {/*             sx={{ */}
-        {/*               transform: 'scale(.8)', */}
-        {/*               color: 'spotColors.goldStar', */}
-        {/*             }} */}
-        {/*           /> */}
-        {/*         ), */}
-        {/*         path: '', */}
-        {/*         align: 'flex-start', */}
-        {/*       }} */}
-        {/*       callback={() => callback && callback({ text: SHOW_FAVORITES })} */}
-        {/*     /> */}
-        {/*     <Box sx={{ ...treeItemStyle, fontSize: 10, width: 30 }}> */}
-        {/*       {favoriteCount} */}
-        {/*     </Box> */}
-        {/*   </Stack> */}
-        {/*   <MenuItem */}
-        {/*     data={{ */}
-        {/*       text: 'Recently Used', */}
-        {/*       icon: <HistoryIcon sx={{ transform: 'scale(.8)' }} />, */}
-        {/*       path: '', */}
-        {/*       align: 'flex-start', */}
-        {/*     }} */}
-        {/*     callback={() => {}} */}
-        {/*   /> */}
-        {/* </Box> */}
-        {/* <Divider */}
-        {/*   sx={{ */}
-        {/*     backgroundColor: isDark ? 'primary.main' : 'background.dark', */}
-        {/*   }} */}
-        {/* /> */}
         {/** Have to force this for design requirement */}
         <SimpleTreeView
           expandedItems={expanded}

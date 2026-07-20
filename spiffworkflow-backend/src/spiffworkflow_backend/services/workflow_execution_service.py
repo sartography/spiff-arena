@@ -421,11 +421,16 @@ class TaskModelSavingDelegate(EngineStepDelegate):
     def did_complete_task(self, spiff_task: SpiffTask) -> None:
         if self._should_update_task_model():
             # NOTE: used with process-all-tasks and process-children-of-last-task
-            task_model = self.task_service.update_task_model_with_spiff_task(spiff_task)
             if self.current_task_start_in_seconds is None:
                 raise Exception("Could not find cached current_task_start_in_seconds. This should never have happened")
-            task_model.start_in_seconds = self.current_task_start_in_seconds
-            task_model.end_in_seconds = time.time()
+            task_end_in_seconds = time.time()
+            self.task_service.update_task_model_with_spiff_task(
+                spiff_task,
+                start_and_end_times={
+                    "start_in_seconds": self.current_task_start_in_seconds,
+                    "end_in_seconds": task_end_in_seconds,
+                },
+            )
 
         metadata = ProcessModelService.extract_metadata(
             self.process_instance.process_model_identifier,
@@ -759,7 +764,8 @@ class WorkflowExecutionService:
                     event = spiff_task.task_spec.event_definition.details(spiff_task)
                     if "Time" in event.event_type:
                         time_string = event.value
-                        run_at_in_seconds = round(datetime.fromisoformat(time_string).timestamp())
+                        if time_string is not None:
+                            run_at_in_seconds = round(datetime.fromisoformat(time_string).timestamp())
 
                 if run_at_in_seconds is None and "spiff__retry_at" in spiff_task.internal_data:
                     run_at_in_seconds = spiff_task.internal_data["spiff__retry_at"]

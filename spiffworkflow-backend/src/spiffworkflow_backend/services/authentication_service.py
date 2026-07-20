@@ -205,8 +205,18 @@ class AuthenticationService:
         return config
 
     @classmethod
+    def valid_client_ids(cls, authentication_identifier: str) -> list[str]:
+        valid_client_ids = [cls.client_id(authentication_identifier)]
+        additional_valid_client_ids = cls.authentication_option_for_identifier(authentication_identifier).get(
+            "additional_valid_client_ids"
+        )
+        if additional_valid_client_ids is not None:
+            valid_client_ids += [value.strip() for value in additional_valid_client_ids.split(",") if value.strip()]
+        return valid_client_ids
+
+    @classmethod
     def valid_audiences(cls, authentication_identifier: str) -> list[str]:
-        return [cls.client_id(authentication_identifier), "account"]
+        return [*cls.valid_client_ids(authentication_identifier), "account"]
 
     @classmethod
     def valid_issuers(cls, authentication_identifier: str) -> list[str]:
@@ -501,17 +511,7 @@ class AuthenticationService:
         if azp is None or not current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_VERIFY_AZP"]:
             return True
 
-        valid_client_ids = [cls.client_id(authentication_identifier)]
-        if (
-            "additional_valid_client_ids" in cls.authentication_option_for_identifier(authentication_identifier)
-            and cls.authentication_option_for_identifier(authentication_identifier)["additional_valid_client_ids"] is not None
-        ):
-            additional_valid_client_ids = cls.authentication_option_for_identifier(authentication_identifier)[
-                "additional_valid_client_ids"
-            ].split(",")
-            additional_valid_client_ids = [value.strip() for value in additional_valid_client_ids]
-            valid_client_ids = valid_client_ids + additional_valid_client_ids
-        return azp in valid_client_ids
+        return azp in cls.valid_client_ids(authentication_identifier)
 
     @classmethod
     def validate_decoded_token(cls, decoded_token: dict, authentication_identifier: str) -> bool:

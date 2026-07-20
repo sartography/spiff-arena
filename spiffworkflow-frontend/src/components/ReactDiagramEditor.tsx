@@ -36,6 +36,7 @@ type OwnProps = {
   diagramXML?: string | null;
   disableSaveButton?: boolean;
   fileName?: string;
+  hasUnsavedChanges?: boolean;
   isPrimaryFile?: boolean;
   processModel?: ProcessModel | null;
   onCallActivityOverlayClick?: (..._args: any[]) => any;
@@ -56,6 +57,7 @@ type OwnProps = {
   onServiceTasksRequested?: (..._args: any[]) => any;
   onSetPrimaryFile?: (..._args: any[]) => any;
   saveDiagram?: (..._args: any[]) => any;
+  saveTooltip?: React.ReactNode;
   tasks?: BasicTask[] | null;
   url?: string;
   navigationStack?: DiagramNavigationItem[];
@@ -69,6 +71,7 @@ export default function ReactDiagramEditor({
   diagramXML,
   disableSaveButton,
   fileName,
+  hasUnsavedChanges,
   isPrimaryFile,
   processModel,
   onCallActivityOverlayClick,
@@ -90,6 +93,7 @@ export default function ReactDiagramEditor({
   onSetPrimaryFile,
   modifiedProcessModelId,
   saveDiagram,
+  saveTooltip,
   tasks,
   url,
   navigationStack,
@@ -229,6 +233,8 @@ export default function ReactDiagramEditor({
         onSave={handleSave}
         saveDisabled={disableSaveButton}
         saveLabel={t('save')}
+        saveRequiresAttention={hasUnsavedChanges}
+        saveTooltip={saveTooltip}
         canDelete={ability.can('DELETE', targetUris.processModelFileShowPath)}
         deleteButton={deleteButton}
         canSetPrimary={
@@ -280,7 +286,16 @@ export default function ReactDiagramEditor({
         data-testid="process-model-file-show"
         data-filename={fileName}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            flex: '1 1 auto',
+            flexWrap: 'wrap',
+            minWidth: 0,
+          }}
+        >
           {navigationStack && onNavigate && (
             <DiagramNavigationBreadcrumbs
               stack={navigationStack}
@@ -299,14 +314,18 @@ export default function ReactDiagramEditor({
               viewXmlLabel={t('diagram_view_xml')}
             />
           )}
+          {diagramControlButtons()}
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <div
-            className="diagram-toolbar__right"
-            style={{ position: 'static', transform: 'none' }}
-          >
-            {diagramControlButtons()}
-          </div>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            flex: '0 1 auto',
+            flexWrap: 'wrap',
+            justifyContent: 'flex-end',
+          }}
+        >
           <div
             className="diagram-toolbar__left"
             style={{ position: 'static', padding: 0 }}

@@ -12,7 +12,7 @@ colorama==0.4.6
 esbonio==0.16.4
 furo==2025.12.19
 idna==3.10
-imagesize==1.4.1
+imagesize==2.0.0
 Jinja2==3.1.6
 lazy-object-proxy==1.12.0
 livereload==2.7.0

@@ -43,6 +43,20 @@ test('it can keep the correct date when converting seconds to date', () => {
   expect(dateString).toEqual('2022-10-21');
 });
 
+test('it spells out the timezone when formatting a datetime with timezone', () => {
+  const seconds = 1666325400;
+  const formattedDateTime =
+    DateAndTimeService.convertSecondsToFormattedDateTime(seconds);
+  const withTimezone =
+    DateAndTimeService.convertSecondsToFormattedDateTimeWithTimezone(seconds);
+  expect(withTimezone).not.toBeNull();
+  // the visible date/time is unchanged, with the timezone appended in parentheses
+  expect((withTimezone as string).startsWith(formattedDateTime as string)).toBe(
+    true,
+  );
+  expect(withTimezone).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \(.+\)$/);
+});
+
 test('it can properly format a duration', () => {
   expect(DateAndTimeService.formatDurationForDisplay('0')).toEqual('0s');
   expect(DateAndTimeService.formatDurationForDisplay('60')).toEqual('1m');
