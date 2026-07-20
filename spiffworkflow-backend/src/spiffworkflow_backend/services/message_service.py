@@ -397,8 +397,9 @@ class MessageService:
                 message_instance_send.user if message_instance_send.user is not None else UserService.find_or_create_system_user()
             )
 
-            if execution_mode == ProcessInstanceExecutionMode.asynchronous.value:
-                should_queue_process_instance(execution_mode=execution_mode)
+            if execution_mode == ProcessInstanceExecutionMode.asynchronous.value and should_queue_process_instance(
+                execution_mode=execution_mode
+            ):
                 reserve_phase = (
                     instrumentation.phase("reserve_message_start_process_instance")
                     if instrumentation is not None
