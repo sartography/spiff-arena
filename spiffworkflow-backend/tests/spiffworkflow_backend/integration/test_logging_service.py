@@ -8,7 +8,6 @@ from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.logging_service import SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR
 from spiffworkflow_backend.services.logging_service import SpiffLogHandler
 from spiffworkflow_backend.services.logging_service import configure_celery_stdout_logger
@@ -73,8 +72,6 @@ class TestLoggingService(BaseTest):
     ) -> None:
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.principal is not None
-        AuthorizationService.import_permissions_from_yaml_file()
-
         process_model = load_test_spec(
             process_model_id="misc/category_number_one/simple_form",
             process_model_source_directory="simple_form",
@@ -127,8 +124,6 @@ class TestLoggingService(BaseTest):
     ) -> None:
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.principal is not None
-        AuthorizationService.import_permissions_from_yaml_file()
-
         process_model = load_test_spec(
             process_model_id="misc/category_number_one/simple_form",
             process_model_source_directory="simple_form",
