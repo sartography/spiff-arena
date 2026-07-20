@@ -1686,12 +1686,7 @@ export default function ProcessInstanceListTableWithFilters({
         </Grid>
         <Grid container className="with-bottom-margin">
           <Grid size={{ xs: 12 }}>
-            <Stack
-              direction="row"
-              alignItems="center"
-              flexWrap="wrap"
-              gap={1}
-            >
+            <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1}>
               {saveAsReportComponent()}
               <Button variant="outlined" onClick={clearFilters}>
                 {t('clear_button')}
