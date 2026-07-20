@@ -1,5 +1,5 @@
 import MDEditor from '@uiw/react-md-editor';
-import { Box, FormHelperText } from '@mui/material';
+import { Box, FormHelperText, useTheme } from '@mui/material';
 import React, { useCallback } from 'react';
 
 interface WidgetArgs {
@@ -27,6 +27,7 @@ export default function MarkDownFieldWidget({
   label,
   rawErrors = [],
 }: WidgetArgs) {
+  const isDark = useTheme().palette.mode === 'dark';
   let invalid = false;
   let errorMessageForField = null;
 
@@ -66,7 +67,7 @@ export default function MarkDownFieldWidget({
   return (
     <div className="with-half-rem-top-margin">
       <Box data-invalid={invalid} sx={{ display: 'inline' }}>
-        <div data-color-mode="light" id={id}>
+        <div data-color-mode={isDark ? 'dark' : 'light'} id={id}>
           <MDEditor
             height={500}
             highlightEnable={false}

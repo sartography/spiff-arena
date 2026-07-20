@@ -75,15 +75,16 @@ def test_can_filter(page: Page):
         # Open status dropdown and select the status
         select = page.locator("#process-instance-status-select")
         select.click()
-        select.get_by_text(titleize(status), exact=False).click()
+        page.get_by_role("option", name=titleize(status), exact=True).click()
         # After selection, a chip for the selected status appears
-        tag = select.locator(".MuiChip-root", has_text=titleize(status))
+        tag = page.locator(".MuiAutocomplete-tag")
         expect(tag).to_be_visible(timeout=5000)
+        expect(tag).to_contain_text(titleize(status))
         # Clear the status filter
-        clear_btn = select.get_by_title("Clear")
+        clear_btn = page.get_by_title("Clear")
         clear_btn.click()
         # Confirm chip removed
-        expect(select.locator(".MuiChip-root")).to_have_count(0)
+        expect(page.locator(".MuiAutocomplete-tag")).to_have_count(0)
 
     # 6. Filter to instances started in the last hour and expect results
     time_range_button = page.get_by_test_id("time-range-filter-button")

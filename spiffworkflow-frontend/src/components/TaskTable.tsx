@@ -115,8 +115,8 @@ export default function TaskTable({
             label={entry.process_model_display_name}
             size="small"
             sx={{
-              bgcolor: '#E0E0E0',
-              color: '#616161',
+              bgcolor: 'action.selected',
+              color: 'text.secondary',
               mb: 1,
               fontWeight: 'normal',
             }}

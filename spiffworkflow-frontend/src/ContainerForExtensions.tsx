@@ -300,6 +300,8 @@ export default function ContainerForExtensions() {
             alignItems: 'center',
             zIndex: 1000,
             padding: '0px !important',
+            color: 'text.primary',
+            backgroundColor: 'background.default',
           }}
         >
           <Grid
