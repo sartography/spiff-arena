@@ -203,6 +203,7 @@ class CustomSendTaskConverter(SendReceiveTaskConverter):
 class CustomStartEvent(StartEvent):
     def _update_hook(self, my_task):
         if isinstance(self.event_definition, BpmnMessageEventDefinition):
+            my_task._inherit_data()
             return True  # bypass message-waiting; go straight to READY for user input
         return super()._update_hook(my_task)
 
