@@ -98,6 +98,7 @@ import {
 } from '../components/ErrorDisplay';
 import { Notification } from '../components/Notification';
 import DateAndTimeService from '../services/DateAndTimeService';
+import FormattedDateTime from '../components/FormattedDateTime';
 import ProcessInstanceCurrentTaskInfo from '../components/ProcessInstanceCurrentTaskInfo';
 import useKeyboardShortcut from '../hooks/useKeyboardShortcut';
 import useProcessInstanceNavigate from '../hooks/useProcessInstanceNavigate';
@@ -548,9 +549,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           {lastUpdatedTimeLabel}:
         </Typography>
         <Typography component="dd" variant="body2">
-          {DateAndTimeService.convertSecondsToFormattedDateTime(
-            lastUpdatedTime || 0,
-          ) || 'N/A'}
+          <FormattedDateTime seconds={lastUpdatedTime || 0} placeholder="N/A" />
         </Typography>
       </dl>
     );
@@ -620,9 +619,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               {t('started')}:
             </Typography>
             <Typography component="dd" variant="body2">
-              {DateAndTimeService.convertSecondsToFormattedDateTime(
-                processInstance.start_in_seconds || 0,
-              )}
+              <FormattedDateTime
+                seconds={processInstance.start_in_seconds || 0}
+              />
             </Typography>
           </dl>
           {lastUpdatedTimeTag}
@@ -1579,7 +1578,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               {t('next_retry_attempt')}:
             </Typography>
             <Typography component="dd" variant="body2">
-              {formattedRetryAt}
+              <FormattedDateTime seconds={retryAtInSeconds} />
             </Typography>
           </dl>
         ) : null}
@@ -1610,27 +1609,31 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return (
       <>
         {taskInstancesToDisplay.map((task: BasicTask, index: number) => {
-          const buttonClass =
-            task.guid === taskToDisplay.guid ? 'selected-task-instance' : null;
+          const isSelectedTaskInstance = task.guid === taskToDisplay.guid;
+          const buttonClass = isSelectedTaskInstance
+            ? 'selected-task-instance'
+            : null;
           return (
-            <Grid container spacing={2}>
+            <Grid container spacing={2} key={task.guid}>
               <Grid size={{ xs: 1 }}>
-                <SpiffTooltip title="View">
-                  <IconButton
-                    onClick={() =>
-                      switchToTask(task.guid, taskInstancesToDisplay)
-                    }
-                  >
-                    <View />
-                  </IconButton>
-                </SpiffTooltip>
+                {isSelectedTaskInstance ? null : (
+                  <SpiffTooltip title="View">
+                    <IconButton
+                      onClick={() =>
+                        switchToTask(task.guid, taskInstancesToDisplay)
+                      }
+                    >
+                      <View />
+                    </IconButton>
+                  </SpiffTooltip>
+                )}
               </Grid>
               <Grid size={{ xs: 11 }}>
                 <div className={`task-instance-modal-row-item ${buttonClass}`}>
                   {index + 1} {': '}
-                  {DateAndTimeService.convertSecondsToFormattedDateTime(
-                    task.properties_json.last_state_change,
-                  )}{' '}
+                  <FormattedDateTime
+                    seconds={task.properties_json.last_state_change}
+                  />{' '}
                   {' - '} {task.state}
                 </div>
               </Grid>
@@ -1675,7 +1678,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       taskInstancesToDisplay.length > 0
     ) {
       accordionItems.push(
-        <Accordion key="mi-task-instances">
+        <Accordion
+          key="mi-task-instances"
+          defaultExpanded={taskInstancesToDisplay.length <= 3}
+        >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             {t('task_instances')} ({taskInstancesToDisplay.length})
           </AccordionSummary>

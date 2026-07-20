@@ -37,8 +37,8 @@ Extension elements appear under `<bpmn:extensionElements>` unless the form says 
 | `spiffworkflow:postScript` | Extension element with text | Python to run after an activity or event task. | Engine behavior. |
 | `spiffworkflow:calledDecisionId` | Extension element with text | DMN decision id for a business rule task. | Engine behavior. |
 | `spiffworkflow:instructionsForEndUser` | Extension element with text | Markdown/Jinja instructions rendered by Arena for human-facing tasks. | Parsed extension data. Defined by the SpiffWorkflow library schema, but rendered by Arena. |
-| `spiffworkflow:messagePayload` | Extension element with text | Python expression for message payload data. | Engine behavior. |
-| `spiffworkflow:messageVariable` | Extension element with text | Process variable name for received message payload data. | Engine behavior. |
+| `spiffworkflow:messagePayload` | Extension element with text on the sending message event or task | Python expression for message payload data. Do not place it on the reusable `bpmn:message`. | Engine behavior. |
+| `spiffworkflow:messageVariable` | Extension element with text on the receiving message event or task | Process variable name for received message payload data. Do not place it on the reusable `bpmn:message`. | Engine behavior. |
 | `spiffworkflow:payloadExpression` | Extension element with text | Payload expression on signal, error, and escalation definitions. | Engine behavior. |
 | `spiffworkflow:variableName` | Extension element with text | Variable name for user task form output or event payload output. | Engine behavior. |
 | `spiffworkflow:processVariableCorrelation` | Extension element containing `propertyId` and `expression` | Message correlation against process data. | Engine behavior. |
@@ -315,6 +315,8 @@ Example:
 ```
 
 This configuration tells the SpiffWorkflow frontend to render a form based on `user_data_schema.json` and `user_data_uischema.json` when this User Task becomes active. The data submitted through this form becomes part of the task's data.
+By default, submitted fields are stored directly in the task data. If the User Task contains
+`<spiffworkflow:variableName>form_data</spiffworkflow:variableName>`, the submitted fields are instead stored together under `form_data`.
 
 Before the frontend receives a User Task form, Spiff Arena renders the referenced JSON Schema and UI Schema files through Jinja using the task data for that task.
 This allows process authors to build dynamic form labels, options, visibility settings, and schema fragments without using custom frontend code.

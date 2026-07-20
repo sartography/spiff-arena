@@ -815,7 +815,10 @@ class ProcessInstanceService:
         )
 
         if spiff_task.task_spec.__class__.__name__ == "UserTask":
-            spiff_task.task_spec.add_data_from_form(spiff_task, data)
+            if getattr(spiff_task.task_spec, "variable", None) is None:
+                spiff_task.data.update(copy.deepcopy(data))
+            else:
+                spiff_task.task_spec.add_data_from_form(spiff_task, data)
         else:
             # this would only affect manual tasks and at some point, we may want to fail instead of updating it
             DeepMerge.merge(spiff_task.data, data)

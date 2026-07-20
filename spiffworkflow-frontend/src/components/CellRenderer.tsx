@@ -1,7 +1,7 @@
 // react doesn't like the name "useTheme" but we don't control that
 /* eslint-disable react-hooks/rules-of-hooks */
 import { Chip, Stack, Typography, useTheme } from '@mui/material';
-import DateAndTimeService from '../services/DateAndTimeService';
+import FormattedDateTime from './FormattedDateTime';
 
 /** Used by the Processes datagrid in Dashboards to render things like chips on cells, etc. */
 export default function CellRenderer({
@@ -60,8 +60,7 @@ export default function CellRenderer({
         }}
       >
         <Typography variant="body2" title={title}>
-          {DateAndTimeService.convertSecondsToFormattedDateTime(data.value) ||
-            '-'}
+          <FormattedDateTime seconds={data.value} />
         </Typography>
       </Stack>
     );
@@ -76,7 +75,7 @@ export default function CellRenderer({
         }}
       >
         <Typography variant="body2" title={title}>
-          {DateAndTimeService.convertSecondsToFormattedDateTime(data.value)}
+          <FormattedDateTime seconds={data.value} />
         </Typography>
       </Stack>
     );

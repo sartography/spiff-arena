@@ -22,6 +22,9 @@
  * **Service Task** - communicate with an external API to fetch or update some data.
 
 You can also change the text you are reading here by updating the *Instructions* on this example manual task.</spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:messagePayload>{
+  "a": 1
+}</spiffworkflow:messagePayload>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_17db3yp</bpmn:incoming>
       <bpmn:outgoing>Flow_12pkbxb</bpmn:outgoing>
@@ -29,13 +32,7 @@ You can also change the text you are reading here by updating the *Instructions*
     <bpmn:sequenceFlow id="Flow_17db3yp" sourceRef="StartEvent_1" targetRef="send_message" />
     <bpmn:sequenceFlow id="Flow_12pkbxb" sourceRef="send_message" targetRef="EndEvent_1" />
   </bpmn:process>
-  <bpmn:message id="Message_1wmbbip" name="message_one">
-    <bpmn:extensionElements>
-      <spiffworkflow:messagePayload>{
-  "a": 1
-}</spiffworkflow:messagePayload>
-    </bpmn:extensionElements>
-  </bpmn:message>
+  <bpmn:message id="Message_1wmbbip" name="message_one" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1sixwed">
       <bpmndi:BPMNShape id="Participant_1e3jwxw_di" bpmnElement="Participant_1e3jwxw" isHorizontal="true">

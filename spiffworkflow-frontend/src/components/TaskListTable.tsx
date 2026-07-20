@@ -25,6 +25,7 @@ import { PaginationObject, ProcessInstanceTask, Task } from '../interfaces';
 import CustomForm from './CustomForm';
 import InstructionsForEndUser from './InstructionsForEndUser';
 import DateAndTimeService from '../services/DateAndTimeService';
+import FormattedDateTime from './FormattedDateTime';
 
 type OwnProps = {
   apiPath: string;
@@ -359,9 +360,9 @@ export default function TaskListTable({
     if (showDateStarted) {
       rowElements.push(
         <TableCell>
-          {DateAndTimeService.convertSecondsToFormattedDateTime(
-            processInstanceTask.created_at_in_seconds,
-          ) || '-'}
+          <FormattedDateTime
+            seconds={processInstanceTask.created_at_in_seconds}
+          />
         </TableCell>,
       );
     }
@@ -369,7 +370,7 @@ export default function TaskListTable({
       rowElements.push(
         <TableCell
           title={
-            DateAndTimeService.convertSecondsToFormattedDateTime(
+            DateAndTimeService.convertSecondsToFormattedDateTimeWithTimezone(
               processInstanceTask.updated_at_in_seconds,
             ) || '-'
           }
