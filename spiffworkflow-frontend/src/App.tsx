@@ -42,7 +42,7 @@ export default function App() {
       );
     }
     return (
-      <div className="cds--white">
+      <div className="app-root">
         <QueryClientProvider client={queryClient}>
           <APIErrorProvider>
             <AbilityContext.Provider value={ability}>

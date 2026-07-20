@@ -1,5 +1,5 @@
 import { FieldProps, WidgetProps } from '@rjsf/utils';
-import { TextInput } from '@carbon/react';
+import { TextField } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { getCommonAttributes } from './helpers';
 
@@ -557,16 +557,21 @@ export function FormattedNumberWidget({
   };
 
   return (
-    <TextInput
+    <TextField
       id={id}
       type="text"
-      labelText={
+      label={
         required
           ? commonAttributes.labelWithRequiredIndicator
           : commonAttributes.label
       }
       disabled={disabled}
-      readOnly={readonly}
+      slotProps={{
+        htmlInput: {
+          readOnly: readonly,
+          inputMode: schemaHasIntegerType(schema) ? 'numeric' : 'decimal',
+        },
+      }}
       value={displayValue}
       onBlur={(event: any) =>
         onBlur?.(
@@ -580,12 +585,15 @@ export function FormattedNumberWidget({
       }
       onChange={handleChange}
       onFocus={(event: any) => onFocus?.(id, event.currentTarget.value)}
-      invalid={commonAttributes.invalid}
-      invalidText={commonAttributes.errorMessageForField}
-      helperText={commonAttributes.helperText}
+      error={commonAttributes.invalid}
+      helperText={
+        commonAttributes.invalid
+          ? commonAttributes.errorMessageForField
+          : commonAttributes.helperText
+      }
       placeholder={placeholder}
       autoFocus={autofocus}
-      inputMode={schemaHasIntegerType(schema) ? 'numeric' : 'decimal'}
+      fullWidth
     />
   );
 }
@@ -627,20 +635,24 @@ export function CalculatedField({
   const options = uiOptions(uiSchema);
 
   return (
-    <TextInput
+    <TextField
       id={id}
       type="text"
-      labelText={
+      label={
         required
           ? commonAttributes.labelWithRequiredIndicator
           : commonAttributes.label
       }
       disabled={disabled}
-      readOnly
+      slotProps={{ htmlInput: { readOnly: true } }}
       value={formatCalculatedFieldValue(formData, options)}
-      invalid={commonAttributes.invalid}
-      invalidText={commonAttributes.errorMessageForField}
-      helperText={commonAttributes.helperText}
+      error={commonAttributes.invalid}
+      helperText={
+        commonAttributes.invalid
+          ? commonAttributes.errorMessageForField
+          : commonAttributes.helperText
+      }
+      fullWidth
     />
   );
 }

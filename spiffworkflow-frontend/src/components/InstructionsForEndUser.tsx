@@ -104,10 +104,6 @@ export default function InstructionsForEndUser({
     return (
       <div className={className}>
         <div className={mdClassName}>
-          {/*
-          https://www.npmjs.com/package/@uiw/react-md-editor switches to dark mode by default by respecting @media (prefers-color-scheme: dark)
-          This makes it look like our site is broken, so until the rest of the site supports dark mode, turn off dark mode for this component.
-        */}
           <MarkdownRenderer source={instructions} />
         </div>
         {showCollapseToggle()}

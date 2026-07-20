@@ -97,9 +97,18 @@ const customPalette = (mode: PaletteMode) => {
     },
     background: {
       paper: '#121212',
+      bluegreydark: blueGrey[900],
+      bluegreylight: blueGrey[800],
+      bluegreymedium: blueGrey[700],
+      dark: grey[700],
+      darker: grey[900],
       light: 'rgba(255, 255, 255, 0.16)',
+      medium: grey[700],
+      mediumdark: grey[600],
+      mediumlight: grey[800],
+      nav: '#121212',
+      offblack: grey[100],
       default: '#121212',
-      bluegreymedium: blueGrey[600],
     },
     text: {
       primary: grey[100],
@@ -116,6 +125,7 @@ const customPalette = (mode: PaletteMode) => {
     spotColors: {
       goldStar: yellow[700],
       selectedBackground: blueGrey[500],
+      linkHover: lightBlue[200],
     },
   };
 
@@ -142,6 +152,23 @@ const customComponents = (mode: PaletteMode) => {
           '&.Mui-selected': {
             color: mode === 'light' ? 'primary.main' : cyan[200],
           },
+        },
+      },
+    },
+    MuiTooltip: {
+      styleOverrides: {
+        arrow: {
+          '&::before': {
+            color: mode === 'light' ? grey[100] : grey[800],
+            border: `1px solid ${mode === 'light' ? grey[500] : grey[600]}`,
+          },
+        },
+        tooltip: {
+          fontSize: '.8em',
+          color: mode === 'light' ? grey[900] : grey[100],
+          backgroundColor: mode === 'light' ? grey[100] : grey[800],
+          padding: '5px',
+          border: `1px solid ${mode === 'light' ? grey[500] : grey[600]}`,
         },
       },
     },
