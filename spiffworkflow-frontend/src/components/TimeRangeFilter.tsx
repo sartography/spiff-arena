@@ -162,6 +162,9 @@ export default function TimeRangeFilter({
   const [absoluteEnd, setAbsoluteEnd] = useState<Date | null>(null);
   const [startTime, setStartTime] = useState('00:00');
   const [endTime, setEndTime] = useState('23:59');
+  const [absoluteRangeError, setAbsoluteRangeError] = useState<string | null>(
+    null,
+  );
   const lastApplied = useRef<{ start: number; end: number } | null>(null);
   const timeInputPreferences = useMemo(() => getTimeInputPreferences(), []);
 
@@ -223,6 +226,7 @@ export default function TimeRangeFilter({
   };
 
   const openAbsolutePicker = () => {
+    setAbsoluteRangeError(null);
     if (startTimestamp && endTimestamp) {
       setAbsoluteStart(pickerDate(startTimestamp, useUtc));
       setAbsoluteEnd(pickerDate(endTimestamp, useUtc));
@@ -242,9 +246,17 @@ export default function TimeRangeFilter({
     }
     const start = dateAndTimeToTimestamp(absoluteStart, startTime, useUtc);
     const end = dateAndTimeToTimestamp(absoluteEnd, endTime, useUtc);
-    if (start > end) {
+    if (!Number.isFinite(start) || !Number.isFinite(end)) {
+      setAbsoluteRangeError('Enter valid start and end times.');
       return;
     }
+    if (start > end) {
+      setAbsoluteRangeError(
+        'Start date and time must be before end date and time.',
+      );
+      return;
+    }
+    setAbsoluteRangeError(null);
     applyRange(
       start,
       end,
@@ -358,6 +370,7 @@ export default function TimeRangeFilter({
                 startDate={absoluteStart}
                 endDate={absoluteEnd}
                 onChange={(dates: [Date | null, Date | null]) => {
+                  setAbsoluteRangeError(null);
                   setAbsoluteStart(dates[0]);
                   setAbsoluteEnd(dates[1]);
                 }}
@@ -378,7 +391,10 @@ export default function TimeRangeFilter({
                 type="time"
                 size="small"
                 value={startTime}
-                onChange={(event) => setStartTime(event.target.value)}
+                onChange={(event) => {
+                  setAbsoluteRangeError(null);
+                  setStartTime(event.target.value);
+                }}
                 inputProps={{
                   step: 60,
                   lang: timeInputPreferences.locale,
@@ -393,7 +409,10 @@ export default function TimeRangeFilter({
                 type="time"
                 size="small"
                 value={endTime}
-                onChange={(event) => setEndTime(event.target.value)}
+                onChange={(event) => {
+                  setAbsoluteRangeError(null);
+                  setEndTime(event.target.value);
+                }}
                 inputProps={{
                   step: 60,
                   lang: timeInputPreferences.locale,
@@ -408,11 +427,24 @@ export default function TimeRangeFilter({
                   <Checkbox
                     size="small"
                     checked={useUtc}
-                    onChange={(event) => setUseUtc(event.target.checked)}
+                    onChange={(event) => {
+                      setAbsoluteRangeError(null);
+                      setUseUtc(event.target.checked);
+                    }}
                   />
                 }
                 label="UTC"
               />
+              {absoluteRangeError ? (
+                <Typography
+                  color="error"
+                  role="alert"
+                  variant="caption"
+                  sx={{ gridColumn: '1 / -1' }}
+                >
+                  {absoluteRangeError}
+                </Typography>
+              ) : null}
             </Box>
             <Divider />
             <Stack direction="row" justifyContent="space-between" sx={{ p: 1 }}>
