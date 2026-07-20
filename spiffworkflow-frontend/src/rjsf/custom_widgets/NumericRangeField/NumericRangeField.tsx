@@ -5,7 +5,7 @@ import {
   getUiOptions,
 } from '@rjsf/utils';
 import { useState } from 'react';
-import { TextInput } from '@carbon/react';
+import { TextField } from '@mui/material';
 import { getCommonAttributes } from '../../helpers';
 import { matchNumberRegex } from '../../../helpers';
 
@@ -152,36 +152,36 @@ export default function NumericRangeField({
         )}
       </div>
       <div className="numeric--range-field-inputs">
-        <TextInput
+        <TextField
           id={`${id}-min`}
           type="text"
-          labelText={(schema as any).properties?.min?.title || `Minimum`}
+          label={(schema as any).properties?.min?.title || `Minimum`}
           disabled={disabled}
-          readonly={readonly}
+          slotProps={{ htmlInput: { readOnly: readonly } }}
           value={formatNumberString(minValue)}
           onChange={(event: any) => {
             onChangeLocal('min', event);
             setMinValue(event.target.value);
           }}
-          invalid={commonAttributes.invalid}
-          invalidText={minHelperText}
+          error={commonAttributes.invalid}
           helperText={minHelperText}
-          autofocus={autofocus}
+          autoFocus={autofocus}
+          fullWidth
         />
-        <TextInput
+        <TextField
           id={`${id}-max`}
           type="text"
-          labelText={(schema as any).properties?.max?.title || `Maximum`}
+          label={(schema as any).properties?.max?.title || `Maximum`}
           disabled={disabled}
-          readonly={readonly}
+          slotProps={{ htmlInput: { readOnly: readonly } }}
           value={formatNumberString(maxValue)}
           onChange={(event: any) => {
             onChangeLocal('max', event);
             setMaxValue(event.target.value);
           }}
-          invalid={commonAttributes.invalid}
-          invalidText={maxHelperText}
+          error={commonAttributes.invalid}
           helperText={maxHelperText}
+          fullWidth
         />
       </div>
       {commonAttributes.errorMessageForField && (

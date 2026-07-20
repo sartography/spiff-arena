@@ -52,8 +52,7 @@ export const getCommonAttributes = (
   };
 };
 
-// this is useful for certain carbon elements where if they do not have a unique id on groups
-// then odd things will happen. Examples:
+// This is useful for grouped form controls where duplicate ids cause odd behavior. Examples:
 //    * radio button groups will deselect the item from a group when selecting one from a different group
 //    * checkboxes will not accept any clicks to the checkbox
 // https://github.com/rjsf-team/react-jsonschema-form/issues/1824

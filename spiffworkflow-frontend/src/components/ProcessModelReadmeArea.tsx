@@ -1,8 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Column, Grid } from '@carbon/react';
+import { Button, IconButton } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { Can } from '@casl/react';
-import { Edit } from '@carbon/icons-react';
+import EditIcon from '@mui/icons-material/Edit';
 import { PureAbility } from '@casl/ability';
 import MarkdownDisplayForFile from './MarkdownDisplayForFile';
 import { ProcessFile } from '../interfaces';
@@ -24,26 +25,25 @@ export default function ProcessModelReadmeArea({
   if (readmeFile) {
     return (
       <div className="readme-container">
-        <Grid condensed fullWidth className="megacondensed">
-          <Column md={7} lg={15} sm={3}>
+        <Grid container spacing={1} alignItems="center">
+          <Grid size={{ xs: 9, md: 11 }}>
             <p className="with-icons">{readmeFile.name}</p>
-          </Column>
-          <Column md={1} lg={1} sm={1}>
+          </Grid>
+          <Grid size={{ xs: 3, md: 1 }} textAlign="right">
             <Can
               I="PUT"
               a={targetUris.processModelFileCreatePath}
               ability={ability}
             >
-              <Button
-                kind="ghost"
+              <IconButton
                 data-testid="process-model-readme-file-edit"
-                renderIcon={Edit}
-                iconDescription={t('edit_readme')}
-                hasIconOnly
+                aria-label={t('edit_readme')}
                 href={`/process-models/${modifiedProcessModelId}/form/${readmeFile.name}`}
-              />
+              >
+                <EditIcon />
+              </IconButton>
             </Can>
-          </Column>
+          </Grid>
         </Grid>
         <hr />
         <MarkdownDisplayForFile
@@ -60,7 +60,7 @@ export default function ProcessModelReadmeArea({
           className="with-top-margin"
           data-testid="process-model-readme-file-create"
           href={`/process-models/${modifiedProcessModelId}/form?file_ext=md&default_file_name=README.md`}
-          size="md"
+          variant="contained"
         >
           {t('add_readme')}
         </Button>

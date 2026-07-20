@@ -3,7 +3,6 @@ import * as ReactDOMClient from 'react-dom/client';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import App from './App';
 
-import './index.scss';
 import './index.css';
 import './i18n';
 

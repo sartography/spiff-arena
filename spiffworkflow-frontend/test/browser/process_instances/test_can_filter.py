@@ -76,14 +76,14 @@ def test_can_filter(page: Page):
         select = page.locator("#process-instance-status-select")
         select.click()
         select.get_by_text(titleize(status), exact=False).click()
-        # After selection, a tag '1' appears
-        tag = page.locator("#process-instance-status-select .cds--tag", has_text="1")
+        # After selection, a chip for the selected status appears
+        tag = select.locator(".MuiChip-root", has_text=titleize(status))
         expect(tag).to_be_visible(timeout=5000)
         # Clear the status filter
-        clear_btn = page.locator('div[aria-label="Clear all selected items"]').first
+        clear_btn = select.get_by_title("Clear")
         clear_btn.click()
-        # Confirm tag removed
-        expect(page.locator("#process-instance-status-select .cds--tag")).to_have_count(0)
+        # Confirm chip removed
+        expect(select.locator(".MuiChip-root")).to_have_count(0)
 
     # 6. Filter to instances started in the last hour and expect results
     time_range_button = page.get_by_test_id("time-range-filter-button")

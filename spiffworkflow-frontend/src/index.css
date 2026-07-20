@@ -6,10 +6,6 @@ body {
   /* This prevents the annoying MUI select box layout shift */
   overflow-y: auto !important;
 }
-.cds--header,
-a.cds--header__menu-item {
-  color: white;
-}
 
 .megacondensed {
   padding-left: 0;
@@ -17,29 +13,6 @@ a.cds--header__menu-item {
 }
 
 /* defaults to 3rem, which isn't long sufficient for "elizabeth" */
-.cds--header__action.username-header-text {
-  width: 5rem;
-}
-
-.cds--header__action.spiff-environment-header-text {
-  width: 5rem;
-  color: #126d82;
-}
-
-.cds--header__action.unclickable-text:hover {
-  background-color: #161616;
-  cursor: default;
-}
-
-.cds--header__action.unclickable-text:focus {
-  border: none;
-  box-shadow: none;
-  border-color: none;
-}
-
-.cds--loading__stroke {
-  stroke: rgb(128, 128, 128);
-}
 
 /* make this a little less prominent so the actual human beings completing tasks stand out */
 .system-user-log-entry {
@@ -52,7 +25,7 @@ a.cds--header__menu-item {
   font-style: italic;
 }
 
-.cds--white h1 {
+.app-root h1 {
   font-weight: 400;
   font-size: 28px;
   line-height: 36px;
@@ -60,14 +33,14 @@ a.cds--header__menu-item {
   letter-spacing: 0.00938em;
 }
 
-.cds--white h2 {
+.app-root h2 {
   font-weight: 400;
   font-size: 20px;
   line-height: 28px;
   color: #161616;
 }
 
-.cds--white h3 {
+.app-root h3 {
   font-weight: 400;
   font-size: 18px;
   line-height: 20px;
@@ -77,17 +50,6 @@ a.cds--header__menu-item {
 .tag-within-dl {
   color: black;
   margin-left: -3px;
-}
-
-.cds--btn.button-white-background {
-  color: #393939;
-  background: #ffffff;
-  background-blend-mode: multiply;
-  border: 1px solid #393939;
-}
-
-.cds--btn.button-white-background:hover {
-  background: lightgrey;
 }
 
 .spiff-breadcrumb .MuiBreadcrumbs-li a {
@@ -110,185 +72,18 @@ a.cds--header__menu-item {
   text-decoration: none;
 }
 
-.cds--btn--ghost {
-  color: black;
-}
-
-.cds--btn--ghost:visited {
-  color: black;
-}
-
-.cds--btn--ghost:hover {
-  color: black;
-}
-
-.cds--btn--ghost:visited:hover {
-  color: black;
-}
-
 /* match normal link colors */
-.cds--btn--ghost.button-link {
-  color: #0062fe;
-  padding-left: 0;
-}
-
-.cds--btn--ghost.button-link:visited {
-  color: #0062fe;
-  padding-left: 0;
-}
-
-.cds--btn--ghost.button-link:hover {
-  color: #0062fe;
-  background-color: transparent;
-  padding-left: 0;
-}
-
-.cds--btn--ghost.button-link:visited:hover {
-  color: #0062fe;
-  background-color: transparent;
-  padding-left: 0;
-}
 
 /* make the colors black to make it easier to read */
-.cds--btn--tertiary {
-  color: black;
-  border-color: black;
-}
-
-.cds--btn--tertiary:visited {
-  color: black;
-  border-color: black;
-}
 
 /* make the colors a little lighter black on hover
  * so they match our normal scheme better
  */
-.cds--btn--tertiary:focus {
-  color: #161616;
-  border-color: #161616;
-  background-color: #f4f4f4;
-}
-
-.cds--btn--tertiary:hover {
-  color: #161616;
-  border-color: #161616;
-  background-color: #f4f4f4;
-}
-
-.cds--btn--tertiary:visited:hover {
-  color: #161616;
-  border-color: #161616;
-  background-color: #f4f4f4;
-}
-
-.cds--btn--secondary {
-  color: #161616;
-  border-color: #efefef;
-  background-color: #efefef;
-}
-
-.cds--btn--secondary:visited {
-  color: #161616;
-  border-color: #efefef;
-  background-color: #efefef;
-}
-
-.cds--btn--secondary:focus {
-  color: #161616;
-  border-color: #efefef;
-  background-color: #efefef;
-}
-
-.cds--btn--secondary:hover {
-  color: #161616;
-  border-color: #dddddd;
-  background-color: #dddddd;
-}
-
-.cds--btn--secondary:visited:hover {
-  color: #161616;
-  border-color: #dddddd;
-  background-color: #dddddd;
-}
-
-.cds--modal-footer .cds--btn--secondary {
-  color: #ffffff;
-  border-color: #393939;
-  background-color: #393939;
-}
-
-.cds--modal-footer .cds--btn--secondary:visited {
-  color: #ffffff;
-  border-color: #393939;
-  background-color: #393939;
-}
-
-.cds--modal-footer .cds--btn--secondary:focus {
-  color: #ffffff;
-  border-color: #393939;
-  background-color: #393939;
-}
-
-.cds--modal-footer .cds--btn--secondary:hover {
-  color: #ffffff;
-  border-color: #474747;
-  background-color: #474747;
-}
-
-.cds--modal-footer .cds--btn--secondary:visited:hover {
-  color: #ffffff;
-  border-color: #474747;
-  background-color: #474747;
-}
 
 /* position the close button at the top-right corner of the modal header */
-.cds--modal-close {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  padding: 0;
-}
-
-.cds--modal-close__icon {
-  fill: #161616;
-}
-
-.cds--modal-footer .cds--btn--secondary {
-  color: #161616;
-  border-color: #e0e0e0;
-  background-color: #e0e0e0;
-}
-
-.cds--modal-footer .cds--btn--secondary:hover {
-  border-color: #c6c6c6;
-  background-color: #c6c6c6;
-  color: #161616;
-}
-
-.cds--header__global .cds--btn--primary.button-link {
-  color: #f4f4f4;
-  background-color: #393939;
-  padding-left: 0;
-}
-
-.cds--header__global .cds--btn--primary {
-  background-color: #161616;
-}
-
-.cds--btn--primary {
-  background-color: #393939;
-}
-
-.cds--btn--primary:hover {
-  background-color: #474747;
-}
 
 code {
-  font-family:
-    source-code-pro, Menlo, Consolas, 'Courier New', monospace;
+  font-family: source-code-pro, Menlo, Consolas, 'Courier New', monospace;
 }
 
 .app-logo {
@@ -401,32 +196,7 @@ dl dd {
   margin-right: 12px;
 }
 
-#user-profile-toggletip .cds--popover-content::before {
-  content: none;
-}
-
-#user-profile-toggletip .cds--popover--bottom-right .cds--popover-content {
-  bottom: 11px;
-  right: -5px;
-  border-radius: 5px;
-  border: 3px solid black;
-}
-
-#user-profile-toggletip .cds--popover-caret {
-  display: none;
-}
-
 .user-profile-toggletip-button:hover {
-  background-color: #161616;
-}
-
-#user-profile-toggletip .cds--popover--tab-tip__button::after {
-  content: none;
-}
-
-#user-profile-toggletip
-  .cds--popover--tab-tip.cds--popover--open
-  .cds--popover--tab-tip__button {
   background-color: #161616;
 }
 
@@ -514,16 +284,6 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
   padding-left: 5px;
 }
 
-.cds--tile.tile-data-store {
-  padding: 0px;
-  margin: 12px 24px 12px 0px;
-  width: 320px;
-  height: 264px;
-  background: #f4f4f4;
-  order: 1;
-  float: left;
-}
-
 .tile-data-store-content-container {
   width: 320px;
   height: 264px;
@@ -538,16 +298,6 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
   line-height: 28px;
   color: #161616;
   order: 0;
-}
-
-.cds--tile.tile-process-group {
-  padding: 0px;
-  margin: 12px 24px 12px 0px;
-  width: 320px;
-  height: 264px;
-  background: #f4f4f4;
-  order: 1;
-  float: left;
 }
 
 .tile-process-group-content-container {
@@ -595,16 +345,6 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
   bottom: 1rem;
 }
 
-.cds--tabs .cds--tabs__nav-link {
-  max-width: 20rem;
-}
-
-/* carbon wants padding on all sides. our UI person wanted everything leaning against the left wall. */
-.cds--tab-content {
-  padding-left: 0;
-  padding-right: 0;
-}
-
 .clear-left {
   clear: left;
 }
@@ -631,11 +371,6 @@ td.actions-cell {
   font-size: 14px;
 }
 
-th.table-header-right-align .cds--data-table,
-th.table-header-right-align .cds--table-header-label {
-  text-align: right;
-}
-
 .data-table-description {
   font-size: 14px;
   line-height: 18px;
@@ -647,18 +382,6 @@ th.table-header-right-align .cds--table-header-label {
 .filter-icon {
   text-align: right;
   margin-right: 0px;
-}
-
-.cds--btn--ghost:not([disabled]).red-icon svg {
-  fill: red;
-}
-
-.cds--btn--ghost:not([disabled]).green-icon svg {
-  fill: #198038;
-}
-
-.cds--btn--ghost:not([disabled]) svg.red-icon {
-  fill: red;
 }
 
 svg.green-icon {
@@ -689,40 +412,8 @@ svg.notification-icon {
   margin-right: 0.5px;
 }
 
-.cds--btn--ghost.cds--btn--sm.button-tag {
-  padding-left: 0;
-  padding-right: 0;
-  padding-top: 0px;
-  flex-grow: 1;
-}
-
-.cds--btn--ghost.cds--btn--sm.button-tag-icon {
-  padding-left: 0;
-  padding-right: 0;
-  padding-top: 0px;
-}
-
-/* .no-wrap cds--label cds--label--inline cds--label--inline--md{ */
-.no-wrap .cds--label--inline {
-  word-break: normal;
-}
-
 .vertical-spacer-to-allow-combo-box-to-expand-in-modal {
   height: 250px;
-}
-
-.cds--btn.narrow-button {
-  max-width: 10rem;
-  min-width: 5rem;
-  word-break: normal;
-}
-
-/* make this the same width as the carbon datePickerItem element
- * so the calendar icon stays on the input box.
- * CLASS: cds--date-picker-input__wrapper
-*/
-.cds--date-picker-container .cds--form__helper-text {
-  width: 18rem;
 }
 
 /* lime green */
@@ -731,13 +422,6 @@ svg.notification-icon {
 }
 
 /* reset to initial modal css and avoid table specific css */
-.modal-within-table-cell .cds--modal-container {
-  text-align: left;
-}
-
-.modal-within-table-cell .cds--modal-container button {
-  padding-left: 15px;
-}
 
 /* Errors and notifications  */
 .error_info .error_title {
@@ -940,17 +624,13 @@ div[role='tabpanel'] p {
   max-width: unset;
 }
 
-.cds--white h1,
-.cds--white h2,
-.cds--white h3,
-.cds--white h4,
-.cds--white h5,
-.cds--white h6 {
+.app-root h1,
+.app-root h2,
+.app-root h3,
+.app-root h4,
+.app-root h5,
+.app-root h6 {
   max-width: 640px;
-}
-
-li.cds--accordion__item {
-  max-width: 100%;
 }
 
 .process-model-search-combobox li {
@@ -980,10 +660,6 @@ div.markdown-collapsed {
   mask: var(--mask);
 }
 
-.cds--data-table-content {
-  overflow-x: auto;
-}
-
 .MuiContainer-root .wmde-markdown {
   background-color: inherit;
   color: inherit;
@@ -994,26 +670,12 @@ div.markdown-collapsed {
   overflow: auto;
 }
 
-/* override carbon variable so we can left align accordions*/
-.cds--accordion {
-  --cds-layout-density-padding-inline-local: 0px;
-}
-
-.megacondensed-button .cds--btn {
-  --cds-layout-density-padding-inline-local: 0px;
-}
-
 .wmde-markdown ol {
   list-style: decimal;
 }
 
 .wmde-markdown ul {
   list-style: disc;
-}
-
-div.cds--tag svg {
-  vertical-align: middle;
-  display: inline-block;
 }
 
 div.onboarding {
@@ -1085,10 +747,6 @@ div.retrievalExpressionsForm {
   margin: 20px;
 }
 
-.task-info-modal-accordion .cds--accordion__content {
-  padding-right: 1rem;
-}
-
 .task-instance-modal-row-item {
   padding-top: 0.5rem;
   font-size: 14px;
@@ -1112,8 +770,6 @@ div.retrievalExpressionsForm {
 .error-text-red {
   color: red;
 }
-
-/* Utility classes (carbon equivalents for stacks, columns and rows?) */
 .p-10 {
   padding: 10px;
 }
