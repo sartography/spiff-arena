@@ -10,10 +10,13 @@ from spiffworkflow_backend.background_processing.celery_tasks.process_instance_t
 )
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
+from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
@@ -180,10 +183,6 @@ def celery_task_process_instance_start_from_message(
     message_instance_id: int,
     message_triggerable_process_model_id: int,
 ) -> dict:
-    from spiffworkflow_backend.models.message_instance import MessageInstanceModel  # noqa: PLC0415
-    from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel  # noqa: PLC0415
-    from spiffworkflow_backend.services.message_service import MessageService  # noqa: PLC0415
-
     celery_task_id = self.request.id
     logger_prefix = f"celery_task_process_instance_start_from_message[{celery_task_id}]"
     current_app.logger.info(
