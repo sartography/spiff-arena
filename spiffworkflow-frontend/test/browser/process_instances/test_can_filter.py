@@ -12,6 +12,24 @@ def titleize(status: str) -> str:
     return " ".join([word.capitalize() for word in status.split("_")])
 
 
+def select_calendar_date(page: Page, date: datetime):
+    calendar = page.get_by_test_id("absolute-time-range-picker")
+    target_month = date.strftime("%B %Y")
+    month_header = calendar.locator(".react-datepicker__current-month")
+    for _ in range(3):
+        if month_header.inner_text() == target_month:
+            break
+        calendar.get_by_role("button", name="Next Month").click()
+    else:
+        raise AssertionError(f"Could not navigate calendar to {target_month}")
+
+    day = calendar.locator(
+        ".react-datepicker__day:not(.react-datepicker__day--outside-month)"
+    ).filter(has_text=re.compile(rf"^{date.day}$"))
+    expect(day).to_have_count(1)
+    day.click()
+
+
 def test_can_filter(page: Page):
     """
     Test that users can filter process instances by status and date, and see correct filtered results.
@@ -67,36 +85,28 @@ def test_can_filter(page: Page):
         # Confirm tag removed
         expect(page.locator("#process-instance-status-select .cds--tag")).to_have_count(0)
 
-    # 6. Filter by a recent past date (1 hour ago) and expect results
-    past = datetime.now() - timedelta(hours=1)
-    page.locator("#date-picker-start-from").fill(past.strftime("%Y-%m-%d"))
-    page.get_by_text("Start date to", exact=False).click()
-    page.locator("#time-picker-start-from").fill(past.strftime("%H:%M"))
-    page.locator("#date-picker-end-from").fill(past.strftime("%Y-%m-%d"))
-    page.get_by_text("End date to", exact=False).click()
-    page.locator("#time-picker-end-from").fill(past.strftime("%H:%M"))
-    # Click header to apply filter
-    page.get_by_text("All Process Instances", exact=False).click()
-    page.wait_for_timeout(500)
+    # 6. Filter to instances started in the last hour and expect results
+    time_range_button = page.get_by_test_id("time-range-filter-button")
+    time_range_button.click()
+    page.get_by_role("menuitem", name="Last hour").click()
+    expect(time_range_button).to_contain_text("1H")
     # Debugging if no results
     if item_locator.count() == 0:
         print_page_details(page)
     count_past = item_locator.count()
     assert count_past > 0, f"Expected some process instances for past date, got {count_past}"
 
-    # 7. Filter by a future date (26h ahead) and expect no results
-    future = datetime.now() + timedelta(hours=26)
-    page.locator("#date-picker-start-from").fill(future.strftime("%Y-%m-%d"))
-    page.get_by_text("Start date to", exact=False).click()
-    page.locator("#time-picker-start-from").fill(future.strftime("%H:%M"))
-    page.locator("#date-picker-end-from").fill(future.strftime("%Y-%m-%d"))
-    page.get_by_text("End date to", exact=False).click()
-    page.locator("#time-picker-end-from").fill(future.strftime("%H:%M"))
-    # Click header to apply filter
-    page.get_by_text("All Process Instances", exact=False).click()
-    page.wait_for_timeout(500)
-    count_future = item_locator.count()
-    assert count_future == 0, f"Expected no process instances for future date, got {count_future}"
+    # 7. Filter by an absolute future range and expect no results
+    future_start = datetime.now() + timedelta(hours=26)
+    future_end = future_start + timedelta(days=1)
+    time_range_button.click()
+    page.get_by_role("menuitem", name="Absolute date").click()
+    select_calendar_date(page, future_start)
+    select_calendar_date(page, future_end)
+    page.get_by_label("Start time").fill(future_start.strftime("%H:%M"))
+    page.get_by_label("End time").fill(future_end.strftime("%H:%M"))
+    page.get_by_role("button", name="Apply").click()
+    expect(item_locator).to_have_count(0, timeout=10000)
 
     # 8. Cleanup: logout
     logout(page)

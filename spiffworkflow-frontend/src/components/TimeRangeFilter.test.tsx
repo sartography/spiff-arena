@@ -70,9 +70,7 @@ test('accepts a custom relative range on Enter', () => {
 
   const end = Date.parse('2026-07-20T12:00:00Z') / 1000;
   expect(onApply).toHaveBeenCalledWith(end - 8 * 7 * 86400, end);
-  expect(screen.getByTestId(TIME_RANGE_BUTTON_TEST_ID)).toHaveTextContent(
-    '8W',
-  );
+  expect(screen.getByTestId(TIME_RANGE_BUTTON_TEST_ID)).toHaveTextContent('8W');
 });
 
 test('opens the absolute date range picker and can go back', () => {
