@@ -27,7 +27,7 @@ The JSON body is the message payload used for correlation.
 
 If the message matches a waiting process instance, SpiffWorkflow correlates the message and returns `200`.
 
-If the message matches a Message Start Event, SpiffWorkflow starts the process and returns `200`.
+If the message matches a Message Start Event, SpiffWorkflow starts the process and returns `200` in synchronous mode.
 
 If there is no match and no buffering is requested, the request returns `400` with `message_not_accepted`.
 
@@ -35,15 +35,19 @@ The messages list in the UI can help debug whether a message was accepted, buffe
 
 ## Execution Mode
 
-Set `execution_mode=asynchronous` to queue continued process execution when Celery is enabled:
+Set `execution_mode=asynchronous` to use Celery when it is enabled:
 
 ```bash
 POST /v1.0/messages/orders:payment_failed?execution_mode=asynchronous
 ```
 
-For a Message Start Event, the response still includes the process instance that was created. Process-instance creation,
-message correlation, and the initial workflow state are persisted before continued execution is queued, so asynchronous
-mode does not currently make the entire message-start request asynchronous.
+For a Message Start Event, SpiffWorkflow reserves a process instance, queues its BPMN initialization and message delivery,
+and returns `202`. The response includes the reserved process instance with its real `id` and an initial status of
+`not_started`, so callers can refer to it immediately. The process may still be `not_started` when it is first retrieved;
+the Celery worker updates that same process instance as execution proceeds.
+
+For a message that matches an existing waiting process instance, message delivery is completed before the response and
+continued process execution is queued as before.
 
 ## Buffering Unmatched Messages
 
