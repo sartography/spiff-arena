@@ -66,6 +66,19 @@ def test_can_filter(page: Page):
     # 4. Expand filter section
     page.get_by_test_id("filter-section-expand-toggle").click()
 
+    first_column_chip = page.locator(".filter-tag").first
+    expect(first_column_chip).to_be_visible()
+    assert first_column_chip.bounding_box()["width"] <= 128
+
+    save_button = page.get_by_role("button", name="Save", exact=True)
+    clear_filters_button = page.get_by_role("button", name="Clear", exact=True)
+    advanced_button = page.get_by_test_id("advanced-options-filters")
+    expect(save_button).to_be_visible()
+    expect(clear_filters_button).to_be_visible()
+    expect(advanced_button).to_be_visible()
+    assert save_button.bounding_box()["x"] < clear_filters_button.bounding_box()["x"]
+    assert advanced_button.bounding_box()["x"] > clear_filters_button.bounding_box()["x"]
+
     # 5. Filter by each status except 'all' and 'waiting', verifying UI tag behavior
     statuses = [
         "complete", "error", "not_started", "running",

@@ -1266,7 +1266,7 @@ export default function ProcessInstanceListTableWithFilters({
           reportColumnLabel = `${reportColumnLabel}=${reportColumnForEditing.filter_field_value}`;
         }
         tags.push(
-          <Grid key={reportColumn.accessor} size={{ xs: 6, sm: 3, md: 2 }}>
+          <Grid key={reportColumn.accessor} size="auto">
             <Chip
               size="small"
               color={reportColumnForEditing.filterable ? 'success' : 'default'}
@@ -1684,29 +1684,29 @@ export default function ProcessInstanceListTableWithFilters({
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>{processStatusSearch()}</Grid>
         </Grid>
-        <Grid container spacing={2} className="with-bottom-margin">
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Stack direction="row">
+        <Grid container className="with-bottom-margin">
+          <Grid size={{ xs: 12 }}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              flexWrap="wrap"
+              gap={1}
+            >
+              {saveAsReportComponent()}
               <Button variant="outlined" onClick={clearFilters}>
                 {t('clear_button')}
               </Button>
-            </Stack>
-          </Grid>
-          <Grid size={{ xs: 9, md: 4 }}>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              {saveAsReportComponent()}
               {deleteReportComponent()}
-            </div>
-          </Grid>
-          <Grid size={{ xs: 3, md: 2 }}>
-            <Button
-              variant="text"
-              onClick={() => setShowAdvancedOptions(true)}
-              data-testid="advanced-options-filters"
-              className="narrow-button button-link"
-            >
-              {t('advanced')}
-            </Button>
+              <Button
+                variant="text"
+                onClick={() => setShowAdvancedOptions(true)}
+                data-testid="advanced-options-filters"
+                className="narrow-button button-link"
+                sx={{ ml: 'auto' }}
+              >
+                {t('advanced')}
+              </Button>
+            </Stack>
           </Grid>
         </Grid>
       </>

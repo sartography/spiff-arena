@@ -420,14 +420,15 @@ svg.notification-icon {
 
 .filter-tag {
   justify-content: left;
-  width: 100%;
+  max-width: 8rem;
   height: 2rem;
 }
 
 .filter-tag > span {
   display: flex;
   flex-direction: row;
-  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .filter-tag > span > span {
