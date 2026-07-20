@@ -22,10 +22,13 @@ To reproduce the 25-request asynchronous message-start latency case:
 uv run python bin/load_tests/concurrent_message_starts.py \
   --requests 25 \
   --workers 25 \
-  --execution-mode asynchronous
+  --execution-mode asynchronous \
+  --max-http-latency-seconds 2
 ```
 
 The summary reports HTTP min/p50/p95/max latency, concurrent-batch wall time, throughput, and the ten slowest requests.
+When `--max-http-latency-seconds` is provided, the script exits nonzero if any request in the concurrent batch exceeds the
+threshold. The warm-up request and completion polling are not included in this latency check.
 
 To include the cold BPMN process-definition persistence path in the same stress test:
 

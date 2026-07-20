@@ -379,7 +379,11 @@ def run_load(
     return results, request_batch_elapsed_seconds
 
 
-def print_summary(results: list[MessageResult], request_batch_elapsed_seconds: float) -> None:
+def print_summary(
+    results: list[MessageResult],
+    request_batch_elapsed_seconds: float,
+    max_http_latency_seconds: float | None = None,
+) -> None:
     successes = [r for r in results if r.ok]
     failures = [r for r in results if not r.ok]
     accepted = [r for r in results if r.accepted]
@@ -400,6 +404,9 @@ def print_summary(results: list[MessageResult], request_batch_elapsed_seconds: f
         )
         print(f"Concurrent request batch wall time: {request_batch_elapsed_seconds:.3f}s")
         print(f"HTTP throughput: {len(results) / request_batch_elapsed_seconds:.2f} requests/second")
+        if max_http_latency_seconds is not None:
+            latency_violations = sum(result.elapsed_seconds > max_http_latency_seconds for result in results)
+            print(f"HTTP latency threshold: {max_http_latency_seconds:.3f}s ({latency_violations} exceeded)")
 
     print(f"Unique successful process instances: {len(unique_process_instance_ids)}")
     if len(unique_process_instance_ids) != len(successes):
@@ -425,6 +432,19 @@ def all_message_starts_landed(results: list[MessageResult]) -> bool:
     return len(successful_process_instance_ids) == len(results) and len(set(successful_process_instance_ids)) == len(results)
 
 
+def all_requests_within_http_latency(results: list[MessageResult], max_http_latency_seconds: float | None) -> bool:
+    if max_http_latency_seconds is None:
+        return True
+    return all(result.elapsed_seconds <= max_http_latency_seconds for result in results)
+
+
+def positive_float(value: str) -> float:
+    parsed_value = float(value)
+    if parsed_value <= 0:
+        raise argparse.ArgumentTypeError("must be greater than zero")
+    return parsed_value
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--backend-base-url", default=DEFAULT_BACKEND_BASE_URL)
@@ -432,6 +452,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--workers", type=int, default=20)
     parser.add_argument("--execution-mode", default="synchronous", choices=["synchronous", "asynchronous"])
     parser.add_argument("--timeout", type=float, default=30)
+    parser.add_argument(
+        "--max-http-latency-seconds",
+        type=positive_float,
+        help="Exit nonzero if any concurrent message-start HTTP request exceeds this latency",
+    )
     parser.add_argument("--completion-timeout", type=float, default=60)
     parser.add_argument("--poll-interval", type=float, default=0.25)
     parser.add_argument("--username", default=DEFAULT_USERNAME)
@@ -475,8 +500,10 @@ def main() -> int:
 
     group_id, message_name = ensure_process_model(session, args, headers)
     results, request_batch_elapsed_seconds = run_load(args, headers, group_id, message_name)
-    print_summary(results, request_batch_elapsed_seconds)
-    return 0 if all_message_starts_landed(results) else 1
+    print_summary(results, request_batch_elapsed_seconds, args.max_http_latency_seconds)
+    all_requests_succeeded = all_message_starts_landed(results)
+    latency_threshold_met = all_requests_within_http_latency(results, args.max_http_latency_seconds)
+    return 0 if all_requests_succeeded and latency_threshold_met else 1
 
 
 if __name__ == "__main__":
