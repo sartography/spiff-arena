@@ -33,6 +33,18 @@ If there is no match and no buffering is requested, the request returns `400` wi
 
 The messages list in the UI can help debug whether a message was accepted, buffered, completed, or rejected.
 
+## Execution Mode
+
+Set `execution_mode=asynchronous` to queue continued process execution when Celery is enabled:
+
+```bash
+POST /v1.0/messages/orders:payment_failed?execution_mode=asynchronous
+```
+
+For a Message Start Event, the response still includes the process instance that was created. Process-instance creation,
+message correlation, and the initial workflow state are persisted before continued execution is queued, so asynchronous
+mode does not currently make the entire message-start request asynchronous.
+
 ## Buffering Unmatched Messages
 
 External systems often cannot guarantee that a callback arrives after the process is already waiting for it.
