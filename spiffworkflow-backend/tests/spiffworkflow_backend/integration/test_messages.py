@@ -39,7 +39,7 @@ class TestMessages(BaseTest):
                 ProcessInstanceExecutionMode.asynchronous.value,
             )
 
-        assert response.status_code == 202
+        assert response.status_code == 200
         response_json = response.json
         assert response_json["process_instance"]["id"] is not None
         assert response_json["process_instance"]["status"] == "not_started"

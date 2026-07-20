@@ -10,8 +10,6 @@ from flask_sqlalchemy.pagination import QueryPagination
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
-from spiffworkflow_backend.models.message_instance import MessageStatuses
-from spiffworkflow_backend.models.message_instance import MessageTypes
 from spiffworkflow_backend.models.message_model import MessageCorrelationPropertyModel
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -155,12 +153,9 @@ def message_send(
         "task_data": process_instance.get_data(),
         "process_instance": process_instance.serialized(),
     }
-    status_code = 200
-    if receiver_message.message_type == MessageTypes.send.value and receiver_message.status == MessageStatuses.running.value:
-        status_code = 202
     return Response(
         json.dumps(response_json),
-        status=status_code,
+        status=200,
         mimetype="application/json",
     )
 
