@@ -13,7 +13,11 @@
     <bpmn:sequenceFlow id="Flow_1wwg6l1" sourceRef="StartEvent_1" targetRef="Activity_1twstnr" />
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_1wwg6l1</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_1kqg8ba" messageRef="Message_SystemMessageNotification" />
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1kqg8ba" messageRef="Message_SystemMessageNotification">
+        <bpmn:extensionElements>
+          <spiffworkflow:messageVariable>system_message</spiffworkflow:messageVariable>
+        </bpmn:extensionElements>
+      </bpmn:messageEventDefinition>
     </bpmn:startEvent>
     <bpmn:endEvent id="Event_1rn093f">
       <bpmn:incoming>Flow_1hpekd5</bpmn:incoming>
@@ -25,11 +29,7 @@
       <bpmn:script>x = 1</bpmn:script>
     </bpmn:scriptTask>
   </bpmn:process>
-  <bpmn:message id="Message_SystemMessageNotification" name="SystemErrorMessage">
-    <bpmn:extensionElements>
-      <spiffworkflow:messageVariable>system_message</spiffworkflow:messageVariable>
-    </bpmn:extensionElements>
-  </bpmn:message>
+  <bpmn:message id="Message_SystemMessageNotification" name="SystemErrorMessage" />
   <bpmn:correlationProperty id="message_text" name="message_text">
     <bpmn:correlationPropertyRetrievalExpression messageRef="Message_SystemMessageNotification">
       <bpmn:formalExpression>message_text</bpmn:formalExpression>
