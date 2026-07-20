@@ -400,32 +400,18 @@ class MessageService:
             if execution_mode == ProcessInstanceExecutionMode.asynchronous.value and should_queue_process_instance(
                 execution_mode=execution_mode
             ):
-                reserve_phase = (
-                    instrumentation.phase("reserve_message_start_process_instance")
-                    if instrumentation is not None
-                    else contextlib.nullcontext()
+                receiving_process_instance = cls._reserve_process_instance_for_async_message_start(
+                    message_instance_send,
+                    message_triggerable_process_model,
+                    user,
+                    instrumentation,
                 )
-                with reserve_phase:
-                    receiving_process_instance = ProcessInstanceService.reserve_process_instance_from_process_model_identifier(
-                        message_triggerable_process_model.process_model_identifier,
-                        user,
-                        commit_db=False,
-                    )
-                    message_instance_send.process_instance_id = receiving_process_instance.id
-                    db.session.add(message_instance_send)
-                    db.session.commit()
-
-                queue_phase = (
-                    instrumentation.phase("queue_message_start_process_instance")
-                    if instrumentation is not None
-                    else contextlib.nullcontext()
+                cls._enqueue_reserved_process_instance_for_message_start(
+                    receiving_process_instance,
+                    message_instance_send,
+                    message_triggerable_process_model,
+                    instrumentation,
                 )
-                with queue_phase:
-                    queue_message_start_process_instance(
-                        receiving_process_instance.id,
-                        message_instance_send.id,
-                        message_triggerable_process_model.id,
-                    )
                 return message_instance_send
 
             with cls._started_process_with_message(
@@ -456,6 +442,50 @@ class MessageService:
                 receiving_process_instance,
             )
             raise
+
+    @classmethod
+    def _reserve_process_instance_for_async_message_start(
+        cls,
+        message_instance_send: MessageInstanceModel,
+        message_triggerable_process_model: MessageTriggerableProcessModel,
+        user: UserModel,
+        instrumentation: MessageSendInstrumentation | None,
+    ) -> ProcessInstanceModel:
+        reserve_phase = (
+            instrumentation.phase("reserve_message_start_process_instance")
+            if instrumentation is not None
+            else contextlib.nullcontext()
+        )
+        with reserve_phase:
+            receiving_process_instance = ProcessInstanceService.reserve_process_instance_from_process_model_identifier(
+                message_triggerable_process_model.process_model_identifier,
+                user,
+                commit_db=False,
+            )
+            message_instance_send.process_instance_id = receiving_process_instance.id
+            db.session.add(message_instance_send)
+            db.session.commit()
+        return receiving_process_instance
+
+    @classmethod
+    def _enqueue_reserved_process_instance_for_message_start(
+        cls,
+        receiving_process_instance: ProcessInstanceModel,
+        message_instance_send: MessageInstanceModel,
+        message_triggerable_process_model: MessageTriggerableProcessModel,
+        instrumentation: MessageSendInstrumentation | None,
+    ) -> None:
+        queue_phase = (
+            instrumentation.phase("queue_message_start_process_instance")
+            if instrumentation is not None
+            else contextlib.nullcontext()
+        )
+        with queue_phase:
+            queue_message_start_process_instance(
+                receiving_process_instance.id,
+                message_instance_send.id,
+                message_triggerable_process_model.id,
+            )
 
     @classmethod
     def _deliver_message_to_started_process(
@@ -701,53 +731,20 @@ class MessageService:
         message_instance_send: MessageInstanceModel,
         message_triggerable_process_model: MessageTriggerableProcessModel,
     ) -> MessageInstanceModel:
-        if message_instance_send.status == MessageStatuses.completed.value:
-            counterpart = cast(
-                MessageInstanceModel | None,
-                MessageInstanceModel.query.filter_by(id=message_instance_send.counterpart_id).first(),
-            )
-            if counterpart is None:
-                raise MessageServiceError(
-                    f"Completed send message instance {message_instance_send.id} has no receive-message counterpart"
-                )
+        counterpart = cls._completed_counterpart_for_reserved_message(message_instance_send)
+        if counterpart is not None:
             return counterpart
 
-        if message_instance_send.status != MessageStatuses.running.value:
-            raise MessageServiceError(
-                f"Reserved send message instance {message_instance_send.id} has unexpected status "
-                f"{message_instance_send.status!r}"
-            )
-        if message_instance_send.process_instance_id != receiving_process_instance.id:
-            raise MessageServiceError(
-                f"Reserved send message instance {message_instance_send.id} is not associated with process instance "
-                f"{receiving_process_instance.id}"
-            )
+        cls._validate_reserved_message_start(receiving_process_instance, message_instance_send)
 
         message_instance_receive: MessageInstanceModel | None = None
         try:
-            BpmnProcessService.persist_bpmn_process_definition(
-                receiving_process_instance.process_model_identifier,
-            )
-            cycle_count, _, duration_in_seconds = ProcessInstanceService.next_start_event_configuration(
-                receiving_process_instance
-            )
-            ProcessInstanceService.register_process_model_cycles(
-                receiving_process_instance.process_model_identifier,
-                cycle_count,
-                duration_in_seconds,
-            )
-            with cls._initialized_process_with_message(
+            cls._prepare_reserved_process_for_message_start(receiving_process_instance)
+            with cls._reserved_process_with_delivered_message(
                 receiving_process_instance,
+                message_instance_send,
                 message_triggerable_process_model,
-                message_instance_send=message_instance_send,
-                execution_mode=ProcessInstanceExecutionMode.asynchronous.value,
-            ) as runtime_receive:
-                message_instance_receive = cls._deliver_message_to_started_process(
-                    receiving_process_instance,
-                    message_instance_send,
-                    runtime_receive,
-                    execution_mode=ProcessInstanceExecutionMode.asynchronous.value,
-                )
+            ) as (message_instance_receive, runtime_receive):
                 task_runnability = runtime_receive.do_engine_steps(
                     save=True,
                     execution_strategy_name="queue_instructions_for_end_user",
@@ -767,6 +764,78 @@ class MessageService:
                 receiving_process_instance,
             )
             raise
+
+    @classmethod
+    def _completed_counterpart_for_reserved_message(
+        cls,
+        message_instance_send: MessageInstanceModel,
+    ) -> MessageInstanceModel | None:
+        if message_instance_send.status != MessageStatuses.completed.value:
+            return None
+
+        counterpart = cast(
+            MessageInstanceModel | None,
+            MessageInstanceModel.query.filter_by(id=message_instance_send.counterpart_id).first(),
+        )
+        if counterpart is None:
+            raise MessageServiceError(
+                f"Completed send message instance {message_instance_send.id} has no receive-message counterpart"
+            )
+        return counterpart
+
+    @classmethod
+    def _validate_reserved_message_start(
+        cls,
+        receiving_process_instance: ProcessInstanceModel,
+        message_instance_send: MessageInstanceModel,
+    ) -> None:
+        if message_instance_send.status != MessageStatuses.running.value:
+            raise MessageServiceError(
+                f"Reserved send message instance {message_instance_send.id} has unexpected status "
+                f"{message_instance_send.status!r}"
+            )
+        if message_instance_send.process_instance_id != receiving_process_instance.id:
+            raise MessageServiceError(
+                f"Reserved send message instance {message_instance_send.id} is not associated with process instance "
+                f"{receiving_process_instance.id}"
+            )
+
+    @classmethod
+    def _prepare_reserved_process_for_message_start(
+        cls,
+        receiving_process_instance: ProcessInstanceModel,
+    ) -> None:
+        BpmnProcessService.persist_bpmn_process_definition(
+            receiving_process_instance.process_model_identifier,
+        )
+        cycle_count, _, duration_in_seconds = ProcessInstanceService.next_start_event_configuration(receiving_process_instance)
+        ProcessInstanceService.register_process_model_cycles(
+            receiving_process_instance.process_model_identifier,
+            cycle_count,
+            duration_in_seconds,
+        )
+
+    @classmethod
+    @contextlib.contextmanager
+    def _reserved_process_with_delivered_message(
+        cls,
+        receiving_process_instance: ProcessInstanceModel,
+        message_instance_send: MessageInstanceModel,
+        message_triggerable_process_model: MessageTriggerableProcessModel,
+    ) -> Generator[tuple[MessageInstanceModel, ProcessInstanceRuntime], None, None]:
+        with cls._initialized_process_with_message(
+            receiving_process_instance,
+            message_triggerable_process_model,
+            message_instance_send=message_instance_send,
+            execution_mode=ProcessInstanceExecutionMode.asynchronous.value,
+        ) as runtime_receive:
+            message_instance_receive = cls._deliver_message_to_started_process(
+                receiving_process_instance,
+                message_instance_send,
+                runtime_receive,
+                execution_mode=ProcessInstanceExecutionMode.asynchronous.value,
+            )
+            yield message_instance_receive, runtime_receive
 
     @staticmethod
     def process_message_receive(
