@@ -5,6 +5,7 @@ from flask import current_app
 
 from spiffworkflow_backend.background_processing import CELERY_TASK_EVENT_NOTIFIER
 from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_RUN
+from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_START_FROM_MESSAGE
 from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
@@ -121,3 +122,22 @@ def queue_start_process_instance_if_appropriate(
         )
         return True
     return False
+
+
+def queue_message_start_process_instance(
+    process_instance_id: int,
+    message_instance_id: int,
+    message_triggerable_process_model_id: int,
+) -> str:
+    async_result = celery.current_app.send_task(
+        CELERY_TASK_PROCESS_INSTANCE_START_FROM_MESSAGE,
+        (
+            process_instance_id,
+            message_instance_id,
+            message_triggerable_process_model_id,
+        ),
+    )
+    current_app.logger.info(
+        f"Queueing reserved message-start process instance ({process_instance_id}) for celery ({async_result.task_id})"
+    )
+    return str(async_result.task_id)

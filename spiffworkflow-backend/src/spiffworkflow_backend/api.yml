@@ -3385,13 +3385,21 @@ paths:
                   process_instance:
                     $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
         "202":
-          description: Message accepted and buffered until a matching receiver is available
+          description: Message accepted for asynchronous process start, or buffered until a matching receiver is available
           content:
             application/json:
               schema:
-                properties:
-                  message_instance:
-                    $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+                oneOf:
+                  - type: object
+                    properties:
+                      task_data:
+                        $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+                      process_instance:
+                        $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+                  - type: object
+                    properties:
+                      message_instance:
+                        $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
 
   /messages/{modified_message_name}/process-model:
     parameters:
