@@ -23,16 +23,8 @@
       <bpmn:messagePath>po_number</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
-  <bpmn:message id="request_approval" name="Request Approval">
-    <bpmn:extensionElements>
-      <spiffworkflow:messageVariable>invoice</spiffworkflow:messageVariable>
-    </bpmn:extensionElements>
-  </bpmn:message>
-  <bpmn:message id="approval_result" name="Approval Result">
-    <bpmn:extensionElements>
-      <spiffworkflow:messagePayload>invoice</spiffworkflow:messagePayload>
-    </bpmn:extensionElements>
-  </bpmn:message>
+  <bpmn:message id="request_approval" name="Request Approval" />
+  <bpmn:message id="approval_result" name="Approval Result" />
   <bpmn:process id="message_receiver_process" name="Message Receiver Process" isExecutable="true">
     <bpmn:sequenceFlow id="Flow_0fruoax" sourceRef="receive_message" targetRef="send_message_response" />
     <bpmn:sequenceFlow id="Flow_11r9uiw" sourceRef="send_message_response" targetRef="Event_0q5otqd" />
@@ -40,12 +32,19 @@
       <bpmn:incoming>Flow_11r9uiw</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sendTask id="send_message_response" name="Send Message Reponse" messageRef="approval_result">
+      <bpmn:extensionElements>
+        <spiffworkflow:messagePayload>invoice</spiffworkflow:messagePayload>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_0fruoax</bpmn:incoming>
       <bpmn:outgoing>Flow_11r9uiw</bpmn:outgoing>
     </bpmn:sendTask>
     <bpmn:startEvent id="receive_message" name="Receive Message">
       <bpmn:outgoing>Flow_0fruoax</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_08u7ksn" messageRef="request_approval" />
+      <bpmn:messageEventDefinition id="MessageEventDefinition_08u7ksn" messageRef="request_approval">
+        <bpmn:extensionElements>
+          <spiffworkflow:messageVariable>invoice</spiffworkflow:messageVariable>
+        </bpmn:extensionElements>
+      </bpmn:messageEventDefinition>
     </bpmn:startEvent>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">

@@ -12,11 +12,19 @@
   <bpmn:process id="Process_ynixgwm" isExecutable="true">
     <bpmn:startEvent id="purchase_message_start_event" name="Purchase" messageRef="[object Object]">
       <bpmn:outgoing>Flow_18sbiwh</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_090dz23" messageRef="Message_0e9yhnl" />
+      <bpmn:messageEventDefinition id="MessageEventDefinition_090dz23" messageRef="Message_0e9yhnl">
+        <bpmn:extensionElements>
+          <spiffworkflow:messageVariable>incoming_pur_data_test</spiffworkflow:messageVariable>
+        </bpmn:extensionElements>
+      </bpmn:messageEventDefinition>
     </bpmn:startEvent>
     <bpmn:startEvent id="travel_message_start_event" name="Travel" messageRef="[object Object]">
       <bpmn:outgoing>Flow_0kepd4s</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_093515a" messageRef="Message_1pyl8rr" />
+      <bpmn:messageEventDefinition id="MessageEventDefinition_093515a" messageRef="Message_1pyl8rr">
+        <bpmn:extensionElements>
+          <spiffworkflow:messageVariable>incoming_trvl_data_test</spiffworkflow:messageVariable>
+        </bpmn:extensionElements>
+      </bpmn:messageEventDefinition>
     </bpmn:startEvent>
     <bpmn:startEvent id="normal_start_event" name="Normal start event">
       <bpmn:outgoing>Flow_0a541po</bpmn:outgoing>
@@ -47,16 +55,8 @@
     <bpmn:sequenceFlow id="Flow_18oryqi" sourceRef="Gateway_1jfkfac" targetRef="script_task" />
     <bpmn:sequenceFlow id="Flow_17u2bz9" sourceRef="script_task" targetRef="EndEvent_1" />
   </bpmn:process>
-  <bpmn:message id="Message_0e9yhnl" name="purchase_start_test_v2">
-    <bpmn:extensionElements>
-      <spiffworkflow:messageVariable>incoming_pur_data_test</spiffworkflow:messageVariable>
-    </bpmn:extensionElements>
-  </bpmn:message>
-  <bpmn:message id="Message_1pyl8rr" name="travel_start_test_v2">
-    <bpmn:extensionElements>
-      <spiffworkflow:messageVariable>incoming_trvl_data_test</spiffworkflow:messageVariable>
-    </bpmn:extensionElements>
-  </bpmn:message>
+  <bpmn:message id="Message_0e9yhnl" name="purchase_start_test_v2" />
+  <bpmn:message id="Message_1pyl8rr" name="travel_start_test_v2" />
   <bpmn:message id="Message_0tggnp6" name="send_status_trvl_test_v2">
     <bpmn:extensionElements>
       <spiffworkflow:messagePayload>{"status": "open",

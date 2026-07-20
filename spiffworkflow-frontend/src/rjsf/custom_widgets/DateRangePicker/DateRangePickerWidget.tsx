@@ -1,8 +1,10 @@
-import React, { useCallback } from 'react';
-import { DatePickerInput, DatePicker } from '@carbon/react';
-import { useDebouncedCallback } from 'use-debounce';
+import { useCallback } from 'react';
+import { TextField } from '@mui/material';
+// The library intentionally exports its default component as DatePicker.
+// eslint-disable-next-line import-x/no-named-as-default
+import DatePicker from 'react-datepicker';
 import {
-  DATE_FORMAT_CARBON,
+  DATE_FORMAT,
   DATE_FORMAT_FOR_DISPLAY,
   DATE_RANGE_DELIMITER,
 } from '../../../config';
@@ -46,22 +48,26 @@ export default function DateRangePickerWidget({
   );
 
   const onChangeLocal = useCallback(
-    (dateRange: Date[]) => {
+    (dateRange: (Date | null)[]) => {
       let dateRangeString;
-      const startDate = DateAndTimeService.convertDateObjectToFormattedString(
-        dateRange[0],
-      );
-      if (startDate) {
-        const startDateYMD =
-          DateAndTimeService.dateStringToYMDFormat(startDate);
-        const endDate = DateAndTimeService.convertDateObjectToFormattedString(
-          dateRange[1],
-        );
+      const startDate = dateRange[0]
+        ? DateAndTimeService.convertDateObjectToFormattedString(dateRange[0])
+        : null;
+      const endDate = dateRange[1]
+        ? DateAndTimeService.convertDateObjectToFormattedString(dateRange[1])
+        : null;
+      const startDateYMD = startDate
+        ? DateAndTimeService.dateStringToYMDFormat(startDate)
+        : '';
+      const endDateYMD = endDate
+        ? DateAndTimeService.dateStringToYMDFormat(endDate)
+        : '';
+      if (startDateYMD && endDateYMD) {
+        dateRangeString = `${startDateYMD}${DATE_RANGE_DELIMITER}${endDateYMD}`;
+      } else if (startDateYMD) {
         dateRangeString = startDateYMD;
-        if (endDate) {
-          const endDateYMD = DateAndTimeService.dateStringToYMDFormat(endDate);
-          dateRangeString = `${dateRangeString}${DATE_RANGE_DELIMITER}${endDateYMD}`;
-        }
+      } else if (endDateYMD) {
+        dateRangeString = `${DATE_RANGE_DELIMITER}${endDateYMD}`;
       }
       onChange(dateRangeString);
     },
@@ -83,53 +89,61 @@ export default function DateRangePickerWidget({
     dateValue = [startDate, endDate];
   }
 
-  const addDebouncedOnChangeDate = useDebouncedCallback(
-    (fullObject: React.ChangeEvent<HTMLInputElement>) => {
-      fullObject.target.value =
-        DateAndTimeService.attemptToConvertUnknownDateStringFormatToKnownFormat(
-          fullObject.target.value,
-        );
-    },
-    // delay in ms
-    100,
-  );
-
   return (
-    <DatePicker
-      className="date-input"
-      datePickerType="range"
-      dateFormat={DATE_FORMAT_CARBON}
-      onChange={onChangeLocal}
-      value={dateValue}
-    >
-      <DatePickerInput
+    <div className="date-input">
+      <DatePicker
         id={`${id}-start`}
-        placeholder={DATE_FORMAT_FOR_DISPLAY}
-        helperText={commonAttributes.helperText}
-        labelText=""
-        type="text"
-        size="md"
-        autocomplete="off"
+        selected={dateValue?.[0] || null}
+        startDate={dateValue?.[0] || null}
+        endDate={dateValue?.[1] || null}
+        onChange={(date: Date | null) =>
+          onChangeLocal([date, dateValue?.[1] || null])
+        }
+        selectsStart
+        dateFormat={DATE_FORMAT}
+        placeholderText={DATE_FORMAT_FOR_DISPLAY}
+        autoComplete="off"
         disabled={disabled || readonly}
-        invalid={commonAttributes.invalid}
-        invalidText={commonAttributes.errorMessageForField}
-        autoFocus={autofocus}
-        pattern={null}
-        onChange={addDebouncedOnChangeDate}
+        customInput={
+          <TextField
+            label="Start date"
+            error={commonAttributes.invalid}
+            helperText={
+              commonAttributes.invalid
+                ? commonAttributes.errorMessageForField
+                : commonAttributes.helperText
+            }
+            autoFocus={autofocus}
+          />
+        }
       />
-      <DatePickerInput
+      <DatePicker
         id={`${id}-end`}
-        placeholder={DATE_FORMAT_FOR_DISPLAY}
-        labelText=""
-        type="text"
-        size="md"
-        autocomplete="off"
+        selected={dateValue?.[1] || null}
+        startDate={dateValue?.[0] || null}
+        endDate={dateValue?.[1] || null}
+        minDate={dateValue?.[0] || undefined}
+        onChange={(date: Date | null) =>
+          onChangeLocal([dateValue?.[0] || null, date])
+        }
+        selectsEnd
+        dateFormat={DATE_FORMAT}
+        placeholderText={DATE_FORMAT_FOR_DISPLAY}
+        autoComplete="off"
         disabled={disabled || readonly}
-        invalid={commonAttributes.invalid}
-        autoFocus={autofocus}
-        pattern={null}
-        onChange={addDebouncedOnChangeDate}
+        customInput={
+          <TextField
+            label="End date"
+            error={commonAttributes.invalid}
+            helperText={
+              commonAttributes.invalid
+                ? commonAttributes.errorMessageForField
+                : commonAttributes.helperText
+            }
+            autoFocus={autofocus}
+          />
+        }
       />
-    </DatePicker>
+    </div>
   );
 }
