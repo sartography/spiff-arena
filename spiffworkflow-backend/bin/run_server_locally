@@ -16,8 +16,10 @@ script_dir="$(
 server_type="${1:-api}"
 
 if [[ "$server_type" == "celery_worker" ]]; then
+  export SPIFFWORKFLOW_BACKEND_CELERY_WORKER_DIRECT_EXEC=true
   exec uv run watchfiles \
     --filter python \
+    --sigint-timeout 30 \
     "${script_dir}/start_celery_worker" \
     "${script_dir}/../src"
 else

@@ -414,6 +414,20 @@ def get_log_formatter(app: Flask) -> logging.Formatter:
     return log_formatter
 
 
+def configure_celery_stdout_logger(
+    logger: logging.Logger,
+    log_formatter: logging.Formatter,
+    log_level: int,
+) -> None:
+    """Send worker logs directly to stdout instead of Celery's redirected streams."""
+    stdout_handler = logging.StreamHandler(sys.__stdout__ or sys.stdout)
+    stdout_handler.setFormatter(log_formatter)
+    stdout_handler.setLevel(log_level)
+    logger.handlers = [stdout_handler]
+    logger.setLevel(log_level)
+    logger.propagate = False
+
+
 class LoggingService:
     _spiff_logger = logging.getLogger("spiff.event")
 

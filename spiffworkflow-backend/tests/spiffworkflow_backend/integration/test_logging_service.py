@@ -1,4 +1,5 @@
 import logging
+import sys
 from unittest.mock import patch
 from uuid import UUID
 
@@ -10,6 +11,7 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.logging_service import SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR
 from spiffworkflow_backend.services.logging_service import SpiffLogHandler
+from spiffworkflow_backend.services.logging_service import configure_celery_stdout_logger
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -17,6 +19,21 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestLoggingService(BaseTest):
+    def test_configure_celery_stdout_logger_bypasses_redirected_streams(self) -> None:
+        logger = logging.Logger("celery-test")
+        logger.addHandler(logging.NullHandler())
+        formatter = logging.Formatter("%(message)s")
+
+        configure_celery_stdout_logger(logger, formatter, logging.INFO)
+
+        assert len(logger.handlers) == 1
+        assert isinstance(logger.handlers[0], logging.StreamHandler)
+        assert logger.handlers[0].stream is (sys.__stdout__ or sys.stdout)
+        assert logger.handlers[0].formatter is formatter
+        assert logger.handlers[0].level == logging.INFO
+        assert logger.level == logging.INFO
+        assert logger.propagate is False
+
     def test_logger_setup_disables_propagation(self, app: Flask) -> None:
         logger = logging.getLogger("spiffworkflow_backend.services.service_task_delegate")
         assert logger.handlers
