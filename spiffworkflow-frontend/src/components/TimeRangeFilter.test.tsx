@@ -1,0 +1,79 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, expect, test, vi } from 'vitest';
+import TimeRangeFilter, {
+  dateAndTimeToTimestamp,
+  parseRelativeTimeRange,
+} from './TimeRangeFilter';
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+test('parses supported custom relative ranges', () => {
+  expect(parseRelativeTimeRange('2h', 1_000_000)).toEqual({
+    startTimestamp: 992800,
+    endTimestamp: 1_000_000,
+    shortLabel: '2H',
+  });
+  expect(parseRelativeTimeRange('4D', 1_000_000)?.startTimestamp).toBe(654400);
+  expect(parseRelativeTimeRange('8w', 10_000_000)?.startTimestamp).toBe(
+    5161600,
+  );
+  expect(parseRelativeTimeRange('tomorrow')).toBeNull();
+});
+
+test('converts absolute UTC dates and times to timestamps', () => {
+  expect(dateAndTimeToTimestamp(new Date(2026, 6, 2), '13:45', true)).toBe(
+    Date.UTC(2026, 6, 2, 13, 45) / 1000,
+  );
+});
+
+test('applies a relative preset and displays its short label', () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-07-20T12:00:00Z'));
+  const onApply = vi.fn();
+  render(<TimeRangeFilter onApply={onApply} />);
+
+  fireEvent.click(screen.getByTestId('time-range-filter-button'));
+  fireEvent.click(screen.getByText('Last 14 days'));
+
+  const end = Date.parse('2026-07-20T12:00:00Z') / 1000;
+  expect(onApply).toHaveBeenCalledWith(end - 14 * 86400, end);
+  expect(screen.getByTestId('time-range-filter-button')).toHaveTextContent(
+    '14D',
+  );
+});
+
+test('accepts a custom relative range on Enter', () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-07-20T12:00:00Z'));
+  const onApply = vi.fn();
+  render(<TimeRangeFilter onApply={onApply} />);
+
+  fireEvent.click(screen.getByTestId('time-range-filter-button'));
+  const input = screen.getByLabelText('Custom time range');
+  fireEvent.change(input, { target: { value: '8w' } });
+  fireEvent.keyDown(input, { key: 'Enter' });
+
+  const end = Date.parse('2026-07-20T12:00:00Z') / 1000;
+  expect(onApply).toHaveBeenCalledWith(end - 8 * 7 * 86400, end);
+  expect(screen.getByTestId('time-range-filter-button')).toHaveTextContent(
+    '8W',
+  );
+});
+
+test('opens the absolute date range picker and can go back', () => {
+  render(<TimeRangeFilter onApply={vi.fn()} />);
+  fireEvent.click(screen.getByTestId('time-range-filter-button'));
+  fireEvent.click(screen.getByText('Absolute date'));
+
+  expect(screen.getByTestId('absolute-time-range-picker')).toBeVisible();
+  expect(screen.getByLabelText('Start time')).toBeVisible();
+  expect(screen.getByLabelText('End time')).toBeVisible();
+  expect(screen.getByLabelText('UTC')).toBeChecked();
+
+  fireEvent.click(screen.getByText('← Back'));
+  expect(
+    screen.getByPlaceholderText('Custom range: 2h, 4d, 8w...'),
+  ).toBeVisible();
+});
