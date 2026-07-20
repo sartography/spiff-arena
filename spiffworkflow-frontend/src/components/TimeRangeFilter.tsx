@@ -20,7 +20,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 // react-datepicker intentionally gives its default export the same name as a named type.
 // eslint-disable-next-line import-x/no-named-as-default
 import DatePicker from 'react-datepicker';
@@ -71,13 +71,14 @@ export const parseRelativeTimeRange = (
   value: string,
   nowSeconds = Math.floor(Date.now() / 1000),
 ) => {
-  const match = value.trim().match(/^(\d+)\s*([hdw])$/i);
+  const match = value.trim().match(/^(\d+)\s*([mhdw])$/i);
   if (!match || Number(match[1]) < 1) {
     return null;
   }
   const amount = Number(match[1]);
   const unit = match[2].toLowerCase();
   const secondsPerUnit: Record<string, number> = {
+    m: 60,
     h: 3600,
     d: 86400,
     w: 604800,
@@ -127,6 +128,16 @@ export const dateAndTimeToTimestamp = (
   return Math.floor(milliseconds / 1000);
 };
 
+export const getTimeInputPreferences = (locale?: string) => {
+  const preferences = new Intl.DateTimeFormat(locale, {
+    hour: 'numeric',
+  }).resolvedOptions();
+  return {
+    locale: preferences.locale,
+    uses24HourClock: preferences.hour12 === false,
+  };
+};
+
 const absoluteRangeLabel = (start: Date, end: Date) => {
   const format = new Intl.DateTimeFormat(undefined, {
     month: 'short',
@@ -152,6 +163,7 @@ export default function TimeRangeFilter({
   const [startTime, setStartTime] = useState('00:00');
   const [endTime, setEndTime] = useState('23:59');
   const lastApplied = useRef<{ start: number; end: number } | null>(null);
+  const timeInputPreferences = useMemo(() => getTimeInputPreferences(), []);
 
   useEffect(() => {
     if (!startTimestamp || !endTimestamp) {
@@ -263,7 +275,15 @@ export default function TimeRangeFilter({
           setView('presets');
         }}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        slotProps={{ paper: { sx: { mt: 0.5, width: 330, maxWidth: '95vw' } } }}
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 0.5,
+              width: view === 'absolute' ? 390 : 330,
+              maxWidth: '95vw',
+            },
+          },
+        }}
       >
         <Typography sx={{ fontWeight: 600, px: 2, py: 1.25 }}>
           Filter Time Range
@@ -278,7 +298,7 @@ export default function TimeRangeFilter({
                 size="small"
                 value={customRange}
                 error={customRangeInvalid}
-                placeholder="Custom range: 2h, 4d, 8w..."
+                placeholder="Custom range: 10m, 2h, 4d..."
                 inputProps={{ 'aria-label': 'Custom time range' }}
                 InputProps={{
                   startAdornment: (
@@ -344,29 +364,46 @@ export default function TimeRangeFilter({
               />
             </Box>
             <Divider />
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{ alignItems: 'center', p: 1.5 }}
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 1,
+                gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+                p: 1.5,
+              }}
             >
               <TextField
+                fullWidth
                 label="Start time"
                 type="time"
                 size="small"
                 value={startTime}
                 onChange={(event) => setStartTime(event.target.value)}
-                inputProps={{ step: 60 }}
+                inputProps={{
+                  step: 60,
+                  lang: timeInputPreferences.locale,
+                  'data-hour-cycle': timeInputPreferences.uses24HourClock
+                    ? '24'
+                    : '12',
+                }}
               />
               <TextField
+                fullWidth
                 label="End time"
                 type="time"
                 size="small"
                 value={endTime}
                 onChange={(event) => setEndTime(event.target.value)}
-                inputProps={{ step: 60 }}
+                inputProps={{
+                  step: 60,
+                  lang: timeInputPreferences.locale,
+                  'data-hour-cycle': timeInputPreferences.uses24HourClock
+                    ? '24'
+                    : '12',
+                }}
               />
               <FormControlLabel
-                sx={{ mr: 0 }}
+                sx={{ gridColumn: '1 / -1', mr: 0 }}
                 control={
                   <Checkbox
                     size="small"
@@ -376,7 +413,7 @@ export default function TimeRangeFilter({
                 }
                 label="UTC"
               />
-            </Stack>
+            </Box>
             <Divider />
             <Stack direction="row" justifyContent="space-between" sx={{ p: 1 }}>
               <Button onClick={() => setView('presets')}>← Back</Button>

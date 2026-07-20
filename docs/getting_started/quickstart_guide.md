@@ -391,7 +391,7 @@ The controls above the table provide quick status filters, a time range filter, 
 
 Use **Time range** to filter process instances by when they started. Choose **Last hour**, **Last 24 hours**, **Last 7 days**, **Last 14 days**, **Last 30 days**, or **Last 90 days** to apply that range immediately.
 
-You can enter a custom relative range such as `2h`, `4d`, or `8w` in the search field and press **Enter**. The suffixes mean hours, days, and weeks.
+You can enter a custom relative range such as `10m`, `2h`, `4d`, or `8w` in the search field and press **Enter**. The suffixes mean minutes, hours, days, and weeks.
 
 For a fixed range, choose **Absolute date**, select the start and end dates and times, choose whether to interpret them as UTC, and click **Apply**. **Back** returns to the relative range choices without applying the fixed range.
 

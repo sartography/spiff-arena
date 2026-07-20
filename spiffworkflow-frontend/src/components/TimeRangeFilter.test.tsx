@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import TimeRangeFilter, {
   dateAndTimeToTimestamp,
+  getTimeInputPreferences,
   parseRelativeTimeRange,
 } from './TimeRangeFilter';
 
@@ -10,6 +11,11 @@ afterEach(() => {
 });
 
 test('parses supported custom relative ranges', () => {
+  expect(parseRelativeTimeRange('10m', 1_000_000)).toEqual({
+    startTimestamp: 999400,
+    endTimestamp: 1_000_000,
+    shortLabel: '10M',
+  });
   expect(parseRelativeTimeRange('2h', 1_000_000)).toEqual({
     startTimestamp: 992800,
     endTimestamp: 1_000_000,
@@ -26,6 +32,11 @@ test('converts absolute UTC dates and times to timestamps', () => {
   expect(dateAndTimeToTimestamp(new Date(2026, 6, 2), '13:45', true)).toBe(
     Date.UTC(2026, 6, 2, 13, 45) / 1000,
   );
+});
+
+test('detects the locale hour cycle for native time inputs', () => {
+  expect(getTimeInputPreferences('en-US').uses24HourClock).toBe(false);
+  expect(getTimeInputPreferences('en-GB').uses24HourClock).toBe(true);
 });
 
 test('applies a relative preset and displays its short label', () => {
@@ -71,9 +82,12 @@ test('opens the absolute date range picker and can go back', () => {
   expect(screen.getByLabelText('Start time')).toBeVisible();
   expect(screen.getByLabelText('End time')).toBeVisible();
   expect(screen.getByLabelText('UTC')).toBeChecked();
+  expect(screen.getByLabelText('Start time')).toHaveAttribute(
+    'data-hour-cycle',
+  );
 
   fireEvent.click(screen.getByText('← Back'));
   expect(
-    screen.getByPlaceholderText('Custom range: 2h, 4d, 8w...'),
+    screen.getByPlaceholderText('Custom range: 10m, 2h, 4d...'),
   ).toBeVisible();
 });
