@@ -6,6 +6,7 @@
   --spiff-surface-muted: #f0f0f0;
   --spiff-border: #ccc;
   --spiff-error-text: #b71c1c;
+
   color-scheme: light;
 }
 
@@ -17,6 +18,7 @@
   --spiff-surface-muted: #2b2b2b;
   --spiff-border: #616161;
   --spiff-error-text: #ff8a80;
+
   color-scheme: dark;
 }
 

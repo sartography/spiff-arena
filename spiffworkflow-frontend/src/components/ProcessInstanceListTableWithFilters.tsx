@@ -1190,6 +1190,9 @@ export default function ProcessInstanceListTableWithFilters({
             setReportColumnConditionOperator(event.target.value);
           }}
         >
+          <MenuItem value="">
+            <em>None</em>
+          </MenuItem>
           {Object.keys(filterOperatorMappings).map((option) => (
             <MenuItem key={option} value={option}>
               {option}

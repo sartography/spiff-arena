@@ -131,6 +131,11 @@ export default function DateRangePickerWidget({
           <TextField
             label="End date"
             error={commonAttributes.invalid}
+            helperText={
+              commonAttributes.invalid
+                ? commonAttributes.errorMessageForField
+                : commonAttributes.helperText
+            }
             autoFocus={autofocus}
           />
         }
