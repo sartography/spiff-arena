@@ -833,7 +833,6 @@ export default function ProcessInstanceListTableWithFilters({
     return (
       <Autocomplete
         multiple
-        className="our-class"
         id="process-instance-status-select"
         options={processStatusAllOptions}
         onChange={(_event, selectedItems) => {
@@ -1106,7 +1105,6 @@ export default function ProcessInstanceListTableWithFilters({
           id="report-column-selection"
           key="report-column-selection"
           data-testid="report-column-selection"
-          data-modal-primary-focus
           options={availableReportColumns}
           getOptionLabel={(reportColumn) => reportColumn.accessor || ''}
           filterOptions={(options, state) =>

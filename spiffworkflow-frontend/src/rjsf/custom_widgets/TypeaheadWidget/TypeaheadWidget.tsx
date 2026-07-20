@@ -99,6 +99,15 @@ export default function TypeaheadWidget({
     return str;
   };
 
+  const itemIdentifier = (item: any) => {
+    const identifierKey = ['id', 'key', 'value', 'search_term'].find(
+      (key) => item?.[key] !== undefined,
+    );
+    return identifierKey
+      ? `${identifierKey}:${item[identifierKey]}`
+      : itemToString(item);
+  };
+
   let placeholderText = `Start typing to search...`;
   if (placeholder) {
     placeholderText = placeholder;
@@ -128,7 +137,7 @@ export default function TypeaheadWidget({
       options={items}
       getOptionLabel={(item) => itemToString(item) || ''}
       isOptionEqualToValue={(option, selectedValue) =>
-        JSON.stringify(option) === JSON.stringify(selectedValue)
+        itemIdentifier(option) === itemIdentifier(selectedValue)
       }
       value={selectedItem}
       disabled={disabled}

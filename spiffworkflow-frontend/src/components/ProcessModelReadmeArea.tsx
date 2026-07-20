@@ -5,6 +5,7 @@ import Grid from '@mui/material/Grid';
 import { Can } from '@casl/react';
 import EditIcon from '@mui/icons-material/Edit';
 import { PureAbility } from '@casl/ability';
+import { Link } from 'react-router-dom';
 import MarkdownDisplayForFile from './MarkdownDisplayForFile';
 import { ProcessFile } from '../interfaces';
 
@@ -38,7 +39,8 @@ export default function ProcessModelReadmeArea({
               <IconButton
                 data-testid="process-model-readme-file-edit"
                 aria-label={t('edit_readme')}
-                href={`/process-models/${modifiedProcessModelId}/form/${readmeFile.name}`}
+                component={Link}
+                to={`/process-models/${modifiedProcessModelId}/form/${readmeFile.name}`}
               >
                 <EditIcon />
               </IconButton>
@@ -59,7 +61,8 @@ export default function ProcessModelReadmeArea({
         <Button
           className="with-top-margin"
           data-testid="process-model-readme-file-create"
-          href={`/process-models/${modifiedProcessModelId}/form?file_ext=md&default_file_name=README.md`}
+          component={Link}
+          to={`/process-models/${modifiedProcessModelId}/form?file_ext=md&default_file_name=README.md`}
           variant="contained"
         >
           {t('add_readme')}

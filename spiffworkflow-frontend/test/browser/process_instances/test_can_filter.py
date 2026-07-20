@@ -94,7 +94,10 @@ def test_can_filter(page: Page):
         expect(tag).to_be_visible(timeout=5000)
         expect(tag).to_contain_text(titleize(status))
         # Clear the status filter
-        clear_btn = page.get_by_title("Clear")
+        status_autocomplete = select.locator(
+            "xpath=ancestor::div[contains(@class, 'MuiAutocomplete-root')]"
+        )
+        clear_btn = status_autocomplete.get_by_title("Clear")
         clear_btn.click()
         # Confirm chip removed
         expect(page.locator(".MuiAutocomplete-tag")).to_have_count(0)

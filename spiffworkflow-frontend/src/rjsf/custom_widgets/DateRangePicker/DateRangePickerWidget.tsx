@@ -53,17 +53,21 @@ export default function DateRangePickerWidget({
       const startDate = dateRange[0]
         ? DateAndTimeService.convertDateObjectToFormattedString(dateRange[0])
         : null;
-      if (startDate) {
-        const startDateYMD =
-          DateAndTimeService.dateStringToYMDFormat(startDate);
-        const endDate = dateRange[1]
-          ? DateAndTimeService.convertDateObjectToFormattedString(dateRange[1])
-          : null;
+      const endDate = dateRange[1]
+        ? DateAndTimeService.convertDateObjectToFormattedString(dateRange[1])
+        : null;
+      const startDateYMD = startDate
+        ? DateAndTimeService.dateStringToYMDFormat(startDate)
+        : '';
+      const endDateYMD = endDate
+        ? DateAndTimeService.dateStringToYMDFormat(endDate)
+        : '';
+      if (startDateYMD && endDateYMD) {
+        dateRangeString = `${startDateYMD}${DATE_RANGE_DELIMITER}${endDateYMD}`;
+      } else if (startDateYMD) {
         dateRangeString = startDateYMD;
-        if (endDate) {
-          const endDateYMD = DateAndTimeService.dateStringToYMDFormat(endDate);
-          dateRangeString = `${dateRangeString}${DATE_RANGE_DELIMITER}${endDateYMD}`;
-        }
+      } else if (endDateYMD) {
+        dateRangeString = `${DATE_RANGE_DELIMITER}${endDateYMD}`;
       }
       onChange(dateRangeString);
     },
