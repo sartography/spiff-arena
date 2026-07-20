@@ -6,13 +6,10 @@ import { Close, AddAlt } from '@carbon/icons-react';
 import {
   Button,
   ButtonSet,
-  DatePicker,
-  DatePickerInput,
   Dropdown,
   Grid,
   Column,
   MultiSelect,
-  TimePicker,
   Tag,
   Modal,
   ComboBox,
@@ -34,13 +31,10 @@ import {
   MenuItem,
   Autocomplete,
   TextField,
+  Stack,
 } from '@mui/material';
 import { useDebouncedCallback } from 'use-debounce';
-import {
-  PROCESS_STATUSES,
-  DATE_FORMAT_CARBON,
-  DATE_FORMAT_FOR_DISPLAY,
-} from '../config';
+import { PROCESS_STATUSES } from '../config';
 import {
   buildUniqueMilestoneNamesPath,
   getKeyByValue,
@@ -86,6 +80,7 @@ import DateAndTimeService from '../services/DateAndTimeService';
 import ProcessInstanceListTable from './ProcessInstanceListTable';
 import ProcessInstanceGroupByModel from './ProcessInstanceGroupByModel';
 import QuickFilterChips from './QuickFilterChips';
+import TimeRangeFilter from './TimeRangeFilter';
 
 type OwnProps = {
   filtersEnabled?: boolean;
@@ -163,12 +158,6 @@ export default function ProcessInstanceListTableWithFilters({
   const [startToTime, setStartToTime] = useState<string>('');
   const [endFromTime, setEndFromTime] = useState<string>('');
   const [endToTime, setEndToTime] = useState<string>('');
-  const [startFromTimeInvalid, setStartFromTimeInvalid] =
-    useState<boolean>(false);
-  const [startToTimeInvalid, setStartToTimeInvalid] = useState<boolean>(false);
-  const [endFromTimeInvalid, setEndFromTimeInvalid] = useState<boolean>(false);
-  const [endToTimeInvalid, setEndToTimeInvalid] = useState<boolean>(false);
-
   const [showFilterOptions, setShowFilterOptions] = useState<boolean>(false);
   const [lastColumnFilter, setLastColumnFilter] = useState<string>('');
 
@@ -666,6 +655,37 @@ export default function ProcessInstanceListTableWithFilters({
     setReportMetadata(next);
   };
 
+  const applyTimeRangeFilter = (
+    startTimestamp: number,
+    endTimestamp: number,
+  ) => {
+    if (!reportMetadata) {
+      return;
+    }
+    const dateFieldNames = ['start_from', 'start_to', 'end_from', 'end_to'];
+    const next = { ...reportMetadata };
+    next.filter_by = reportMetadata.filter_by.filter(
+      (filter: ReportFilter) => !dateFieldNames.includes(filter.field_name),
+    );
+    next.filter_by.push(
+      {
+        field_name: 'start_from',
+        field_value: startTimestamp,
+        operator: 'equals',
+      },
+      {
+        field_name: 'start_to',
+        field_value: endTimestamp,
+        operator: 'equals',
+      },
+    );
+    syncWidgetStateForField('start_from', startTimestamp);
+    syncWidgetStateForField('start_to', endTimestamp);
+    syncWidgetStateForField('end_from', null);
+    syncWidgetStateForField('end_to', null);
+    setReportMetadata(next);
+  };
+
   const handleProcessInstanceInitiatorSearchResult = (
     result: any,
     inputText: string,
@@ -809,97 +829,6 @@ export default function ProcessInstanceListTableWithFilters({
       return reportMetadata.columns;
     }
     return [];
-  };
-
-  const dateComponent = (
-    labelTranslationKey: string,
-    name: any,
-    initialDate: any,
-    initialTime: string,
-    onChangeDateFunction: any,
-    onChangeTimeFunction: any,
-    timeInvalid: boolean,
-    setTimeInvalid: any,
-  ) => {
-    if (!reportMetadata) {
-      return null;
-    }
-    const propNameUnderscored = name.replaceAll('-', '_');
-    return (
-      <>
-        <DatePicker
-          id={`date-picker-parent-${name}`}
-          dateFormat={DATE_FORMAT_CARBON}
-          datePickerType="single"
-        >
-          <DatePickerInput
-            id={`date-picker-${name}`}
-            placeholder={DATE_FORMAT_FOR_DISPLAY}
-            labelText={t(labelTranslationKey)}
-            type="text"
-            size="md"
-            autocomplete="off"
-            allowInput={false}
-            onChange={(dateChangeEvent: any) => {
-              const newDateValue = dateChangeEvent.srcElement.value;
-              if (!newDateValue && initialDate) {
-                return;
-              }
-              if (!initialDate && !initialTime) {
-                onChangeTimeFunction(
-                  DateAndTimeService.convertDateObjectToFormattedHoursMinutes(
-                    new Date(),
-                  ),
-                );
-              }
-              const newValue =
-                DateAndTimeService.convertDateAndTimeStringsToSeconds(
-                  newDateValue,
-                  initialTime || '00:00:00',
-                );
-              insertOrUpdateFieldInReportMetadata(
-                reportMetadata,
-                propNameUnderscored,
-                newValue,
-              );
-              onChangeDateFunction(newDateValue);
-              validateStartAndEndSeconds();
-            }}
-            value={initialDate}
-          />
-        </DatePicker>
-        <TimePicker
-          invalid={timeInvalid}
-          id={`time-picker-${name}`}
-          labelText={t('select_a_time')}
-          pattern="^([01]\d|2[0-3]):?([0-5]\d)$"
-          value={initialTime}
-          onChange={(event: any) => {
-            const newTimeValue = event.srcElement.value;
-            if (!newTimeValue && initialTime) {
-              return;
-            }
-            if (event.srcElement.validity.valid) {
-              setTimeInvalid(false);
-            } else {
-              setTimeInvalid(true);
-            }
-            const newValue =
-              DateAndTimeService.convertDateAndTimeStringsToSeconds(
-                initialDate,
-                newTimeValue,
-              );
-            insertOrUpdateFieldInReportMetadata(
-              reportMetadata,
-              propNameUnderscored,
-              newValue,
-            );
-            onChangeTimeFunction(newTimeValue);
-            validateStartAndEndSeconds();
-          }}
-        />
-      </>
-    );
   };
 
   const formatProcessInstanceStatus = (_row: any, value: any) => {
@@ -1749,72 +1678,6 @@ export default function ProcessInstanceListTableWithFilters({
           <Column md={4}>{processStatusSearch()}</Column>
         </Grid>
         <Grid fullWidth className="with-bottom-margin">
-          <Column md={4}>
-            {dateComponent(
-              t('filter_start_date_from'),
-              'start-from',
-              startFromDate,
-              startFromTime,
-              (val: string) => {
-                setStartFromDate(val);
-              },
-              (val: string) => {
-                setStartFromTime(val);
-              },
-              startFromTimeInvalid,
-              setStartFromTimeInvalid,
-            )}
-          </Column>
-          <Column md={4}>
-            {dateComponent(
-              t('filter_start_date_to'),
-              'start-to',
-              startToDate,
-              startToTime,
-              (val: string) => {
-                setStartToDate(val);
-              },
-              (val: string) => {
-                setStartToTime(val);
-              },
-              startToTimeInvalid,
-              setStartToTimeInvalid,
-            )}
-          </Column>
-          <Column md={4}>
-            {dateComponent(
-              t('filter_end_date_from'),
-              'end-from',
-              endFromDate,
-              endFromTime,
-              (val: string) => {
-                setEndFromDate(val);
-              },
-              (val: string) => {
-                setEndFromTime(val);
-              },
-              endFromTimeInvalid,
-              setEndFromTimeInvalid,
-            )}
-          </Column>
-          <Column md={4}>
-            {dateComponent(
-              t('filter_end_date_to'),
-              'end-to',
-              endToDate,
-              endToTime,
-              (val: string) => {
-                setEndToDate(val);
-              },
-              (val: string) => {
-                setEndToTime(val);
-              },
-              endToTimeInvalid,
-              setEndToTimeInvalid,
-            )}
-          </Column>
-        </Grid>
-        <Grid fullWidth className="with-bottom-margin">
           <Column sm={4} md={4} lg={8}>
             <ButtonSet>
               <MuiButton variant="outlined" onClick={clearFilters}>
@@ -1863,16 +1726,23 @@ export default function ProcessInstanceListTableWithFilters({
     return null;
   };
 
-  const quickFilterChips = () => {
+  const quickFilterControls = () => {
     if (!filtersEnabled || !reportMetadata) {
       return null;
     }
     return (
-      <QuickFilterChips
-        activePresetIds={Object.values(activeQuickFilterByField)}
-        reportMetadata={reportMetadata}
-        onApplyPreset={applyQuickFilter}
-      />
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+        <TimeRangeFilter
+          startTimestamp={filterValue(reportMetadata.filter_by, 'start_from')}
+          endTimestamp={filterValue(reportMetadata.filter_by, 'start_to')}
+          onApply={applyTimeRangeFilter}
+        />
+        <QuickFilterChips
+          activePresetIds={Object.values(activeQuickFilterByField)}
+          reportMetadata={reportMetadata}
+          onApplyPreset={applyQuickFilter}
+        />
+      </Stack>
     );
   };
 
@@ -1921,7 +1791,7 @@ export default function ProcessInstanceListTableWithFilters({
             reportSearchComponent={reportSearchComponent}
             filtersEnabled={filtersEnabled}
             reportHash={reportHash}
-            controlsStart={quickFilterChips()}
+            controlsStart={quickFilterControls()}
             controlsBeforeFilterButton={filtersEnabled ? groupByControl : null}
           />
         </Column>
