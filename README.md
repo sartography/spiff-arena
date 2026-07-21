@@ -25,6 +25,7 @@ When these are installed, you are ready for:
     uv sync
     ./bin/recreate_db clean
     ./bin/run_server_locally
+    ./bin/run_server_locally celery_worker # in a separate terminal; reloads when backend Python files change
     ./bin/run_server_locally keycloak # if you want to use keycloak instead of the built-in openid server
 ```
 

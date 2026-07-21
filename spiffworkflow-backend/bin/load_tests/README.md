@@ -13,7 +13,22 @@ uv run python bin/load_tests/concurrent_message_starts.py --requests 50 --worker
 The script creates a temporary message-start process model using the API, sends one warm-up message, then fires concurrent
 `POST /v1.0/messages/...` requests. The warm-up keeps this focused on message-start concurrency rather than the separate
 cold BPMN process-definition persistence path. It exits nonzero if any request fails or does not complete its own process
-instance, or if successful requests do not each return a distinct process instance.
+instance, or if successful requests do not each return a distinct process instance. HTTP latency is measured separately
+from the follow-up polling used to verify eventual process completion.
+
+To reproduce the 25-request asynchronous message-start latency case:
+
+```sh
+uv run python bin/load_tests/concurrent_message_starts.py \
+  --requests 25 \
+  --workers 25 \
+  --execution-mode asynchronous \
+  --max-http-latency-seconds 2
+```
+
+The summary reports HTTP min/p50/p95/max latency, concurrent-batch wall time, throughput, and the ten slowest requests.
+When `--max-http-latency-seconds` is provided, the script exits nonzero if any request in the concurrent batch exceeds the
+threshold. The warm-up request and completion polling are not included in this latency check.
 
 To include the cold BPMN process-definition persistence path in the same stress test:
 

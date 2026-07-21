@@ -16,7 +16,12 @@ script_dir="$(
 server_type="${1:-api}"
 
 if [[ "$server_type" == "celery_worker" ]]; then
-  exec "${script_dir}/start_celery_worker"
+  export SPIFFWORKFLOW_BACKEND_CELERY_WORKER_DIRECT_EXEC=true
+  exec uv run watchfiles \
+    --filter python \
+    --sigint-timeout 30 \
+    "${script_dir}/start_celery_worker" \
+    "${script_dir}/../src"
 else
   if [[ -n "${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-}" || -n "${SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX:-}" ]]; then
     echo "using ./bin/boot_server_in_docker because we actually load fixture data in wsgi.py, which will not be run with the typical local dev flask server"

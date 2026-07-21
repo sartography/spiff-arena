@@ -23,6 +23,8 @@ class ProcessInstanceIsAlreadyLockedError(Exception):
 
 
 class ProcessInstanceQueueService:
+    MESSAGE_START_PENDING_STATUS = "message_start_pending"
+
     @staticmethod
     def is_enqueued_to_run_in_the_future(process_instance: ProcessInstanceModel) -> bool:
         queue_entry = (
