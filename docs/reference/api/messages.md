@@ -41,6 +41,9 @@ Set `execution_mode=asynchronous` to use Celery when it is enabled:
 POST /v1.0/messages/orders:payment_failed?execution_mode=asynchronous
 ```
 
+Asynchronous execution requires Celery background processing.
+For setup details, see [Configure Celery Background Processing](/how_to_guides/deployment/work_with_redis_celery_broker).
+
 For a Message Start Event, SpiffWorkflow reserves a process instance, queues its BPMN initialization and message delivery,
 and returns `200`. The response includes the reserved process instance with its real `id` and an initial status of
 `not_started`, so callers can refer to it immediately. The process may still be `not_started` when it is first retrieved;
