@@ -10,6 +10,7 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
 from sqlalchemy import asc
+from sqlalchemy import inspect as sqlalchemy_inspect
 
 from spiffworkflow_backend.exceptions.error import TaskMismatchError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -400,14 +401,21 @@ class TaskService:
             self.json_data_dicts[python_env_dict["hash"]] = python_env_dict
         task_model.runtime_info = spiff_task.task_spec.task_info(spiff_task)
 
+    def _find_existing_task_model(self, task_guid: str) -> TaskModel | None:
+        task_model = self.task_model_mapping.get(task_guid)
+        cached_model_has_identity = task_model is not None and sqlalchemy_inspect(task_model).has_identity
+        if self._should_query_task_models and not cached_model_has_identity:
+            persisted_task_model = TaskModel.query.filter_by(guid=task_guid).first()
+            if persisted_task_model is not None:
+                task_model = persisted_task_model
+        return task_model
+
     def find_or_create_task_model_from_spiff_task(
         self,
         spiff_task: SpiffTask,
     ) -> tuple[BpmnProcessModel | None, TaskModel]:
         spiff_task_guid = str(spiff_task.id)
-        task_model: TaskModel | None = None
-        if self._should_query_task_models:
-            task_model = TaskModel.query.filter_by(guid=spiff_task_guid).first()
+        task_model = self._find_existing_task_model(spiff_task_guid)
         bpmn_process = None
         if task_model is None:
             bpmn_process = self.task_bpmn_process(spiff_task)
@@ -561,9 +569,7 @@ class TaskService:
             if spiff_task.has_state(TaskState.PREDICTED_MASK):
                 self.__class__.remove_spiff_task_from_parent(spiff_task, self.task_models)
                 continue
-            task_model = None
-            if self._should_query_task_models:
-                task_model = TaskModel.query.filter_by(guid=task_id).first()
+            task_model = self._find_existing_task_model(task_id)
             if task_model is None:
                 task_model = self.__class__._create_task(
                     bpmn_process,

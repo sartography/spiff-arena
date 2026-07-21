@@ -3,6 +3,7 @@ from typing import Any
 
 import pytest
 from flask import Flask
+from sqlalchemy.orm import make_transient_to_detached
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
@@ -232,3 +233,115 @@ class TestTaskService(BaseTest):
 
         assert task_service.task_models["parent"].properties_json["children"] == ["child_a", "child_b"]
         assert task_service.task_models["untouched"].properties_json["children"] == ["child_c"]
+
+    def test_find_or_create_task_model_uses_mapping_before_querying(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        task_model = TaskModel(guid="task-1")
+        make_transient_to_detached(task_model)
+        task_service: Any = TaskService.__new__(TaskService)
+        task_service.task_model_mapping = {"task-1": task_model}
+        task_service._should_query_task_models = True
+
+        def fail_filter_by(**_kwargs: Any) -> None:
+            pytest.fail("TaskModel.query.filter_by should not be called for a task_model_mapping hit")
+
+        monkeypatch.setattr(TaskModel, "query", SimpleNamespace(filter_by=fail_filter_by))
+
+        bpmn_process, found_task_model = task_service.find_or_create_task_model_from_spiff_task(SimpleNamespace(id="task-1"))
+
+        assert bpmn_process is None
+        assert found_task_model is task_model
+
+    def test_find_or_create_task_model_queries_for_transient_mapping_entry(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        transient_task_model = TaskModel(guid="task-1")
+        persisted_task_model = TaskModel(guid="task-1")
+        make_transient_to_detached(persisted_task_model)
+        filter_by_calls = []
+        task_service: Any = TaskService.__new__(TaskService)
+        task_service.task_model_mapping = {"task-1": transient_task_model}
+        task_service._should_query_task_models = True
+
+        class TaskModelQuery:
+            def filter_by(self, **kwargs: Any) -> "TaskModelQuery":
+                filter_by_calls.append(kwargs)
+                return self
+
+            def first(self) -> TaskModel:
+                return persisted_task_model
+
+        monkeypatch.setattr(TaskModel, "query", TaskModelQuery())
+
+        bpmn_process, found_task_model = task_service.find_or_create_task_model_from_spiff_task(SimpleNamespace(id="task-1"))
+
+        assert filter_by_calls == [{"guid": "task-1"}]
+        assert bpmn_process is None
+        assert found_task_model is persisted_task_model
+
+    def test_find_or_create_task_model_queries_when_mapping_misses(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        task_model = SimpleNamespace(guid="task-1")
+        filter_by_calls = []
+        task_service: Any = TaskService.__new__(TaskService)
+        task_service.task_model_mapping = {"other-task": SimpleNamespace(guid="other-task")}
+        task_service._should_query_task_models = True
+
+        class TaskModelQuery:
+            def filter_by(self, **kwargs: Any) -> "TaskModelQuery":
+                filter_by_calls.append(kwargs)
+                return self
+
+            def first(self) -> Any:
+                return task_model
+
+        monkeypatch.setattr(TaskModel, "query", TaskModelQuery())
+
+        bpmn_process, found_task_model = task_service.find_or_create_task_model_from_spiff_task(SimpleNamespace(id="task-1"))
+
+        assert filter_by_calls == [{"guid": "task-1"}]
+        assert bpmn_process is None
+        assert found_task_model is task_model
+
+    def test_add_tasks_to_bpmn_process_uses_mapping_before_querying(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        task_id = "00000000-0000-0000-0000-000000000001"
+        task_model = TaskModel(guid=task_id)
+        make_transient_to_detached(task_model)
+        spiff_task = SimpleNamespace(
+            id=task_id,
+            has_state=lambda _state: False,
+        )
+        task_service: Any = TaskService.__new__(TaskService)
+        task_service.task_model_mapping = {task_id: task_model}
+        task_service._should_query_task_models = True
+        task_service.task_models = {}
+
+        def fail_filter_by(**_kwargs: Any) -> None:
+            pytest.fail("TaskModel.query.filter_by should not be called for a task_model_mapping hit")
+
+        def fail_create_task(*_args: Any, **_kwargs: Any) -> None:
+            pytest.fail("TaskService._create_task should not be called for a task_model_mapping hit")
+
+        monkeypatch.setattr(TaskModel, "query", SimpleNamespace(filter_by=fail_filter_by))
+        monkeypatch.setattr(TaskService, "_create_task", fail_create_task)
+        task_service.update_task_model = lambda _task_model, _spiff_task: None
+
+        task_service.add_tasks_to_bpmn_process(
+            tasks={task_id: {}},
+            spiff_workflow=SimpleNamespace(get_task_from_id=lambda _task_uuid: spiff_task),
+            bpmn_process=SimpleNamespace(),
+        )
+
+        assert task_service.task_models == {task_id: task_model}
