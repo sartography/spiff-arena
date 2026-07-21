@@ -35,19 +35,10 @@ If you split Backend into API / Background / Celery worker containers, these are
 2. Background (`spiffworkflow-backend-apscheduler`): `./bin/start_blocking_apscheduler`
 3. Celery worker (`spiffworkflow-backend-worker`): `./bin/start_celery_worker`
 
-Use the same backend env var set for all three containers, including Celery settings. At minimum, set these in API, Background, and Celery worker containers:
-
-- `SPIFFWORKFLOW_BACKEND_CELERY_ENABLED=true`
-- `SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL=...`
-- `SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND=...`
-- `SPIFFWORKFLOW_BACKEND_CELERY_SQS_URL=...` (if using SQS broker)
-- `SPIFFWORKFLOW_BACKEND_CELERY_RESULT_S3_BUCKET=...` (if using S3 result backend)
+Use the same backend env var set for all three containers, including Celery settings.
+For the required Celery variables and broker/backend options, see [Configure Celery Background Processing](/how_to_guides/deployment/work_with_redis_celery_broker).
 
 You do not need container-specific Celery env var differences for this split; `./bin/start_celery_worker` sets worker-only runtime flags internally.
-
-If you use Redis for the Celery broker and/or result backend, a Redis container/service must also be running and reachable by all three backend containers. Example broker URL:
-
-- `SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL=redis://spiff-redis:6379`
 
 ## Configuration
 
