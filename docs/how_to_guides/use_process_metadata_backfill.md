@@ -33,7 +33,7 @@ SPIFFWORKFLOW_BACKEND_CELERY_ENABLED=true
 SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED=true
 ```
 
-For complete Celery configuration, including setting up Redis as a broker and result backend, see [Configure Celery Background Processing](deployment/work_with_redis_celery_broker.md).
+For complete Celery configuration, including setting up Redis as a broker, see [Configure Celery Background Processing](deployment/work_with_redis_celery_broker.md).
 
 ### Validation
 

@@ -36,7 +36,7 @@ If you split Backend into API / Background / Celery worker containers, these are
 3. Celery worker (`spiffworkflow-backend-worker`): `./bin/start_celery_worker`
 
 Use the same backend env var set for all three containers, including Celery settings.
-For the required Celery variables and broker/backend options, see [Configure Celery Background Processing](/how_to_guides/deployment/work_with_redis_celery_broker).
+For the Celery configurations, see [Configure Celery Background Processing](/how_to_guides/deployment/work_with_redis_celery_broker).
 
 You do not need container-specific Celery env var differences for this split; `./bin/start_celery_worker` sets worker-only runtime flags internally.
 
