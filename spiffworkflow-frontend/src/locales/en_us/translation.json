@@ -107,6 +107,7 @@
   "diagram_file_name_editor_label": "File Name:",
   "diagram_file_name_editor_title": "Process Model File Name",
   "diagram_json_schema_editor_title": "Edit JSON Schema",
+  "diagram_last_saved": "Last saved: {{datetime}}",
   "diagram_markdown_editor_title": "Edit Markdown",
   "diagram_message_editor_close": "Close (this does not save)",
   "diagram_message_editor_description": "Create or edit a message and manage its correlation properties",

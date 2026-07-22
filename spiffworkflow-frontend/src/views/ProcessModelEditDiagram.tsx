@@ -1219,6 +1219,7 @@ export default function ProcessModelEditDiagram() {
           modifiedProcessModelId={modifiedProcessModelId || ''}
           saveDiagram={saveDiagram}
           saveTooltip={unsavedChangesSaveTooltip}
+          lastSaved={processModelFile?.last_modified}
           navigationStack={navigationStack}
           onNavigate={(index) => {
             const item = navigationStack[index];
@@ -1274,6 +1275,7 @@ export default function ProcessModelEditDiagram() {
         modifiedProcessModelId={modifiedProcessModelId || ''}
         saveDiagram={saveDiagram}
         saveTooltip={unsavedChangesSaveTooltip}
+        lastSaved={processModelFile?.last_modified}
         navigationStack={navigationStack}
         onNavigate={(index) => {
           const item = navigationStack[index];
