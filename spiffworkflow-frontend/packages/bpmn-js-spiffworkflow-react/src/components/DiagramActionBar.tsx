@@ -107,8 +107,8 @@ export default function DiagramActionBar({
       sx={{ flexWrap: 'wrap' }}
     >
       {saveAttentionMessage}
-      {saveButton}
       {lastSavedElement || null}
+      {saveButton}
       {processInstanceRun || null}
       {canDelete ? deleteButton || null : null}
       {canSetPrimary && onSetPrimary ? (

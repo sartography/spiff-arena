@@ -22,6 +22,29 @@ describe('DiagramActionBar lastSavedElement', () => {
     ).toBeInTheDocument();
   });
 
+  it('renders the last saved element before the save button', () => {
+    render(
+      <DiagramActionBar
+        {...requiredProps}
+        canSave
+        onSave={() => {}}
+        lastSavedElement={<span>Last saved: 2026-07-21 14:03:00</span>}
+      />,
+    );
+
+    const lastSavedElement = screen.getByText(
+      'Last saved: 2026-07-21 14:03:00',
+    );
+    const saveButton = screen.getByRole('button', { name: 'Save' });
+    const actionBarChildren = Array.from(
+      lastSavedElement.parentElement?.children || [],
+    );
+
+    expect(actionBarChildren.indexOf(lastSavedElement)).toBeLessThan(
+      actionBarChildren.indexOf(saveButton),
+    );
+  });
+
   it('renders nothing for the indicator when no last saved element is given', () => {
     render(<DiagramActionBar {...requiredProps} />);
     expect(screen.queryByText(/Last saved:/)).not.toBeInTheDocument();
