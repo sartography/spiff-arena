@@ -23,11 +23,11 @@ WORKDIR /app
 # vim is just for debugging
 FROM base AS deployment
 
-# git-core because the app does "git commit", etc
+# git and openssh-client because the app clones, commits, and pushes process models
 # curl because the docker health check uses it
 # procps because it is useful for debugging
 # uvicorn for web server
-# default-mysql-client for convenience accessing mysql docker container
+# mysql-client for convenience accessing the MySQL container
 # vim ftw
 # jq because it is really useful, even for scenarios where people might have environment variables with json values they might need to use for configs. about 1MB.
 # libpq in order to be able to use postgres at runtime
@@ -35,7 +35,7 @@ FROM base AS deployment
 # bash is needed from backend
 
 RUN apk update \
- && apk add --no-cache git curl procps mysql-client mariadb-connector-c vim jq libpq krb5-libs libexpat bash \
+ && apk add --no-cache git openssh-client curl procps mysql-client mariadb-connector-c vim jq libpq krb5-libs libexpat bash \
  && rm -rf /var/cache/apk/*
 
 # keep pip up to date
