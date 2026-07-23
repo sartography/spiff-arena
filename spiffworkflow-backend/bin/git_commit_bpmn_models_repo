@@ -63,12 +63,14 @@ fi
 
 exec {lock_fd}>"${lock_directory}/spiffworkflow-git-lock" || failed_to_get_lock
 lock_acquired="false"
-for ((seconds_waited = 0; seconds_waited < 60; seconds_waited++)); do
+for ((seconds_waited = 0; seconds_waited <= 60; seconds_waited++)); do
   if flock -n "${lock_fd}"; then
     lock_acquired="true"
     break
   fi
-  sleep 1
+  if ((seconds_waited < 60)); then
+    sleep 1
+  fi
 done
 if [[ "$lock_acquired" != "true" ]]; then
   failed_to_get_lock
