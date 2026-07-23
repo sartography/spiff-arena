@@ -104,10 +104,9 @@ jobs:
             org.opencontainers.image.description=${{ matrix.description }}
             org.opencontainers.image.version=${{ steps.normalize_branch_name.outputs.normalized_branch_name }}-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
           tags: |
-            type=ref,event=branch,branch=main,suffix=-latest
+            type=raw,value=main-latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}-${{ steps.commit_sha.outputs.sha_short }}
-            type=ref,event=tag,enable=true,format={{version}}
-            type=ref,event=tag,enable=true,format=latest
+            type=semver,pattern={{raw}},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
 
       - name: Write app version info
         working-directory: ${{ matrix.context }}
