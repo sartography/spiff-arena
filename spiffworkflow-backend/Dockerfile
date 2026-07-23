@@ -31,10 +31,11 @@ FROM base AS deployment
 # vim ftw
 # jq because it is really useful, even for scenarios where people might have environment variables with json values they might need to use for configs. about 1MB.
 # libpq in order to be able to use postgres at runtime
+# mariadb-connector-c provides libmariadb and its authentication plugins at runtime
 # bash is needed from backend
 
 RUN apk update \
- && apk add --no-cache git curl procps mysql-client vim jq libpq krb5-libs libexpat bash \
+ && apk add --no-cache git curl procps mysql-client mariadb-connector-c vim jq libpq krb5-libs libexpat bash \
  && rm -rf /var/cache/apk/*
 
 # keep pip up to date
@@ -69,10 +70,6 @@ FROM deployment AS final
 
 LABEL source="https://github.com/sartography/spiff-arena/spiffworkflow-backend"
 LABEL description="Backend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams"
-
-# Prevent ImportError: Error loading shared library libmariadb.so.3: No such file or directory (needed by /app/.venv/lib/python3.13/site-packages/MySQLdb/_mysql.cpython-313-x86_64-linux-musl.so)
-COPY --from=setup /usr/lib/libmariadb.so.3 /usr/lib
-#alternative: RUN apk add --no-cache mariadb-dev
 
 # container log warning: Using `httpx` with `starlette.testclient` is deprecated => sporadically with alpine AND debian trixie
 
