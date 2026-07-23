@@ -104,7 +104,9 @@ if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
 fi
 
 if [[ -n "${PROMETHEUS_MULTIPROC_DIR:-}" ]]; then
-  if ! prometheus_multiproc_dir_resolved="$(realpath -m -- "$PROMETHEUS_MULTIPROC_DIR")"; then
+  # Python's non-strict realpath works for paths that do not exist yet, like GNU realpath -m.
+  # BusyBox realpath treats -m and -- as file names.
+  if ! prometheus_multiproc_dir_resolved="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$PROMETHEUS_MULTIPROC_DIR")"; then
     echo >&2 "ERROR: PROMETHEUS_MULTIPROC_DIR could not be resolved safely: '$PROMETHEUS_MULTIPROC_DIR'. Refusing to remove it."
     exit 1
   fi

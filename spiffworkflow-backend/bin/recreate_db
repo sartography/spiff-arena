@@ -39,13 +39,42 @@ databases_to_run_on="spiffworkflow_backend_local_development spiffworkflow_backe
 database_name_from_uri=""
 if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" != "sqlite" ]]; then
   if [[ -n "${SPIFFWORKFLOW_BACKEND_DATABASE_URI:-}" ]]; then
-    database_host_and_port=$(grep -oP "^[^:]+://.*@\K(.+?)[/]" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI" | sed -E 's/[\/]$//')
-    database_host=$(awk -F ':' '{print $1}' <<<"$database_host_and_port")
-    database_port=$(awk -F ':' '{print $2}' <<<"$database_host_and_port")
-    database_username_and_password=$(grep -oP "^[^:]+://\K([^@]+)[@]" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI" | sed -E 's/[@]$//')
-    database_username=$(awk -F ':' '{print $1}' <<<"$database_username_and_password")
-    database_password=$(awk -F ':' '{print $2}' <<<"$database_username_and_password")
-    database_name_from_uri=$(grep -oP "/\K(\w+)$" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI")
+    database_uri_without_scheme="${SPIFFWORKFLOW_BACKEND_DATABASE_URI#*://}"
+    database_authority="${database_uri_without_scheme%%/*}"
+    database_name_from_uri="${database_uri_without_scheme##*/}"
+
+    if [[ "$database_authority" != *@* ]]; then
+      echo >&2 "ERROR: SPIFFWORKFLOW_BACKEND_DATABASE_URI must include a username and password."
+      exit 1
+    fi
+
+    database_username_and_password="${database_authority%%@*}"
+    database_host_and_port="${database_authority#*@}"
+    database_username="${database_username_and_password%%:*}"
+    if [[ "$database_username_and_password" != *:* ]]; then
+      echo >&2 "ERROR: SPIFFWORKFLOW_BACKEND_DATABASE_URI must include a username and password."
+      exit 1
+    fi
+    database_password="${database_username_and_password#*:}"
+    if [[ -z "$database_username" ]] || [[ -z "$database_password" ]]; then
+      echo >&2 "ERROR: SPIFFWORKFLOW_BACKEND_DATABASE_URI must include a username and password."
+      exit 1
+    fi
+
+    if [[ "$database_host_and_port" == \[*\]* ]]; then
+      database_host="${database_host_and_port%%]*}"
+      database_host="${database_host#\[}"
+      database_port="${database_host_and_port#*]}"
+      database_port="${database_port#:}"
+    else
+      database_host="${database_host_and_port%%:*}"
+      if [[ "$database_host_and_port" == *:* ]]; then
+        database_port="${database_host_and_port#*:}"
+      else
+        database_port=""
+      fi
+    fi
+
     if ! grep "\<$database_name_from_uri\>" <<<"$databases_to_run_on"; then
       databases_to_run_on="$database_name_from_uri"
     fi
