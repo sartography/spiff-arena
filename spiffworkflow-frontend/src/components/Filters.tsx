@@ -96,7 +96,7 @@ export default function Filters({
           size={{
             xs: 12,
             sm: controlsBeforeFilterButton ? 12 : 6,
-            md: controlsStart ? 4 : 8,
+            md: controlsStart ? 3 : 8,
           }}
         >
           {reportSearchComponent()}
@@ -112,7 +112,7 @@ export default function Filters({
           justifyContent="flex-end"
         >
           {controlsStart ? (
-            <Grid size={{ xs: 12, md: 4 }}>{controlsStart}</Grid>
+            <Grid size={{ xs: 12, md: 5 }}>{controlsStart}</Grid>
           ) : null}
           {reportSearchSection}
           <Grid

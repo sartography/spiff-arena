@@ -104,16 +104,6 @@ export default function ContainerForExtensions() {
     localStorage.setItem('theme', desiredTheme);
   };
 
-  useEffect(() => {
-    /**
-     * The housing app has an element with a white background
-     * and a very high z-index. This is a hack to remove it.
-     */
-    const element = document.querySelector('.cds--white');
-    if (element) {
-      element.classList.remove('cds--white');
-    }
-  }, []);
   // never carry an error message across to a different path
   useEffect(() => {
     removeError();
@@ -310,6 +300,8 @@ export default function ContainerForExtensions() {
             alignItems: 'center',
             zIndex: 1000,
             padding: '0px !important',
+            color: 'text.primary',
+            backgroundColor: 'background.default',
           }}
         >
           <Grid

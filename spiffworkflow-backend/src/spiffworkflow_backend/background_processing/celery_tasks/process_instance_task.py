@@ -10,10 +10,13 @@ from spiffworkflow_backend.background_processing.celery_tasks.process_instance_t
 )
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
+from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
@@ -170,4 +173,53 @@ def celery_task_process_instance_start_from_model(
         return {"ok": True, "process_instance_id": process_instance.id, "task_guid": task_guid}
     except Exception as exception:
         error_message = f"Error in celery_task_process_instance_start_from_model: {str(exception)}"
+        raise SpiffCeleryWorkerError(error_message) from exception
+
+
+@shared_task(ignore_result=False, time_limit=TEN_MINUTES, bind=True)
+def celery_task_process_instance_start_from_message(
+    self: Any,
+    process_instance_id: int,
+    message_instance_id: int,
+    message_triggerable_process_model_id: int,
+) -> dict:
+    celery_task_id = self.request.id
+    logger_prefix = f"celery_task_process_instance_start_from_message[{celery_task_id}]"
+    current_app.logger.info(
+        f"{logger_prefix}: process_instance_id: {process_instance_id}, message_instance_id: {message_instance_id}"
+    )
+    ProcessInstanceLockService.set_thread_local_locking_context("celery:message-start")
+
+    process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+    message_instance = MessageInstanceModel.query.filter_by(id=message_instance_id).first()
+    message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
+        id=message_triggerable_process_model_id
+    ).first()
+    if process_instance is None:
+        raise SpiffCeleryWorkerError(f"Could not find reserved process instance with id {process_instance_id}")
+    if message_instance is None:
+        raise SpiffCeleryWorkerError(f"Could not find message instance with id {message_instance_id}")
+    if message_triggerable_process_model is None:
+        raise SpiffCeleryWorkerError(
+            f"Could not find message-triggerable process model with id {message_triggerable_process_model_id}"
+        )
+
+    try:
+        receiver_message = MessageService.start_reserved_process_from_message(
+            process_instance,
+            message_instance,
+            message_triggerable_process_model,
+        )
+        return {
+            "ok": True,
+            "process_instance_id": process_instance_id,
+            "message_instance_id": message_instance_id,
+            "receiver_message_instance_id": receiver_message.id,
+        }
+    except Exception as exception:
+        db.session.rollback()
+        error_message = (
+            f"{logger_prefix}: Error starting reserved process instance {process_instance_id} "
+            f"from message instance {message_instance_id}. {str(exception)}"
+        )
         raise SpiffCeleryWorkerError(error_message) from exception

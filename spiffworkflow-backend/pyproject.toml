@@ -65,6 +65,7 @@ dependencies = [
     "authlib>=1.6.11",
     "starlette>=0.47.2",
     "uvicorn-worker>=0.3.0",
+    "httpx2>=2.7.0",
 ]
 
 [dependency-groups]
@@ -114,6 +115,9 @@ constraint-dependencies = [
 spiffworkflow-backend = "spiffworkflow_backend.__main__:main"
 
 [tool.pytest.ini_options]
+markers = [
+    "requires_committed_database: use committed database state so concurrent connections can observe test writes",
+]
 # ignore deprecation warnings from various packages that we don't control
 filterwarnings = [
     # note the use of single quote below to denote "raw" strings in TOML

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, expect, test, vi } from 'vitest';
+import { expect, test, vi } from 'vitest';
 import { ReportFilter, ReportMetadata } from '../interfaces';
 import QuickFilterChips from './QuickFilterChips';
 
@@ -13,74 +13,6 @@ const metadataWithFilters = (filterBy: ReportFilter[]): ReportMetadata => ({
   columns: [],
   filter_by: filterBy,
   order_by: [],
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-});
-
-test('keeps the last 7 days quick filter active after time advances', () => {
-  vi.useFakeTimers();
-  vi.setSystemTime(new Date('2026-07-01T12:00:00Z'));
-
-  const onApplyPreset = vi.fn();
-  const { rerender } = render(
-    <QuickFilterChips
-      activePresetIds={[]}
-      reportMetadata={metadataWithFilters([])}
-      onApplyPreset={onApplyPreset}
-    />,
-  );
-
-  fireEvent.click(screen.getByText('quick_filter_last_7_days'));
-
-  vi.setSystemTime(new Date('2026-07-01T12:00:05Z'));
-  rerender(
-    <QuickFilterChips
-      activePresetIds={['last_7_days']}
-      reportMetadata={metadataWithFilters(onApplyPreset.mock.calls[0][0])}
-      onApplyPreset={onApplyPreset}
-    />,
-  );
-  fireEvent.click(screen.getByText('quick_filter_last_7_days'));
-
-  expect(onApplyPreset).toHaveBeenLastCalledWith(
-    [],
-    ['start_from'],
-    'last_7_days',
-    true,
-  );
-});
-
-test('builds date quick filters when clicked', () => {
-  vi.useFakeTimers();
-  const renderTime = new Date('2026-07-01T12:00:00Z');
-  vi.setSystemTime(renderTime);
-
-  const onApplyPreset = vi.fn();
-  render(
-    <QuickFilterChips
-      activePresetIds={[]}
-      reportMetadata={metadataWithFilters([])}
-      onApplyPreset={onApplyPreset}
-    />,
-  );
-
-  vi.setSystemTime(new Date('2026-07-02T13:00:00Z'));
-  fireEvent.click(screen.getByText('quick_filter_today'));
-  const appliedFilter = onApplyPreset.mock.calls[0][0][0];
-
-  expect(appliedFilter.field_name).toEqual('start_from');
-  expect(appliedFilter.operator).toEqual('equals');
-  expect(appliedFilter.field_value).toBeGreaterThan(
-    Math.floor(renderTime.getTime() / 1000),
-  );
-  expect(onApplyPreset).toHaveBeenLastCalledWith(
-    [appliedFilter],
-    ['start_from'],
-    'today',
-    false,
-  );
 });
 
 test('does not infer completed quick filter active from manual status filter', () => {

@@ -448,6 +448,38 @@ class ProcessInstanceService:
         return process_instance_model
 
     @classmethod
+    def reserve_process_instance_from_process_model_identifier(
+        cls,
+        process_model_identifier: str,
+        user: UserModel,
+        commit_db: bool = True,
+    ) -> ProcessInstanceModel:
+        """Persist a process identity without parsing or initializing its BPMN runtime."""
+        process_model = ProcessModelService.get_process_model(process_model_identifier)
+        process_instance_model, _ = cls.create_process_instance(
+            process_model,
+            user,
+            start_configuration=(0, 0, 0),
+            load_bpmn_process_model=False,
+        )
+        db.session.flush()
+        queue_entry = process_instance_model.process_instance_queue[0]
+        queue_entry.status = ProcessInstanceQueueService.MESSAGE_START_PENDING_STATUS
+        db.session.add(queue_entry)
+        if commit_db:
+            db.session.commit()
+
+        LoggingService.log_event(
+            ProcessInstanceEventType.process_instance_created.value,
+            {
+                "milestone": "Reserved",
+                "process_model_identifier": process_model_identifier,
+                "process_instance_id": process_instance_model.id,
+            },
+        )
+        return process_instance_model
+
+    @classmethod
     def register_process_model_cycles(cls, process_model_identifier: str, cycle_count: int, duration_in_seconds: int) -> None:
         # clean up old cycle record if it exists. event if the given cycle_count is 0 the previous version
         # of the model could have included a cycle timer start event

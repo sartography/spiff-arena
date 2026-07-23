@@ -53,12 +53,4 @@ export default defineConfig({
     preserveSymlinks: true,
     tsconfigPaths: true,
   },
-  css: {
-    preprocessorOptions: {
-      scss: {
-        // carbon creates these warnings
-        silenceDeprecations: ['if-function'],
-      },
-    },
-  },
 });

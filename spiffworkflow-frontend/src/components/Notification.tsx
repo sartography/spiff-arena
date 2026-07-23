@@ -62,6 +62,7 @@ export function Notification({
       anchorOrigin={anchorOrigin}
       autoHideDuration={timeout}
       onClose={onClose}
+      sx={{ pointerEvents: 'none' }}
       {...additionalProps}
     >
       <Alert
@@ -94,7 +95,7 @@ export function Notification({
             )}
           </>
         }
-        sx={{ mb: withBottomMargin ? 2 : 0 }}
+        sx={{ mb: withBottomMargin ? 2 : 0, pointerEvents: 'auto' }}
       >
         <strong>{title}</strong>
         {showMessage && <div>{children}</div>}

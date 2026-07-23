@@ -45,11 +45,21 @@ It will fire a message connected to the invoice keys above, starting another pro
     <bpmn:intermediateCatchEvent id="receive_message_response" name="Receive Approval Result">
       <bpmn:incoming>Flow_037vpjk</bpmn:incoming>
       <bpmn:outgoing>Flow_1qgz6p0</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_1l3n0zr" messageRef="approval_result" />
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1l3n0zr" messageRef="approval_result">
+        <bpmn:extensionElements>
+          <spiffworkflow:messageVariable>the_payload</spiffworkflow:messageVariable>
+        </bpmn:extensionElements>
+      </bpmn:messageEventDefinition>
     </bpmn:intermediateCatchEvent>
     <bpmn:sendTask id="send_message" name="Request Approval" messageRef="request_approval">
       <bpmn:extensionElements>
         <spiffworkflow:preScript>the_topic = "first_conversation" </spiffworkflow:preScript>
+        <spiffworkflow:messagePayload>{
+"customer_id": customer_id,
+"po_number": po_number,
+"amount": amount,
+"description": description,
+}</spiffworkflow:messagePayload>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_02lw0q9</bpmn:incoming>
       <bpmn:outgoing>Flow_037vpjk</bpmn:outgoing>
@@ -66,21 +76,8 @@ It will fire a message connected to the invoice keys above, starting another pro
       <bpmn:outgoing>Flow_02lw0q9</bpmn:outgoing>
     </bpmn:userTask>
   </bpmn:process>
-  <bpmn:message id="request_approval" name="Request Approval">
-    <bpmn:extensionElements>
-      <spiffworkflow:messagePayload>{
-"customer_id": customer_id,
-"po_number": po_number,
-"amount": amount,
-"description": description,
-}</spiffworkflow:messagePayload>
-    </bpmn:extensionElements>
-  </bpmn:message>
-  <bpmn:message id="approval_result" name="Approval Result">
-    <bpmn:extensionElements>
-      <spiffworkflow:messageVariable>the_payload</spiffworkflow:messageVariable>
-    </bpmn:extensionElements>
-  </bpmn:message>
+  <bpmn:message id="request_approval" name="Request Approval" />
+  <bpmn:message id="approval_result" name="Approval Result" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0oye1os">
       <bpmndi:BPMNShape id="Participant_0bjh770_di" bpmnElement="message_initiator" isHorizontal="true">

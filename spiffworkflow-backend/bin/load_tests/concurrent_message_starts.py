@@ -79,15 +79,16 @@ class MessageResult:
     process_instance_status: str | None
     error_code: str | None
     response_text: str
+    final_process_instance_status: str | None = None
+    completion_error: str | None = None
+
+    @property
+    def accepted(self) -> bool:
+        return self.status_code in {200, 202} and self.process_instance_id is not None and self.error_code is None
 
     @property
     def ok(self) -> bool:
-        return (
-            self.status_code == 200
-            and self.process_instance_id is not None
-            and self.process_instance_status == "complete"
-            and self.error_code is None
-        )
+        return self.accepted and self.final_process_instance_status == "complete" and self.completion_error is None
 
 
 def modified_identifier(identifier: str) -> str:
@@ -295,39 +296,117 @@ def send_message(args: argparse.Namespace, headers: dict[str, str], modified_mes
         )
 
 
-def run_load(args: argparse.Namespace, headers: dict[str, str], group_id: str, message_name: str) -> list[MessageResult]:
+def wait_for_process_instances(
+    args: argparse.Namespace,
+    headers: dict[str, str],
+    results: list[MessageResult],
+) -> None:
+    pending = {result.index: result for result in results if result.accepted}
+    deadline = time.monotonic() + args.completion_timeout
+
+    while pending and time.monotonic() < deadline:
+        for index, result in list(pending.items()):
+            try:
+                response = requests.get(
+                    f"{args.backend_base_url}/v1.0/process-instances/find-by-id/{result.process_instance_id}",
+                    headers=headers,
+                    timeout=args.timeout,
+                )
+            except requests.RequestException as exception:
+                result.completion_error = f"poll failed: {exception}"
+                continue
+            if response.status_code != 200:
+                result.completion_error = f"poll returned HTTP {response.status_code}: {response.text[:500]}"
+                continue
+
+            try:
+                data = response.json()
+            except ValueError:
+                result.completion_error = f"poll returned invalid JSON: {response.text[:500]}"
+                continue
+            process_instance = data.get("process_instance", {})
+            result.final_process_instance_status = process_instance.get("status")
+            result.completion_error = None
+            if result.final_process_instance_status in {"complete", "error", "terminated"}:
+                pending.pop(index)
+
+        if pending:
+            time.sleep(args.poll_interval)
+
+    for result in pending.values():
+        result.completion_error = (
+            f"process instance did not finish within {args.completion_timeout:.1f}s; "
+            f"last status was {result.final_process_instance_status!r}"
+        )
+
+
+def percentile(values: list[float], fraction: float) -> float:
+    ordered = sorted(values)
+    position = (len(ordered) - 1) * fraction
+    lower = int(position)
+    upper = min(lower + 1, len(ordered) - 1)
+    weight = position - lower
+    return ordered[lower] * (1 - weight) + ordered[upper] * weight
+
+
+def run_load(
+    args: argparse.Namespace,
+    headers: dict[str, str],
+    group_id: str,
+    message_name: str,
+) -> tuple[list[MessageResult], float]:
     modified_message_name = f"{modified_identifier(group_id)}:{message_name}"
     if args.warm_up:
         print(f"Warming up message '{modified_message_name}' before the concurrent phase")
         warm_up_result = send_message(args, headers, modified_message_name, -1)
+        wait_for_process_instances(args, headers, [warm_up_result])
         if not warm_up_result.ok:
-            raise RuntimeError(f"warm-up message failed: {warm_up_result.response_text}")
+            raise RuntimeError(
+                "warm-up message failed: "
+                f"response={warm_up_result.response_text} completion_error={warm_up_result.completion_error}"
+            )
 
     print(
         f"Firing {args.requests} message starts with {args.workers} workers against message '{modified_message_name}' "
         f"using execution_mode={args.execution_mode}"
     )
+    started_at = time.perf_counter()
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
         futures = [executor.submit(send_message, args, headers, modified_message_name, i) for i in range(args.requests)]
-        return [future.result() for future in concurrent.futures.as_completed(futures)]
+        results = [future.result() for future in concurrent.futures.as_completed(futures)]
+    request_batch_elapsed_seconds = time.perf_counter() - started_at
+    wait_for_process_instances(args, headers, results)
+    return results, request_batch_elapsed_seconds
 
 
-def print_summary(results: list[MessageResult]) -> None:
+def print_summary(
+    results: list[MessageResult],
+    request_batch_elapsed_seconds: float,
+    max_http_latency_seconds: float | None = None,
+) -> None:
     successes = [r for r in results if r.ok]
     failures = [r for r in results if not r.ok]
+    accepted = [r for r in results if r.accepted]
     elapsed_values = [r.elapsed_seconds for r in results]
     process_instance_ids = [r.process_instance_id for r in successes if r.process_instance_id is not None]
     unique_process_instance_ids = set(process_instance_ids)
 
     print("\nConcurrent Message Start Summary")
     print(f"Total: {len(results)}")
+    print(f"Accepted HTTP responses: {len(accepted)}")
     print(f"Successes: {len(successes)}")
     print(f"Failures: {len(failures)}")
     if elapsed_values:
         print(
-            "Latency min/median/max: "
-            f"{min(elapsed_values):.3f}s / {statistics.median(elapsed_values):.3f}s / {max(elapsed_values):.3f}s"
+            "HTTP latency min/p50/p95/max: "
+            f"{min(elapsed_values):.3f}s / {statistics.median(elapsed_values):.3f}s / "
+            f"{percentile(elapsed_values, 0.95):.3f}s / {max(elapsed_values):.3f}s"
         )
+        print(f"Concurrent request batch wall time: {request_batch_elapsed_seconds:.3f}s")
+        print(f"HTTP throughput: {len(results) / request_batch_elapsed_seconds:.2f} requests/second")
+        if max_http_latency_seconds is not None:
+            latency_violations = sum(result.elapsed_seconds > max_http_latency_seconds for result in results)
+            print(f"HTTP latency threshold: {max_http_latency_seconds:.3f}s ({latency_violations} exceeded)")
 
     print(f"Unique successful process instances: {len(unique_process_instance_ids)}")
     if len(unique_process_instance_ids) != len(successes):
@@ -339,13 +418,31 @@ def print_summary(results: list[MessageResult]) -> None:
         for result in sorted(failures, key=lambda r: r.index)[:20]:
             print(
                 f"- request={result.index} http={result.status_code} status={result.process_instance_status} "
-                f"error={result.error_code} body={result.response_text}"
+                f"final_status={result.final_process_instance_status} error={result.error_code} "
+                f"completion_error={result.completion_error} body={result.response_text}"
             )
+
+    print("\nSlowest HTTP requests:")
+    for result in sorted(results, key=lambda item: item.elapsed_seconds, reverse=True)[: min(10, len(results))]:
+        print(f"- request={result.index} latency={result.elapsed_seconds:.3f}s http={result.status_code}")
 
 
 def all_message_starts_landed(results: list[MessageResult]) -> bool:
     successful_process_instance_ids = [result.process_instance_id for result in results if result.ok]
     return len(successful_process_instance_ids) == len(results) and len(set(successful_process_instance_ids)) == len(results)
+
+
+def all_requests_within_http_latency(results: list[MessageResult], max_http_latency_seconds: float | None) -> bool:
+    if max_http_latency_seconds is None:
+        return True
+    return all(result.elapsed_seconds <= max_http_latency_seconds for result in results)
+
+
+def positive_float(value: str) -> float:
+    parsed_value = float(value)
+    if parsed_value <= 0:
+        raise argparse.ArgumentTypeError("must be greater than zero")
+    return parsed_value
 
 
 def parse_args() -> argparse.Namespace:
@@ -355,6 +452,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--workers", type=int, default=20)
     parser.add_argument("--execution-mode", default="synchronous", choices=["synchronous", "asynchronous"])
     parser.add_argument("--timeout", type=float, default=30)
+    parser.add_argument(
+        "--max-http-latency-seconds",
+        type=positive_float,
+        help="Exit nonzero if any concurrent message-start HTTP request exceeds this latency",
+    )
+    parser.add_argument("--completion-timeout", type=float, default=60)
+    parser.add_argument("--poll-interval", type=float, default=0.25)
     parser.add_argument("--username", default=DEFAULT_USERNAME)
     parser.add_argument("--password", default=DEFAULT_PASSWORD)
     parser.add_argument("--realm", default=DEFAULT_REALM)
@@ -395,9 +499,11 @@ def main() -> int:
         check_response(response, "login_with_access_token", {200, 204, 302})
 
     group_id, message_name = ensure_process_model(session, args, headers)
-    results = run_load(args, headers, group_id, message_name)
-    print_summary(results)
-    return 0 if all_message_starts_landed(results) else 1
+    results, request_batch_elapsed_seconds = run_load(args, headers, group_id, message_name)
+    print_summary(results, request_batch_elapsed_seconds, args.max_http_latency_seconds)
+    all_requests_succeeded = all_message_starts_landed(results)
+    latency_threshold_met = all_requests_within_http_latency(results, args.max_http_latency_seconds)
+    return 0 if all_requests_succeeded and latency_threshold_met else 1
 
 
 if __name__ == "__main__":

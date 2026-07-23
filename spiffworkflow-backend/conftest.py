@@ -3,6 +3,7 @@ import os
 import shutil
 from collections.abc import Generator
 from typing import Any
+from typing import cast
 
 import flask
 import pytest
@@ -57,9 +58,7 @@ def client(connexion_app: FlaskApp) -> starlette.testclient.TestClient:  # noqa
     return connexion_app.test_client(follow_redirects=False, base_url="http://localhost")
 
 
-@pytest.fixture()
-def with_db_and_bpmn_file_cleanup() -> Generator[None, Any, Any]:
-    """Do it cleanly!"""
+def _clear_database() -> None:
     db.session.remove()
     meta = db.metadata
     db.session.execute(db.update(BpmnProcessModel).values(top_level_process_id=None))
@@ -68,6 +67,47 @@ def with_db_and_bpmn_file_cleanup() -> Generator[None, Any, Any]:
     for table in reversed(meta.sorted_tables):
         db.session.execute(table.delete())
     db.session.commit()
+
+
+def _database_has_rows() -> bool:
+    # Some narrow unit tests manage their own committed rows without requesting
+    # the shared cleanup fixture. Detect that state in one query before reusing
+    # the worker's clean transactional baseline.
+    table_has_rows = [db.exists(db.select(1).select_from(table)) for table in db.metadata.sorted_tables]
+    query = db.select(db.literal(True)).where(db.or_(*table_has_rows)).limit(1)
+    return db.session.execute(query).scalar() is not None
+
+
+@pytest.fixture(scope="session")
+def database_cleanup_state() -> dict[str, bool]:
+    return {"was_cleaned": False}
+
+
+@pytest.fixture()
+def with_db_and_bpmn_file_cleanup(
+    request: pytest.FixtureRequest, database_cleanup_state: dict[str, bool]
+) -> Generator[None, Any, Any]:
+    """Run each test against a clean database and remove its BPMN files."""
+    requires_committed_database = request.node.get_closest_marker("requires_committed_database") is not None
+    if requires_committed_database:
+        _clear_database()
+        database_cleanup_state["was_cleaned"] = True
+    else:
+        if not database_cleanup_state["was_cleaned"] or _database_has_rows():
+            _clear_database()
+            database_cleanup_state["was_cleaned"] = True
+
+        # Bind every ORM session created during the test to one connection. The
+        # fixture savepoint makes application commit/rollback calls use nested
+        # savepoints, while the outer transaction gives teardown a single cheap
+        # rollback that restores the clean worker baseline.
+        db.session.remove()
+        engines = cast(dict[str | None, Any], db.engines)
+        engine = engines[None]
+        connection = engine.connect()
+        transaction = connection.begin()
+        savepoint = connection.begin_nested()
+        engines[None] = connection
 
     # when g.user gets set and then we clear the db, the user is now deleted and so
     # this fails so reset it
@@ -80,6 +120,14 @@ def with_db_and_bpmn_file_cleanup() -> Generator[None, Any, Any]:
         if os.path.exists(ProcessModelService.root_path()):
             shutil.rmtree(ProcessModelService.root_path())
         db.session.remove()
+        if requires_committed_database:
+            _clear_database()
+        else:
+            engines[None] = engine
+            if savepoint.is_active:
+                savepoint.rollback()
+            transaction.rollback()
+            connection.close()
 
 
 @pytest.fixture()

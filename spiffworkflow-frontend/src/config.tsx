@@ -164,16 +164,9 @@ if (unsupportedFormatTypes.length > 0) {
     )}. Valid options are: ${formattedSupportedDateTypes.join(', ')}`,
   );
 }
-const carbonDateFormat = generalDateFormat
-  .replace(/\byyyy\b/, 'Y')
-  .replace(/\bMM\b/, 'm')
-  .replace(/\bMMM\b/, 'M')
-  .replace(/\bMMMM\b/, 'F')
-  .replace(/\bdd\b/, 'd');
 const DATE_TIME_FORMAT = `${generalDateFormat} HH:mm:ss`;
 const TIME_FORMAT_HOURS_MINUTES = 'HH:mm';
 const DATE_FORMAT = generalDateFormat;
-const DATE_FORMAT_CARBON = carbonDateFormat;
 const DATE_FORMAT_FOR_DISPLAY = generalDateFormat.toLowerCase();
 const DATE_RANGE_DELIMITER = ':::';
 
@@ -183,7 +176,6 @@ export {
   CONFIGURATION_ERRORS,
   DARK_MODE_ENABLED,
   DATE_FORMAT,
-  DATE_FORMAT_CARBON,
   DATE_FORMAT_FOR_DISPLAY,
   DATE_RANGE_DELIMITER,
   DATE_TIME_FORMAT,

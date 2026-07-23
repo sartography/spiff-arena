@@ -1,6 +1,7 @@
 import pytest
 from flask.app import Flask
 
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -12,7 +13,11 @@ class TestRefreshPermissions(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
+        # Authorization is the subject here; permission-file parsing is covered
+        # by AuthorizationService's own tests.
+        monkeypatch.setattr(AuthorizationService, "load_permissions_yaml", lambda: {})
         basic_user = self.find_or_create_user("basic_user")
         privileged_user = self.find_or_create_user("privileged_user")
         self.add_permissions_to_user(

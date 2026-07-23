@@ -13,8 +13,8 @@ import Grid from '@mui/material/Grid';
 /* usage: add ui:layout to an object in the uiSchema
  *
  * If using ui:layout then ALL fields must be specified in the desired order.
- * The sm, md, and lg options match the Column options for Carbon theme. So they
- * specify how many grid columns the field takes up.
+ * The sm, md, and lg options specify how many responsive grid columns the field
+ * takes up.
  *
  * Example uiSchema:
  *

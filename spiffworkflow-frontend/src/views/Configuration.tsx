@@ -70,9 +70,7 @@ export default function Configuration({ extensionUxElements }: OwnProps) {
     );
   };
 
-  // wow, if you do not check to see if the permissions are loaded, then in safari,
-  // you will get {null} inside the <TabList> which totally explodes carbon (in safari!).
-  // we *think* that null inside a TabList works fine in all other browsers.
+  // Avoid rendering incomplete tabs while permissions are still loading.
   if (!permissionsLoaded) {
     return null;
   }

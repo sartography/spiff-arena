@@ -1,6 +1,5 @@
 from flask.app import Flask
 
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -15,8 +14,6 @@ class TestGetLastUserCompletingTask(BaseTest):
     ) -> None:
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.principal is not None
-        AuthorizationService.import_permissions_from_yaml_file()
-
         process_model = load_test_spec(
             process_model_id="misc/category_number_one/simple_form",
             # bpmn_file_name="simp.bpmn",

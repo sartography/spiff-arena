@@ -26,26 +26,21 @@
       <bpmn:formalExpression>topic_two_b</bpmn:formalExpression>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
-  <bpmn:message id="message_send_two" name="Message Send Two">
-    <bpmn:extensionElements>
-      <spiffworkflow:messageVariable>payload_var_two</spiffworkflow:messageVariable>
-    </bpmn:extensionElements>
-  </bpmn:message>
-  <bpmn:message id="message_response_two" name="Message Response Two">
-    <bpmn:extensionElements>
-      <spiffworkflow:messagePayload>{
-"topic_two_a": payload_var_two["topica_two"],
-"topic_two_b": payload_var_two["topicb_two"],
-"second_var_two": second_var_two
-}</spiffworkflow:messagePayload>
-    </bpmn:extensionElements>
-  </bpmn:message>
+  <bpmn:message id="message_send_two" name="Message Send Two" />
+  <bpmn:message id="message_response_two" name="Message Response Two" />
   <bpmn:process id="message_receiver_process_two" name="Message Receiver Process Two" isExecutable="true">
     <bpmn:sequenceFlow id="Flow_11r9uiw" sourceRef="send_message_response" targetRef="Event_0q5otqd" />
     <bpmn:endEvent id="Event_0q5otqd">
       <bpmn:incoming>Flow_11r9uiw</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sendTask id="send_message_response" name="Send Message Reponse" messageRef="message_response_two">
+      <bpmn:extensionElements>
+        <spiffworkflow:messagePayload>{
+"topic_two_a": payload_var_two["topica_two"],
+"topic_two_b": payload_var_two["topicb_two"],
+"second_var_two": second_var_two
+}</spiffworkflow:messagePayload>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_197lbl3</bpmn:incoming>
       <bpmn:outgoing>Flow_11r9uiw</bpmn:outgoing>
     </bpmn:sendTask>
@@ -58,7 +53,11 @@
     </bpmn:scriptTask>
     <bpmn:startEvent id="receive_message" name="Receive Message">
       <bpmn:outgoing>Flow_0rx0bxv</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_08u7ksn" messageRef="message_send_two" />
+      <bpmn:messageEventDefinition id="MessageEventDefinition_08u7ksn" messageRef="message_send_two">
+        <bpmn:extensionElements>
+          <spiffworkflow:messageVariable>payload_var_two</spiffworkflow:messageVariable>
+        </bpmn:extensionElements>
+      </bpmn:messageEventDefinition>
     </bpmn:startEvent>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">

@@ -496,7 +496,7 @@ wheels = [
 
 [[package]]
 name = "spiff-arena-common"
-version = "0.1.41"
+version = "0.1.42"
 source = { editable = "spiff-arena-common" }
 dependencies = [
     { name = "jinja2" },

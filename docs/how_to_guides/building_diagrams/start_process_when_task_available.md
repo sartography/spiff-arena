@@ -5,6 +5,15 @@ This works for User Tasks and Manual Tasks.
 
 Use this when task availability should trigger related workflow, such as assigning follow-up work, creating an audit record, sending a message, or starting a task-specific integration process.
 
+## Prerequisites
+
+This feature requires Celery background processing.
+Before using the task hook, make sure Celery is enabled and a worker is running with access to the same backend configuration as the API.
+For setup details, see [Configure Celery Background Processing](/how_to_guides/deployment/work_with_redis_celery_broker).
+
+If Celery is not enabled, Arena creates the human task but does not start the configured task-available process model.
+The backend logs a warning for the skipped trigger.
+
 ## How It Works
 
 When Arena creates a new waiting human task, it checks the task for the `spiffworkflow:processModelToStartOnTaskAvailable` BPMN extension.

@@ -26,6 +26,7 @@ type DiagramActionBarProps = {
   referencesButton?: ReactNode;
   processInstanceRun?: ReactNode;
   activeUserElement?: ReactNode;
+  lastSavedElement?: ReactNode;
 };
 
 export default function DiagramActionBar({
@@ -52,6 +53,7 @@ export default function DiagramActionBar({
   referencesButton,
   processInstanceRun,
   activeUserElement,
+  lastSavedElement,
 }: DiagramActionBarProps) {
   const canRenderSaveButton = Boolean(canSave && onSave);
   const shouldShowSaveAttention =
@@ -105,6 +107,7 @@ export default function DiagramActionBar({
       sx={{ flexWrap: 'wrap' }}
     >
       {saveAttentionMessage}
+      {lastSavedElement || null}
       {saveButton}
       {processInstanceRun || null}
       {canDelete ? deleteButton || null : null}

@@ -12,19 +12,24 @@ import {
 } from 'react-router-dom';
 import {
   Send,
-  Checkmark,
+  Check as Checkmark,
   Edit,
-  InProgress,
-  PauseOutline,
-  UserFollow,
-  Play,
-  Reset,
-  RuleDraft,
-  SkipForward,
-  StopOutline,
-  Warning,
-  View,
-} from '@carbon/icons-react';
+  Autorenew as InProgress,
+  PauseCircleOutline as PauseOutline,
+  PersonAddAlt as UserFollow,
+  RestartAlt as Reset,
+  Rule as RuleDraft,
+  SkipNext as SkipForward,
+  WarningAmber as Warning,
+  Visibility as View,
+  ExpandMore as ExpandMoreIcon,
+  DeleteOutlineOutlined,
+  LinkOutlined,
+  PauseOutlined,
+  PlayArrow,
+  SyncAltOutlined,
+  StopCircleOutlined,
+} from '@mui/icons-material';
 import {
   Box,
   Typography,
@@ -44,17 +49,9 @@ import {
   AccordionSummary,
   AccordionDetails,
   Alert,
+  Link as MuiLink,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import {
-  DeleteOutlineOutlined,
-  LinkOutlined,
-  PauseOutlined,
-  PlayArrow,
-  SyncAltOutlined,
-  StopCircleOutlined,
-} from '@mui/icons-material';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -500,13 +497,20 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
   const completionViewLink = (label: any, taskGuid: string) => {
     return (
-      <Link
+      <MuiLink
+        component={Link}
         reloadDocument
         data-testid="process-instance-step-link"
         to={`${processInstanceShowPageBaseUrl}/${taskGuid}${queryParams()}`}
+        sx={(theme) => ({
+          color:
+            theme.palette.mode === 'dark'
+              ? theme.palette.info.light
+              : theme.palette.primary.main,
+        })}
       >
         {label}
-      </Link>
+      </MuiLink>
     );
   };
   const returnToProcessInstance = () => {
@@ -562,7 +566,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       statusIcon = <Checkmark />;
       // statusColor = 'success';
     } else if (processInstance.status === 'terminated') {
-      statusIcon = <StopOutline />;
+      statusIcon = <StopCircleOutlined />;
     } else if (processInstance.status === 'error') {
       statusIcon = <Warning />;
       // statusColor = 'error';
@@ -1310,7 +1314,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       buttons.push(
         <Button
           variant="outlined"
-          startIcon={<Play />}
+          startIcon={<PlayArrow />}
           data-testid="execute-task-complete-button"
           onClick={() => completeTask(true)}
         >

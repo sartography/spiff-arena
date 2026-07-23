@@ -1,4 +1,4 @@
-import { Chip, Stack } from '@mui/material';
+import { Box, Chip } from '@mui/material';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReportFilter, ReportMetadata } from '../interfaces';
@@ -9,16 +9,6 @@ type QuickFilterPreset = {
   buildFilters: () => ReportFilter[];
   // Whose filters this preset "owns" — used to detect active state and to clear.
   ownedFields: string[];
-};
-
-const startOfTodaySeconds = (): number => {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return Math.floor(d.getTime() / 1000);
-};
-
-const daysAgoSeconds = (days: number): number => {
-  return Math.floor(Date.now() / 1000) - days * 86400;
 };
 
 const equalsFilter = (fieldName: string, fieldValue: any): ReportFilter => ({
@@ -47,18 +37,6 @@ const buildPresets = (t: (k: string) => string): QuickFilterPreset[] => [
     label: t('quick_filter_completed'),
     ownedFields: ['process_status'],
     buildFilters: () => [equalsFilter('process_status', 'complete')],
-  },
-  {
-    id: 'today',
-    label: t('quick_filter_today'),
-    ownedFields: ['start_from'],
-    buildFilters: () => [equalsFilter('start_from', startOfTodaySeconds())],
-  },
-  {
-    id: 'last_7_days',
-    label: t('quick_filter_last_7_days'),
-    ownedFields: ['start_from'],
-    buildFilters: () => [equalsFilter('start_from', daysAgoSeconds(7))],
   },
 ];
 
@@ -99,10 +77,13 @@ export default function QuickFilterChips({
   };
 
   return (
-    <Stack
-      direction="row"
-      spacing={1}
-      sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 1 }}
+    <Box
+      sx={{
+        alignItems: 'center',
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 0.5,
+      }}
     >
       {presets.map((preset) => {
         const active = activePresetIds.includes(preset.id);
@@ -118,6 +99,6 @@ export default function QuickFilterChips({
           />
         );
       })}
-    </Stack>
+    </Box>
   );
 }

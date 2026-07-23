@@ -28,6 +28,8 @@ from spiffworkflow_backend.services.workflow_execution_service import WorkflowEx
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
+pytestmark = pytest.mark.requires_committed_database
+
 
 class SupportsCeleryTaskRun(Protocol):
     def run(self, process_instance_id: int, task_guid: str | None = None) -> dict[str, Any]: ...

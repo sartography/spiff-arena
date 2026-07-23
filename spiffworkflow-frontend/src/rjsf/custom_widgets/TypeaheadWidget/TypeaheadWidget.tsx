@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ComboBox } from '@carbon/react';
+import { Autocomplete, TextField } from '@mui/material';
 import HttpService from '../../../services/HttpService';
 import { getCommonAttributes } from '../../helpers';
 
@@ -99,6 +99,15 @@ export default function TypeaheadWidget({
     return str;
   };
 
+  const itemIdentifier = (item: any) => {
+    const identifierKey = ['id', 'key', 'value', 'search_term'].find(
+      (key) => item?.[key] !== undefined,
+    );
+    return identifierKey
+      ? `${identifierKey}:${item[identifierKey]}`
+      : itemToString(item);
+  };
+
   let placeholderText = `Start typing to search...`;
   if (placeholder) {
     placeholderText = placeholder;
@@ -110,11 +119,11 @@ export default function TypeaheadWidget({
   }
 
   return (
-    <ComboBox
-      onInputChange={typeaheadSearch}
-      onChange={(event: any) => {
-        setSelectedItem(event.selectedItem);
-        let valueToUse = event.selectedItem;
+    <Autocomplete
+      onInputChange={(_event, inputValue) => typeaheadSearch(inputValue)}
+      onChange={(_event, nextSelectedItem) => {
+        setSelectedItem(nextSelectedItem);
+        let valueToUse = nextSelectedItem;
 
         // if the value is not truthy then do not stringify it
         // otherwise things like null becomes "null"
@@ -125,17 +134,29 @@ export default function TypeaheadWidget({
         onChange(valueToUse);
       }}
       id={id}
-      items={items}
-      itemToString={itemToString}
-      placeholder={placeholderText}
-      selectedItem={selectedItem}
-      helperText={
-        reactJsonSchemaFormTheme === 'mui' ? '' : commonAttributes.helperText
+      options={items}
+      getOptionLabel={(item) => itemToString(item) || ''}
+      isOptionEqualToValue={(option, selectedValue) =>
+        itemIdentifier(option) === itemIdentifier(selectedValue)
       }
+      value={selectedItem}
       disabled={disabled}
       readOnly={readonly}
-      invalid={commonAttributes.invalid}
-      invalidText={commonAttributes.errorMessageForField}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label={commonAttributes.label}
+          placeholder={placeholderText}
+          error={commonAttributes.invalid}
+          helperText={
+            commonAttributes.invalid
+              ? commonAttributes.errorMessageForField
+              : reactJsonSchemaFormTheme === 'mui'
+                ? ''
+                : commonAttributes.helperText
+          }
+        />
+      )}
     />
   );
 }

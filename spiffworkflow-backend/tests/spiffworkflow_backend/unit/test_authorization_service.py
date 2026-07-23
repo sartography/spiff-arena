@@ -18,8 +18,32 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestAuthorizationService(BaseTest):
-    def test_does_not_fail_if_user_not_created(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
+    def test_does_not_fail_if_user_not_created(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        missing_username = "not-created"
+        monkeypatch.setattr(
+            AuthorizationService,
+            "load_permissions_yaml",
+            lambda: {
+                "groups": {"missing-user-group": {"users": [missing_username]}},
+                "permissions": {
+                    "group-read": {
+                        "uri": "PG:missing-user-group",
+                        "actions": ["read"],
+                        "groups": ["missing-user-group"],
+                    },
+                },
+            },
+        )
+
         AuthorizationService.import_permissions_from_yaml_file()
+
+        waiting_assignment = UserGroupAssignmentWaitingModel.query.filter_by(username=missing_username).one()
+        assert waiting_assignment.group.identifier == "missing-user-group"
 
     def test_can_import_permissions_from_yaml(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         usernames = [
@@ -58,11 +82,20 @@ class TestAuthorizationService(BaseTest):
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.principal is not None
         # to ensure there is a user that can be assigned to the task
         self.find_or_create_user("testuser1")
+        monkeypatch.setattr(
+            AuthorizationService,
+            "load_permissions_yaml",
+            lambda: {
+                "groups": {"Finance Team": {"users": ["testuser1", "testuser2"]}},
+                "permissions": {},
+            },
+        )
         AuthorizationService.import_permissions_from_yaml_file()
 
         process_model = load_test_spec(
@@ -97,8 +130,6 @@ class TestAuthorizationService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         initiator_user = self.find_or_create_user("initiator_user")
-        self.find_or_create_user("testuser1")
-        AuthorizationService.import_permissions_from_yaml_file()
 
         process_model = load_test_spec(
             process_model_id="test_group/model_with_lanes",
@@ -560,10 +591,22 @@ class TestAuthorizationService(BaseTest):
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         user = self.find_or_create_user(username="user_one")
         user_two = self.find_or_create_user(username="user_two")
         admin_user = self.find_or_create_user(username="testadmin1")
+
+        monkeypatch.setattr(
+            AuthorizationService,
+            "load_permissions_yaml",
+            lambda: {
+                "groups": {"admin": {"users": ["testadmin1"]}},
+                "permissions": {
+                    "admin-all": {"uri": "ALL", "actions": ["create"], "groups": ["admin"]},
+                },
+            },
+        )
 
         # this group is not mentioned so it will get deleted
         UserService.find_or_create_group("group_two")
@@ -745,10 +788,21 @@ class TestAuthorizationService(BaseTest):
         app: Flask,
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         user_regex = "REGEX:^user_.*"
+        persistent_user_regex = "REGEX:^persistent_.*"
         user = self.find_or_create_user(username="user_one")
         user_two = self.find_or_create_user(username="second_user_to_not_match_regex")
+
+        monkeypatch.setattr(
+            AuthorizationService,
+            "load_permissions_yaml",
+            lambda: {
+                "groups": {"persistent_group": {"users": [persistent_user_regex]}},
+                "permissions": {},
+            },
+        )
 
         # this group is not mentioned so it will get deleted
         UserService.find_or_create_group("group_two")
@@ -813,7 +867,7 @@ class TestAuthorizationService(BaseTest):
 
         waiting_assignments = UserGroupAssignmentWaitingModel.query.all()
         # ensure we didn't delete all of the user group assignments
-        assert len(waiting_assignments) > 0
+        assert [assignment.username for assignment in waiting_assignments] == [persistent_user_regex]
 
     def test_can_deny_access_with_permission(
         self,
