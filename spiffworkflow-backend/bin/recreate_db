@@ -40,16 +40,25 @@ database_name_from_uri=""
 if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" != "sqlite" ]]; then
   if [[ -n "${SPIFFWORKFLOW_BACKEND_DATABASE_URI:-}" ]]; then
     database_uri_without_scheme="${SPIFFWORKFLOW_BACKEND_DATABASE_URI#*://}"
-    database_username_and_password="${database_uri_without_scheme%%@*}"
-    database_host_and_name="${database_uri_without_scheme#*@}"
-    database_host_and_port="${database_host_and_name%%/*}"
-    database_name_from_uri="${database_host_and_name##*/}"
+    database_authority="${database_uri_without_scheme%%/*}"
+    database_name_from_uri="${database_uri_without_scheme##*/}"
 
+    if [[ "$database_authority" != *@* ]]; then
+      echo >&2 "ERROR: SPIFFWORKFLOW_BACKEND_DATABASE_URI must include a username and password."
+      exit 1
+    fi
+
+    database_username_and_password="${database_authority%%@*}"
+    database_host_and_port="${database_authority#*@}"
     database_username="${database_username_and_password%%:*}"
-    if [[ "$database_username_and_password" == *:* ]]; then
-      database_password="${database_username_and_password#*:}"
-    else
-      database_password=""
+    if [[ "$database_username_and_password" != *:* ]]; then
+      echo >&2 "ERROR: SPIFFWORKFLOW_BACKEND_DATABASE_URI must include a username and password."
+      exit 1
+    fi
+    database_password="${database_username_and_password#*:}"
+    if [[ -z "$database_username" ]] || [[ -z "$database_password" ]]; then
+      echo >&2 "ERROR: SPIFFWORKFLOW_BACKEND_DATABASE_URI must include a username and password."
+      exit 1
     fi
 
     if [[ "$database_host_and_port" == \[*\]* ]]; then
