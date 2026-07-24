@@ -133,7 +133,11 @@ class TestLoggingService(BaseTest):
         handler.pause_file = str(pause_file)
         handler.retry_interval_seconds = 0.01
 
-        with patch.object(handler, "send", side_effect=lambda *_args: delivered.set() or True):
+        def send_and_mark_delivered(*_args: object) -> bool:
+            delivered.set()
+            return True
+
+        with patch.object(handler, "send", side_effect=send_and_mark_delivered):
             handler.emit(self.spiff_event_record())
             assert len(handler.pending_events) == 1
 
