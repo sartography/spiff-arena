@@ -296,6 +296,46 @@ def test_unittest_reports_recorded_timer_that_is_not_waiting(tmp_path, capsys):
     assert "spiff_testFixture_index" not in result["pending_tasks"][0]["data"]
 
 
+def test_unittest_prioritizes_recorded_boundary_timer(tmp_path, capsys):
+    fixture_file = tmp_path / "boundary-recording.json"
+    fixture_file.write_text(json.dumps({
+        "pendingTaskStack": [
+            {"id": "Boundary_timer", "data": {}, "force_timer": True},
+        ],
+    }))
+    specs, err = runner.specs_from_xml([("boundary.bpmn", timer_boundary_bpmn())])
+    assert err is None
+
+    result = json.loads(runner.advance_workflow(
+        specs,
+        {},
+        None,
+        "unittest",
+        {"data": {"spiff_testFixture_file": str(fixture_file)}},
+    ))
+
+    assert result["status"] == "ok"
+    assert result["state"]["tasks"]
+    assert any(
+        task["task_spec"] == "Boundary_timer"
+        and task["state"] == TaskState.COMPLETED
+        for task in result["state"]["tasks"].values()
+    )
+    assert any(
+        task["task_spec"] == "Script_timer_fired"
+        and task["state"] == TaskState.COMPLETED
+        for task in result["state"]["tasks"].values()
+    )
+    assert any(
+        task["task_spec"]["bpmn_id"] == "UserTask_1"
+        and task["state"] == TaskState.READY
+        for task in result["pending_tasks"]
+    )
+    event = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert event["reason"] == "fixture_exhausted"
+    assert event["fixture_index"] == -1
+
+
 def advance_to_waiting_timer_boundary(specs, session_id="timer-boundary-test"):
     first_step = json.loads(
         runner.advance_workflow(specs, None, None, "oneAtATime", None, session_id=session_id)

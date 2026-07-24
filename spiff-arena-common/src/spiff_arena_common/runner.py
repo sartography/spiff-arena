@@ -562,7 +562,27 @@ def _waiting_recorded_timer(workflow, entry):
     )
 
 
-def _replay_recorded_timer(workflow, reference_task, fixture_cache, iteration):
+def _is_unittest_fixture_checkpoint(task):
+    if task is None:
+        return True
+    if not task.task_spec.__class__.__name__.startswith("Custom"):
+        return False
+    return not (
+        isinstance(task.task_spec, CustomStartEvent)
+        and not isinstance(
+            task.task_spec.event_definition,
+            BpmnMessageEventDefinition,
+        )
+    )
+
+
+def _replay_recorded_timer(
+    workflow,
+    reference_task,
+    fixture_cache,
+    iteration,
+    diagnose_missing,
+):
     cursor = _unittest_fixture_cursor(workflow, reference_task, fixture_cache)
     entry = cursor.get("entry")
     if not entry or entry.get("force_timer") is not True:
@@ -570,6 +590,8 @@ def _replay_recorded_timer(workflow, reference_task, fixture_cache, iteration):
 
     timer_task = _waiting_recorded_timer(workflow, entry)
     if timer_task is None:
+        if not diagnose_missing:
+            return False, None
         print_unittest_break(
             "recorded_timer_not_waiting",
             iteration=iteration,
@@ -637,20 +659,29 @@ def _advance_workflow(workflow, task, strategy_name, compress_response=False, se
         task = next_task(workflow, TaskState.READY, completed_task)
         if not task:
             task = next_task(workflow, TaskState.READY)
-        if not task and strategy_name == "unittest":
-            handled_timer, timer_task = _replay_recorded_timer(
-                workflow,
-                completed_task,
-                fixture_cache,
-                iters,
-            )
-            if handled_timer:
+        recorded_timer_error = False
+        if strategy_name == "unittest":
+            while True:
+                reference_task = task or completed_task
+                handled_timer, timer_task = _replay_recorded_timer(
+                    workflow,
+                    reference_task,
+                    fixture_cache,
+                    iters,
+                    _is_unittest_fixture_checkpoint(task),
+                )
+                if not handled_timer:
+                    break
                 if timer_task is None:
+                    recorded_timer_error = True
                     break
                 completed_task = timer_task
                 task = next_task(workflow, TaskState.READY, completed_task)
                 if not task:
                     task = next_task(workflow, TaskState.READY)
+
+        if recorded_timer_error:
+            break
         if not task:
             if strategy_name == "unittest" and not workflow.completed:
                 print_unittest_break(
