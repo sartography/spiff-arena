@@ -446,8 +446,6 @@ class AuthorizationService:
         name, family_name, given_name, middle_name, nickname, preferred_username,
         profile, picture, website, gender, birthdate, zoneinfo, locale,updated_at, email.
         """
-        new_group_ids: set[int] = set()
-        old_group_ids: set[int] = set()
         user_attributes = {}
 
         if "preferred_username" in user_info:
@@ -510,20 +508,12 @@ class AuthorizationService:
                 current_app.logger.error(  # type: ignore
                     f"Invalid groups property in token: {desired_group_identifiers}.If groups is specified, it must be a list"
                 )
+                desired_group_identifiers = None
             else:
                 for desired_group_identifier in desired_group_identifiers:
-                    new_group = UserService.add_user_to_group_by_group_identifier(
+                    UserService.add_user_to_group_by_group_identifier(
                         user_model, desired_group_identifier, source_is_open_id=True
                     )
-                    if new_group is not None:
-                        new_group_ids.add(new_group.id)
-                group_ids_to_remove_from_user = [
-                    item.id for item in user_model.groups if item.identifier not in desired_group_identifiers
-                ]
-                for group_id in group_ids_to_remove_from_user:
-                    if group_id != current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]:
-                        old_group_ids.add(group_id)
-                        UserService.remove_user_from_group(user_model, group_id)
 
         # this may eventually get too slow.
         # when it does, be careful about backgrounding, because
@@ -531,7 +521,26 @@ class AuthorizationService:
         # we are also a little apprehensive about pre-creating users
         # before the user signs in, because we won't know things like
         # the external service user identifier.
-        cls.import_permissions_from_yaml_file(user_model)
+        added_permissions = cls.import_permissions_from_yaml_file(user_model)
+
+        if desired_group_identifiers is not None:
+            # OIDC and permissions.yaml can both be authoritative for a user's
+            # groups. Reconcile only after both sources have added their desired
+            # memberships so a YAML-managed assignment is not deleted and
+            # recreated on every sign-in.
+            effective_group_identifiers = set(desired_group_identifiers)
+            effective_group_identifiers.update(
+                assignment["group_identifier"] for assignment in added_permissions["user_to_group_identifiers"]
+            )
+            default_group_identifier = current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]
+            if default_group_identifier:
+                effective_group_identifiers.add(default_group_identifier)
+
+            group_ids_to_remove_from_user = [
+                group.id for group in user_model.groups if group.identifier not in effective_group_identifiers
+            ]
+            for group_id in group_ids_to_remove_from_user:
+                UserService.remove_user_from_group(user_model, group_id)
 
         # Refresh the groups relationship to get the latest from the database
         db.session.expire(user_model, ["groups"])

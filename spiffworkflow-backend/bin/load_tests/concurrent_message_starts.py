@@ -356,16 +356,6 @@ def run_load(
     message_name: str,
 ) -> tuple[list[MessageResult], float]:
     modified_message_name = f"{modified_identifier(group_id)}:{message_name}"
-    if args.warm_up:
-        print(f"Warming up message '{modified_message_name}' before the concurrent phase")
-        warm_up_result = send_message(args, headers, modified_message_name, -1)
-        wait_for_process_instances(args, headers, [warm_up_result])
-        if not warm_up_result.ok:
-            raise RuntimeError(
-                "warm-up message failed: "
-                f"response={warm_up_result.response_text} completion_error={warm_up_result.completion_error}"
-            )
-
     print(
         f"Firing {args.requests} message starts with {args.workers} workers against message '{modified_message_name}' "
         f"using execution_mode={args.execution_mode}"
@@ -471,13 +461,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--group-id", help="Use an existing or deterministic process group path")
     parser.add_argument("--message-name", help="Use an existing or deterministic message name")
     parser.add_argument("--suffix", help="Suffix for generated group/model/message identifiers")
-    parser.add_argument(
-        "--no-warm-up",
-        action="store_false",
-        dest="warm_up",
-        help="Skip the single warm-up message and include cold BPMN definition persistence in the stress test",
-    )
-    parser.set_defaults(warm_up=True)
     return parser.parse_args()
 
 
