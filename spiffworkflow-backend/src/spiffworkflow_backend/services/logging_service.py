@@ -242,22 +242,26 @@ class SpiffLogHandler(SocketHandler):
 
     def close(self) -> None:
         deadline = time.monotonic() + self.shutdown_drain_seconds
-        while self.pending_events and not self.delivery_is_paused():
-            # A process shutdown is the last opportunity to hand buffered
-            # events to a healthy listener, so bypass normal reconnect backoff.
-            self.retryTime = None
-            self.flush_pending()
-            if not self.pending_events or time.monotonic() >= deadline:
-                break
-            time.sleep(min(self.retry_interval_seconds, max(deadline - time.monotonic(), 0)))
-        if self.pending_events:
-            self.app.logger.error(
-                "Event stream handler closed with buffered events still pending.",
-                extra={
-                    SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR: True,
-                    "extras": {"pending_event_count": len(self.pending_events)},
-                },
-            )
+        self.acquire()
+        try:
+            while self.pending_events and not self.delivery_is_paused():
+                # A process shutdown is the last opportunity to hand buffered
+                # events to a healthy listener, so bypass normal reconnect backoff.
+                self.retryTime = None
+                self.flush_pending()
+                if not self.pending_events or time.monotonic() >= deadline:
+                    break
+                time.sleep(min(self.retry_interval_seconds, max(deadline - time.monotonic(), 0)))
+            if self.pending_events:
+                self.app.logger.error(
+                    "Event stream handler closed with buffered events still pending.",
+                    extra={
+                        SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR: True,
+                        "extras": {"pending_event_count": len(self.pending_events)},
+                    },
+                )
+        finally:
+            self.release()
         self.retry_stop.set()
         self.retry_wakeup.set()
         super().close()
