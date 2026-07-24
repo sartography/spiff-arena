@@ -9,7 +9,7 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.task import Task
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 
 

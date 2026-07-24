@@ -1,5 +1,7 @@
 import logging
 import sys
+from pathlib import Path
+from threading import Event
 from unittest.mock import patch
 from uuid import UUID
 
@@ -18,6 +20,20 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestLoggingService(BaseTest):
+    @staticmethod
+    def spiff_event_record() -> logging.LogRecord:
+        record = logging.LogRecord(
+            name="spiff.event",
+            level=logging.INFO,
+            pathname=__file__,
+            lineno=0,
+            msg="task_completed",
+            args=(),
+            exc_info=None,
+        )
+        record.__dict__["_spiff_data"] = {"process_instance_id": 123}
+        return record
+
     def test_configure_celery_stdout_logger_bypasses_redirected_streams(self) -> None:
         logger = logging.Logger("celery-test")
         logger.addHandler(logging.NullHandler())
@@ -62,6 +78,86 @@ class TestLoggingService(BaseTest):
         warning.assert_called_once()
         extra = warning.call_args.kwargs["extra"]
         assert extra[SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR] is True
+
+    def test_spiff_log_handler_retains_the_same_payload_after_socket_failure(self, app: Flask) -> None:
+        handler = SpiffLogHandler(app)
+        with (
+            patch.object(handler, "send", side_effect=[False, True]) as send,
+            patch.object(handler, "start_retry_thread"),
+        ):
+            handler.emit(self.spiff_event_record())
+            assert len(handler.pending_events) == 1
+
+            retained_payload = handler.pending_events[0]
+            handler.flush_pending()
+
+        assert not handler.pending_events
+        assert send.call_args_list[0].args[0] == retained_payload
+        assert send.call_args_list[1].args[0] == retained_payload
+        handler.close()
+
+    def test_spiff_log_handler_pause_file_holds_events_without_sending(
+        self,
+        app: Flask,
+        tmp_path: Path,
+    ) -> None:
+        pause_file = tmp_path / "event-stream-paused"
+        pause_file.touch()
+        handler = SpiffLogHandler(app)
+        handler.pause_file = str(pause_file)
+
+        with (
+            patch.object(handler, "send", return_value=True) as send,
+            patch.object(handler, "start_retry_thread"),
+        ):
+            handler.emit(self.spiff_event_record())
+            send.assert_not_called()
+            assert len(handler.pending_events) == 1
+
+            pause_file.unlink()
+            handler.flush_pending()
+
+        send.assert_called_once()
+        assert not handler.pending_events
+        handler.close()
+
+    def test_spiff_log_handler_retry_thread_flushes_after_pause_is_removed(
+        self,
+        app: Flask,
+        tmp_path: Path,
+    ) -> None:
+        pause_file = tmp_path / "event-stream-paused"
+        pause_file.touch()
+        delivered = Event()
+        handler = SpiffLogHandler(app)
+        handler.pause_file = str(pause_file)
+        handler.retry_interval_seconds = 0.01
+
+        def send_and_mark_delivered(*_args: object) -> bool:
+            delivered.set()
+            return True
+
+        with patch.object(handler, "send", side_effect=send_and_mark_delivered):
+            handler.emit(self.spiff_event_record())
+            assert len(handler.pending_events) == 1
+
+            pause_file.unlink()
+            assert delivered.wait(timeout=1)
+
+        handler.acquire()
+        handler.release()
+        assert not handler.pending_events
+        handler.close()
+
+    def test_spiff_log_handler_close_flushes_pending_events(self, app: Flask) -> None:
+        handler = SpiffLogHandler(app)
+        handler.pending_events.append(b'{"id":"event-on-shutdown"}\n')
+
+        with patch.object(handler, "send", return_value=True) as send:
+            handler.close()
+
+        send.assert_called_once()
+        assert not handler.pending_events
 
     def test_logging_service_detailed_logs(
         self,

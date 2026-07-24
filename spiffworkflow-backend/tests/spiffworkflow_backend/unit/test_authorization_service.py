@@ -7,6 +7,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroupAssignmentWaitingModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import GroupPermissionsDict
@@ -18,6 +19,39 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestAuthorizationService(BaseTest):
+    def test_sign_in_preserves_yaml_managed_group_assignment_when_oidc_is_authoritative(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        username = "yaml-group-user"
+        group_identifier = "yaml-managed-group"
+        monkeypatch.setattr(
+            AuthorizationService,
+            "load_permissions_yaml",
+            lambda: {
+                "groups": {group_identifier: {"users": [username]}},
+                "permissions": {},
+            },
+        )
+        user_info = {
+            "preferred_username": username,
+            "sub": username,
+            "iss": "https://test.stuff",
+            "groups": [],
+        }
+
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", True):
+            user = AuthorizationService.create_user_from_sign_in(user_info)
+            group = GroupModel.query.filter_by(identifier=group_identifier).one()
+            original_assignment = UserGroupAssignmentModel.query.filter_by(user_id=user.id, group_id=group.id).one()
+
+            AuthorizationService.create_user_from_sign_in(user_info)
+
+            current_assignment = UserGroupAssignmentModel.query.filter_by(user_id=user.id, group_id=group.id).one()
+            assert current_assignment.id == original_assignment.id
+
     def test_does_not_fail_if_user_not_created(
         self,
         app: Flask,
