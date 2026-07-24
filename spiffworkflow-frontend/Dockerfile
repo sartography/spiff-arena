@@ -1,5 +1,5 @@
 # Base image to share ENV vars that activate VENV.
-FROM node:24.15.0-trixie-slim AS base
+FROM node:24.18.0-trixie-slim@sha256:ae91dcc111a68c9d2d81ff2a17bda61be126426176fde6fe7d08ab13b7f50573 AS base
 
 RUN mkdir /app
 
@@ -42,7 +42,7 @@ RUN ./bin/build
 
 # Use nginx as the base image
 # FROM nginx:1.29.1-bookworm
-FROM nginx:1.29-alpine
+FROM nginx:1.31-alpine@sha256:4a73073bd557c65b759505da037898b61f1be6cbcc3c2c3aeac22d2a470c1752
 
 # we sort of love bash too much to use sh
 RUN apk add --no-cache bash
