@@ -485,22 +485,116 @@ def print_progress(iteration):
         "iteration": iteration,
     }, sort_keys=True), flush=True)
 
+
+def _unittest_fixture_cursor(workflow, task, cache):
+    workflow_data = getattr(workflow, "data", {})
+    fixture_file = task.data.get("spiff_testFixture_file")
+    if fixture_file:
+        if cache.get("file") != fixture_file or cache.get("recording") is None:
+            try:
+                with open(fixture_file) as f:
+                    cache["recording"] = json.load(f)
+                cache["file"] = fixture_file
+            except Exception as e:
+                raise Exception(f"Failed to load test fixture from {fixture_file}: {e}") from e
+
+        stack = cache["recording"].get("pendingTaskStack", [])
+        index = workflow_data.get("spiff_testFixture_index", len(stack) - 1)
+        if index < 0:
+            return {
+                "reason": "fixture_exhausted",
+                "file": fixture_file,
+                "index": index,
+                "stack": stack,
+            }
+        if index >= len(stack):
+            return {
+                "reason": "fixture_index_out_of_bounds",
+                "file": fixture_file,
+                "index": index,
+                "stack": stack,
+            }
+        return {
+            "entry": stack[index],
+            "file": fixture_file,
+            "index": index,
+            "stack": stack,
+        }
+
+    inline_fixture = (
+        task.data.get("spiff_testFixture")
+        or workflow_data.get("spiff_testFixture", {})
+    )
+    stack = inline_fixture.get("pendingTaskStack", [])
+    if not stack:
+        return {
+            "reason": "missing_inline_fixture",
+            "file": None,
+            "index": None,
+            "stack": stack,
+        }
+    return {
+        "entry": stack[-1],
+        "file": None,
+        "index": len(stack) - 1,
+        "stack": stack,
+    }
+
+
+def _consume_unittest_fixture(workflow, cursor):
+    if cursor["file"]:
+        workflow.data["spiff_testFixture_index"] = cursor["index"] - 1
+    else:
+        cursor["stack"].pop()
+
+
+def _waiting_recorded_timer(workflow, entry):
+    return next(
+        (
+            task
+            for task in workflow.get_tasks(
+                task_filter=TaskFilter(state=TaskState.WAITING)
+            )
+            if task.task_spec.bpmn_id == entry.get("id")
+            and _is_timer_event_task(task)
+        ),
+        None,
+    )
+
+
+def _replay_recorded_timer(workflow, reference_task, fixture_cache, iteration):
+    cursor = _unittest_fixture_cursor(workflow, reference_task, fixture_cache)
+    entry = cursor.get("entry")
+    if not entry or entry.get("force_timer") is not True:
+        return False, None
+
+    timer_task = _waiting_recorded_timer(workflow, entry)
+    if timer_task is None:
+        print_unittest_break(
+            "recorded_timer_not_waiting",
+            iteration=iteration,
+            expected_task_id=entry.get("id"),
+            **(
+                {
+                    "fixture_file": cursor["file"],
+                    "fixture_index": cursor["index"],
+                }
+                if cursor["file"]
+                else {}
+            ),
+        )
+        return True, None
+
+    timer_task.data.update(entry.get("data", {}))
+    _force_timer_event(timer_task)
+    _consume_unittest_fixture(workflow, cursor)
+    return True, timer_task
+
+
 def _advance_workflow(workflow, task, strategy_name, compress_response=False, session_id=None):
     iters = 0
     lazy_loads_list = None
-
-    # Cache fixture file for unittest strategy to avoid repeated file I/O
-    cached_fixture = None
-    cached_fixture_file = None
-    if strategy_name == "unittest" and task:
-        fixture_file = task.data.get("spiff_testFixture_file")
-        if fixture_file:
-            try:
-                with open(fixture_file) as f:
-                    cached_fixture = json.load(f)
-                cached_fixture_file = fixture_file
-            except Exception as e:
-                raise Exception(f"Failed to load test fixture from {fixture_file}: {e}") from e
+    fixture_cache = {"file": None, "recording": None}
 
     # TODO: make maxIters part of strategy, add cycle detection
     while task and iters < 5000:
@@ -521,7 +615,11 @@ def _advance_workflow(workflow, task, strategy_name, compress_response=False, se
 
         # Only check for missing lazy loads if not using file-based test fixtures
         # (file fixtures preload all specs recursively, so this check is redundant and expensive)
-        if not (strategy_name == "unittest" and cached_fixture_file):
+        fixture_file = task.data.get("spiff_testFixture_file")
+        if not (
+            strategy_name == "unittest"
+            and (fixture_file or fixture_cache["file"])
+        ):
             lazy_loads_list = lazy_loads(workflow)
             if any(spec not in workflow.subprocess_specs for spec in lazy_loads_list):
                 if strategy_name == "unittest":
@@ -539,6 +637,20 @@ def _advance_workflow(workflow, task, strategy_name, compress_response=False, se
         task = next_task(workflow, TaskState.READY, completed_task)
         if not task:
             task = next_task(workflow, TaskState.READY)
+        if not task and strategy_name == "unittest":
+            handled_timer, timer_task = _replay_recorded_timer(
+                workflow,
+                completed_task,
+                fixture_cache,
+                iters,
+            )
+            if handled_timer:
+                if timer_task is None:
+                    break
+                completed_task = timer_task
+                task = next_task(workflow, TaskState.READY, completed_task)
+                if not task:
+                    task = next_task(workflow, TaskState.READY)
         if not task:
             if strategy_name == "unittest" and not workflow.completed:
                 print_unittest_break(
@@ -562,84 +674,54 @@ def _advance_workflow(workflow, task, strategy_name, compress_response=False, se
                 if isinstance(task.task_spec, CustomStartEvent) and not isinstance(task.task_spec.event_definition, BpmnMessageEventDefinition):
                     pass
                 else:
-                    # Check for file-based fixture first (ed recording playback)
-                    fixture_file = task.data.get("spiff_testFixture_file")
-                    if fixture_file:
-                        # Use cached fixture data instead of re-reading from disk
-                        if cached_fixture_file != fixture_file or cached_fixture is None:
-                            # Fixture file changed or wasn't cached - shouldn't happen but handle it
-                            try:
-                                with open(fixture_file) as f:
-                                    cached_fixture = json.load(f)
-                                cached_fixture_file = fixture_file
-                            except Exception as e:
-                                raise Exception(f"Failed to load test fixture from {fixture_file}: {e}") from e
+                    cursor = _unittest_fixture_cursor(
+                        workflow,
+                        task,
+                        fixture_cache,
+                    )
+                    reason = cursor.get("reason")
+                    if reason:
+                        print_unittest_break(
+                            reason,
+                            iteration=iters,
+                            task_id=task.task_spec.bpmn_id,
+                            **(
+                                {
+                                    "fixture_file": cursor["file"],
+                                    "fixture_index": cursor["index"],
+                                    **(
+                                        {"fixture_length": len(cursor["stack"])}
+                                        if reason == "fixture_index_out_of_bounds"
+                                        else {}
+                                    ),
+                                }
+                                if cursor["file"]
+                                else {}
+                            ),
+                        )
+                        break
 
-                        stack = cached_fixture.get("pendingTaskStack", [])
+                    expected = cursor["entry"]
+                    if task.task_spec.bpmn_id != expected["id"]:
+                        print_unittest_break(
+                            "fixture_task_mismatch",
+                            iteration=iters,
+                            task_id=task.task_spec.bpmn_id,
+                            expected_task_id=expected["id"],
+                            **(
+                                {
+                                    "fixture_file": cursor["file"],
+                                    "fixture_index": cursor["index"],
+                                }
+                                if cursor["file"]
+                                else {}
+                            ),
+                        )
+                        break
 
-                        if "spiff_testFixture_index" not in workflow.data:
-                            index = len(stack) - 1
-                        else:
-                            index = workflow.data["spiff_testFixture_index"]
-
-                        # If recording is exhausted (index < 0), let task run interactively
-                        if index < 0:
-                            print_unittest_break(
-                                "fixture_exhausted",
-                                iteration=iters,
-                                task_id=task.task_spec.bpmn_id,
-                                fixture_file=fixture_file,
-                                fixture_index=index,
-                            )
-                            break
-
-                        if index >= len(stack):
-                            print_unittest_break(
-                                "fixture_index_out_of_bounds",
-                                iteration=iters,
-                                task_id=task.task_spec.bpmn_id,
-                                fixture_file=fixture_file,
-                                fixture_index=index,
-                                fixture_length=len(stack),
-                            )
-                            break
-
-                        expected = stack[index]
-                        if task.task_spec.bpmn_id != expected["id"]:
-                            print_unittest_break(
-                                "fixture_task_mismatch",
-                                iteration=iters,
-                                task_id=task.task_spec.bpmn_id,
-                                expected_task_id=expected["id"],
-                                fixture_file=fixture_file,
-                                fixture_index=index,
-                            )
-                            break
-
-                        task.run()
-                        task.data.update(expected["data"])
-                        workflow.data["spiff_testFixture_index"] = index - 1
-                    else:
-                        # Fallback to inline fixture (process-models compatibility)
-                        stack = task.data.get("spiff_testFixture", {}).get("pendingTaskStack", [])
-                        if not stack:
-                            print_unittest_break(
-                                "missing_inline_fixture",
-                                iteration=iters,
-                                task_id=task.task_spec.bpmn_id,
-                            )
-                            break
-                        expected = stack.pop()
-                        if task.task_spec.bpmn_id != expected["id"]:
-                            print_unittest_break(
-                                "fixture_task_mismatch",
-                                iteration=iters,
-                                task_id=task.task_spec.bpmn_id,
-                                expected_task_id=expected["id"],
-                            )
-                            break
-                        task.run()
-                        task.data.update(expected["data"])
+                    task.run()
+                    task.data.update(expected["data"])
+                    _consume_unittest_fixture(workflow, cursor)
     return build_response(workflow, None, compress_response=compress_response, lazy_loads_result=lazy_loads_list, session_id=session_id)
 
 def _is_timer_event_task(task):
