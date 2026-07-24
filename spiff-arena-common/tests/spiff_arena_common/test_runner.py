@@ -208,6 +208,134 @@ def timer_boundary_bpmn():
 """
 
 
+def timer_intermediate_bpmn():
+    return """
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_timer_intermediate" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_timer_intermediate" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1"><bpmn:outgoing>Flow_start_timer</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_start_timer" sourceRef="StartEvent_1" targetRef="Timer_1" />
+    <bpmn:intermediateCatchEvent id="Timer_1" name="Wait">
+      <bpmn:incoming>Flow_start_timer</bpmn:incoming><bpmn:outgoing>Flow_timer_script</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerDefinition_1"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">"PT1H"</bpmn:timeDuration></bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_timer_script" sourceRef="Timer_1" targetRef="Script_1" />
+    <bpmn:scriptTask id="Script_1">
+      <bpmn:incoming>Flow_timer_script</bpmn:incoming><bpmn:outgoing>Flow_script_end</bpmn:outgoing>
+      <bpmn:script>timer_replayed = True</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_script_end" sourceRef="Script_1" targetRef="EndEvent_1" />
+    <bpmn:endEvent id="EndEvent_1"><bpmn:incoming>Flow_script_end</bpmn:incoming></bpmn:endEvent>
+  </bpmn:process>
+</bpmn:definitions>
+"""
+
+
+def test_unittest_replays_recorded_intermediate_timer(tmp_path):
+    fixture_file = tmp_path / "timer-recording.json"
+    fixture_file.write_text(json.dumps({
+        "pendingTaskStack": [
+            {"id": "Timer_1", "data": {}, "force_timer": True},
+        ],
+    }))
+    specs, err = runner.specs_from_xml([("timer.bpmn", timer_intermediate_bpmn())])
+    assert err is None
+
+    result = json.loads(runner.advance_workflow(
+        specs,
+        {},
+        None,
+        "unittest",
+        {"data": {"spiff_testFixture_file": str(fixture_file)}},
+    ))
+
+    assert result["status"] == "ok"
+    assert result["completed"] is True
+    assert result["result"]["timer_replayed"] is True
+    assert result["result"]["spiff_testFixture_index"] == -1
+
+
+def test_unittest_replays_recorded_intermediate_timer_from_inline_fixture():
+    specs, err = runner.specs_from_xml([("timer.bpmn", timer_intermediate_bpmn())])
+    assert err is None
+
+    result = json.loads(runner.advance_workflow(
+        specs,
+        {},
+        None,
+        "unittest",
+        {"data": {"spiff_testFixture": {"pendingTaskStack": [
+            {"id": "Timer_1", "data": {}, "force_timer": True},
+        ]}}},
+    ))
+
+    assert result["completed"] is True
+    assert result["result"]["timer_replayed"] is True
+
+
+def test_unittest_reports_recorded_timer_that_is_not_waiting(tmp_path, capsys):
+    fixture_file = tmp_path / "bad-timer-recording.json"
+    fixture_file.write_text(json.dumps({
+        "pendingTaskStack": [
+            {"id": "Missing_Timer", "data": {}, "force_timer": True},
+        ],
+    }))
+    specs, err = runner.specs_from_xml([("timer.bpmn", timer_intermediate_bpmn())])
+    assert err is None
+
+    result = json.loads(runner.advance_workflow(
+        specs,
+        {},
+        None,
+        "unittest",
+        {"data": {"spiff_testFixture_file": str(fixture_file)}},
+    ))
+
+    event = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert event["reason"] == "recorded_timer_not_waiting"
+    assert event["expected_task_id"] == "Missing_Timer"
+    assert "spiff_testFixture_index" not in result["pending_tasks"][0]["data"]
+
+
+def test_unittest_prioritizes_recorded_boundary_timer(tmp_path, capsys):
+    fixture_file = tmp_path / "boundary-recording.json"
+    fixture_file.write_text(json.dumps({
+        "pendingTaskStack": [
+            {"id": "Boundary_timer", "data": {}, "force_timer": True},
+        ],
+    }))
+    specs, err = runner.specs_from_xml([("boundary.bpmn", timer_boundary_bpmn())])
+    assert err is None
+
+    result = json.loads(runner.advance_workflow(
+        specs,
+        {},
+        None,
+        "unittest",
+        {"data": {"spiff_testFixture_file": str(fixture_file)}},
+    ))
+
+    assert result["status"] == "ok"
+    assert result["state"]["tasks"]
+    assert any(
+        task["task_spec"] == "Boundary_timer"
+        and task["state"] == TaskState.COMPLETED
+        for task in result["state"]["tasks"].values()
+    )
+    assert any(
+        task["task_spec"] == "Script_timer_fired"
+        and task["state"] == TaskState.COMPLETED
+        for task in result["state"]["tasks"].values()
+    )
+    assert any(
+        task["task_spec"]["bpmn_id"] == "UserTask_1"
+        and task["state"] == TaskState.READY
+        for task in result["pending_tasks"]
+    )
+    event = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert event["reason"] == "fixture_exhausted"
+    assert event["fixture_index"] == -1
+
+
 def advance_to_waiting_timer_boundary(specs, session_id="timer-boundary-test"):
     first_step = json.loads(
         runner.advance_workflow(specs, None, None, "oneAtATime", None, session_id=session_id)
