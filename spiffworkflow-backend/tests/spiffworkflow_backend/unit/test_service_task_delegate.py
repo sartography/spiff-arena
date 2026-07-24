@@ -12,7 +12,7 @@ from spiffworkflow_connector_command.command_interface import ConnectorProxyResp
 from sqlalchemy import and_
 
 from spiffworkflow_backend.connectors import http_connector
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.connector_proxy_service import connector_proxy_request_proxies

@@ -8,7 +8,6 @@ from flask import Flask
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
 from spiffworkflow_backend.models.future_task import FutureTaskModel
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest

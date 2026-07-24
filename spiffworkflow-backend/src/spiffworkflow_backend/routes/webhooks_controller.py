@@ -8,7 +8,7 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model_for_instantiation
-from spiffworkflow_backend.services.authentication_service import AuthenticationService  # noqa: F401
+from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 

@@ -26,7 +26,7 @@ from spiffworkflow_backend.exceptions.error import NotAuthorizedError
 from spiffworkflow_backend.exceptions.error import TokenInvalidError
 from spiffworkflow_backend.exceptions.error import TokenNotProvidedError
 from spiffworkflow_backend.exceptions.error import UserNotLoggedInError
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
 
