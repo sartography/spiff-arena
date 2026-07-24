@@ -4,8 +4,11 @@ import os
 import re
 import sys
 import time
+from collections import deque
 from datetime import datetime
 from logging.handlers import SocketHandler
+from threading import Event
+from threading import Thread
 from typing import Any
 from uuid import uuid4
 
@@ -13,6 +16,9 @@ from flask import g
 from flask.app import Flask
 
 SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR = "spiff_log_handler_skip_record"
+EVENT_STREAM_PAUSE_FILE = "/tmp/spiff-event-stream-paused"  # noqa: S108 - container-local operator control marker
+EVENT_STREAM_RETRY_INTERVAL_SECONDS = 1.0
+EVENT_STREAM_SHUTDOWN_DRAIN_SECONDS = 5.0
 
 # flask logging formats:
 #   from: https://www.askpython.com/python-modules/flask/flask-logging
@@ -41,7 +47,14 @@ class SpiffLogHandler(SocketHandler):
             app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT"],
         )
         self.app = app
-        self.dropped_event_count = 0
+        self.pending_events: deque[bytes] = deque()
+        self.retry_stop = Event()
+        self.retry_wakeup = Event()
+        self.retry_thread: Thread | None = None
+        self.pause_file = EVENT_STREAM_PAUSE_FILE
+        self.retry_interval_seconds = EVENT_STREAM_RETRY_INTERVAL_SECONDS
+        self.shutdown_drain_seconds = EVENT_STREAM_SHUTDOWN_DRAIN_SECONDS
+        self.delivery_failure_count = 0
         self.next_socket_warning_at = 0.0
         try:
             self.socket_warning_interval_seconds = int(
@@ -162,43 +175,113 @@ class SpiffLogHandler(SocketHandler):
         elif record is not None:
             self.log_socket_failure(None, record)
 
-    def send(self, s: bytes, record: Any | None = None) -> None:  # type: ignore[override]
+    def send(self, s: bytes, record: Any | None = None) -> bool:  # type: ignore[override]
         if self.sock is None:
             self.createSocket(record)
         if self.sock:
             try:
                 self.sock.sendall(s)
+                return True
             except OSError as exception:
                 self.sock.close()
                 self.sock = None
                 self.log_socket_failure(exception, record)
+        return False
 
     def emit(self, record: Any) -> None:
         try:
             s = self.makePickle(record)
-            self.send(s, record)
+            queue_was_empty = not self.pending_events
+            self.pending_events.append(s)
+            self.flush_pending(max_events=1, record=record if queue_was_empty else None)
+            if self.pending_events:
+                self.start_retry_thread()
         except Exception:
             self.handleError(record)
 
+    def delivery_is_paused(self) -> bool:
+        return bool(self.pause_file) and os.path.exists(self.pause_file)
+
+    def flush_pending(self, max_events: int | None = None, record: Any | None = None) -> None:
+        if self.delivery_is_paused():
+            if self.sock is not None:
+                self.sock.close()
+                self.sock = None
+            return
+
+        sent = 0
+        while self.pending_events and (max_events is None or sent < max_events):
+            payload = self.pending_events[0]
+            if not self.send(payload, record):
+                return
+            self.pending_events.popleft()
+            record = None
+            sent += 1
+
+    def start_retry_thread(self) -> None:
+        if self.retry_thread is None or not self.retry_thread.is_alive():
+            self.retry_thread = Thread(
+                target=self.retry_pending_events,
+                daemon=True,
+                name="spiff-event-stream-retry",
+            )
+            self.retry_thread.start()
+        self.retry_wakeup.set()
+
+    def retry_pending_events(self) -> None:
+        while not self.retry_stop.is_set():
+            self.retry_wakeup.wait(self.retry_interval_seconds)
+            self.retry_wakeup.clear()
+            if self.retry_stop.is_set():
+                return
+            self.acquire()
+            try:
+                self.flush_pending()
+            finally:
+                self.release()
+
+    def close(self) -> None:
+        deadline = time.monotonic() + self.shutdown_drain_seconds
+        while self.pending_events and not self.delivery_is_paused():
+            # A process shutdown is the last opportunity to hand buffered
+            # events to a healthy listener, so bypass normal reconnect backoff.
+            self.retryTime = None
+            self.flush_pending()
+            if not self.pending_events or time.monotonic() >= deadline:
+                break
+            time.sleep(min(self.retry_interval_seconds, max(deadline - time.monotonic(), 0)))
+        if self.pending_events:
+            self.app.logger.error(
+                "Event stream handler closed with buffered events still pending.",
+                extra={
+                    SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR: True,
+                    "extras": {"pending_event_count": len(self.pending_events)},
+                },
+            )
+        self.retry_stop.set()
+        self.retry_wakeup.set()
+        super().close()
+
     def log_socket_failure(self, exception: OSError | None, record: Any | None) -> None:
-        self.dropped_event_count += 1
+        self.delivery_failure_count += 1
         now = time.monotonic()
         if now < self.next_socket_warning_at:
             return
 
-        dropped_event_count = self.dropped_event_count
-        self.dropped_event_count = 0
+        delivery_failure_count = self.delivery_failure_count
+        self.delivery_failure_count = 0
         self.next_socket_warning_at = now + self.socket_warning_interval_seconds
 
         spiff_data = getattr(record, "_spiff_data", {}) if record is not None else {}
         self.app.logger.warning(
-            "Event stream socket logging failed; dropping Spiff event records.",
+            "Event stream socket logging failed; retaining Spiff event records for retry.",
             extra={
                 SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR: True,
                 "extras": {
                     "event_stream_host": self.host,
                     "event_stream_port": self.port,
-                    "dropped_event_count": dropped_event_count,
+                    "delivery_failure_count": delivery_failure_count,
+                    "pending_event_count": len(self.pending_events),
                     "event_logger_name": getattr(record, "name", None),
                     "event_message": getattr(record, "msg", None),
                     "process_instance_id": spiff_data.get("process_instance_id"),
