@@ -5,7 +5,7 @@
 # https://docs.astral.sh/uv/guides/integration/docker/#installing-a-project
 # https://codegym.cc/groups/posts/python-docker-for-beginners
 
-FROM python:3.13-alpine AS base
+FROM python:3.14-alpine@sha256:26730869004e2b9c4b9ad09cab8625e81d256d1ce97e72df5520e806b1709f92 AS base
 
 ENV UV_NO_SYNC=true
 ENV VIRTUAL_ENV=/app/.venv
@@ -52,7 +52,7 @@ RUN git config --global --add safe.directory '*'
 FROM base AS setup
 
 # Astral is the company behind uv
-COPY --from=ghcr.io/astral-sh/uv:alpine /usr/local/bin/uv /usr/local/bin/uvx /usr/local/bin/
+COPY --from=ghcr.io/astral-sh/uv:alpine@sha256:73dce5b8dd3b66c536e8b34a60ad76be1eadcab003b7d166deea7b7bffb009a7 /usr/local/bin/uv /usr/local/bin/uvx /usr/local/bin/
 
 # mysqldev for mysqlclient lib
 # libpq-dev in order to be able to install postgres lib. See also libpq above in deployment image.
