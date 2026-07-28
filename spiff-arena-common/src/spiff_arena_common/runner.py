@@ -88,7 +88,7 @@ class CustomServiceTask(ServiceTask):
         result = task.workflow.script_engine.call_service(
             task,
             operation_name=self.operation_name,
-            operation_params=self.evalutate_params(task),
+            operation_params=self.evaluate_params(task),
         )
         parsed_result = json.loads(result)
         if self._handle_connector_error(task, parsed_result):
