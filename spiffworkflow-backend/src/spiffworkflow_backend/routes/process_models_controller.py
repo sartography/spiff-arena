@@ -397,12 +397,7 @@ def process_model_file_show(modified_process_model_identifier: str, file_name: s
         try:
             file.bpmn_process_ids = SpecFileService.get_bpmn_process_ids_for_file_contents(file_contents)
         except XMLSyntaxError as exception:
-            raise ApiError(
-                error_code="invalid_xml",
-                message=f"'{file.name}' is not a valid XML file. {exception}",
-                file_name=file.name,
-                status_code=400,
-            ) from exception
+            raise ApiError.from_invalid_xml(file.name, exception) from exception
 
     return make_response(jsonify(file), 200)
 

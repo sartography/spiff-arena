@@ -12,6 +12,7 @@ from connexion.problem import problem
 from flask import Flask
 from flask import current_app
 from flask import g
+from lxml.etree import XMLSyntaxError  # type: ignore
 from sentry_sdk import capture_exception
 from sentry_sdk import set_tag
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
@@ -229,6 +230,15 @@ class ApiError(Exception):
             return ApiError.from_task_spec(error_code, msg, exp.task_spec)
         else:
             return ApiError("workflow_error", str(exp))
+
+    @classmethod
+    def from_invalid_xml(cls, file_name: str, exception: XMLSyntaxError) -> ApiError:
+        return cls(
+            error_code="invalid_xml",
+            message=f"'{file_name}' is not a valid XML file. {exception}",
+            file_name=file_name,
+            status_code=400,
+        )
 
 
 def set_user_sentry_context() -> None:
