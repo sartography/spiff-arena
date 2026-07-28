@@ -132,6 +132,17 @@ class TestMonitoringService(unittest.TestCase):
             )
         )
 
+    def test_invalid_xml_api_error_is_not_captured(self) -> None:
+        self.assertFalse(
+            should_capture_exception_in_sentry(
+                ApiError(
+                    error_code="invalid_xml",
+                    message="'example.bpmn' is not a valid XML file.",
+                    status_code=400,
+                )
+            )
+        )
+
     def test_missing_process_instance_api_error_is_not_captured(self) -> None:
         self.assertFalse(
             should_capture_exception_in_sentry(

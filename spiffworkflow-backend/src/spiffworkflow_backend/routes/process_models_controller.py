@@ -11,6 +11,7 @@ from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import make_response
+from lxml.etree import XMLSyntaxError  # type: ignore
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from werkzeug.datastructures import FileStorage
 
@@ -211,7 +212,7 @@ def process_model_show(
             try:
                 refs = SpecFileService.get_references_for_file(file, process_model)
                 file.references = refs
-            except ValidationException as exception:
+            except (ValidationException, XMLSyntaxError) as exception:
                 file.references = [{"identifier": f"ERROR: {exception.__class__.__name__}", "display_name": str(exception)}]  # type: ignore
 
     process_model.parent_groups = ProcessModelService.get_parent_group_array(process_model.id)
@@ -393,7 +394,10 @@ def process_model_file_show(modified_process_model_identifier: str, file_name: s
     file.process_model_id = process_model.id
 
     if file.type == FileType.bpmn.value:
-        file.bpmn_process_ids = SpecFileService.get_bpmn_process_ids_for_file_contents(file_contents)
+        try:
+            file.bpmn_process_ids = SpecFileService.get_bpmn_process_ids_for_file_contents(file_contents)
+        except XMLSyntaxError as exception:
+            raise ApiError.from_invalid_xml(file.name, exception) from exception
 
     return make_response(jsonify(file), 200)
 

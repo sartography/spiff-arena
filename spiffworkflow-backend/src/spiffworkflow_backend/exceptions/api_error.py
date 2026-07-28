@@ -12,6 +12,7 @@ from connexion.problem import problem
 from flask import Flask
 from flask import current_app
 from flask import g
+from lxml.etree import XMLSyntaxError  # type: ignore
 from sentry_sdk import capture_exception
 from sentry_sdk import set_tag
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
@@ -230,6 +231,15 @@ class ApiError(Exception):
         else:
             return ApiError("workflow_error", str(exp))
 
+    @classmethod
+    def from_invalid_xml(cls, file_name: str, exception: XMLSyntaxError) -> ApiError:
+        return cls(
+            error_code="invalid_xml",
+            message=f"'{file_name}' is not a valid XML file. {exception}",
+            file_name=file_name,
+            status_code=400,
+        )
+
 
 def set_user_sentry_context() -> None:
     try:
@@ -252,6 +262,8 @@ def should_notify_sentry(exception: Exception) -> bool:
     """
     if isinstance(exception, ApiError):
         if exception.error_code == "invalid_token":
+            return False
+        if exception.error_code == "invalid_xml":
             return False
         # when someone is looking for a process instance that doesn't exist or that they don't have access to
         if exception.error_code == "process_instance_cannot_be_found":

@@ -43,11 +43,8 @@ class WorkflowSpecService:
                 elif file.type == FileType.dmn.value:
                     dmn: etree.Element = ProcessModelService.get_etree_from_xml_bytes(data)
                     parser.add_dmn_xml(dmn, filename=file.name)
-            except XMLSyntaxError as xse:
-                raise ApiError(
-                    error_code="invalid_xml",
-                    message=f"'{file.name}' is not a valid xml file." + str(xse),
-                ) from xse
+            except XMLSyntaxError as exception:
+                raise ApiError.from_invalid_xml(file.name, exception) from exception
         if process_id is None or process_id == "":
             raise ApiError(
                 error_code="no_primary_bpmn_error",

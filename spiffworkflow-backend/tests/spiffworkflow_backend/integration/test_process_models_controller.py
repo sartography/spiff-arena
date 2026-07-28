@@ -95,6 +95,62 @@ class TestProcessModelsController(BaseTest):
         assert json["id"] == "test_group/non_executable"
         assert json["is_executable"] is False
 
+    def test_process_model_show_reports_malformed_bpmn_reference(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        file_name = "hello_world.bpmn"
+        process_model = load_test_spec(
+            "test_group/malformed_show",
+            bpmn_file_name=file_name,
+            process_model_source_directory="hello_world",
+        )
+        SpecFileService.write_file_data_to_system(
+            SpecFileService.full_file_path(process_model, file_name),
+            b"<definitions></definitions> trailing content",
+        )
+
+        response = client.get(
+            f"/v1.0/process-models/{process_model.modified_process_model_identifier()}",
+            params={"include_file_references": "true"},
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        response_json = response.json()
+        malformed_file = next(file for file in response_json["files"] if file["name"] == file_name)
+        assert malformed_file["references"][0]["identifier"] == "ERROR: XMLSyntaxError"
+
+    def test_process_model_file_show_returns_invalid_xml_for_malformed_bpmn(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        file_name = "hello_world.bpmn"
+        process_model = load_test_spec(
+            "test_group/malformed_file_show",
+            bpmn_file_name=file_name,
+            process_model_source_directory="hello_world",
+        )
+        SpecFileService.write_file_data_to_system(
+            SpecFileService.full_file_path(process_model, file_name),
+            b"<definitions></definitions> trailing content",
+        )
+
+        response = client.get(
+            f"/v1.0/process-models/{process_model.modified_process_model_identifier()}/files/{file_name}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 400
+        assert response.json()["error_code"] == "invalid_xml"
+        assert response.json()["file_name"] == file_name
+
     def test_process_model_show_when_not_found(
         self,
         app: Flask,
