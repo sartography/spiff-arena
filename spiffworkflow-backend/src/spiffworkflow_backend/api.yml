@@ -2229,6 +2229,16 @@ paths:
         description: The page number to return. Defaults to page 1.
         schema:
           type: integer
+      - name: sort
+        in: query
+        required: false
+        description: Sort tasks by human_task.id. Use -id for descending order. Defaults to -id.
+        schema:
+          type: string
+          enum:
+            - id
+            - "-id"
+          default: "-id"
     get:
       tags:
         - Tasks
@@ -4386,90 +4396,6 @@ components:
           type: string
         title:
           type: string
-    DataModel:
-      properties:
-        id:
-          type: string
-    ProcessModelDiffList:
-      properties:
-        workflow_spec_id:
-          type: string
-          example: top_level_workflow
-        created_at_in_seconds:
-          type: integer
-        location:
-          type: string
-          example: remote
-        new:
-          type: boolean
-          example: false
-    ProcessModelFilesList:
-      properties:
-        file_model_id:
-          type: integer
-          example: 171
-        workflow_spec_id:
-          type: string
-          example: top_level_workflow
-        filename:
-          type: string
-          example: data_security_plan.dmn
-        created_at_in_seconds:
-          type: integer
-        type:
-          type: string
-          example: dmn
-        primary:
-          type: boolean
-          example: false
-        content_type:
-          type: string
-          example: text/xml
-        primary_process_id:
-          type: string
-          example: null
-        md5_hash:
-          type: string
-          example: f12e2bbd-a20c-673b-ccb8-a8a1ea9c5b7b
-
-    ProcessModelFilesDiff:
-      properties:
-        filename:
-          type: string
-          example: data_security_plan.dmn
-        created_at_in_seconds:
-          type: integer
-        type:
-          type: string
-          example: dmn
-        primary:
-          type: boolean
-          example: false
-        content_type:
-          type: string
-          example: text/xml
-        primary_process_id:
-          type: string
-          example: null
-        md5_hash:
-          type: string
-          example: f12e2bbd-a20c-673b-ccb8-a8a1ea9c5b7b
-        location:
-          type: string
-          example: remote
-        new:
-          type: boolean
-          example: false
-    ProcessModelAll:
-      properties:
-        workflow_spec_id:
-          type: string
-          example: acaf1258-43b4-437e-8846-f612afa66811
-        created_at_in_seconds:
-          type: integer
-        md5_hash:
-          type: string
-          example: c30fd597f21715018eab12f97f9d4956
     DataStore:
       properties:
         id:
@@ -4820,108 +4746,6 @@ components:
                   value: "model.my_boolean_field_id && model.my_enum_field_value !== 'something'"
                 - id: "hide_expression"
                   value: "model.my_enum_field_value === 'something'"
-    PaginatedTaskLog:
-      properties:
-        code:
-          example: "email_sent"
-          type: string
-        level:
-          example: "warning"
-          type: string
-        user:
-          example: "email_sent"
-          type: string
-        page:
-          type: integer
-          example: 0
-        per_page:
-          type: integer
-          example: 10
-        sort_column:
-          type: string
-          example: "timestamp"
-        sort_reverse:
-          type: boolean
-          example: false
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/TaskLog"
-        has_next:
-          type: boolean
-          example: true
-        has_prev:
-          type: boolean
-          example: false
-    TaskLog:
-      properties:
-        level:
-          type: string
-          example: "info"
-        code:
-          example: "email_sent"
-          type: string
-        message:
-          example: "Approval email set to Jake in Accounting"
-          type: string
-        workflow_id:
-          example: 42
-          type: integer
-        user_uid:
-          example: "dhf8r"
-          type: string
-        timestamp:
-          type: string
-          format: date_time
-          example: "2021-01-07T11:36:40.001Z"
-    TaskEvent:
-      properties:
-        workflow:
-          $ref: "#/components/schemas/Workflow"
-        workflow_sec:
-          $ref: "#/components/schemas/ProcessModel"
-        spec_version:
-          type: string
-        action:
-          type: string
-        task_id:
-          type: string
-        task_type:
-          type: string
-        task_lane:
-          type: string
-        form_data:
-          type: object
-        mi_type:
-          type: string
-        mi_count:
-          type: integer
-        mi_index:
-          type: integer
-        process_name:
-          type: string
-        date:
-          type: string
-    Script:
-      properties:
-        name:
-          type: string
-          format: string
-          example: "random_fact"
-        description:
-          type: string
-          example: "Returns a random fact about a topic.  Provide an argument of either 'cat', 'norris', or 'buzzword'"
-    LookupItem:
-      properties:
-        value:
-          type: string
-          format: string
-          example: "1000"
-        label:
-          type: string
-          example: "Chuck Norris"
-        data:
-          type: string
     NavigationItem:
       properties:
         id:
@@ -4969,34 +4793,6 @@ components:
           readOnly: true
         task:
           $ref: "#/components/schemas/Task"
-    Approval:
-      properties:
-        id:
-          type: number
-          format: integer
-          example: 5
-    ApprovalCounts:
-      properties:
-        PENDING:
-          type: number
-          format: integer
-          example: 5
-        APPROVED:
-          type: number
-          format: integer
-          example: 5
-        DECLINED:
-          type: number
-          format: integer
-          example: 5
-        CANCELED:
-          type: number
-          format: integer
-          example: 5
-        AWAITING:
-          type: number
-          format: integer
-          example: 5
     ServiceTask:
       properties:
         items:
@@ -5023,26 +4819,6 @@ components:
         required:
           type: boolean
           example: false
-    GitRepo:
-      properties:
-        #        remote:
-        #          type: string
-        #          example: sartography/crconnect-workflow-specs
-        directory:
-          type: string
-          example: /home/cr-connect/sync_files
-        branch:
-          type: string
-          example: dev
-        merge_branch:
-          type: string
-          example: staging
-        changes:
-          type: array
-          example: ["file_1.txt", "file_2.txt"]
-        untracked:
-          type: array
-          example: ["a_file.txt", "b_file.txt"]
     Secret:
       properties:
         key:
@@ -5116,14 +4892,3 @@ components:
     AwesomeUnspecifiedPayload:
       type: "object"
       additionalProperties: {}
-
-    ServiceAccountRequest:
-      properties:
-        name:
-          type: string
-          nullable: false
-    ServiceAccountApiKey:
-      properties:
-        api_key:
-          type: string
-          nullable: false

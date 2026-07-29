@@ -711,6 +711,58 @@ class TestTasksController(BaseTest):
         assert response.json() is not None
         assert response.json()["pagination"]["count"] == 0
 
+    def test_task_list_my_tasks_sort_order(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = self.create_group_and_model_with_bpmn(
+            client,
+            with_super_admin_user,
+            process_group_id="sort_tasks",
+            process_model_id="dynamic_enum_select_fields",
+            bpmn_file_location="dynamic_enum_select_fields",
+        )
+        headers = self.logged_in_headers(with_super_admin_user)
+        process_instance_ids = []
+
+        for _ in range(2):
+            response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+            assert response.status_code == 201
+            assert response.json() is not None
+            process_instance_id = response.json()["id"]
+            process_instance_ids.append(process_instance_id)
+
+            response = client.post(
+                f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}"
+                f"/{process_instance_id}/run",
+                headers=headers,
+            )
+            assert response.status_code == 200
+            _dequeued_interstitial_stream(process_instance_id)
+
+        human_tasks = (
+            HumanTaskModel.query.filter(HumanTaskModel.process_instance_id.in_(process_instance_ids))
+            .order_by(HumanTaskModel.id)
+            .all()
+        )
+        ascending_task_ids = [task.task_id for task in human_tasks]
+
+        for query_string, expected_task_ids in [
+            ("?sort=id", ascending_task_ids),
+            ("?sort=-id", list(reversed(ascending_task_ids))),
+            ("", list(reversed(ascending_task_ids))),
+        ]:
+            response = client.get(f"/v1.0/tasks{query_string}", headers=headers)
+            assert response.status_code == 200
+            assert response.json() is not None
+            assert [task["id"] for task in response.json()["results"]] == expected_task_ids
+
+        response = client.get("/v1.0/tasks?sort=created_at", headers=headers)
+        assert response.status_code == 400
+
     def test_task_list_my_tasks_returns_multiple_potential_owners(
         self,
         app: Flask,
