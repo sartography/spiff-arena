@@ -741,7 +741,6 @@ class TestTasksController(BaseTest):
                 headers=headers,
             )
             assert response.status_code == 200
-            _dequeued_interstitial_stream(process_instance_id)
 
         human_tasks = (
             HumanTaskModel.query.filter(HumanTaskModel.process_instance_id.in_(process_instance_ids))  # type: ignore
