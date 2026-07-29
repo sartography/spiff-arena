@@ -102,6 +102,9 @@ class TestMonitoringService(unittest.TestCase):
 
         self.assertIsNone(filter_sentry_error_event(event, hint))
 
+    def test_filter_sentry_error_event_drops_direct_message_without_exception_info(self) -> None:
+        self.assertIsNone(filter_sentry_error_event({"message": "boom"}, {}))
+
     def test_filter_sentry_error_event_keeps_log_with_exception_info(self) -> None:
         exception = ValueError("boom")
         exc_info = (ValueError, exception, None)

@@ -3,6 +3,7 @@ import os
 import sys
 from functools import partial
 from typing import Any
+from typing import cast
 
 import flask.wrappers
 import sentry_sdk
@@ -103,15 +104,28 @@ def scrub_transaction_event(event: dict[str, Any], _hint: Any) -> dict[str, Any]
     return event
 
 
+def _has_usable_exception_info(exc_info: Any) -> bool:
+    return (
+        isinstance(exc_info, tuple)
+        and len(exc_info) == 3
+        and isinstance(exc_info[0], type)
+        and issubclass(exc_info[0], BaseException)
+        and isinstance(exc_info[1], BaseException)
+    )
+
+
 def filter_sentry_error_event(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any] | None:
     """Keep exception captures while dropping message-only logs and Flask duplicates."""
     log_record = hint.get("log_record")
-    if log_record is not None:
-        # Plain error logs remain application logs and Sentry breadcrumbs, but do not create Sentry issues.
-        # logger.exception() and logger.error(..., exc_info=...) are retained as exception events.
-        exc_info = getattr(log_record, "exc_info", None)
-        if not exc_info or exc_info[0] is None:
-            return None
+    log_record_exc_info = getattr(log_record, "exc_info", None)
+    hint_exc_info = hint.get("exc_info")
+    exc_info = log_record_exc_info if _has_usable_exception_info(log_record_exc_info) else hint_exc_info
+
+    # Plain messages remain application logs and Sentry breadcrumbs, but do not create Sentry issues.
+    # logger.exception() and logger.error(..., exc_info=...) are retained as exception events.
+    if not _has_usable_exception_info(exc_info):
+        return None
+    usable_exc_info = cast(tuple[type[BaseException], BaseException, Any], exc_info)
 
     exception_values = event.get("exception", {}).get("values", [])
 
@@ -123,10 +137,9 @@ def filter_sentry_error_event(event: dict[str, Any], hint: dict[str, Any]) -> di
     ):
         return None
 
-    if "exc_info" in hint:
-        _exc_type, exc_value, _tb = hint["exc_info"]
-        if not should_capture_exception_in_sentry(exc_value):
-            return None
+    _exc_type, exc_value, _tb = usable_exc_info
+    if not should_capture_exception_in_sentry(exc_value):
+        return None
     return event
 
 
