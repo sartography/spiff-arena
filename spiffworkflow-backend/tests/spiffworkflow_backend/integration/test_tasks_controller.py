@@ -744,7 +744,7 @@ class TestTasksController(BaseTest):
             _dequeued_interstitial_stream(process_instance_id)
 
         human_tasks = (
-            HumanTaskModel.query.filter(HumanTaskModel.process_instance_id.in_(process_instance_ids))
+            HumanTaskModel.query.filter(HumanTaskModel.process_instance_id.in_(process_instance_ids))  # type: ignore
             .order_by(HumanTaskModel.id)
             .all()
         )

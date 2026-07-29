@@ -98,9 +98,9 @@ def task_list_my_tasks(
     htum_all = aliased(HumanTaskUserModel)
     assigned_user_all = aliased(UserModel)
 
-    human_task_id_order = HumanTaskModel.id.asc() if sort == "id" else HumanTaskModel.id.desc()
+    human_task_id_order = HumanTaskModel.id.asc() if sort == "id" else HumanTaskModel.id.desc()  # type: ignore
     human_task_query = (
-        HumanTaskModel.query.order_by(human_task_id_order)  # type: ignore
+        HumanTaskModel.query.order_by(human_task_id_order)
         .group_by(HumanTaskModel.id)
         .join(ProcessInstanceModel, ProcessInstanceModel.id == HumanTaskModel.process_instance_id)
         .join(process_initiator_user, process_initiator_user.id == ProcessInstanceModel.process_initiator_id)
