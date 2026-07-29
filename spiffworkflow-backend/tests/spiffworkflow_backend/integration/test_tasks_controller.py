@@ -747,6 +747,7 @@ class TestTasksController(BaseTest):
             .order_by(HumanTaskModel.id)
             .all()
         )
+        assert human_tasks
         ascending_task_ids = [task.task_id for task in human_tasks]
 
         for query_string, expected_task_ids in [
