@@ -14,6 +14,7 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import NotAuthorizedError
 from spiffworkflow_backend.services.monitoring_service import configure_sentry
 from spiffworkflow_backend.services.monitoring_service import ensure_prometheus_multiproc_dir
+from spiffworkflow_backend.services.monitoring_service import filter_sentry_error_event
 from spiffworkflow_backend.services.monitoring_service import get_public_version_info_data
 from spiffworkflow_backend.services.monitoring_service import scrub_transaction_event
 from spiffworkflow_backend.services.monitoring_service import should_capture_exception_in_sentry
@@ -95,8 +96,46 @@ class TestMonitoringService(unittest.TestCase):
 
         self.assertEqual([{"key": "environment", "value": "prod"}], scrubbed_event["tags"])
 
+    def test_filter_sentry_error_event_drops_log_without_exception_info(self) -> None:
+        event = {"logger": "spiffworkflow_backend.services.custom_service_task"}
+        hint = {"log_record": Mock(exc_info=None)}
+
+        self.assertIsNone(filter_sentry_error_event(event, hint))
+
+    def test_filter_sentry_error_event_keeps_log_with_exception_info(self) -> None:
+        exception = ValueError("boom")
+        exc_info = (ValueError, exception, None)
+        event = {
+            "logger": "spiffworkflow_backend.services.custom_service_task",
+            "exception": {"values": [{"mechanism": {"type": "logging", "handled": True}}]},
+        }
+        hint = {"log_record": Mock(exc_info=exc_info), "exc_info": exc_info}
+
+        self.assertIs(event, filter_sentry_error_event(event, hint))
+
+    def test_filter_sentry_error_event_drops_implicit_flask_exception(self) -> None:
+        exception = ValueError("boom")
+        event = {"exception": {"values": [{"mechanism": {"type": "flask", "handled": False}}]}}
+        hint = {"exc_info": (ValueError, exception, None)}
+
+        self.assertIsNone(filter_sentry_error_event(event, hint))
+
+    def test_filter_sentry_error_event_keeps_implicit_celery_exception(self) -> None:
+        exception = ValueError("boom")
+        event = {"exception": {"values": [{"mechanism": {"type": "celery", "handled": False}}]}}
+        hint = {"exc_info": (ValueError, exception, None)}
+
+        self.assertIs(event, filter_sentry_error_event(event, hint))
+
+    def test_filter_sentry_error_event_keeps_explicit_exception(self) -> None:
+        exception = ValueError("boom")
+        event = {"exception": {"values": [{"mechanism": {"type": "generic", "handled": True}}]}}
+        hint = {"exc_info": (ValueError, exception, None)}
+
+        self.assertIs(event, filter_sentry_error_event(event, hint))
+
     @patch("spiffworkflow_backend.services.monitoring_service.sentry_sdk.init")
-    def test_configure_sentry_registers_transaction_event_scrubber(self, mock_sentry_init: Mock) -> None:
+    def test_configure_sentry_registers_event_filters(self, mock_sentry_init: Mock) -> None:
         app = Flask(__name__)
         app.config.update(
             SPIFFWORKFLOW_BACKEND_SENTRY_DSN="https://public@example.com/1",
@@ -108,6 +147,7 @@ class TestMonitoringService(unittest.TestCase):
 
         configure_sentry(app)
 
+        self.assertIs(mock_sentry_init.call_args.kwargs["before_send"], filter_sentry_error_event)
         self.assertIs(mock_sentry_init.call_args.kwargs["before_send_transaction"], scrub_transaction_event)
 
     def test_not_found_is_not_captured(self) -> None:

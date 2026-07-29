@@ -103,20 +103,39 @@ def scrub_transaction_event(event: dict[str, Any], _hint: Any) -> dict[str, Any]
     return event
 
 
+def filter_sentry_error_event(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any] | None:
+    """Keep exception captures while dropping message-only logs and Flask duplicates."""
+    log_record = hint.get("log_record")
+    if log_record is not None:
+        # Plain error logs remain application logs and Sentry breadcrumbs, but do not create Sentry issues.
+        # logger.exception() and logger.error(..., exc_info=...) are retained as exception events.
+        exc_info = getattr(log_record, "exc_info", None)
+        if not exc_info or exc_info[0] is None:
+            return None
+
+    exception_values = event.get("exception", {}).get("values", [])
+
+    # we ignore all unhandled flask exceptions for purposes of sentry notification,
+    # because these go through handle_exception, where we capture_exception explicitly.
+    if any(
+        value.get("mechanism", {}).get("type") == "flask" and value.get("mechanism", {}).get("handled") is False
+        for value in exception_values
+    ):
+        return None
+
+    if "exc_info" in hint:
+        _exc_type, exc_value, _tb = hint["exc_info"]
+        if not should_capture_exception_in_sentry(exc_value):
+            return None
+    return event
+
+
 def configure_sentry(app: flask.app.Flask) -> None:
     sentry_dsn = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_DSN")
 
     # Skip Sentry initialization if no DSN is configured (e.g., in tests)
     if not sentry_dsn:
         return
-
-    # get rid of NotFound errors
-    def before_send(event: Any, hint: Any) -> Any:
-        if "exc_info" in hint:
-            _exc_type, exc_value, _tb = hint["exc_info"]
-            if not should_capture_exception_in_sentry(exc_value):
-                return None
-        return event
 
     sentry_errors_sample_rate = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ERRORS_SAMPLE_RATE")
     if sentry_errors_sample_rate is None:
@@ -148,7 +167,7 @@ def configure_sentry(app: flask.app.Flask) -> None:
             default_sample_rate=float(sentry_traces_sample_rate),
         ),
         # The profiles_sample_rate setting is relative to the traces_sample_rate setting.
-        "before_send": before_send,
+        "before_send": filter_sentry_error_event,
         "before_send_transaction": scrub_transaction_event,
     }
 
