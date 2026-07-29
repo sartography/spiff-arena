@@ -37,7 +37,7 @@ class BpmnProcessModel(SpiffworkflowBaseDBModel):
     direct_parent_process_id: int | None = db.Column(ForeignKey("bpmn_process.id"), nullable=True, index=True)
 
     properties_json: dict = db.Column(db.JSON, nullable=False)
-    json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
+    json_data_hash: str = db.Column(db.String(255), nullable=False)
 
     tasks = relationship("TaskModel", back_populates="bpmn_process", cascade="delete")  # type: ignore
     child_processes = relationship("BpmnProcessModel", foreign_keys=[direct_parent_process_id], cascade="all")

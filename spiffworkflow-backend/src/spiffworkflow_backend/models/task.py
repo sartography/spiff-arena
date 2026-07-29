@@ -57,11 +57,11 @@ class TaskModel(SpiffworkflowBaseDBModel):
     task_definition_id: int = db.Column(ForeignKey(TaskDefinitionModel.id), nullable=False, index=True)  # type: ignore
     task_definition = relationship("TaskDefinitionModel")
 
-    state: str = db.Column(db.String(10), nullable=False, index=True)
+    state: str = db.Column(db.String(10), nullable=False)
     properties_json: dict = db.Column(db.JSON, nullable=False)
 
-    json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
-    python_env_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
+    json_data_hash: str = db.Column(db.String(255), nullable=False)
+    python_env_data_hash: str = db.Column(db.String(255), nullable=False)
 
     runtime_info: dict | None = db.Column(db.JSON)
     start_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
