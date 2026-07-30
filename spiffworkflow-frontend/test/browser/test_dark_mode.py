@@ -35,6 +35,20 @@ def test_dark_mode_uses_dark_background_and_light_text(page: Page) -> None:
     expect(name_input).to_be_visible()
     expect(name_input).to_have_css("background-color", "rgb(43, 43, 43)")
 
+    page.locator("g[data-element-id=process_script]").click()
+    page.locator(".djs-context-pad [data-action=replace]").click()
+    change_element_popup = page.locator(".djs-popup")
+    expect(change_element_popup).to_be_visible()
+    expect(
+        change_element_popup.locator("[data-id=toggle-parallel-mi]")
+    ).to_have_css("color", "rgb(0, 0, 0)")
+    expect(
+        change_element_popup.locator("[data-id=toggle-sequential-mi]")
+    ).to_have_css("color", "rgb(0, 0, 0)")
+    expect(
+        change_element_popup.locator("[data-id=toggle-loop]")
+    ).to_have_css("color", "rgb(0, 0, 0)")
+
     model_url = (
         f"{BASE_URL}/process-models/"
         "misc:acceptance-tests-group-one:acceptance-tests-model-1"

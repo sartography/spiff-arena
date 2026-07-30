@@ -119,6 +119,10 @@
     background-color: white;
     color: black;
 }
+[data-theme='dark'] .bpmn-js-container .canvas .djs-popup-header button.entry:not(.active) {
+    /* Native buttons use the dark color scheme before the canvas is inverted. */
+    color: black;
+}
 [data-theme='dark'] .bpmn-js-container .canvas .djs-popup .selected {
     background-color: grey;
 }
