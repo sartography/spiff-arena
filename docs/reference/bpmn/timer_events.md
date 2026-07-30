@@ -96,7 +96,8 @@ When customers add this item to their cart, a timer boundary event of 24 hours i
 If they don't purchase within this time frame, the timer activates, removing the limited offering.
 
 When an interrupting timer boundary event is attached to a multi-instance task, completed instances remain completed.
-Any unfinished parallel instances are discarded, and a sequential multi-instance task does not create its remaining future instances.
+All currently active unfinished instances are discarded.
+For sequential execution, remaining future instances are not created.
 The process continues along the timer event's outgoing sequence flow.
 
 **Timer Boundary Event (non-interrupting):**

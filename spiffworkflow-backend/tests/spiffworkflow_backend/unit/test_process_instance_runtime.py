@@ -1802,6 +1802,11 @@ class TestProcessInstanceRuntime(BaseTest):
         assert completed_human_task.completed is True
         assert completed_human_task.task_status == "COMPLETED"
 
+        remaining_human_task_guids = {
+            task.task_id for task in HumanTaskModel.query.filter_by(process_instance_id=process_instance.id).all()
+        }
+        assert remaining_human_task_guids == {completed_task_guid}
+
         assert TaskModel.query.filter(TaskModel.guid.in_(unfinished_human_task_guids)).count() == 0  # type: ignore
         assert HumanTaskModel.query.filter(HumanTaskModel.task_id.in_(unfinished_human_task_guids)).count() == 0  # type: ignore
 
