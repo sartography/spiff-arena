@@ -7,6 +7,7 @@ from sqlalchemy.orm import make_transient_to_detached
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
@@ -233,6 +234,41 @@ class TestTaskService(BaseTest):
 
         assert task_service.task_models["parent"].properties_json["children"] == ["child_a", "child_b"]
         assert task_service.task_models["untouched"].properties_json["children"] == ["child_c"]
+
+    def test_queue_task_model_deletions_does_not_touch_db_session(
+        self,
+        app: Flask,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        task_service: Any = TaskService.__new__(TaskService)
+        task_model = SimpleNamespace(guid="task")
+        bpmn_process = SimpleNamespace(id=123, guid="task")
+        task_service.task_model_guids_to_delete = set()
+        task_service.human_task_guids_to_delete = set()
+        task_service.bpmn_process_guids_to_delete = set()
+        task_service.task_model_mapping = {"task": task_model}
+        task_service.task_models = {"task": task_model}
+        task_service.process_instance_events = {"task": object()}
+        task_service.bpmn_subprocess_mapping = {"task": bpmn_process}
+        task_service.bpmn_processes = {"task": bpmn_process}
+        task_service.dirty_bpmn_process_updates = {"123": object()}
+
+        def fail_delete(_db_model: object) -> None:
+            pytest.fail("Queueing a deletion must not touch the database session")
+
+        monkeypatch.setattr(db.session, "delete", fail_delete)
+
+        task_service.queue_task_model_deletions_by_guid({"task"}, additional_human_task_guid="reset-task")
+
+        assert task_service.task_model_guids_to_delete == {"task"}
+        assert task_service.human_task_guids_to_delete == {"task", "reset-task"}
+        assert task_service.bpmn_process_guids_to_delete == {"task"}
+        assert task_service.task_model_mapping == {}
+        assert task_service.task_models == {}
+        assert task_service.process_instance_events == {}
+        assert task_service.bpmn_subprocess_mapping == {}
+        assert task_service.bpmn_processes == {}
+        assert task_service.dirty_bpmn_process_updates == {}
 
     def test_find_or_create_task_model_uses_mapping_before_querying(
         self,

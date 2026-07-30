@@ -21,6 +21,7 @@ from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskEr
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -1744,6 +1745,69 @@ class TestProcessInstanceRuntime(BaseTest):
 
         runtime.do_engine_steps(save=True)
         assert process_instance.status == "complete"
+
+    @pytest.mark.parametrize(
+        "bpmn_file_name, expected_initial_human_tasks",
+        [
+            ("multiinstance-manual-task-with-timer.bpmn", 3),
+            ("multiinstance-user-task-with-timer.bpmn", 1),
+        ],
+    )
+    def test_interrupting_timer_prunes_only_unfinished_multiinstance_human_tasks(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        bpmn_file_name: str,
+        expected_initial_human_tasks: int,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id=f"group/{bpmn_file_name}",
+            process_model_source_directory="multiinstance_human_task_with_timer",
+            bpmn_file_name=bpmn_file_name,
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
+
+        active_human_tasks = process_instance.active_human_tasks
+        assert len(active_human_tasks) == expected_initial_human_tasks
+
+        completed_human_task = active_human_tasks[0]
+        completed_task_guid = completed_human_task.task_id
+        completed_spiff_task = runtime.bpmn_process_instance.get_task_from_id(UUID(completed_task_guid))
+        multiinstance_wrapper_guid = str(completed_spiff_task.parent.id)
+        completed_spiff_task.data["result"] = "completed"
+        runtime.complete_task(
+            completed_spiff_task,
+            user=process_instance.process_initiator,
+            human_task=completed_human_task,
+        )
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        runtime = ProcessInstanceRuntime(process_instance)
+        unfinished_human_task_guids = {task.task_id for task in process_instance.active_human_tasks}
+        assert unfinished_human_task_guids
+
+        timer_task = next(task for task in runtime.get_all_waiting_tasks() if task.task_spec.bpmn_id == "TimerBoundary")
+        timer_task._set_state(TaskState.READY)
+        runtime.do_engine_steps(save=True)
+
+        completed_task_model = TaskModel.query.filter_by(guid=completed_task_guid).first()
+        assert completed_task_model is not None
+        assert completed_task_model.state == "COMPLETED"
+
+        completed_human_task = HumanTaskModel.query.filter_by(task_id=completed_task_guid).first()
+        assert completed_human_task is not None
+        assert completed_human_task.completed is True
+        assert completed_human_task.task_status == "COMPLETED"
+
+        assert TaskModel.query.filter(TaskModel.guid.in_(unfinished_human_task_guids)).count() == 0  # type: ignore
+        assert HumanTaskModel.query.filter(HumanTaskModel.task_id.in_(unfinished_human_task_guids)).count() == 0  # type: ignore
+
+        multiinstance_wrapper = TaskModel.query.filter_by(guid=multiinstance_wrapper_guid).first()
+        assert multiinstance_wrapper is not None
+        assert multiinstance_wrapper.state == "CANCELLED"
 
     def test_can_store_summary(
         self,

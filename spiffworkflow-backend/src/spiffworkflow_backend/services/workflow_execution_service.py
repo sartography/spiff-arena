@@ -498,6 +498,24 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         ):
             self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
 
+        top_workflow = bpmn_process_instance.top_workflow
+        workflows = [top_workflow, *top_workflow.subprocesses.values()]
+        spiff_tasks_by_guid = {str(spiff_task.id): spiff_task for workflow in workflows for spiff_task in workflow.get_tasks()}
+        deleted_task_guids = set()
+        for task_guid, task_model in self.task_service.task_model_mapping.items():
+            if (
+                task_guid in spiff_tasks_by_guid
+                or task_model.state in {"COMPLETED", "CANCELLED", "ERROR"}
+                or task_model.properties_json.get("triggered") is not True
+            ):
+                continue
+            parent_task = spiff_tasks_by_guid.get(task_model.parent_guid())
+            if parent_task is not None and parent_task.has_state(TaskState.CANCELLED):
+                deleted_task_guids.add(task_guid)
+
+        self.task_service.queue_task_model_deletions_by_guid(deleted_task_guids)
+        self.task_service.prune_missing_child_references(set(spiff_tasks_by_guid))
+
         self.task_service.save_objects_to_database()
 
         if self.secondary_engine_step_delegate:
