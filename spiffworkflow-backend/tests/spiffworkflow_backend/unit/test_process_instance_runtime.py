@@ -33,10 +33,12 @@ from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInst
 from spiffworkflow_backend.routes.process_instances_controller import process_instance_resume
 from spiffworkflow_backend.routes.tasks_controller import task_data_update
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.process_instance_persistence_service import ProcessInstancePersistenceService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.user_service import UserService
+from spiffworkflow_backend.services.workflow_execution_service import TaskModelSavingDelegate
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -1790,7 +1792,7 @@ class TestProcessInstanceRuntime(BaseTest):
         assert unfinished_human_task_guids
 
         timer_task = next(task for task in runtime.get_all_waiting_tasks() if task.task_spec.bpmn_id == "TimerBoundary")
-        timer_task._set_state(TaskState.READY)
+        timer_task.internal_data["event_fired"] = True
         task_removed_event = runtime.bpmn_process_instance.task_removed_event
         runtime.do_engine_steps(save=True)
         assert task_removed_event.n_subscribers() == 0
@@ -1815,6 +1817,65 @@ class TestProcessInstanceRuntime(BaseTest):
         multiinstance_wrapper = TaskModel.query.filter_by(guid=multiinstance_wrapper_guid).first()
         assert multiinstance_wrapper is not None
         assert multiinstance_wrapper.state == "CANCELLED"
+
+    def test_task_removal_event_removes_nested_task_models(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        bpmn_file_name = "nested-parallel-manual-tasks.bpmn"
+        process_model = load_test_spec(
+            process_model_id=f"group/{bpmn_file_name}",
+            process_model_source_directory="task_removed_event",
+            bpmn_file_name=bpmn_file_name,
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
+
+        active_human_tasks = process_instance.active_human_tasks
+        assert len(active_human_tasks) == 2
+        nested_human_task_guids = {human_task.task_id for human_task in active_human_tasks}
+        nested_human_spiff_task = runtime.bpmn_process_instance.get_task_from_id(UUID(active_human_tasks[0].task_id))
+        removed_subtree_root = nested_human_spiff_task.parent
+        assert removed_subtree_root is not None
+        assert removed_subtree_root.task_spec.bpmn_id == "ParallelSplit"
+        assert {str(child.id) for child in removed_subtree_root.children} == nested_human_task_guids
+        removed_subtree_root_guid = str(removed_subtree_root.id)
+        assert removed_subtree_root.parent is not None
+
+        nested_human_task_models = TaskModel.query.filter(
+            TaskModel.guid.in_(nested_human_task_guids)  # type: ignore
+        ).all()
+        assert {task_model.guid for task_model in nested_human_task_models} == nested_human_task_guids
+        assert all(task_model.state in {"READY", "WAITING", "STARTED"} for task_model in nested_human_task_models)
+        assert all(task_model.properties_json.get("triggered") is False for task_model in nested_human_task_models)
+
+        task_model_delegate = TaskModelSavingDelegate(
+            serializer=BpmnProcessService.serializer,
+            process_instance=process_instance,
+            bpmn_definition_to_task_definitions_mappings=runtime.bpmn_definition_to_task_definitions_mappings,
+            bpmn_subprocess_mapping=runtime.bpmn_subprocess_mapping,
+            task_model_mapping=runtime.task_model_mapping,
+        )
+        assert nested_human_task_guids.isdisjoint(task_model_delegate.task_service.task_model_mapping)
+        task_removed_event = runtime.bpmn_process_instance.task_removed_event
+        task_removed_event.connect(task_model_delegate.did_remove_task)
+        try:
+            removed_subtree_root.workflow._remove_task(removed_subtree_root.id)
+        finally:
+            task_removed_event.disconnect(task_model_delegate.did_remove_task)
+
+        removed_task_guids = {str(task_guid) for task_guid in task_model_delegate.removed_spiff_tasks}
+        assert removed_subtree_root_guid in removed_task_guids
+        assert nested_human_task_guids <= removed_task_guids
+
+        task_model_delegate.add_object_to_db_session(runtime.bpmn_process_instance)
+        db.session.flush()
+
+        assert TaskModel.query.filter(TaskModel.guid.in_(nested_human_task_guids)).count() == 0  # type: ignore
+        assert HumanTaskModel.query.filter(HumanTaskModel.task_id.in_(nested_human_task_guids)).count() == 0  # type: ignore
 
     def test_can_store_summary(
         self,

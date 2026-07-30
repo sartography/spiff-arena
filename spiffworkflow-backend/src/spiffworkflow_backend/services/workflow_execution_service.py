@@ -513,11 +513,11 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self.removed_spiff_tasks.clear()
         removed_spiff_tasks = []
         for removed_spiff_task in reported_removed_spiff_tasks:
-            task_model = self.task_service.task_model_mapping.get(str(removed_spiff_task.id))
+            task_model = self.task_service.find_existing_task_model(str(removed_spiff_task.id))
             if (
                 task_model is not None
                 and task_model.state not in {"COMPLETED", "CANCELLED", "ERROR"}
-                and task_model.properties_json.get("triggered") is True
+                and (task_model.properties_json.get("triggered") is True or task_model.state in {"READY", "WAITING", "STARTED"})
             ):
                 removed_spiff_tasks.append(removed_spiff_task)
         deleted_task_guids = {str(spiff_task.id) for spiff_task in removed_spiff_tasks}

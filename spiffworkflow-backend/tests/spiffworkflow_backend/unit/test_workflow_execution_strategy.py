@@ -42,7 +42,7 @@ class FakeDelegate(EngineStepDelegate):
 
 
 class FakeWorkflow:
-    def refresh_due_waiting_tasks(self) -> None:
+    def refresh_timers(self) -> None:
         pass
 
     def get_tasks(self, **kwargs: Any) -> list[Any]:

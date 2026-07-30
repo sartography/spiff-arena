@@ -261,7 +261,7 @@ class TaskService:
             deleted_children_by_parent.setdefault(parent_guid, set()).add(str(deleted_spiff_task.id))
 
         for parent_guid, deleted_child_guids in deleted_children_by_parent.items():
-            parent_task_model = self.task_models.get(parent_guid) or self._find_existing_task_model(parent_guid)
+            parent_task_model = self.task_models.get(parent_guid) or self.find_existing_task_model(parent_guid)
             if parent_task_model is None:
                 continue
             children = parent_task_model.properties_json.get("children")
@@ -494,7 +494,7 @@ class TaskService:
             self.json_data_dicts[python_env_dict["hash"]] = python_env_dict
         task_model.runtime_info = spiff_task.task_spec.task_info(spiff_task)
 
-    def _find_existing_task_model(self, task_guid: str) -> TaskModel | None:
+    def find_existing_task_model(self, task_guid: str) -> TaskModel | None:
         task_model = self.task_model_mapping.get(task_guid)
         cached_model_has_identity = task_model is not None and sqlalchemy_inspect(task_model).has_identity
         if self._should_query_task_models and not cached_model_has_identity:
@@ -508,7 +508,7 @@ class TaskService:
         spiff_task: SpiffTask,
     ) -> tuple[BpmnProcessModel | None, TaskModel]:
         spiff_task_guid = str(spiff_task.id)
-        task_model = self._find_existing_task_model(spiff_task_guid)
+        task_model = self.find_existing_task_model(spiff_task_guid)
         bpmn_process = None
         if task_model is None:
             bpmn_process = self.task_bpmn_process(spiff_task)
@@ -662,7 +662,7 @@ class TaskService:
             if spiff_task.has_state(TaskState.PREDICTED_MASK):
                 self.__class__.remove_spiff_task_from_parent(spiff_task, self.task_models)
                 continue
-            task_model = self._find_existing_task_model(task_id)
+            task_model = self.find_existing_task_model(task_id)
             if task_model is None:
                 task_model = self.__class__._create_task(
                     bpmn_process,
