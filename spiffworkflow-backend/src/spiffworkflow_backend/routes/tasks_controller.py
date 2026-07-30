@@ -83,7 +83,12 @@ def task_allows_guest(
 
 
 # this is currently used by the ProcessInstanceShow page on the frontend
-def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+def task_list_my_tasks(
+    process_instance_id: int | None = None,
+    page: int = 1,
+    per_page: int = 100,
+    sort: str = "-id",
+) -> flask.wrappers.Response:
     principal = _find_principal_or_raise()
 
     process_initiator_user = aliased(UserModel)
@@ -93,8 +98,9 @@ def task_list_my_tasks(process_instance_id: int | None = None, page: int = 1, pe
     htum_all = aliased(HumanTaskUserModel)
     assigned_user_all = aliased(UserModel)
 
+    human_task_id_order = HumanTaskModel.id.asc() if sort == "id" else HumanTaskModel.id.desc()  # type: ignore
     human_task_query = (
-        HumanTaskModel.query.order_by(desc(HumanTaskModel.id))  # type: ignore
+        HumanTaskModel.query.order_by(human_task_id_order)
         .group_by(HumanTaskModel.id)
         .join(ProcessInstanceModel, ProcessInstanceModel.id == HumanTaskModel.process_instance_id)
         .join(process_initiator_user, process_initiator_user.id == ProcessInstanceModel.process_initiator_id)
