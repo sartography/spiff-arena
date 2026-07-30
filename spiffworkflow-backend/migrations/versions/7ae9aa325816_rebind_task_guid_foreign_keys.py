@@ -6,8 +6,9 @@ Create Date: 2026-07-29 16:31:00.000000
 
 """
 
-from alembic import op
+from typing import Any
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "7ae9aa325816"
@@ -20,20 +21,35 @@ FUTURE_TASK_FK = "future_task_task_guid_fk"
 HUMAN_TASK_FK = "human_task_ibfk_task_guid"
 
 
-def _set_postgresql_metadata_timeouts():
+def _set_postgresql_metadata_timeouts() -> None:
     op.execute("SET LOCAL lock_timeout = '5s'")
     op.execute("SET LOCAL statement_timeout = '30s'")
 
 
-def _drop_task_foreign_keys():
+def _lock_task_tables_parent_first() -> None:
+    # Normal task deletion locks the parent task row before cascading into the
+    # child tables. Alembic's child-table ALTER statements otherwise request
+    # those locks in the opposite order and can deadlock with that write path.
+    #
+    # Acquire the same ACCESS EXCLUSIVE locks needed by the following
+    # constraint changes explicitly and in application order. If the parent is
+    # busy, the five-second lock_timeout expires while this transaction holds
+    # no child-table lock, allowing the writer to finish and a deploy to retry
+    # safely.
+    op.execute("LOCK TABLE task IN ACCESS EXCLUSIVE MODE")
+    op.execute("LOCK TABLE future_task IN ACCESS EXCLUSIVE MODE")
+    op.execute("LOCK TABLE human_task IN ACCESS EXCLUSIVE MODE")
+
+
+def _drop_task_foreign_keys() -> None:
     with op.batch_alter_table("future_task", schema=None) as batch_op:
         batch_op.drop_constraint(FUTURE_TASK_FK, type_="foreignkey")
     with op.batch_alter_table("human_task", schema=None) as batch_op:
         batch_op.drop_constraint(HUMAN_TASK_FK, type_="foreignkey")
 
 
-def _create_task_foreign_keys(*, not_valid=False):
-    postgresql_options = {"postgresql_not_valid": True} if not_valid else {}
+def _create_task_foreign_keys(*, not_valid: bool = False) -> None:
+    postgresql_options: dict[str, Any] = {"postgresql_not_valid": True} if not_valid else {}
     with op.batch_alter_table("future_task", schema=None) as batch_op:
         batch_op.create_foreign_key(
             FUTURE_TASK_FK,
@@ -53,7 +69,7 @@ def _create_task_foreign_keys(*, not_valid=False):
         )
 
 
-def upgrade():
+def upgrade() -> None:
     dialect = op.get_bind().dialect.name
     # Migration 3191627ae224 removed MySQL's historical `guid` unique index
     # before it added the primary key. Only PostgreSQL and SQLite retained the
@@ -63,13 +79,14 @@ def upgrade():
 
     if dialect == "postgresql":
         _set_postgresql_metadata_timeouts()
+        _lock_task_tables_parent_first()
     _drop_task_foreign_keys()
     with op.batch_alter_table("task", schema=None) as batch_op:
         batch_op.drop_constraint("guid", type_="unique")
     _create_task_foreign_keys(not_valid=dialect == "postgresql")
 
 
-def downgrade():
+def downgrade() -> None:
     dialect = op.get_bind().dialect.name
     if dialect == "mysql":
         return
@@ -79,15 +96,12 @@ def downgrade():
         # then attach it to the restored unique constraint in the short
         # metadata-only transaction below.
         with op.get_context().autocommit_block():
-            op.execute(
-                "CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS guid ON task (guid)"
-            )
+            op.execute("CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS guid ON task (guid)")
 
         _set_postgresql_metadata_timeouts()
+        _lock_task_tables_parent_first()
         _drop_task_foreign_keys()
-        op.execute(
-            "ALTER TABLE task ADD CONSTRAINT guid UNIQUE USING INDEX guid"
-        )
+        op.execute("ALTER TABLE task ADD CONSTRAINT guid UNIQUE USING INDEX guid")
         _create_task_foreign_keys(not_valid=True)
     else:
         _drop_task_foreign_keys()
