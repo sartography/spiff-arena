@@ -509,7 +509,10 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 or task_model.properties_json.get("triggered") is not True
             ):
                 continue
-            parent_task = spiff_tasks_by_guid.get(task_model.parent_guid())
+            parent_task_guid = task_model.parent_guid()
+            if parent_task_guid is None:
+                continue
+            parent_task = spiff_tasks_by_guid.get(parent_task_guid)
             if parent_task is not None and parent_task.has_state(TaskState.CANCELLED):
                 deleted_task_guids.add(task_guid)
 
