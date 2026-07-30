@@ -1791,7 +1791,9 @@ class TestProcessInstanceRuntime(BaseTest):
 
         timer_task = next(task for task in runtime.get_all_waiting_tasks() if task.task_spec.bpmn_id == "TimerBoundary")
         timer_task._set_state(TaskState.READY)
+        task_removed_event = runtime.bpmn_process_instance.task_removed_event
         runtime.do_engine_steps(save=True)
+        assert task_removed_event.n_subscribers() == 0
 
         completed_task_model = TaskModel.query.filter_by(guid=completed_task_guid).first()
         assert completed_task_model is not None

@@ -117,6 +117,10 @@ class EngineStepDelegate:
         pass
 
     @abstractmethod
+    def did_remove_task(self, workflow: Any, spiff_task: SpiffTask) -> None:
+        pass
+
+    @abstractmethod
     def add_object_to_db_session(self, bpmn_process_instance: BpmnWorkflow) -> None:
         pass
 
@@ -210,7 +214,7 @@ class ExecutionStrategy:
         self, bpmn_process_instance: BpmnWorkflow, process_instance_model: ProcessInstanceModel, exit_at: None = None
     ) -> TaskRunnability:
         while True:
-            bpmn_process_instance.refresh_due_waiting_tasks()
+            bpmn_process_instance.refresh_timers()
             self.should_do_before(bpmn_process_instance, process_instance_model)
             engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
             num_steps = len(engine_steps)
@@ -398,6 +402,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self._last_completed_spiff_task: SpiffTask | None = None
         self.spiff_tasks_to_process: set[UUID] = set()
         self.spiff_task_timestamps: dict[UUID, StartAndEndTimes] = {}
+        self.removed_spiff_tasks: dict[UUID, SpiffTask] = {}
 
         self.task_service = TaskService(
             process_instance=self.process_instance,
@@ -478,6 +483,12 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
 
+    def did_remove_task(self, workflow: Any, spiff_task: SpiffTask) -> None:
+        self.removed_spiff_tasks[spiff_task.id] = spiff_task
+
+        if self.secondary_engine_step_delegate:
+            self.secondary_engine_step_delegate.did_remove_task(workflow, spiff_task)
+
     def add_object_to_db_session(self, bpmn_process_instance: BpmnWorkflow) -> None:
         # NOTE: process-all-tasks: All tests pass with this but it's less efficient and would be nice to replace
         # excludes COMPLETED. the others were required to get PP1 to go to completion.
@@ -498,26 +509,21 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         ):
             self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
 
-        top_workflow = bpmn_process_instance.top_workflow
-        workflows = [top_workflow, *top_workflow.subprocesses.values()]
-        spiff_tasks_by_guid = {str(spiff_task.id): spiff_task for workflow in workflows for spiff_task in workflow.get_tasks()}
-        deleted_task_guids = set()
-        for task_guid, task_model in self.task_service.task_model_mapping.items():
+        reported_removed_spiff_tasks = list(self.removed_spiff_tasks.values())
+        self.removed_spiff_tasks.clear()
+        removed_spiff_tasks = []
+        for removed_spiff_task in reported_removed_spiff_tasks:
+            task_model = self.task_service.task_model_mapping.get(str(removed_spiff_task.id))
             if (
-                task_guid in spiff_tasks_by_guid
-                or task_model.state in {"COMPLETED", "CANCELLED", "ERROR"}
-                or task_model.properties_json.get("triggered") is not True
+                task_model is not None
+                and task_model.state not in {"COMPLETED", "CANCELLED", "ERROR"}
+                and task_model.properties_json.get("triggered") is True
             ):
-                continue
-            parent_task_guid = task_model.parent_guid()
-            if parent_task_guid is None:
-                continue
-            parent_task = spiff_tasks_by_guid.get(parent_task_guid)
-            if parent_task is not None and parent_task.has_state(TaskState.CANCELLED):
-                deleted_task_guids.add(task_guid)
+                removed_spiff_tasks.append(removed_spiff_task)
+        deleted_task_guids = {str(spiff_task.id) for spiff_task in removed_spiff_tasks}
 
         self.task_service.queue_task_model_deletions_by_guid(deleted_task_guids)
-        self.task_service.prune_missing_child_references(set(spiff_tasks_by_guid))
+        self.task_service.prune_deleted_child_references(removed_spiff_tasks, deleted_task_guids)
 
         self.task_service.save_objects_to_database()
 
@@ -590,7 +596,7 @@ class QueueInstructionsForEndUserExecutionStrategy(ExecutionStrategy):
         return engine_steps[: max_tasks - self.completed_task_count]
 
     def task_runnability_when_breaking_after(self, bpmn_process_instance: BpmnWorkflow) -> TaskRunnability:
-        bpmn_process_instance.refresh_due_waiting_tasks()
+        bpmn_process_instance.refresh_timers()
         return (
             TaskRunnability.has_ready_tasks
             if self.get_ready_engine_steps(bpmn_process_instance)
@@ -718,6 +724,8 @@ class WorkflowExecutionService:
                         "The current thread has not obtained a lock for this process"
                         f" instance ({self.process_instance_model.id})."
                     )
+        task_removed_event = self.bpmn_process_instance.task_removed_event
+        task_removed_event.connect(self.execution_strategy.delegate.did_remove_task)
         try:
             self.refresh_due_service_task_retries()
 
@@ -746,13 +754,16 @@ class WorkflowExecutionService:
             raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
 
         finally:
-            if self.process_instance_model.persistence_level != "none":
-                # even if a task fails, try to persist all tasks, which will include the error state.
-                self.execution_strategy.add_object_to_db_session(self.bpmn_process_instance)
-                if save:
-                    self.process_instance_saver()
-                    if should_schedule_waiting_timer_events:
-                        self.schedule_waiting_timer_events()
+            try:
+                if self.process_instance_model.persistence_level != "none":
+                    # even if a task fails, try to persist all tasks, which will include the error state.
+                    self.execution_strategy.add_object_to_db_session(self.bpmn_process_instance)
+                    if save:
+                        self.process_instance_saver()
+                        if should_schedule_waiting_timer_events:
+                            self.schedule_waiting_timer_events()
+            finally:
+                task_removed_event.disconnect(self.execution_strategy.delegate.did_remove_task)
 
     def refresh_due_service_task_retries(self) -> None:
         current_time = round(time.time())

@@ -245,6 +245,37 @@ class TaskService:
             new_properties_json["children"] = valid_children
             task_model.properties_json = new_properties_json
 
+    def prune_deleted_child_references(
+        self,
+        deleted_spiff_tasks: list[SpiffTask],
+        deleted_task_guids: set[str],
+    ) -> None:
+        """Drop known deleted child links without reserializing parent task data."""
+        deleted_children_by_parent: dict[str, set[str]] = {}
+        for deleted_spiff_task in deleted_spiff_tasks:
+            if deleted_spiff_task.parent is None:
+                continue
+            parent_guid = str(deleted_spiff_task.parent.id)
+            if parent_guid in deleted_task_guids:
+                continue
+            deleted_children_by_parent.setdefault(parent_guid, set()).add(str(deleted_spiff_task.id))
+
+        for parent_guid, deleted_child_guids in deleted_children_by_parent.items():
+            parent_task_model = self.task_models.get(parent_guid) or self._find_existing_task_model(parent_guid)
+            if parent_task_model is None:
+                continue
+            children = parent_task_model.properties_json.get("children")
+            if not children:
+                continue
+            retained_children = [child_guid for child_guid in children if child_guid not in deleted_child_guids]
+            if len(retained_children) == len(children):
+                continue
+
+            new_properties_json = copy.copy(parent_task_model.properties_json)
+            new_properties_json["children"] = retained_children
+            parent_task_model.properties_json = new_properties_json
+            self.task_models[parent_guid] = parent_task_model
+
     def queue_task_model_deletions_by_guid(
         self,
         deleted_task_guids: set[str],

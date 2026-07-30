@@ -98,7 +98,7 @@ dev = [
 ]
 
 [tool.uv.sources]
-SpiffWorkflow = { git = "https://github.com/sartography/SpiffWorkflow", tag = "v3.1.3a3" }
+SpiffWorkflow = { git = "https://github.com/sartography/SpiffWorkflow", tag = "task-removed-event" }
 # SpiffWorkflow = { path = "../../SpiffWorkflow", editable = true }
 spiffworkflow-connector-command = { git = "https://github.com/sartography/spiffworkflow-connector-command.git", branch = "main" }
 sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", branch = "scoped-session-delete" }

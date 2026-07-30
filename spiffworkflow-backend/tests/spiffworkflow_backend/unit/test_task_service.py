@@ -235,6 +235,29 @@ class TestTaskService(BaseTest):
         assert task_service.task_models["parent"].properties_json["children"] == ["child_a", "child_b"]
         assert task_service.task_models["untouched"].properties_json["children"] == ["child_c"]
 
+    def test_prune_deleted_child_references_only_updates_parent_children(
+        self,
+        app: Flask,
+    ) -> None:
+        task_service: Any = TaskService.__new__(TaskService)
+        parent_task_model = SimpleNamespace(
+            properties_json={
+                "children": ["deleted_child", "retained_child"],
+                "state": "COMPLETED",
+            },
+        )
+        task_service.task_models = {"parent": parent_task_model}
+        task_service.task_model_mapping = {}
+        parent = SimpleNamespace(id="parent", parent=None)
+        deleted_child = SimpleNamespace(id="deleted_child", parent=parent)
+
+        TaskService.prune_deleted_child_references(task_service, [deleted_child], {"deleted_child"})
+
+        assert parent_task_model.properties_json == {
+            "children": ["retained_child"],
+            "state": "COMPLETED",
+        }
+
     def test_queue_task_model_deletions_does_not_touch_db_session(
         self,
         app: Flask,

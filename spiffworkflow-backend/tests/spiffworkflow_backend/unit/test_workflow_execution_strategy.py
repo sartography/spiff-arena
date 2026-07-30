@@ -25,6 +25,9 @@ class FakeDelegate(EngineStepDelegate):
     def did_complete_task(self, spiff_task: Any) -> None:
         pass
 
+    def did_remove_task(self, workflow: Any, spiff_task: Any) -> None:
+        pass
+
     def add_object_to_db_session(self, bpmn_process_instance: Any) -> None:
         pass
 
