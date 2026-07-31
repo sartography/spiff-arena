@@ -25,6 +25,9 @@ class FakeDelegate(EngineStepDelegate):
     def did_complete_task(self, spiff_task: Any) -> None:
         pass
 
+    def did_remove_task(self, workflow: Any, spiff_task: Any) -> None:
+        pass
+
     def add_object_to_db_session(self, bpmn_process_instance: Any) -> None:
         pass
 
@@ -39,7 +42,7 @@ class FakeDelegate(EngineStepDelegate):
 
 
 class FakeWorkflow:
-    def refresh_due_waiting_tasks(self) -> None:
+    def refresh_timers(self) -> None:
         pass
 
     def get_tasks(self, **kwargs: Any) -> list[Any]:

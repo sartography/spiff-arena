@@ -28,21 +28,24 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessInstanceMigrator(BaseTest):
-    def _remove_empty_delta_fields(self, data: dict | list) -> None:
-        """Remove delta fields from serialized workflow data for comparison."""
+    def _remove_new_serializer_fields(self, data: dict | list) -> None:
+        """Remove fields added by newer serializers from historical fixture comparisons."""
         if isinstance(data, dict):
             # Remove delta field if present (we store full data, not deltas)
             if "delta" in data:
                 del data["delta"]
+            for field in ("bpmn_start_events", "trigger_specs"):
+                if data.get(field) == []:
+                    del data[field]
 
             # Recursively process nested structures
             for value in list(data.values()):
                 if isinstance(value, dict | list):
-                    self._remove_empty_delta_fields(value)
+                    self._remove_new_serializer_fields(value)
         elif isinstance(data, list):
             for item in data:
                 if isinstance(item, dict | list):
-                    self._remove_empty_delta_fields(item)
+                    self._remove_new_serializer_fields(item)
 
     def test_data_migrations_directory_has_not_changed(
         self,
@@ -156,7 +159,7 @@ class TestProcessInstanceMigrator(BaseTest):
         bpmn_process_dict_version_4 = runtime.serialize(serialize_script_engine_state=False)
         self.round_last_state_change(bpmn_process_dict_version_4)
         self.round_last_state_change(bpmn_process_dict_version_4_from_spiff)
-        self._remove_empty_delta_fields(bpmn_process_dict_version_4)
+        self._remove_new_serializer_fields(bpmn_process_dict_version_4)
         assert bpmn_process_dict_version_4 == bpmn_process_dict_version_4_from_spiff
 
         bpmn_process_cache_version_4 = {

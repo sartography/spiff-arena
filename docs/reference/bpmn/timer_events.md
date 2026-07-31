@@ -95,6 +95,11 @@ On an e-commerce platform, a product is available at a flash sale price for just
 When customers add this item to their cart, a timer boundary event of 24 hours is set.
 If they don't purchase within this time frame, the timer activates, removing the limited offering.
 
+When an interrupting timer boundary event is attached to a multi-instance task, completed instances remain completed.
+All currently active unfinished instances are discarded.
+For sequential execution, remaining future instances are not created.
+The process continues along the timer event's outgoing sequence flow.
+
 **Timer Boundary Event (non-interrupting):**
 
 A company prides itself on responding to customer support queries within 12 hours.
@@ -119,8 +124,8 @@ Just remember to have a mechanism in place to eventually break out of the loop a
 
 ## Timer Event Configuration
 
-| 💻 Form                                | ⌨ Field Input                      | 📝 Description                                                                              |
-| -------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------- |
+| 💻 Form                                 | ⌨ Field Input                       | 📝 Description                                                                              |
+| --------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------- |
 | ![name_field](/images/name_field.png)   | **Name:** Cancel Order              | A descriptive name given to the element, providing a human-readable label or title.         |
 | ![id_field](/images/id_field.png)       | **ID:** Example - cancel_order      | An identifier used to uniquely identify the element within the BPMN model.                  |
 | ![timer_field](/images/timer_field.png) | **Type:** Duration **Value:** PT48H | Choose the type of trigger you want to set: Specific Date/Time, Duration, or Cycle Trigger. |

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Definitions_NestedParallelTasks" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_NestedParallelTasks" isExecutable="true">
+    <bpmn:startEvent id="StartEvent" />
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent" targetRef="OuterScope" />
+    <bpmn:subProcess id="OuterScope" name="Nested scope">
+      <bpmn:startEvent id="InnerStart" />
+      <bpmn:sequenceFlow id="InnerFlow_1" sourceRef="InnerStart" targetRef="ParallelSplit" />
+      <bpmn:parallelGateway id="ParallelSplit" />
+      <bpmn:sequenceFlow id="InnerFlow_2" sourceRef="ParallelSplit" targetRef="NestedManualTaskA" />
+      <bpmn:sequenceFlow id="InnerFlow_3" sourceRef="ParallelSplit" targetRef="NestedManualTaskB" />
+      <bpmn:manualTask id="NestedManualTaskA" name="Nested manual task A" />
+      <bpmn:manualTask id="NestedManualTaskB" name="Nested manual task B" />
+      <bpmn:sequenceFlow id="InnerFlow_4" sourceRef="NestedManualTaskA" targetRef="ParallelJoin" />
+      <bpmn:sequenceFlow id="InnerFlow_5" sourceRef="NestedManualTaskB" targetRef="ParallelJoin" />
+      <bpmn:parallelGateway id="ParallelJoin" />
+      <bpmn:sequenceFlow id="InnerFlow_6" sourceRef="ParallelJoin" targetRef="InnerEnd" />
+      <bpmn:endEvent id="InnerEnd" />
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="OuterScope" targetRef="EndEvent" />
+    <bpmn:endEvent id="EndEvent" />
+  </bpmn:process>
+</bpmn:definitions>

@@ -136,18 +136,25 @@ class TaskService:
         self.json_data_dicts: dict[str, JsonDataDict] = {}
         self.process_instance_events: dict[str, ProcessInstanceEventModel] = {}
         self.dirty_bpmn_process_updates: dict[str, tuple[BpmnWorkflow, BpmnProcessModel]] = {}
+        self.task_model_guids_to_delete: set[str] = set()
+        self.human_task_guids_to_delete: set[str] = set()
+        self.bpmn_process_guids_to_delete: set[str] = set()
         self._should_query_task_models = len(self.task_model_mapping) > 0
         self._subprocess_guid_lookup_by_top_workflow: dict[int, dict[int, str]] = {}
 
         self.run_started_at: float | None = run_started_at
 
     def save_objects_to_database(self, save_process_instance_events: bool = True) -> None:
+        self._add_queued_deletions_to_db_session()
         self.flush_dirty_bpmn_process_updates()
         db.session.bulk_save_objects(self.bpmn_processes.values())
         db.session.bulk_save_objects(self.task_models.values())
         if save_process_instance_events:
             db.session.bulk_save_objects(self.process_instance_events.values())
         JsonDataModel.insert_or_update_json_data_records(self.json_data_dicts)
+        self.task_model_guids_to_delete.clear()
+        self.human_task_guids_to_delete.clear()
+        self.bpmn_process_guids_to_delete.clear()
 
     def get_guid_to_db_object_mappings(self) -> tuple[dict[str, TaskModel], dict[str, BpmnProcessModel]]:
         return (self.task_model_mapping, self.bpmn_subprocess_mapping)
@@ -237,6 +244,92 @@ class TaskService:
             new_properties_json = copy.copy(task_model.properties_json)
             new_properties_json["children"] = valid_children
             task_model.properties_json = new_properties_json
+
+    def prune_deleted_child_references(
+        self,
+        deleted_spiff_tasks: list[SpiffTask],
+        deleted_task_guids: set[str],
+    ) -> None:
+        """Drop known deleted child links without reserializing parent task data."""
+        deleted_children_by_parent: dict[str, set[str]] = {}
+        for deleted_spiff_task in deleted_spiff_tasks:
+            if deleted_spiff_task.parent is None:
+                continue
+            parent_guid = str(deleted_spiff_task.parent.id)
+            if parent_guid in deleted_task_guids:
+                continue
+            deleted_children_by_parent.setdefault(parent_guid, set()).add(str(deleted_spiff_task.id))
+
+        for parent_guid, deleted_child_guids in deleted_children_by_parent.items():
+            parent_task_model = self.task_models.get(parent_guid) or self.find_existing_task_model(parent_guid)
+            if parent_task_model is None:
+                continue
+            children = parent_task_model.properties_json.get("children")
+            if not children:
+                continue
+            retained_children = [child_guid for child_guid in children if child_guid not in deleted_child_guids]
+            if len(retained_children) == len(children):
+                continue
+
+            new_properties_json = copy.copy(parent_task_model.properties_json)
+            new_properties_json["children"] = retained_children
+            parent_task_model.properties_json = new_properties_json
+            self.task_models[parent_guid] = parent_task_model
+
+    def queue_task_model_deletions_by_guid(
+        self,
+        deleted_task_guids: set[str],
+        additional_human_task_guid: str | None = None,
+    ) -> None:
+        """Queue persisted projections for deletion when TaskService next saves."""
+        if not deleted_task_guids and additional_human_task_guid is None:
+            return
+
+        self.task_model_guids_to_delete.update(deleted_task_guids)
+        self.human_task_guids_to_delete.update(deleted_task_guids)
+        self.bpmn_process_guids_to_delete.update(deleted_task_guids)
+        if additional_human_task_guid is not None:
+            self.human_task_guids_to_delete.add(additional_human_task_guid)
+
+        for deleted_task_guid in deleted_task_guids:
+            bpmn_process = self.bpmn_subprocess_mapping.get(deleted_task_guid)
+            if bpmn_process is not None:
+                dirty_key = str(bpmn_process.id or bpmn_process.guid or "top_level")
+                self.dirty_bpmn_process_updates.pop(dirty_key, None)
+
+            self.task_model_mapping.pop(deleted_task_guid, None)
+            self.task_models.pop(deleted_task_guid, None)
+            self.process_instance_events.pop(deleted_task_guid, None)
+            self.bpmn_subprocess_mapping.pop(deleted_task_guid, None)
+            self.bpmn_processes.pop(deleted_task_guid, None)
+
+    def _add_queued_deletions_to_db_session(self) -> None:
+        """Resolve and add queued deletions to the session as one part of the save operation."""
+        with db.session.no_autoflush:
+            human_tasks_to_delete = (
+                HumanTaskModel.query.filter(
+                    HumanTaskModel.task_id.in_(self.human_task_guids_to_delete)  # type: ignore
+                ).all()
+                if self.human_task_guids_to_delete
+                else []
+            )
+            task_models_to_delete = (
+                TaskModel.query.filter(TaskModel.guid.in_(self.task_model_guids_to_delete)).all()  # type: ignore
+                if self.task_model_guids_to_delete
+                else []
+            )
+            bpmn_processes_to_delete = (
+                BpmnProcessModel.query.filter(
+                    BpmnProcessModel.guid.in_(self.bpmn_process_guids_to_delete)  # type: ignore
+                )
+                .order_by(BpmnProcessModel.id.desc())  # type: ignore
+                .all()
+                if self.bpmn_process_guids_to_delete
+                else []
+            )
+
+        for db_model in human_tasks_to_delete + task_models_to_delete + bpmn_processes_to_delete:
+            db.session.delete(db_model)
 
     def update_task_model_with_spiff_task(
         self,
@@ -401,7 +494,7 @@ class TaskService:
             self.json_data_dicts[python_env_dict["hash"]] = python_env_dict
         task_model.runtime_info = spiff_task.task_spec.task_info(spiff_task)
 
-    def _find_existing_task_model(self, task_guid: str) -> TaskModel | None:
+    def find_existing_task_model(self, task_guid: str) -> TaskModel | None:
         task_model = self.task_model_mapping.get(task_guid)
         cached_model_has_identity = task_model is not None and sqlalchemy_inspect(task_model).has_identity
         if self._should_query_task_models and not cached_model_has_identity:
@@ -415,7 +508,7 @@ class TaskService:
         spiff_task: SpiffTask,
     ) -> tuple[BpmnProcessModel | None, TaskModel]:
         spiff_task_guid = str(spiff_task.id)
-        task_model = self._find_existing_task_model(spiff_task_guid)
+        task_model = self.find_existing_task_model(spiff_task_guid)
         bpmn_process = None
         if task_model is None:
             bpmn_process = self.task_bpmn_process(spiff_task)
@@ -569,7 +662,7 @@ class TaskService:
             if spiff_task.has_state(TaskState.PREDICTED_MASK):
                 self.__class__.remove_spiff_task_from_parent(spiff_task, self.task_models)
                 continue
-            task_model = self._find_existing_task_model(task_id)
+            task_model = self.find_existing_task_model(task_id)
             if task_model is None:
                 task_model = self.__class__._create_task(
                     bpmn_process,
@@ -589,32 +682,9 @@ class TaskService:
     ) -> None:
         """Update given spiff tasks in the database and remove deleted tasks."""
         # Remove all the deleted/pruned tasks from the database.
-        deleted_task_guids = [str(t.id) for t in deleted_spiff_tasks]
-        tasks_to_clear = TaskModel.query.filter(TaskModel.guid.in_(deleted_task_guids)).all()  # type: ignore
-
-        human_task_guids_to_clear = deleted_task_guids
-
-        # ensure we clear out any human tasks that were associated with this guid in case it was a human task
-        if to_task_guid is not None:
-            human_task_guids_to_clear.append(to_task_guid)
-        human_tasks_to_clear = HumanTaskModel.query.filter(
-            HumanTaskModel.task_id.in_(human_task_guids_to_clear)  # type: ignore
-        ).all()
-
-        # delete human tasks first to avoid potential conflicts when deleting tasks.
-        # otherwise sqlalchemy returns several warnings.
-        for task in human_tasks_to_clear + tasks_to_clear:
-            db.session.delete(task)
-
-        bpmn_processes_to_delete = (
-            BpmnProcessModel.query.filter(BpmnProcessModel.guid.in_(deleted_task_guids))  # type: ignore
-            .order_by(BpmnProcessModel.id.desc())  # type: ignore
-            .all()
-        )
-        for bpmn_process in bpmn_processes_to_delete:
-            db.session.delete(bpmn_process)
-
-        self.sync_parents_for_deleted_spiff_tasks(deleted_spiff_tasks, set(deleted_task_guids))
+        deleted_task_guids = {str(t.id) for t in deleted_spiff_tasks}
+        self.queue_task_model_deletions_by_guid(deleted_task_guids, additional_human_task_guid=to_task_guid)
+        self.sync_parents_for_deleted_spiff_tasks(deleted_spiff_tasks, deleted_task_guids)
 
         # Note: Can't restrict this to definite, because some things are updated and are now CANCELLED
         # and other things may have been COMPLETED and are now MAYBE
