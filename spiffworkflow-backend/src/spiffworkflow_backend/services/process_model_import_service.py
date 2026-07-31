@@ -269,11 +269,12 @@ class ProcessModelImportService:
 
     @classmethod
     def _filestore_model_id(cls, package: dict[str, Any], model_dir: str) -> str:
+        explicit_model_id = cls._explicit_filestore_model_id(package)
         if model_dir:
-            return "/".join(cls._slug(segment) for segment in model_dir.split("/"))
-        process_model_id = cls._explicit_filestore_model_id(package)
-        if process_model_id:
-            return process_model_id
+            model_dir_id = "/".join(cls._slug(segment) for segment in model_dir.split("/"))
+            return f"{explicit_model_id}/{model_dir_id}" if explicit_model_id else model_dir_id
+        if explicit_model_id:
+            return explicit_model_id
         return cls._filestore_root_model_id(package)
 
     @classmethod
