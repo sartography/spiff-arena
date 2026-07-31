@@ -5,6 +5,18 @@ from helpers.login import login, logout, BASE_URL
 from helpers.process_groups import switch_to_card_view
 
 
+def save_process_model_file(page):
+    page.get_by_test_id("process-model-file-save-button").click()
+    expect(page.get_by_text("Changes to the file were saved.")).to_be_visible(
+        timeout=10000
+    )
+
+
+def return_to_process_model(page, model_url):
+    page.get_by_test_id("process-model-breadcrumb-link").click()
+    expect(page).to_have_url(model_url, timeout=10000)
+
+
 def update_dmn_text(page, old_text, new_text, element_id="wonderful_process"):
     page.locator(f"g[data-element-id='{element_id}']").click()
     page.locator(".dmn-icon-decision-table").click()
@@ -16,7 +28,7 @@ def update_dmn_text(page, old_text, new_text, element_id="wonderful_process"):
     page.keyboard.press("Backspace")
     page.keyboard.type(f'"{new_text}"')
     page.wait_for_timeout(500)
-    page.get_by_test_id("process-model-file-save-button").click()
+    save_process_model_file(page)
 
 
 def update_bpmn_python_script(page, python_script, element_id="process_script"):
@@ -28,7 +40,7 @@ def update_bpmn_python_script(page, python_script, element_id="process_script"):
     textarea = page.locator('textarea[name="pythonScript_bpmn:script"]')
     textarea.fill(python_script)
     page.wait_for_timeout(500)
-    page.get_by_test_id("process-model-file-save-button").click()
+    save_process_model_file(page)
 
 
 def test_can_create_and_modify(page: Page):
@@ -82,8 +94,7 @@ def test_can_create_and_modify(page: Page):
     page.get_by_test_id(f"edit-file-{dmn_file.replace('.', '-')}").click()
     update_dmn_text(page, original_dmn_output, new_dmn_output)
     # Return and run
-    page.get_by_text(model_name, exact=False).click()
-    page.wait_for_url(model_url, timeout=10000)
+    return_to_process_model(page, model_url)
     start_btn = page.get_by_test_id("start-process-instance").first
     expect(start_btn).to_be_enabled(timeout=10000)
     start_btn.click()
@@ -95,8 +106,7 @@ def test_can_create_and_modify(page: Page):
     page.get_by_test_id("process-model-files").click()
     page.get_by_test_id(f"edit-file-{dmn_file.replace('.', '-')}").click()
     update_dmn_text(page, new_dmn_output, original_dmn_output)
-    page.get_by_text(model_name, exact=False).click()
-    page.wait_for_url(model_url, timeout=10000)
+    return_to_process_model(page, model_url)
     start_btn = page.get_by_test_id("start-process-instance").first
     expect(start_btn).to_be_enabled(timeout=10000)
     start_btn.click()
@@ -111,8 +121,7 @@ def test_can_create_and_modify(page: Page):
     expect(test_element).to_be_visible(timeout=10000)
     expect(test_element).to_have_attribute("data-filename", bpmn_file)
     update_bpmn_python_script(page, new_python_script)
-    page.get_by_text(model_name, exact=False).click()
-    page.wait_for_url(model_url, timeout=10000)
+    return_to_process_model(page, model_url)
     start_btn = page.get_by_test_id("start-process-instance").first
     expect(start_btn).to_be_enabled(timeout=10000)
     start_btn.click()
@@ -124,8 +133,7 @@ def test_can_create_and_modify(page: Page):
     page.get_by_test_id("process-model-files").click()
     page.get_by_test_id(f"edit-file-{bpmn_file.replace('.', '-')}").click()
     update_bpmn_python_script(page, original_python_script)
-    page.get_by_text(model_name, exact=False).click()
-    page.wait_for_url(model_url, timeout=10000)
+    return_to_process_model(page, model_url)
     start_btn = page.get_by_test_id("start-process-instance").first
     expect(start_btn).to_be_enabled(timeout=10000)
     start_btn.click()
