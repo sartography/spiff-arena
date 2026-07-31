@@ -89,6 +89,38 @@ class TestProcessModelImportController(BaseTest):
         assert process_models[0].display_name == "hot"
         assert FileSystemService.get_data(process_models[0], "bam.bpmn").decode().find("Process_SimpleScript") > -1
 
+    def test_process_model_import_from_filestore_package_namespaces_nested_models_under_explicit_model_id(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        bpmn = Path("tests/data/simple_script/simple_script.bpmn").read_text()
+        package = {
+            "project_id": "files-project",
+            "project_name": "Files Project",
+            "process_model_id": "files-project",
+            "snapshot_id": "snapshot-1",
+            "files": [
+                {
+                    "path": "files-project/main/main.bpmn",
+                    "content": bpmn.replace("Process_SimpleScript", "main_process"),
+                },
+                {
+                    "path": "files-project/called/activity.bpmn",
+                    "content": bpmn.replace("Process_SimpleScript", "called_activity"),
+                },
+            ],
+        }
+
+        process_models = ProcessModelImportService.import_from_filestore_package(package, "filestore")
+
+        assert [process_model.id for process_model in process_models] == [
+            "filestore/files-project/called",
+            "filestore/files-project/main",
+        ]
+        assert FileSystemService.get_data(process_models[0], "activity.bpmn").decode().find("called_activity") > -1
+        assert FileSystemService.get_data(process_models[1], "main.bpmn").decode().find("main_process") > -1
+
     def test_process_model_import_from_filestore_file_update_names_root_model(
         self,
         app: Flask,
