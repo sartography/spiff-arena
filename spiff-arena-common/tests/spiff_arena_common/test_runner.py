@@ -73,6 +73,30 @@ def test_custom_environment_get_current_task_data_filters_internal_keys():
     assert context["result"] == {"visible": 1}
 
 
+def test_custom_environment_get_process_initiator_user_returns_serialized_stub_user():
+    context = {}
+
+    result = runner.CustomEnvironment().execute(
+        "initiator_user = get_process_initiator_user()\n"
+        'username = initiator_user["username"]',
+        context,
+    )
+
+    assert result is True
+    assert context["username"] == "initiator_user"
+    assert context["initiator_user"] == {
+        "id": 1,
+        "username": "initiator_user",
+        "email": "initiator_user@example.com",
+        "display_name": "Mr. Process Initiator User",
+        "tenant_specific_field_1": "initiator_tenant_specific_field_1",
+        "tenant_specific_field_2": "initiator_tenant_specific_field_2",
+        "tenant_specific_field_3": "initiator_tenant_specific_field_3",
+        "updated_at_in_seconds": 0,
+        "created_at_in_seconds": 0,
+    }
+
+
 def test_advance_workflow_prints_unittest_break_when_no_ready_task_is_unexpected(monkeypatch, capsys):
     task = FakeTask(bpmn_id="InitialTask")
     workflow = SimpleNamespace(subprocess_specs={}, completed=False)
