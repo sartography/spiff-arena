@@ -272,6 +272,10 @@ class CustomEnvironment(TaskDataEnvironment):
             "email": "current_user@example.com",
             "display_name": "Mr. Current User",
         }
+        external_context["get_process_initiator_user"] = lambda: {
+            "email": "initiator_user@example.com",
+            "display_name": "Mr. Process Initiator User",
+        }
         external_context["get_group_members"] = lambda group_name: [
             "group_member_1@example.com",
             "group_member_2@example.com",
