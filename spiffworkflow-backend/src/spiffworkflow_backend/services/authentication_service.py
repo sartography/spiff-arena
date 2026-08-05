@@ -547,30 +547,30 @@ class AuthenticationService:
             trusted_issuer_urls.append(internal_server_url)
 
         if iss not in trusted_issuer_urls:
-            current_app.logger.error(
+            current_app.logger.info(
                 f"TOKEN INVALID because ISS '{iss}' does not match any of the trusted issuer urls '{trusted_issuer_urls}'"
             )
             valid = False
         # aud could be an array or a string
         elif len(overlapping_aud_values) < 1:
-            current_app.logger.error(
+            current_app.logger.info(
                 f"TOKEN INVALID because audience '{aud}' does not match client id '{cls.client_id(authentication_identifier)}'"
             )
             valid = False
         elif not cls.is_valid_azp(authentication_identifier, azp):
-            current_app.logger.error(
+            current_app.logger.info(
                 f"TOKEN INVALID because azp '{azp}' does not match client id '{cls.client_id(authentication_identifier)}'"
             )
             valid = False
         # make sure issued at time is not in the future
         elif now + iat_clock_skew_leeway < iat:
-            current_app.logger.error(f"TOKEN INVALID because iat '{iat}' is in the future relative to server now '{now}'")
+            current_app.logger.info(f"TOKEN INVALID because iat '{iat}' is in the future relative to server now '{now}'")
             valid = False
 
         if valid and now > decoded_token["exp"]:
             raise TokenExpiredError("Your token is expired. Please Login")
         elif not valid:
-            current_app.logger.error(
+            current_app.logger.info(
                 "TOKEN INVALID: details: "
                 f"ISS: {iss} "
                 f"AUD: {aud} "
