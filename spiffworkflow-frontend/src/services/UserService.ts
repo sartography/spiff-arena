@@ -4,11 +4,10 @@ import { BACKEND_BASE_URL } from '../config';
 import { AuthenticationOption } from '../interfaces';
 import { parseTaskShowUrl } from '../helpers';
 
-// NOTE: this currently stores the jwt token in local storage
-// which is considered insecure. Server set cookies seem to be considered
-// the most secure but they require both frontend and backend to be on the same
-// domain which we probably can't guarantee. We could also use cookies directly
-// but they have the same XSS issues as local storage.
+// The backend sets separate browser-readable cookies for the OAuth access token
+// and OIDC ID token. The access token authenticates API requests; the ID token
+// supplies identity claims to the UI and is passed back to the provider at logout.
+// Because the SPA reads these cookies, an XSS vulnerability could expose either token.
 //
 // Some explanation:
 // https://dev.to/nilanth/how-to-secure-jwt-in-a-single-page-application-cko
@@ -49,7 +48,7 @@ const checkPathForTaskShowParams = (
   return null;
 };
 
-// required for logging out
+// Used for identity display and OIDC logout, never as the Arena API bearer token.
 const getIdToken = () => {
   return getCookie('id_token');
 };
