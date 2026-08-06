@@ -45,11 +45,11 @@ SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY: "your-secret-api-key"
 ```
 
 The connector proxy must be configured to expect the same key. For the
-`connector-proxy-demo` application, set `SPIFF_CONNECTOR_PROXY_API_KEY` on the
+`connector-proxy-demo` application, set `CONNECTOR_PROXY_API_KEY` on the
 connector proxy process:
 
 ```yaml
-SPIFF_CONNECTOR_PROXY_API_KEY: "your-secret-api-key"
+CONNECTOR_PROXY_API_KEY: "your-secret-api-key"
 ```
 
 When this variable is set, all requests from the Spiff Arena backend to the connector proxy (command discovery, authentication listing, and command execution) will include:
