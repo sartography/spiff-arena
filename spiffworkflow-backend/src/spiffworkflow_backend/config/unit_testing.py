@@ -14,7 +14,10 @@ SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID = "spiffworkflow-backend"
 SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY = "JXeQExm0JhQPLumgHtIIqf52bDalHz0q"  # noqa: S105
 SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS = None
 
-SPIFFWORKFLOW_BACKEND_LOG_LEVEL = environ.get("SPIFFWORKFLOW_BACKEND_LOG_LEVEL", default="debug")
+# debug logging is very chatty in the test code paths (e.g. the permission import
+# logs per-target/per-user debug lines) and measurably slows the suite down,
+# so default to warning unless explicitly overridden.
+SPIFFWORKFLOW_BACKEND_LOG_LEVEL = environ.get("SPIFFWORKFLOW_BACKEND_LOG_LEVEL", default="warning")
 SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE = False
 
 SPIFFWORKFLOW_BACKEND_WEBHOOK_PROCESS_MODEL_IDENTIFIER = "test_group/simple_script"

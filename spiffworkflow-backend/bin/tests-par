@@ -1,24 +1,20 @@
 #!/usr/bin/env bash
+# Parallel test runner.
+# Each pytest-xdist worker gets its own sqlite database via the
+# PYTEST_XDIST_WORKER env var (see config/unit_testing.py), so we don't need
+# to copy the base database to per-worker files like we used to.
+
+set -Eeuo pipefail
 
 function error_handler() {
   echo >&2 "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 trap 'error_handler ${LINENO} $?' ERR
-set -o errtrace -o errexit -o nounset -o pipefail
 
 if [[ ! -f ./src/instance/db_unit_testing_gw0.sqlite3 ]]; then
   echo >&2 -e "ERROR: please run the following command first in order to set up and migrate the sqlite unit_testing database:\n\n\tSPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite ./bin/recreate_db clean"
   exit 1
 fi
 
-# Refresh per-worker databases from the base database to ensure schema is current.
-# Stale worker databases (from previous migration revisions) cause spurious failures.
-if [[ -f ./src/instance/db_unit_testing.sqlite3 ]]; then
-  workers=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 8)
-  for i in $(seq 0 $((workers - 1))); do
-    cp ./src/instance/db_unit_testing.sqlite3 ./src/instance/db_unit_testing_gw${i}.sqlite3
-  done
-fi
-
-SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite env -u VIRTUAL_ENV uv run pytest -n auto -x --random-order "$@" tests/spiffworkflow_backend
+exec env -u VIRTUAL_ENV SPIFFWORKFLOW_BACKEND_DATABASE_TYPE=sqlite uv run pytest -n auto -x --random-order "$@" tests/spiffworkflow_backend

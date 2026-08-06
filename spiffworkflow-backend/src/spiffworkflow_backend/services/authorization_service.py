@@ -232,14 +232,16 @@ class AuthorizationService:
         return result
 
     @classmethod
-    def find_or_create_permission_target(cls, uri: str) -> PermissionTargetModel:
+    def find_or_create_permission_target(cls, uri: str, commit: bool = True) -> PermissionTargetModel:
         uri_with_percent = re.sub(r"\*", "%", uri)
         target_uri_normalized = remove_api_prefix(uri_with_percent)
         permission_target: PermissionTargetModel | None = PermissionTargetModel.query.filter_by(uri=target_uri_normalized).first()
         if permission_target is None:
             permission_target = PermissionTargetModel(uri=target_uri_normalized)
             db.session.add(permission_target)
-            db.session.commit()
+            db.session.flush()
+            if commit:
+                db.session.commit()
         return permission_target
 
     @classmethod
@@ -249,6 +251,7 @@ class AuthorizationService:
         permission_target: PermissionTargetModel,
         permission: str,
         grant_type: str = "permit",
+        commit: bool = True,
     ) -> PermissionAssignmentModel:
         permission_assignment: PermissionAssignmentModel | None = PermissionAssignmentModel.query.filter_by(
             principal_id=principal.id,
@@ -263,11 +266,15 @@ class AuthorizationService:
                 grant_type=grant_type,
             )
             db.session.add(permission_assignment)
-            db.session.commit()
+            db.session.flush()
+            if commit:
+                db.session.commit()
         elif permission_assignment.grant_type != grant_type:
             permission_assignment.grant_type = grant_type
             db.session.add(permission_assignment)
-            db.session.commit()
+            db.session.flush()
+            if commit:
+                db.session.commit()
         return permission_assignment
 
     @classmethod
@@ -827,15 +834,18 @@ class AuthorizationService:
         permissions_to_assign = cls.explode_permissions(permission_without_deny, target)
         permission_assignments = []
         for permission_to_assign in permissions_to_assign:
-            permission_target = cls.find_or_create_permission_target(permission_to_assign.target_uri)
+            permission_target = cls.find_or_create_permission_target(permission_to_assign.target_uri, commit=False)
             permission_assignments.append(
                 cls.create_permission_for_principal(
                     principal=group.principal,
                     permission_target=permission_target,
                     permission=permission_to_assign.permission,
                     grant_type=grant_type,
+                    commit=False,
                 )
             )
+        # one commit for the whole batch instead of one per target/assignment
+        db.session.commit()
         return permission_assignments
 
     @classmethod
