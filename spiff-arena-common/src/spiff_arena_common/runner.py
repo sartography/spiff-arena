@@ -268,6 +268,9 @@ class CustomEnvironment(TaskDataEnvironment):
             "process_instance_id": 0,
             "process_model_identifier": "local",
         }
+        external_context["get_url_for_task"] = lambda task_guid, public=False: (
+            f"http://localhost:5173{'/public' if public is True else ''}/tasks/0/{task_guid}"
+        )
         external_context["get_current_user"] = lambda: {
             "email": "current_user@example.com",
             "display_name": "Mr. Current User",

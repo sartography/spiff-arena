@@ -88,6 +88,20 @@ def test_custom_environment_get_toplevel_process_info_returns_local_stub():
     }
 
 
+def test_custom_environment_get_url_for_task_returns_local_task_urls():
+    context = {}
+
+    result = runner.CustomEnvironment().execute(
+        'task_url = get_url_for_task("task-guid-123")\n'
+        'public_task_url = get_url_for_task("task-guid-123", public=True)',
+        context,
+    )
+
+    assert result is True
+    assert context["task_url"] == "http://localhost:5173/tasks/0/task-guid-123"
+    assert context["public_task_url"] == "http://localhost:5173/public/tasks/0/task-guid-123"
+
+
 def test_custom_environment_get_process_initiator_user_returns_serialized_stub_user():
     context = {}
 
