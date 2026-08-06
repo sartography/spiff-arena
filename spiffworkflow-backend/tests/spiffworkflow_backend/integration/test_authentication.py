@@ -318,6 +318,30 @@ class TestAuthentication(BaseTest):
                 "default",
             )
 
+    def test_token_validation_failure_records_low_cardinality_metric(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+    ) -> None:
+        counter = mocker.patch("spiffworkflow_backend.services.authentication_service.TOKEN_VALIDATION_FAILURES")
+        now = round(time.time())
+        with app.app_context():
+            valid = AuthenticationService.validate_decoded_token(
+                {
+                    "iss": "https://untrusted.example",
+                    "sub": "samwise",
+                    "aud": AuthenticationService.client_id("default"),
+                    "azp": AuthenticationService.client_id("default"),
+                    "iat": now,
+                    "exp": now + 60,
+                },
+                "default",
+            )
+
+        assert valid is False
+        counter.labels.assert_called_once_with(reason="issuer")
+        counter.labels.return_value.inc.assert_called_once_with()
+
     def test_does_not_remove_permissions_from_service_accounts_on_refresh(
         self,
         app: Flask,

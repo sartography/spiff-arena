@@ -44,6 +44,7 @@ from flask import g
 from flask import redirect
 from flask import request
 from jwt.types import Options
+from prometheus_client import Counter
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
@@ -60,6 +61,16 @@ from spiffworkflow_backend.models.pkce_code_verifier import PkceCodeVerifierMode
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
+
+TOKEN_VALIDATION_FAILURES = Counter(
+    "spiff_authentication_token_validation_failure_total",
+    "Handled OpenID token validation failures by validation reason.",
+    ["reason"],
+)
+
+
+def _record_token_validation_failure(reason: str) -> None:
+    TOKEN_VALIDATION_FAILURES.labels(reason=reason).inc()
 
 
 class JWKSKeyConfig(TypedDict):
@@ -547,27 +558,32 @@ class AuthenticationService:
             trusted_issuer_urls.append(internal_server_url)
 
         if iss not in trusted_issuer_urls:
+            _record_token_validation_failure("issuer")
             current_app.logger.info(
                 f"TOKEN INVALID because ISS '{iss}' does not match any of the trusted issuer urls '{trusted_issuer_urls}'"
             )
             valid = False
         # aud could be an array or a string
         elif len(overlapping_aud_values) < 1:
+            _record_token_validation_failure("audience")
             current_app.logger.info(
                 f"TOKEN INVALID because audience '{aud}' does not match client id '{cls.client_id(authentication_identifier)}'"
             )
             valid = False
         elif not cls.is_valid_azp(authentication_identifier, azp):
+            _record_token_validation_failure("azp")
             current_app.logger.info(
                 f"TOKEN INVALID because azp '{azp}' does not match client id '{cls.client_id(authentication_identifier)}'"
             )
             valid = False
         # make sure issued at time is not in the future
         elif now + iat_clock_skew_leeway < iat:
+            _record_token_validation_failure("iat")
             current_app.logger.info(f"TOKEN INVALID because iat '{iat}' is in the future relative to server now '{now}'")
             valid = False
 
         if valid and now > decoded_token["exp"]:
+            _record_token_validation_failure("expired")
             raise TokenExpiredError("Your token is expired. Please Login")
         elif not valid:
             current_app.logger.info(
