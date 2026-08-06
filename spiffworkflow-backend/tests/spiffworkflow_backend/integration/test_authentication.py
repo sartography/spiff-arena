@@ -432,9 +432,7 @@ class TestAuthentication(BaseTest):
             },
         )
         redirect_url = f"{app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/after-login"
-        state_payload = AuthenticationService.generate_state_payload(
-            authentication_identifier="default", final_url=redirect_url
-        )
+        state_payload = AuthenticationService.generate_state_payload(authentication_identifier="default", final_url=redirect_url)
         state = AuthenticationService.encode_state_payload(state_payload)
 
         response = client.get(
