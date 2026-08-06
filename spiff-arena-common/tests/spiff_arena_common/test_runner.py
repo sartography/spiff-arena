@@ -73,6 +73,21 @@ def test_custom_environment_get_current_task_data_filters_internal_keys():
     assert context["result"] == {"visible": 1}
 
 
+def test_custom_environment_get_toplevel_process_info_returns_local_stub():
+    context = {}
+
+    result = runner.CustomEnvironment().execute(
+        "process_info = get_toplevel_process_info()",
+        context,
+    )
+
+    assert result is True
+    assert context["process_info"] == {
+        "process_instance_id": 0,
+        "process_model_identifier": "local",
+    }
+
+
 def test_custom_environment_get_process_initiator_user_returns_serialized_stub_user():
     context = {}
 

@@ -264,7 +264,7 @@ class CustomEnvironment(TaskDataEnvironment):
             external_context = {}
 
         external_context["get_task_data_value"] = lambda k, d=None: context.get(k, d)
-        external_context["get_top_level_process_info"] = lambda: {
+        external_context["get_toplevel_process_info"] = lambda: {
             "process_instance_id": 0,
             "process_model_identifier": "local",
         }
