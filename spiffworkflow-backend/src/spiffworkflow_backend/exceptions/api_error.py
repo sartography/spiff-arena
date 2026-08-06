@@ -272,6 +272,10 @@ def should_notify_sentry(exception: Exception) -> bool:
             return False
         if exception.error_code == "process_instance_validation_error":
             return False
+        if exception.error_code == "invalid_login":
+            return False
+        if exception.error_code == "missing_token":
+            return False
     if isinstance(exception, NotAuthorizedError):
         return False
 
