@@ -34,6 +34,14 @@ Fire it up.
 #> flask run
 ```
 
+## Optional API key protection
+
+Set `CONNECTOR_PROXY_API_KEY` on this connector proxy to require callers to
+send the `Spiff-Connector-Proxy-Api-Key` header.
+
+When Spiff Arena is the caller, set the backend's
+`SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY` to the same value. Arena will add
+that value to connector proxy requests for command discovery, authentication
+metadata, and service task execution.
+
 Any dependencies you add will now be available for SpiffWorkflow to call using a Service Task.  What's more, those services are now discoverable!  So when someone drops a Service Task into their diagram, they will have a dropdown list of all the services you have made available to them.  And those services will know what parameters are required, and can prompt diagram authors to provide information necessary to make the call.  Which can be no parameters at all (Just give me a fact about Chuck Norris) ... to complex parameters (a json structure to be added to a DynamoDB Table).
-
-
