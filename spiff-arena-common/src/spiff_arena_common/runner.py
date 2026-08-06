@@ -271,6 +271,10 @@ class CustomEnvironment(TaskDataEnvironment):
         external_context["get_url_for_task"] = lambda task_guid, public=False: (
             f"http://localhost:5173{'/public' if public is True else ''}/tasks/0/{task_guid}"
         )
+        external_context["get_task_potential_owners"] = lambda task_guid: {
+            "users": ["task_owner_1@example.com", "task_owner_2@example.com"],
+            "groups": ["task_owners"],
+        }
         external_context["get_current_user"] = lambda: {
             "email": "current_user@example.com",
             "display_name": "Mr. Current User",

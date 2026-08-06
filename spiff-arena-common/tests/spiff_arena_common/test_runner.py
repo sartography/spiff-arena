@@ -102,6 +102,24 @@ def test_custom_environment_get_url_for_task_returns_local_task_urls():
     assert context["public_task_url"] == "http://localhost:5173/public/tasks/0/task-guid-123"
 
 
+def test_custom_environment_get_task_potential_owners_returns_local_stub_owners():
+    context = {}
+
+    result = runner.CustomEnvironment().execute(
+        'owners = get_task_potential_owners("task-guid-123")\n'
+        'owners_by_keyword = get_task_potential_owners(task_guid="task-guid-456")',
+        context,
+    )
+
+    expected = {
+        "users": ["task_owner_1@example.com", "task_owner_2@example.com"],
+        "groups": ["task_owners"],
+    }
+    assert result is True
+    assert context["owners"] == expected
+    assert context["owners_by_keyword"] == expected
+
+
 def test_custom_environment_get_process_initiator_user_returns_serialized_stub_user():
     context = {}
 
