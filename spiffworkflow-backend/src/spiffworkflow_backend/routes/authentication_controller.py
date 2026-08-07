@@ -93,7 +93,7 @@ def verify_token(token: str | None = None, force_run: bool | None = False) -> di
         # I am pretty sure g.token is only actually used in UserService.has_user to
         # figure out if the if the user has logged in.
         if token_info["token"]:
-            # This is an id token, so we don't have a refresh token yet
+            # API clients authenticate with an access token or an Arena-generated token.
             g.token = token_info["token"]
             g.authenticated = True
             # we are getting the scope so it will decode the token and ensure it's valid.
@@ -213,21 +213,24 @@ def login_return(
     auth_token_object = AuthenticationService().get_auth_token_object(
         code, authentication_identifier=authentication_identifier, pkce_id=pkce_id
     )
-    if "id_token" in auth_token_object:
+    if "id_token" in auth_token_object and "access_token" in auth_token_object:
         id_token = auth_token_object["id_token"]
+        access_token = auth_token_object["access_token"]
         decoded_token = _get_decoded_token(id_token)
 
         if AuthenticationService.validate_decoded_token(decoded_token, authentication_identifier=authentication_identifier):
             if decoded_token and "error" not in decoded_token:
                 user_model = AuthorizationService.create_user_from_sign_in(decoded_token)
                 g.user = user_model
-                g.token = auth_token_object["id_token"]
+                g.token = access_token
                 if "refresh_token" in auth_token_object:
                     AuthenticationService.store_refresh_token(user_model.id, auth_token_object["refresh_token"])
                 redirect_url = state_redirect_url
                 tld = current_app.config["THREAD_LOCAL_DATA"]
-                tld.new_access_token = auth_token_object["id_token"]
-                tld.new_id_token = auth_token_object["id_token"]
+                # The SPA sends the OAuth access token as its API bearer credential.
+                # The OIDC ID token identifies the login and is retained separately for logout.
+                tld.new_access_token = access_token
+                tld.new_id_token = id_token
                 tld.new_authentication_identifier = authentication_identifier
                 if current_app.config.get("SPIFFWORKFLOW_BACKEND_LOG_LOGIN_LOGOUT"):
                     current_app.logger.info(f"User successfully logged in: {g.user.username}")
@@ -244,7 +247,7 @@ def login_return(
         # we normally clear cookies on 401, but there is a high chance you do not have any yet in this case
         raise ApiError(
             error_code="missing_token",
-            message="Login failed. Please try again",
+            message="Login failed because the identity provider did not return both an access token and an ID token.",
             status_code=401,
         )
 
@@ -328,11 +331,11 @@ def _set_new_access_token_in_cookie(
     if _requires_host_only_cookie_domain(domain_for_frontend_cookie):
         domain_for_frontend_cookie = None
 
-    # fixme - we should not be passing the access token back to the client
+    # The SPA reads this cookie and sends the access token in its Authorization header.
     if hasattr(tld, "new_access_token") and tld.new_access_token:
         response.set_cookie("access_token", tld.new_access_token, domain=domain_for_frontend_cookie)
 
-    # id_token is required for logging out since this gets passed back to the openid server
+    # The ID token supplies identity claims to the SPA and is required for OIDC logout.
     if hasattr(tld, "new_id_token") and tld.new_id_token:
         response.set_cookie("id_token", tld.new_id_token, domain=domain_for_frontend_cookie)
 
@@ -420,10 +423,11 @@ def _get_user_model_from_token(decoded_token: dict) -> UserModel | None:
                             auth_token: dict = AuthenticationService.get_auth_token_from_refresh_token(
                                 refresh_token, authentication_identifier=authentication_identifier
                             )
-                            if auth_token and "error" not in auth_token and "id_token" in auth_token:
+                            if auth_token and "error" not in auth_token and "access_token" in auth_token:
                                 tld = current_app.config["THREAD_LOCAL_DATA"]
-                                tld.new_access_token = auth_token["id_token"]
-                                tld.new_id_token = auth_token["id_token"]
+                                tld.new_access_token = auth_token["access_token"]
+                                if "id_token" in auth_token:
+                                    tld.new_id_token = auth_token["id_token"]
                                 # We have the user, but this code is a bit convoluted, and will later demand
                                 # a user_info object so it can look up the user.  Sorry to leave this crap here.
                                 user_info = {

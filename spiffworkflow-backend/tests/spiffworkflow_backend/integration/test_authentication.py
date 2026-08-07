@@ -13,9 +13,12 @@ from starlette.testclient import TestClient
 from werkzeug.wrappers import Response as WerkzeugResponse
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.exceptions.error import TokenExpiredError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.pkce_code_verifier import PkceCodeVerifierModel
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.routes.authentication_controller import _clear_auth_tokens_from_thread_local_data
+from spiffworkflow_backend.routes.authentication_controller import _get_user_model_from_token
 from spiffworkflow_backend.routes.service_tasks_controller import authentication_begin
 from spiffworkflow_backend.routes.service_tasks_controller import authentication_list
 from spiffworkflow_backend.services.authentication_service import PKCE
@@ -398,6 +401,99 @@ class TestAuthentication(BaseTest):
         redirect_location = response.headers["location"]
         assert redirect_location.startswith(auth_uri)
         assert re.search(r"\bredirect_uri=" + re.escape(login_return_uri), redirect_location) is not None
+
+    def test_login_return_uses_access_token_for_api_cookie(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        auth_config = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]
+        user = self.find_or_create_user("access-token-cookie-user@example.com")
+        id_token = user.encode_auth_token(
+            {
+                "iss": auth_config["uri"],
+                "sub": "access-token-cookie-user",
+                "aud": auth_config["client_id"],
+                "preferred_username": "access-token-cookie-user",
+                "email": "access-token-cookie-user@example.com",
+            }
+        )
+        access_token = "provider-access-token"  # noqa: S105 -- deliberately distinct from the ID token
+        store_refresh_token = mocker.patch.object(AuthenticationService, "store_refresh_token")
+        mocker.patch.object(
+            AuthenticationService,
+            "get_auth_token_object",
+            return_value={
+                "access_token": access_token,
+                "id_token": id_token,
+                "refresh_token": "provider-refresh-token",
+            },
+        )
+        redirect_url = f"{app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/after-login"
+        state_payload = AuthenticationService.generate_state_payload(authentication_identifier="default", final_url=redirect_url)
+        state = AuthenticationService.encode_state_payload(state_payload)
+
+        response = client.get(
+            "/v1.0/login_return",
+            params={"state": state.decode(), "code": "provider-authorization-code"},
+        )
+
+        assert response.status_code == 302
+        assert response.headers["location"] == redirect_url
+        assert response.cookies["access_token"] == access_token
+        assert response.cookies["id_token"] == id_token
+        store_refresh_token.assert_called_once()
+
+    def test_refresh_uses_refreshed_access_token_for_api_cookie(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        auth_config = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]
+        user = self.find_or_create_user("refreshed-access-token-user@example.com")
+        user.service = auth_config["uri"]
+        user.service_id = "refreshed-access-token-user"
+        db.session.add(user)
+        db.session.commit()
+        mocker.patch.object(
+            AuthenticationService,
+            "validate_decoded_token",
+            side_effect=TokenExpiredError("expired"),
+        )
+        mocker.patch.object(AuthenticationService, "get_refresh_token", return_value="stored-refresh-token")
+        mocker.patch.object(
+            AuthenticationService,
+            "get_auth_token_from_refresh_token",
+            return_value={
+                "access_token": "refreshed-provider-access-token",
+                "id_token": "refreshed-provider-id-token",
+                "refresh_token": "rotated-provider-refresh-token",
+            },
+        )
+        store_refresh_token = mocker.patch.object(AuthenticationService, "store_refresh_token")
+
+        with app.test_request_context(
+            "/v1.0/status",
+            headers={"SpiffWorkflow-Authentication-Identifier": "default"},
+        ):
+            try:
+                refreshed_user = _get_user_model_from_token(
+                    {
+                        "iss": auth_config["uri"],
+                        "sub": user.service_id,
+                    }
+                )
+                tld = app.config["THREAD_LOCAL_DATA"]
+
+                assert refreshed_user == user
+                assert tld.new_access_token == "refreshed-provider-access-token"  # noqa: S105
+                assert tld.new_id_token == "refreshed-provider-id-token"  # noqa: S105
+                store_refresh_token.assert_called_once_with(user.id, "rotated-provider-refresh-token")
+            finally:
+                _clear_auth_tokens_from_thread_local_data()
 
     def test_can_login_with_local_development_frontend_hostname_alias(
         self,
