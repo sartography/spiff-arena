@@ -567,6 +567,28 @@ class TestAuthorizationService(BaseTest):
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")
 
+    def test_add_permission_from_macro_commits_once(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        user_group = UserService.find_or_create_group("group_one")
+        original_commit = db.session.commit
+        commit_count = 0
+
+        def recording_commit() -> None:
+            nonlocal commit_count
+            commit_count += 1
+            original_commit()
+
+        monkeypatch.setattr(db.session, "commit", recording_commit)
+
+        permission_assignments = AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:hey")
+
+        assert len(permission_assignments) > 1
+        assert commit_count == 1
+
     # https://github.com/sartography/spiff-arena/issues/1090 describes why we need access to process_group_show for parents
     def test_granting_access_to_subgroup_gives_access_to_subgroup_its_subgroups_and_even_show_for_its_parents(
         self,
