@@ -8,7 +8,6 @@ from typing import Any
 
 from flask import current_app
 from lxml import etree  # type: ignore
-from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator  # type: ignore
 
 from spiffworkflow_backend.exceptions.error import NotAuthorizedError
 from spiffworkflow_backend.models.db import db
@@ -135,7 +134,6 @@ class SpecFileService(FileSystemService):
     def validate_bpmn_xml(cls, file_name: str, binary_data: bytes) -> None:
         file_type = FileSystemService.file_type(file_name)
         if file_type.value == FileType.bpmn.value:
-            BpmnValidator()
             parser = MyCustomParser()
             try:
                 parser.add_bpmn_xml(ProcessModelService.get_etree_from_xml_bytes(binary_data), filename=file_name)

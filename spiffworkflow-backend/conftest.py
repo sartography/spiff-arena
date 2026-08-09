@@ -2,6 +2,7 @@
 import os
 import shutil
 from collections.abc import Generator
+from functools import cache
 from typing import Any
 from typing import cast
 
@@ -69,13 +70,17 @@ def _clear_database() -> None:
     db.session.commit()
 
 
-def _database_has_rows() -> bool:
+@cache
+def _database_has_rows_query() -> Any:
     # Some narrow unit tests manage their own committed rows without requesting
     # the shared cleanup fixture. Detect that state in one query before reusing
     # the worker's clean transactional baseline.
     table_has_rows = [db.exists(db.select(1).select_from(table)) for table in db.metadata.sorted_tables]
-    query = db.select(db.literal(True)).where(db.or_(*table_has_rows)).limit(1)
-    return db.session.execute(query).scalar() is not None
+    return db.select(db.literal(True)).where(db.or_(*table_has_rows)).limit(1)
+
+
+def _database_has_rows() -> bool:
+    return db.session.execute(_database_has_rows_query()).scalar() is not None
 
 
 @pytest.fixture(scope="session")
