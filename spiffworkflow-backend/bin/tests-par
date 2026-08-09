@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Parallel test runner.
 # Each pytest-xdist worker gets its own sqlite database via the
-# PYTEST_XDIST_WORKER env var (see config/unit_testing.py), so we don't need
-# to copy the base database to per-worker files like we used to.
+# PYTEST_XDIST_WORKER env var (see config/unit_testing.py).
 
 set -Eeuo pipefail
 
