@@ -37,4 +37,22 @@ i18next
     },
   });
 
+/**
+ * Keep the document's lang attribute in sync with the active locale.
+ *
+ * index.html ships a static lang="en", but the app switches among several
+ * locales at runtime. Without this, assistive technology keeps announcing
+ * translated content with an English speech synthesizer, which fails
+ * WCAG 2.1 AA success criterion 3.1.1 (Language of Page) for every
+ * non-English user.
+ */
+const syncDocumentLanguage = (language: string) => {
+  if (language) {
+    document.documentElement.lang = language;
+  }
+};
+
+i18next.on('languageChanged', syncDocumentLanguage);
+syncDocumentLanguage(i18next.language);
+
 export default i18next;
