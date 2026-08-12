@@ -31,7 +31,6 @@ describe('document language', () => {
 
     expect(locales.length).toBeGreaterThan(1);
     for (const locale of locales) {
-      // eslint-disable-next-line no-await-in-loop
       await i18next.changeLanguage(locale);
       expect(document.documentElement.lang).toMatch(bcp47);
     }

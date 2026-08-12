@@ -492,12 +492,45 @@ jobs:
         run: uv run playwright install --with-deps
       - name: Playwright run
         working-directory: ./spiffworkflow-frontend/test/browser
-        run: uv run pytest --tracing=retain-on-failure
+        run: uv run pytest --tracing=retain-on-failure --ignore=test_accessibility.py
         env:
           # pass GitHub token to allow accurately detecting a build vs a re-run build
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BROWSER_TEST_USERNAME: "ciadmin1"
           BROWSER_TEST_PASSWORD: "ciadmin1"
+      - name: Accessibility scan (axe-core)
+        working-directory: ./spiffworkflow-frontend/test/browser
+        run: uv run pytest test_accessibility.py -v --tracing=retain-on-failure
+        env:
+          BROWSER_TEST_USERNAME: "ciadmin1"
+          BROWSER_TEST_PASSWORD: "ciadmin1"
+      - name: Accessibility scan summary
+        if: always()
+        working-directory: ./spiffworkflow-frontend/test/browser
+        run: |
+          python3 - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+
+          results_dir = Path("test-results/axe")
+          files = sorted(results_dir.glob("*.json")) if results_dir.is_dir() else []
+
+          print("## Accessibility scan (axe-core, WCAG 2.1 A/AA)")
+          print()
+          if not files:
+              print("No axe results found.")
+          else:
+              print("Fails the build on `serious`/`critical` impact violations; `minor`/`moderate` are recorded but non-blocking.")
+              print()
+              print("| Page | Critical | Serious | Moderate | Minor |")
+              print("|---|---|---|---|---|")
+              for f in files:
+                  data = json.loads(f.read_text())
+                  counts = {"critical": 0, "serious": 0, "moderate": 0, "minor": 0}
+                  for v in data.get("violations", []):
+                      counts[v["impact"]] = counts.get(v["impact"], 0) + 1
+                  print(f"| {f.stem} | {counts['critical']} | {counts['serious']} | {counts['moderate']} | {counts['minor']} |")
+          EOF
       - name: get_backend_logs_from_docker_compose
         if: failure()
         working-directory: ./spiffworkflow-backend
