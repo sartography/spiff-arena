@@ -13,6 +13,14 @@ if [ "${BASH_SOURCE[0]}" -ef "$0" ]; then
 fi
 
 PORT="${SPIFFWORKFLOW_BACKEND_PORT:-7000}"
+
+# by convention the frontend dev server runs on the port one above the backend
+# (spiffworkflow-frontend/src/config.tsx assumes backend = frontend port - 1).
+# keep login redirect_url validation in sync with that convention when the
+# backend runs on a non-default port, or login fails with InvalidRedirectUrlError.
+if [[ -z "${SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND:-}" ]]; then
+  export SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND="http://localhost:$((PORT + 1))"
+fi
 acceptance_test_mode="false"
 
 use_local_open_id="true"
