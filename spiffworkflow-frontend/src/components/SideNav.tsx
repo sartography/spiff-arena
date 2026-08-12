@@ -10,6 +10,7 @@ import {
   IconButton,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Tooltip,
@@ -333,6 +334,13 @@ function SideNav({
               onClick={(event) => {
                 onToggleCollapse(event);
               }}
+              aria-label={
+                isMobile
+                  ? t('close_navigation')
+                  : isCollapsed
+                    ? t('expand_navigation')
+                    : t('collapse_navigation')
+              }
               sx={{ ml: isCollapsed ? 'auto' : 0 }}
             >
               {isMobile ? <CloseIcon /> : collapseOrExpandIcon}
@@ -342,54 +350,55 @@ function SideNav({
             {navItems.map((item) => {
               if (checkUserHasAccessToNavItem(item)) {
                 return (
-                  <ListItem
-                    component={Link}
-                    to={item.route}
-                    key={item.text}
-                    onClick={() => {
-                      // additionalNavElement is the TreePanel in this case so do not
-                      // remove it when you are navigating to the processes page from the processes page
-                      if (item.id !== routeIdentifiers.PROCESSES) {
-                        setAdditionalNavElement(null);
-                      }
-                    }}
-                    sx={{
-                      bgcolor:
-                        selectedTab === item.id
-                          ? 'background.light'
-                          : 'inherit',
-                      color: selectedTab === item.id ? mainBlue : 'inherit',
-                      borderColor:
-                        selectedTab === item.id ? mainBlue : 'transparent',
-                      borderLeftWidth: '4px',
-                      borderStyle: 'solid',
-                      justifyContent: isCollapsed ? 'center' : 'flex-start',
-                    }}
-                  >
-                    <Tooltip
-                      title={isCollapsed ? item.text : ''}
-                      placement="right"
+                  <ListItem key={item.text} disablePadding>
+                    <ListItemButton
+                      component={Link}
+                      to={item.route}
+                      onClick={() => {
+                        // additionalNavElement is the TreePanel in this case so do not
+                        // remove it when you are navigating to the processes page from the processes page
+                        if (item.id !== routeIdentifiers.PROCESSES) {
+                          setAdditionalNavElement(null);
+                        }
+                      }}
+                      sx={{
+                        bgcolor:
+                          selectedTab === item.id
+                            ? 'background.light'
+                            : 'inherit',
+                        color: selectedTab === item.id ? mainBlue : 'inherit',
+                        borderColor:
+                          selectedTab === item.id ? mainBlue : 'transparent',
+                        borderLeftWidth: '4px',
+                        borderStyle: 'solid',
+                        justifyContent: isCollapsed ? 'center' : 'flex-start',
+                      }}
                     >
-                      <ListItemIcon
-                        sx={{
-                          color: 'inherit',
-                          minWidth: isCollapsed ? 24 : 40,
-                        }}
+                      <Tooltip
+                        title={isCollapsed ? item.text : ''}
+                        placement="right"
                       >
-                        {item.icon}
-                      </ListItemIcon>
-                    </Tooltip>
-                    {!isCollapsed && (
-                      <ListItemText
-                        primary={item.text}
-                        data-testid={`nav-${item.text.toLowerCase().replace(' ', '-')}`}
-                        primaryTypographyProps={{
-                          fontSize: '0.875rem',
-                          fontWeight:
-                            selectedTab === item.id ? 'bold' : 'normal',
-                        }}
-                      />
-                    )}
+                        <ListItemIcon
+                          sx={{
+                            color: 'inherit',
+                            minWidth: isCollapsed ? 24 : 40,
+                          }}
+                        >
+                          {item.icon}
+                        </ListItemIcon>
+                      </Tooltip>
+                      {!isCollapsed && (
+                        <ListItemText
+                          primary={item.text}
+                          data-testid={`nav-${item.text.toLowerCase().replace(' ', '-')}`}
+                          primaryTypographyProps={{
+                            fontSize: '0.875rem',
+                            fontWeight:
+                              selectedTab === item.id ? 'bold' : 'normal',
+                          }}
+                        />
+                      )}
+                    </ListItemButton>
                   </ListItem>
                 );
               }
