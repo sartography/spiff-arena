@@ -195,27 +195,45 @@ function CatalogAccordion({
   onToggle: () => void;
   title: ReactNode;
 }) {
+  const panelId = `${ariaControls.toLowerCase().replace(/\s+/g, '-')}-panel`;
   return (
-    <Accordion expanded={expanded} onChange={() => onToggle()}>
-      <AccordionSummary
-        expandIcon={<ExpandMoreIcon />}
-        aria-controls={ariaControls}
-      >
+    <Box sx={{ position: 'relative' }}>
+      <Accordion expanded={expanded} onChange={() => onToggle()}>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls={panelId}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+              // leave room so the title doesn't render under the action button,
+              // which is rendered as a sibling overlay below (not nested inside
+              // this button) so we don't put an interactive control inside one
+              pr: action ? 6 : 2,
+            }}
+          >
+            <Typography>{title}</Typography>
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails>{children}</AccordionDetails>
+      </Accordion>
+      {action && (
         <Box
           sx={{
+            position: 'absolute',
+            top: 4,
+            right: 40,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            width: '100%',
-            pr: 2,
           }}
         >
-          <Typography>{title}</Typography>
           {action}
         </Box>
-      </AccordionSummary>
-      <AccordionDetails>{children}</AccordionDetails>
-    </Accordion>
+      )}
+    </Box>
   );
 }
 
@@ -1451,6 +1469,7 @@ export default function ProcessModelTreePage({
                         >
                           <IconButton
                             size="small"
+                            aria-label={t('add_process_group')}
                             onClick={(e) => e.stopPropagation()}
                             href={`/process-groups/new${currentParentGroupIdSearchParam()}`}
                           >
@@ -1483,6 +1502,7 @@ export default function ProcessModelTreePage({
                         action={
                           <IconButton
                             size="small"
+                            aria-label={t('add_data_store')}
                             onClick={(e) => e.stopPropagation()}
                             data-testid="add-data-store-button"
                             href={`/data-stores/new${currentParentGroupIdSearchParam()}`}
