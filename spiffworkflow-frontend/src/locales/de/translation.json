@@ -308,6 +308,7 @@
   "page_cleared": "Seite gelöscht",
   "page_does_not_exist": "Diese Seite existiert nicht. Bitte überprüfen Sie die URL",
   "pagination_display": "{{from}}-{{to}} von {{count}}",
+  "pagination_display_more_than": "{{from}}-{{to}} von mehr als {{count}}",
   "pagination_go_to_page": "Gehe zu Seite",
   "pagination_items_per_page": "Elemente pro Seite:",
   "previous_migrations": "Vorherige Migrationen",

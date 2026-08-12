@@ -6,7 +6,7 @@ import {
   Stack,
   TablePagination,
 } from '@mui/material';
-import { ChangeEvent, MouseEvent, useId } from 'react';
+import { ChangeEvent, MouseEvent, useCallback, useEffect, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PaginationObject } from '../interfaces';
 
@@ -40,10 +40,25 @@ export default function PaginationForTable({
     ? `${paginationQueryParamPrefix}_`
     : '';
 
-  const setPageSearchParam = (newPage: number) => {
-    searchParams.set(`${paginationQueryParamPrefixToUse}page`, String(newPage));
-    setSearchParams(searchParams);
-  };
+  const setPageSearchParam = useCallback(
+    (newPage: number) => {
+      searchParams.set(
+        `${paginationQueryParamPrefixToUse}page`,
+        String(newPage),
+      );
+      setSearchParams(searchParams);
+    },
+    [searchParams, setSearchParams, paginationQueryParamPrefixToUse],
+  );
+
+  // the ui does not paginate past MAX_PAGES, so a page beyond that (or beyond
+  // the data, e.g. from a hand-edited url) snaps back to the last valid page.
+  const totalPages = pagination ? Math.min(pagination.pages, MAX_PAGES) : null;
+  useEffect(() => {
+    if (totalPages !== null && page > totalPages) {
+      setPageSearchParam(Math.max(totalPages, 1));
+    }
+  }, [totalPages, page, setPageSearchParam]);
 
   const updateRows = (
     _event: MouseEvent<HTMLButtonElement> | null,
@@ -61,8 +76,11 @@ export default function PaginationForTable({
     setSearchParams(searchParams);
   };
 
-  if (pagination) {
-    const totalPages = Math.min(pagination.pages, MAX_PAGES);
+  if (pagination && totalPages !== null) {
+    // when the data has more pages than the ui will paginate through, the
+    // displayed count is capped and the label says "more than" to be honest
+    // about the fact that more results exist.
+    const isCapped = pagination.pages > MAX_PAGES;
     const totalItems =
       pagination.pages < MAX_PAGES ? pagination.total : MAX_PAGES * perPage;
 
@@ -102,7 +120,12 @@ export default function PaginationForTable({
             showLastButton
             labelRowsPerPage={t('pagination_items_per_page')}
             labelDisplayedRows={({ from, to, count }) =>
-              t('pagination_display', { from, to, count })
+              t(
+                isCapped
+                  ? 'pagination_display_more_than'
+                  : 'pagination_display',
+                { from, to, count },
+              )
             }
           />
           <FormControl size="small" variant="standard">
