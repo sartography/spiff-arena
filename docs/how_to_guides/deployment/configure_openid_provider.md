@@ -38,6 +38,12 @@ SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS=<additional_issuers>
 # Additional valid client IDs (comma-separated)
 SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_CLIENT_IDS=<additional_client_ids>
 
+# API audiences accepted in OAuth access tokens (comma-separated)
+SPIFFWORKFLOW_BACKEND_OPEN_ID_ACCESS_TOKEN_AUDIENCES=<api_audience>
+
+# Optional RFC 8707 resource indicator added to authorization requests
+SPIFFWORKFLOW_BACKEND_OPEN_ID_AUTHORIZATION_RESOURCE=<api_audience>
+
 # Tenant-specific fields (comma-separated, max 3)
 SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS=<field1,field2,field3>
 
@@ -49,6 +55,29 @@ SPIFFWORKFLOW_BACKEND_OPEN_ID_INTERNAL_URL_IS_VALID_ISSUER=false
 ## Multi-Provider Configuration
 
 SpiffWorkflow also supports multiple authentication providers through the `SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS` environment variable. This allows users to choose from different OpenID providers at login.
+
+The equivalent per-provider settings are `access_token_audiences` and
+`authorization_resource`. For example:
+
+```bash
+SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__access_token_audiences__0=https://arena.example.com/api
+SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__authorization_resource=https://arena.example.com/api
+```
+
+ID tokens and access tokens have different audiences. The OIDC client ID is
+the expected audience of an ID token returned during login. An access-token
+audience identifies the Arena API that will consume the token. Arena validates
+these independently.
+
+`authorization_resource` is provider-dependent. Amazon Cognito uses the RFC
+8707 `resource` parameter to bind an access token to an API. Keycloak usually
+sets the access-token audience with an audience mapper, and Okta custom
+authorization servers define it in the authorization-server configuration.
+
+For backward compatibility, configurations without
+`access_token_audiences` continue to accept the legacy client-ID and Keycloak
+`account` audiences. Configure an explicit API audience when the provider has
+been updated to issue one.
 
 ## Provider-Specific Guides
 
@@ -64,4 +93,3 @@ For the complete list of all available configuration options and their defaults,
 `spiffworkflow-backend/src/spiffworkflow_backend/config/default.py`
 
 This file contains all environment variables with their default values and documentation comments explaining their purpose.
-

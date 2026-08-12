@@ -173,6 +173,11 @@ else:
         #       if client-B is added to this list, then an api user can auth with keycloak
         #           and use that token successfully with backend
         config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_CLIENT_IDS")
+        # Optional comma-separated API audiences for access-token validation. When omitted,
+        # the legacy client-id/account audience behavior remains in effect.
+        config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_ACCESS_TOKEN_AUDIENCES")
+        # Optional RFC 8707 resource indicator to include in authorization requests.
+        config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_AUTHORIZATION_RESOURCE")
     else:
         SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS = [
             {
@@ -184,6 +189,8 @@ else:
                 "client_secret": "JXeQExm0JhQPLumgHtIIqf52bDalHz0q",
                 "additional_valid_client_ids": None,
                 "additional_valid_issuers": [],
+                "access_token_audiences": None,
+                "authorization_resource": None,
             }
         ]
 

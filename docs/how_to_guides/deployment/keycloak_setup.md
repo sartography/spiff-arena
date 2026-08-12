@@ -7,6 +7,18 @@ This guide outlines the steps to configure Keycloak for a client, including **gr
 **NOTE** If running spiffworkflow and keycloak through docker compose, you may need to set "SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS" in the backend to contain the appropriate localhost domain for keycloak.
 Otherwise, backend will talk to keycloak with a docker compose network host and the web client will use localhost and that will invalidate the token.
 
+Existing Keycloak environments remain compatible with Arena's legacy token
+audience handling. For audience-bound access tokens, add an Audience protocol
+mapper to the Arena client, include the Arena API identifier in access tokens,
+and configure the same value in Arena:
+
+```bash
+SPIFFWORKFLOW_BACKEND_OPEN_ID_ACCESS_TOKEN_AUDIENCES=https://arena.example.com/api
+```
+
+The audience must identify the Arena API, not the OIDC client that initiated
+the login. Keycloak's `azp` claim identifies that client separately.
+
 ## **1. Super Admin Tasks: Allowing Realm User Management**  
 
 To allow user management in a specific **Keycloak realm**, follow these steps:
