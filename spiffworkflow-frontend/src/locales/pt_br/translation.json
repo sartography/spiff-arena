@@ -308,6 +308,7 @@
   "page_cleared": "Página limpa",
   "page_does_not_exist": "Esta página não existe. Verifique a URL",
   "pagination_display": "{{from}}-{{to}} de {{count}}",
+  "pagination_go_to_page": "Ir para a página",
   "pagination_items_per_page": "Itens por página:",
   "previous_migrations": "Migrações anteriores",
   "primary_file": "Arquivo principal",

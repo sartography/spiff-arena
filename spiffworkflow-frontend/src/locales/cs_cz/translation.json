@@ -308,6 +308,7 @@
   "page_cleared": "Stránka vymazána",
   "page_does_not_exist": "Tato stránka neexistuje. Zkontrolujte prosím adresu URL",
   "pagination_display": "{{from}}-{{to}} z {{count}}",
+  "pagination_go_to_page": "Přejít na stránku",
   "pagination_items_per_page": "Položek na stránce:",
   "previous_migrations": "Předchozí migrace",
   "primary_file": "Primární soubor",

@@ -308,6 +308,7 @@
   "page_cleared": "Sivu tyhjennetty",
   "page_does_not_exist": "Tätä sivua ei ole olemassa. Tarkista osoite",
   "pagination_display": "{{from}}-{{to}} / {{count}}",
+  "pagination_go_to_page": "Siirry sivulle",
   "pagination_items_per_page": "Kohteita sivulla:",
   "previous_migrations": "Aikaisemmat siirrot",
   "primary_file": "Ensisijainen tiedosto",
