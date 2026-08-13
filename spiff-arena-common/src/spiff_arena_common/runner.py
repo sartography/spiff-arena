@@ -6,7 +6,6 @@ import json
 import logging
 import time
 import uuid
-from copy import deepcopy
 from types import ModuleType
 
 import jsonschema
@@ -298,7 +297,9 @@ class CustomEnvironment(TaskDataEnvironment):
             "email": "current_user@example.com",
             "display_name": "Mr. Current User",
         }
-        external_context["get_process_initiator_user"] = lambda: deepcopy(process_initiator_user)
+        external_context["get_process_initiator_user"] = lambda: {
+            key: value for key, value in process_initiator_user.items()
+        }
         external_context["get_group_members"] = lambda group_name: [
             "group_member_1@example.com",
             "group_member_2@example.com",
@@ -317,11 +318,11 @@ class CustomEnvironment(TaskDataEnvironment):
 class CustomScriptEngine(PythonScriptEngine):
     def __init__(self, external_context=None):
         super().__init__(environment=CustomEnvironment())
-        self.external_context = deepcopy(external_context or {})
+        self.external_context = external_context or {}
 
     def execute(self, task, script, external_context=None):
         if self.external_context:
-            task.data[_EXTERNAL_CONTEXT_KEY] = deepcopy(self.external_context)
+            task.data[_EXTERNAL_CONTEXT_KEY] = self.external_context
         return super().execute(task, script, external_context)
 
     def call_service(
@@ -811,9 +812,7 @@ def advance_workflow(specs, state, completed_task, strategy_name, start_params, 
     start_data = dict(start_params.get("data", {})) if start_params else {}
     workflow = hydrate_workflow(specs, state, session_id=session_id)
     if _EXTERNAL_CONTEXT_KEY in start_data:
-        workflow.script_engine.external_context = deepcopy(
-            start_data.pop(_EXTERNAL_CONTEXT_KEY, {})
-        )
+        workflow.script_engine.external_context = start_data.pop(_EXTERNAL_CONTEXT_KEY, {})
     if state == {} and start_params:
         for task in workflow.get_tasks(task_filter=TaskFilter(state=TaskState.READY, spec_name="Start")):
             task.data.update(start_data)
