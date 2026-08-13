@@ -6,6 +6,7 @@ import json
 import logging
 import time
 import uuid
+from copy import deepcopy
 from types import ModuleType
 
 import jsonschema
@@ -64,6 +65,18 @@ from SpiffWorkflow.util.task import TaskFilter, TaskState  # noqa: E402
 logging.basicConfig(level=logging.ERROR)
 
 _INTERNAL_KEYS = {"__builtins__", "__annotations__"}
+_EXTERNAL_CONTEXT_KEY = "spiff__external_context"
+_DEFAULT_PROCESS_INITIATOR_USER = {
+    "id": 1,
+    "username": "initiator_user",
+    "email": "initiator_user@example.com",
+    "display_name": "Mr. Process Initiator User",
+    "tenant_specific_field_1": "initiator_tenant_specific_field_1",
+    "tenant_specific_field_2": "initiator_tenant_specific_field_2",
+    "tenant_specific_field_3": "initiator_tenant_specific_field_3",
+    "updated_at_in_seconds": 0,
+    "created_at_in_seconds": 0,
+}
 
 class CustomManualTask(ManualTask):
     def _run(self, task):
@@ -263,6 +276,12 @@ class CustomEnvironment(TaskDataEnvironment):
         if external_context is None:
             external_context = {}
 
+        configured_external_context = context.pop(_EXTERNAL_CONTEXT_KEY, {})
+        process_initiator_user = configured_external_context.get(
+            "get_process_initiator_user",
+            _DEFAULT_PROCESS_INITIATOR_USER,
+        )
+
         external_context["get_task_data_value"] = lambda k, d=None: context.get(k, d)
         external_context["get_toplevel_process_info"] = lambda: {
             "process_instance_id": 0,
@@ -279,17 +298,7 @@ class CustomEnvironment(TaskDataEnvironment):
             "email": "current_user@example.com",
             "display_name": "Mr. Current User",
         }
-        external_context["get_process_initiator_user"] = lambda: {
-            "id": 1,
-            "username": "initiator_user",
-            "email": "initiator_user@example.com",
-            "display_name": "Mr. Process Initiator User",
-            "tenant_specific_field_1": "initiator_tenant_specific_field_1",
-            "tenant_specific_field_2": "initiator_tenant_specific_field_2",
-            "tenant_specific_field_3": "initiator_tenant_specific_field_3",
-            "updated_at_in_seconds": 0,
-            "created_at_in_seconds": 0,
-        }
+        external_context["get_process_initiator_user"] = lambda: deepcopy(process_initiator_user)
         external_context["get_group_members"] = lambda group_name: [
             "group_member_1@example.com",
             "group_member_2@example.com",
@@ -305,12 +314,15 @@ class CustomEnvironment(TaskDataEnvironment):
         return super().execute(script or "", context, external_context)
 
 
-custom_environment = CustomEnvironment()
-
-
 class CustomScriptEngine(PythonScriptEngine):
-    def __init__(self):
-        super().__init__(environment=custom_environment)
+    def __init__(self, external_context=None):
+        super().__init__(environment=CustomEnvironment())
+        self.external_context = deepcopy(external_context or {})
+
+    def execute(self, task, script, external_context=None):
+        if self.external_context:
+            task.data[_EXTERNAL_CONTEXT_KEY] = deepcopy(self.external_context)
+        return super().execute(task, script, external_context)
 
     def call_service(
         self,
@@ -796,10 +808,15 @@ def advance_workflow(specs, state, completed_task, strategy_name, start_params, 
         if 0 <= jump_to_step_idx < len(steps):
             state = steps[jump_to_step_idx]
 
+    start_data = dict(start_params.get("data", {})) if start_params else {}
     workflow = hydrate_workflow(specs, state, session_id=session_id)
+    if _EXTERNAL_CONTEXT_KEY in start_data:
+        workflow.script_engine.external_context = deepcopy(
+            start_data.pop(_EXTERNAL_CONTEXT_KEY, {})
+        )
     if state == {} and start_params:
         for task in workflow.get_tasks(task_filter=TaskFilter(state=TaskState.READY, spec_name="Start")):
-            task.data.update(start_params.get("data", {}))
+            task.data.update(start_data)
             break
 
     try:

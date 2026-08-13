@@ -144,6 +144,119 @@ def test_custom_environment_get_process_initiator_user_returns_serialized_stub_u
     }
 
 
+def test_custom_environment_uses_configured_process_initiator_and_cleans_transport_data():
+    configured_user = {
+        "id": 23,
+        "username": "bob",
+        "email": "bob@example.com",
+        "display_name": "Bob Example",
+    }
+    context = {
+        "spiff__external_context": {
+            "get_process_initiator_user": configured_user,
+        },
+    }
+
+    result = runner.CustomEnvironment().execute(
+        "first_user = get_process_initiator_user()\n"
+        'first_user["username"] = "changed"\n'
+        "second_user = get_process_initiator_user()",
+        context,
+    )
+
+    assert result is True
+    assert context["first_user"]["username"] == "changed"
+    assert context["second_user"] == configured_user
+    assert "spiff__external_context" not in context
+
+
+def test_custom_script_engine_supplies_external_context_to_each_script():
+    configured_external_context = {
+        "get_process_initiator_user": {"username": "bob"},
+    }
+    engine = runner.CustomScriptEngine(configured_external_context)
+    first_task = SimpleNamespace(data={})
+    second_task = SimpleNamespace(data={})
+
+    engine.execute(first_task, 'username = get_process_initiator_user()["username"]')
+    engine.execute(second_task, 'username = get_process_initiator_user()["username"]')
+
+    assert first_task.data == {"username": "bob"}
+    assert second_task.data == {"username": "bob"}
+
+
+def test_advance_workflow_extracts_external_context_without_mutating_start_params(monkeypatch):
+    configured_external_context = {
+        "get_process_initiator_user": {"username": "bob"},
+    }
+    start_task = FakeTask()
+    workflow = SimpleNamespace(
+        script_engine=runner.CustomScriptEngine(),
+        get_tasks=lambda task_filter: [start_task],
+    )
+    start_params = {
+        "data": {
+            "case_id": "case-1",
+            "spiff__external_context": configured_external_context,
+        },
+    }
+    original_start_params = {
+        "data": {
+            "case_id": "case-1",
+            "spiff__external_context": configured_external_context,
+        },
+    }
+    monkeypatch.setattr(runner, "hydrate_workflow", lambda *args, **kwargs: workflow)
+    monkeypatch.setattr(runner, "next_task", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        runner,
+        "_advance_workflow",
+        lambda *args, **kwargs: {"status": "ok"},
+    )
+
+    result = runner.advance_workflow(
+        specs={},
+        state={},
+        completed_task=None,
+        strategy_name="oneAtATime",
+        start_params=start_params,
+    )
+
+    assert result == {"status": "ok"}
+    assert workflow.script_engine.external_context == configured_external_context
+    assert start_task.data == {"case_id": "case-1"}
+    assert start_params == original_start_params
+
+
+def test_advance_workflow_restores_external_context_after_rehydration(monkeypatch):
+    configured_external_context = {
+        "get_process_initiator_user": {"username": "bob"},
+    }
+    workflow = SimpleNamespace(script_engine=runner.CustomScriptEngine())
+    monkeypatch.setattr(runner, "hydrate_workflow", lambda *args, **kwargs: workflow)
+    monkeypatch.setattr(runner, "next_task", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        runner,
+        "_advance_workflow",
+        lambda *args, **kwargs: {"status": "ok"},
+    )
+
+    result = runner.advance_workflow(
+        specs={},
+        state={"restored": True},
+        completed_task=None,
+        strategy_name="oneAtATime",
+        start_params={
+            "data": {
+                "spiff__external_context": configured_external_context,
+            },
+        },
+    )
+
+    assert result == {"status": "ok"}
+    assert workflow.script_engine.external_context == configured_external_context
+
+
 def test_advance_workflow_prints_unittest_break_when_no_ready_task_is_unexpected(monkeypatch, capsys):
     task = FakeTask(bpmn_id="InitialTask")
     workflow = SimpleNamespace(subprocess_specs={}, completed=False)
