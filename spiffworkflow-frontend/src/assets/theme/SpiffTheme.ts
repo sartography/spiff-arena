@@ -30,11 +30,21 @@ export const BRAND_GREEN = {
 };
 
 // WCAG 2.1 AA (4.5:1 for normal text):
-// - light.main #0F766E: 5.47:1 vs white, 5.02:1 vs #f5f5f5 (as text)
-// - dark.main #0E857B: 4.16:1 vs #121212 (as text), 4.51:1 (white text on
-//   it as a background) -- same balanced-tradeoff shape as BRAND_GREEN's
-//   dark.main, since no single shade clears 4.5:1 in both directions on a
-//   dark background.
+// - light.main #0F766E: 5.47:1 vs white, 5.02:1 vs #f5f5f5 (as text), and
+//   5.47:1 for white text on it as a filled background -- one shade clears
+//   both directions on a light background, so light mode keeps white
+//   contrastText.
+// - dark.main #14B8A6 has to work in three places: as text/border directly
+//   on the page background (e.g. outlined buttons -- 7.53:1 vs #121212),
+//   as the selected-nav-item text against SideNav's lighter
+//   selected-row highlight background (rgba(255,255,255,0.16) over
+//   #121212, ~#383838 -- 4.71:1), and as a filled-button background
+//   (8.44:1 for BLACK text on it -- it's too light for legible white text,
+//   so dark mode's contrastText, in baseTheme below, is black instead).
+//   One shade clearing all three, rather than trying to force a single
+//   shade+contrastText to do it (which cannot work on a dark background --
+//   see BRAND_GREEN's dark.main for the earlier, narrower version of this
+//   that only checked two of the three and got the tradeoff wrong).
 const BRAND_TEAL = {
   light: {
     main: '#0F766E',
@@ -42,12 +52,12 @@ const BRAND_TEAL = {
     dark: '#134E4A',
   },
   dark: {
-    main: '#0E857B',
-    light: '#0D9488',
-    dark: '#134E4A',
+    main: '#14B8A6',
+    light: '#2DD4BF',
+    dark: '#0D9488',
     // Brighter accent for content that needs to stand out against dark
     // backgrounds more than `main` allows (e.g. the selected-tab indicator).
-    accent: '#2DD4BF',
+    accent: '#5EEAD4',
   },
 };
 
@@ -290,7 +300,12 @@ const baseTheme = (mode: PaletteMode) => {
         main: BRAND.dark.main,
         light: BRAND.dark.light,
         dark: BRAND.dark.dark,
-        contrastText: '#ffffff',
+        // BRAND.dark.main is chosen to pass contrast as text/border against
+        // the dark background (and the selected-nav-item highlight), which
+        // makes it too light for legible WHITE text as a filled button
+        // background -- black text passes instead (8.44:1). See the
+        // comment on BRAND_TEAL.dark above.
+        contrastText: '#000000',
       },
       secondary: {
         main: grey[300],

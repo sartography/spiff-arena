@@ -1154,63 +1154,70 @@ export default function ProcessModelTreePage({
     return (
       <Box
         key={model.id}
-        role="button"
-        tabIndex={0}
         data-testid={`group-tree-model-${modifyProcessIdentifierForPathParam(model.id)}`}
-        onClick={() => navigateToViewModel(model)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            navigateToViewModel(model);
-          }
-        }}
         sx={{
           display: 'flex',
           alignItems: 'center',
           gap: 1,
-          cursor: 'pointer',
           py: 0.75,
           pl: ctx.depth * 2.5 + 3,
           pr: 2,
           borderBottom: '1px solid',
           borderColor: 'borders.primary',
           backgroundColor: 'background.paper',
-          '&:hover': { backgroundColor: 'action.hover' },
         }}
       >
-        <Box sx={{ flex: '1 1 auto', minWidth: 0, maxWidth: '100%' }}>
-          <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
-            {model.display_name}
-          </Typography>
-          {modelDescription ? (
+        <Box
+          role="button"
+          tabIndex={0}
+          onClick={() => navigateToViewModel(model)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              navigateToViewModel(model);
+            }
+          }}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            cursor: 'pointer',
+            flex: '1 1 auto',
+            minWidth: 0,
+            '&:hover': { backgroundColor: 'action.hover' },
+          }}
+        >
+          <Box sx={{ flex: '1 1 auto', minWidth: 0, maxWidth: '100%' }}>
+            <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
+              {model.display_name}
+            </Typography>
+            {modelDescription ? (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                title={model.description || undefined}
+                sx={processDescriptionSx}
+              >
+                {modelDescription}
+              </Typography>
+            ) : null}
+          </Box>
+          {stats && stats.instance_count > 0 ? (
             <Typography
               variant="caption"
               color="text.secondary"
-              title={model.description || undefined}
-              sx={processDescriptionSx}
+              noWrap
+              sx={{ flexShrink: 0 }}
             >
-              {modelDescription}
+              {t('n_runs', { count: stats.instance_count })}
             </Typography>
           ) : null}
         </Box>
-        {stats && stats.instance_count > 0 ? (
-          <Typography
-            variant="caption"
-            color="text.disabled"
-            noWrap
-            sx={{ flexShrink: 0 }}
-          >
-            {t('n_runs', { count: stats.instance_count })}
-          </Typography>
-        ) : null}
         <Tooltip title={t('start_process')}>
           <IconButton
             color="primary"
             size="small"
             aria-label={t('start_process')}
-            onClick={(e) => {
-              e.stopPropagation();
-              navigateToStartModel(model);
-            }}
+            onClick={() => navigateToStartModel(model)}
             sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
           >
             <PlayArrow fontSize="small" />
@@ -1219,10 +1226,7 @@ export default function ProcessModelTreePage({
         <Button
           variant="contained"
           size="small"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigateToStartModel(model);
-          }}
+          onClick={() => navigateToStartModel(model)}
           sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
         >
           {t('start_process')}

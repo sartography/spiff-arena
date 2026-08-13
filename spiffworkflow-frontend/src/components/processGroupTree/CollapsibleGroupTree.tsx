@@ -76,44 +76,59 @@ export default function CollapsibleGroupTree({
     return (
       <Box key={group.id} data-testid={`group-tree-node-${group.id}`}>
         <Box
-          role="button"
-          tabIndex={0}
-          aria-expanded={expanded}
-          onClick={() => toggle(group.id)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              toggle(group.id);
-            }
-          }}
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: 1,
-            cursor: 'pointer',
-            py: 1,
-            pl: depth * INDENT_PER_LEVEL + 1,
-            pr: 2,
             borderBottom: '1px solid',
             borderColor: 'borders.primary',
             backgroundColor: groupRowBackgroundColor,
-            '&:hover': { backgroundColor: 'action.hover' },
           }}
         >
-          {expanded ? (
-            <ExpandMoreIcon fontSize="small" />
-          ) : (
-            <ChevronRightIcon fontSize="small" />
-          )}
-          <FolderIcon fontSize="small" color="action" />
-          <Typography sx={{ fontWeight: 600 }}>{group.display_name}</Typography>
-          <Box sx={{ flexGrow: 1 }} />
-          {renderGroupMetadata ? (
-            renderGroupMetadata(group, count)
-          ) : getGroupInstanceCount ? (
-            <Chip size="small" label={count} />
+          <Box
+            role="button"
+            tabIndex={0}
+            aria-expanded={expanded}
+            onClick={() => toggle(group.id)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggle(group.id);
+              }
+            }}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              cursor: 'pointer',
+              flexGrow: 1,
+              minWidth: 0,
+              py: 1,
+              pl: depth * INDENT_PER_LEVEL + 1,
+              pr: 2,
+              '&:hover': { backgroundColor: 'action.hover' },
+            }}
+          >
+            {expanded ? (
+              <ExpandMoreIcon fontSize="small" />
+            ) : (
+              <ChevronRightIcon fontSize="small" />
+            )}
+            <FolderIcon fontSize="small" color="action" />
+            <Typography sx={{ fontWeight: 600 }}>
+              {group.display_name}
+            </Typography>
+            <Box sx={{ flexGrow: 1 }} />
+            {renderGroupMetadata ? (
+              renderGroupMetadata(group, count)
+            ) : getGroupInstanceCount ? (
+              <Chip size="small" label={count} />
+            ) : null}
+          </Box>
+          {renderGroupActions ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', pr: 2 }}>
+              {renderGroupActions(group)}
+            </Box>
           ) : null}
-          {renderGroupActions ? renderGroupActions(group) : null}
         </Box>
         <Collapse in={expanded} unmountOnExit>
           {childGroups.map((child) => renderGroup(child, depth + 1))}

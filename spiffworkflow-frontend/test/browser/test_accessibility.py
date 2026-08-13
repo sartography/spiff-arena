@@ -34,6 +34,27 @@ def test_process_groups_list_has_no_wcag_violations(page: Page) -> None:
     logout(page)
 
 
+def test_process_groups_tree_expanded_has_no_wcag_violations(page: Page) -> None:
+    """Scans a real, non-default UI state: axe only sees what's actually in
+    the DOM when it runs, so a scan of the collapsed tree (see
+    test_process_groups_list_has_no_wcag_violations above) says nothing
+    about what expanding a group renders. This caught 28 nested-interactive
+    violations and a color-contrast violation on the model rows that the
+    collapsed-state scan couldn't see."""
+    login(page)
+    page.goto(f"{BASE_URL}/process-groups")
+    group_toggle = page.locator(
+        '[data-testid="group-tree-node-misc"] [role="button"]'
+    ).first
+    expect(group_toggle).to_be_visible(timeout=10000)
+    group_toggle.click()
+    expect(page.locator('[data-testid^="group-tree-model-"]').first).to_be_visible(
+        timeout=10000
+    )
+    assert_no_violations(page, "process_groups_tree_expanded")
+    logout(page)
+
+
 def test_process_model_show_has_no_wcag_violations(page: Page) -> None:
     login(page)
     page.goto(f"{BASE_URL}/process-groups")
