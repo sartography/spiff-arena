@@ -260,6 +260,7 @@
   "line_number": "Line Number",
   "list_of_tabs": "List of tabs",
   "load": "Load",
+  "loading": "Loading",
   "local_configuration": "Local Configuration",
   "location": "Location",
   "location_description": "Only process models within this path will have access to this message.",

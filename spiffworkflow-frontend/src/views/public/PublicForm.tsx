@@ -177,7 +177,7 @@ export default function PublicForm() {
     const style = { margin: '50px 0 50px 50px' };
     return (
       <Box sx={style}>
-        <CircularProgress />
+        <CircularProgress aria-label={t('loading')} />
       </Box>
     );
   };
