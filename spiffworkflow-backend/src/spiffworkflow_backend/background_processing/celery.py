@@ -1,6 +1,14 @@
 import flask.wrappers
 from celery import Celery
 from celery import Task
+from celery.signals import before_task_publish
+
+from spiffworkflow_backend.background_processing.background_job import before_task_publish_handler
+
+
+def _register_before_publish_handler(celery_app: Celery) -> None:
+    """Attach the envelope-metadata fallback for legacy send_task callers."""
+    before_task_publish.connect(before_task_publish_handler)
 
 
 def init_celery_if_appropriate(app: flask.app.Flask) -> None:
@@ -54,5 +62,6 @@ def celery_init_app(app: flask.app.Flask) -> Celery:
     celery_app.config_from_object(celery_configs)
     celery_app.conf.update(app.config)
     celery_app.set_default()
+    _register_before_publish_handler(celery_app)
     app.celery_app = celery_app
     return celery_app

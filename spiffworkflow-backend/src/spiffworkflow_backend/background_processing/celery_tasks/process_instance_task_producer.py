@@ -1,12 +1,13 @@
 import time
 
-import celery
 from flask import current_app
 
 from spiffworkflow_backend.background_processing import CELERY_TASK_EVENT_NOTIFIER
 from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_RUN
 from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_START_FROM_MESSAGE
 from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL
+from spiffworkflow_backend.background_processing.background_job import BackgroundJobEnvelope
+from spiffworkflow_backend.background_processing.background_job import BackgroundJobPublisher
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -54,10 +55,19 @@ def queue_future_task_if_appropriate(
         # (maybe due to subsecond stuff, maybe because of clock skew within the cluster of computers running spiff)
         # celery_task_process_instance_run.apply_async(kwargs=args_to_celery, countdown=countdown + 1)  # type: ignore
 
-        async_result = celery.current_app.send_task(CELERY_TASK_PROCESS_INSTANCE_RUN, kwargs=args_to_celery, countdown=countdown)
+        published_job = BackgroundJobPublisher().publish(
+            BackgroundJobEnvelope.create(
+                CELERY_TASK_PROCESS_INSTANCE_RUN,
+                args_to_celery,
+                countdown=countdown,
+                process_instance_id=process_instance.id,
+                task_guid=task_guid,
+            ),
+            countdown=countdown,
+        )
         message = (
             f"Queueing process instance ({process_instance.id}) for future task ({task_guid}). "
-            f"new celery task id: ({async_result.task_id})"
+            f"new celery task id: ({published_job.delivery_id})"
         )
         current_app.logger.info(message)
         return True
@@ -82,8 +92,15 @@ def queue_process_instance_if_appropriate(
     #     )
 
     if should_queue_process_instance(execution_mode):
-        async_result = celery.current_app.send_task(CELERY_TASK_PROCESS_INSTANCE_RUN, (process_instance.id, task_guid))
-        current_app.logger.info(f"Queueing process instance ({process_instance.id}) for celery ({async_result.task_id})")
+        published_job = BackgroundJobPublisher().publish(
+            BackgroundJobEnvelope.create(
+                CELERY_TASK_PROCESS_INSTANCE_RUN,
+                {"process_instance_id": process_instance.id, "task_guid": task_guid},
+                process_instance_id=process_instance.id,
+                task_guid=task_guid,
+            )
+        )
+        current_app.logger.info(f"Queueing process instance ({process_instance.id}) for celery ({published_job.delivery_id})")
         return True
     return False
 
@@ -97,11 +114,20 @@ def queue_event_notifier_if_appropriate(updated_process_instance: ProcessInstanc
             != updated_process_instance.process_model_identifier
         )
     ):
-        async_result = celery.current_app.send_task(
-            CELERY_TASK_EVENT_NOTIFIER,
-            (updated_process_instance.id, updated_process_instance.process_model_identifier, event_type),
+        published_job = BackgroundJobPublisher().publish(
+            BackgroundJobEnvelope.create(
+                CELERY_TASK_EVENT_NOTIFIER,
+                {
+                    "updated_process_instance_id": updated_process_instance.id,
+                    "process_model_identifier": updated_process_instance.process_model_identifier,
+                    "event_type": event_type,
+                },
+                process_instance_id=updated_process_instance.id,
+            )
         )
-        current_app.logger.info(f"Queueing process instance ({updated_process_instance.id}) for celery ({async_result.task_id})")
+        current_app.logger.info(
+            f"Queueing process instance ({updated_process_instance.id}) for celery ({published_job.delivery_id})"
+        )
         return True
     return False
 
@@ -112,13 +138,16 @@ def queue_start_process_instance_if_appropriate(
     initiator_user_id: int,
 ) -> bool:
     if queue_enabled_for_process_model():
-        celery.current_app.send_task(
-            CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL,
-            (
-                process_model_identifier,
-                triggering_task_guid,
-                initiator_user_id,
-            ),
+        BackgroundJobPublisher().publish(
+            BackgroundJobEnvelope.create(
+                CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL,
+                {
+                    "process_model_identifier": process_model_identifier,
+                    "task_guid": triggering_task_guid,
+                    "user_id": initiator_user_id,
+                },
+                task_guid=triggering_task_guid,
+            )
         )
         return True
     return False
@@ -129,15 +158,18 @@ def queue_message_start_process_instance(
     message_instance_id: int,
     message_triggerable_process_model_id: int,
 ) -> str:
-    async_result = celery.current_app.send_task(
-        CELERY_TASK_PROCESS_INSTANCE_START_FROM_MESSAGE,
-        (
-            process_instance_id,
-            message_instance_id,
-            message_triggerable_process_model_id,
-        ),
+    published_job = BackgroundJobPublisher().publish(
+        BackgroundJobEnvelope.create(
+            CELERY_TASK_PROCESS_INSTANCE_START_FROM_MESSAGE,
+            {
+                "process_instance_id": process_instance_id,
+                "message_instance_id": message_instance_id,
+                "message_triggerable_process_model_id": message_triggerable_process_model_id,
+            },
+            process_instance_id=process_instance_id,
+        )
     )
     current_app.logger.info(
-        f"Queueing reserved message-start process instance ({process_instance_id}) for celery ({async_result.task_id})"
+        f"Queueing reserved message-start process instance ({process_instance_id}) for celery ({published_job.delivery_id})"
     )
-    return str(async_result.task_id)
+    return published_job.delivery_id

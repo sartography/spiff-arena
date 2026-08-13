@@ -1,28 +1,25 @@
-import time
 from typing import Any
 
 from billiard import current_process  # type: ignore
 from celery import shared_task
 from flask import current_app
 
+from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_RUN
+from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_START_FROM_MESSAGE
+from spiffworkflow_backend.background_processing.background_job import BackgroundJobEnvelope
+from spiffworkflow_backend.background_processing.background_job import background_job_context
+from spiffworkflow_backend.background_processing.background_job_instrumentation import BackgroundJobInstrumentation
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
     queue_process_instance_if_appropriate,
 )
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.future_task import FutureTaskModel
-from spiffworkflow_backend.models.message_instance import MessageInstanceModel
-from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
+from spiffworkflow_backend.background_processing.process_instance_operations import BackgroundOperationOutcome
+from spiffworkflow_backend.background_processing.process_instance_operations import ProcessInstanceOperationError
+from spiffworkflow_backend.background_processing.process_instance_operations import run_queued_process_instance
+from spiffworkflow_backend.background_processing.process_instance_operations import start_reserved_process_from_message
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.message_service import MessageService
-from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
-from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
-from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 
 TEN_MINUTES = 60 * 10
 
@@ -74,81 +71,40 @@ def celery_task_event_notifier_run(
 @shared_task(ignore_result=False, time_limit=TEN_MINUTES, bind=True)
 def celery_task_process_instance_run(self, process_instance_id: int, task_guid: str | None = None) -> dict:  # type: ignore
     proc_index = current_process().index
-
     celery_task_id = self.request.id
     logger_prefix = f"celery_task_process_instance_run[{celery_task_id}]"
-    worker_intro_log_message = f"{logger_prefix}: process_instance_id: {process_instance_id}"
-    if task_guid:
-        worker_intro_log_message += f" task_guid: {task_guid}"
-    current_app.logger.info(worker_intro_log_message)
-
-    ProcessInstanceLockService.set_thread_local_locking_context("celery:worker")
-    process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-
-    skipped_mesage = None
-    if process_instance is None:
-        skipped_mesage = "Skipped because the process instance no longer exists in the database. It could have been deleted."
-    elif task_guid is None and ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
-        skipped_mesage = "Skipped because the process instance is set to run in the future."
-    if skipped_mesage is not None:
-        return {
-            "ok": True,
-            "process_instance_id": process_instance_id,
-            "task_guid": task_guid,
-            "message": skipped_mesage,
-        }
-
+    envelope = BackgroundJobEnvelope.from_delivery(
+        CELERY_TASK_PROCESS_INSTANCE_RUN,
+        {"process_instance_id": process_instance_id, "task_guid": task_guid},
+        getattr(self.request, "headers", None),
+        delivery_job_id=celery_task_id,
+    )
+    instrumentation = BackgroundJobInstrumentation(envelope)
     try:
-        task_guid_for_requeueing = task_guid
-        future_task_was_rescheduled = False
-        with ProcessInstanceQueueService.dequeued(process_instance):
-            # run ready tasks to force them to run in case they have instructions on them since queue_instructions_for_end_user
-            # has a should_break_before that will exit if there are instructions.
-            ProcessInstanceService.run_process_instance_with_runtime(
-                process_instance, execution_strategy_name="run_current_ready_tasks", should_schedule_waiting_timer_events=False
+        with background_job_context(envelope):
+            result = run_queued_process_instance(process_instance_id, task_guid, instrumentation=instrumentation)
+            if result.should_requeue:
+                with instrumentation.phase("requeue"):
+                    # Delivery remains an adapter concern; the operation only decides whether follow-up work is needed.
+                    process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).one()
+                    queue_process_instance_if_appropriate(process_instance, task_guid=result.requeue_task_guid)
+        if result.outcome == BackgroundOperationOutcome.locked:
+            exception = result.exception or "unknown locking error"
+            instrumentation.finish_operation("locked", process_instance_id=process_instance_id, task_guid=task_guid)
+            current_app.logger.info(
+                f"{logger_prefix}: Could not run process instance with worker: {current_app.config['PROCESS_UUID']}"
+                f" - {proc_index}. Error was: {exception}"
             )
-            # we need to save instructions to the db so the frontend progress page can view them,
-            # and this is the only way to do it
-            _runtime, task_runnability = ProcessInstanceService.run_process_instance_with_runtime(
-                process_instance,
-                execution_strategy_name="queue_instructions_for_end_user",
-            )
-            # currently, whenever we get a task_guid, that means that that task, which was a future task, is ready to run.
-            # there is an assumption that it was successfully processed by run_process_instance_with_runtime above.
-            # we might want to check that assumption.
-            if task_guid is not None:
-                completed_task_model = (
-                    TaskModel.query.filter_by(guid=task_guid)
-                    .filter(TaskModel.state.in_(["COMPLETED", "ERROR", "CANCELLED"]))  # type: ignore
-                    .first()
-                )
-                future_task = FutureTaskModel.query.filter_by(completed=False, guid=task_guid).first()
-                if completed_task_model is not None:
-                    if future_task is not None:
-                        future_task.completed = True
-                        db.session.add(future_task)
-                        db.session.commit()
-                        task_guid_for_requeueing = None
-                elif future_task is not None and future_task.run_at_in_seconds > round(time.time()):
-                    future_task_was_rescheduled = True
-                    task_guid_for_requeueing = None
-        if task_runnability == TaskRunnability.has_ready_tasks and not future_task_was_rescheduled:
-            queue_process_instance_if_appropriate(process_instance, task_guid=task_guid_for_requeueing)
-        return {"ok": True, "process_instance_id": process_instance_id, "task_guid": task_guid}
-    except (ProcessInstanceIsAlreadyLockedError, ProcessInstanceCannotBeRunError) as exception:
-        current_app.logger.info(
-            f"{logger_prefix}: Could not run process instance with worker: {current_app.config['PROCESS_UUID']}"
-            f" - {proc_index}. Error was: {str(exception)}"
-        )
-        return {"ok": False, "process_instance_id": process_instance_id, "task_guid": task_guid, "exception": str(exception)}
-    except Exception as exception:
-        db.session.rollback()  # in case the above left the database with a bad transaction
-        error_message = (
-            f"{logger_prefix}: Error running process_instance {process_instance_id} task_guid {task_guid}. {str(exception)}"
-        )
-        db.session.add(process_instance)
-        db.session.commit()
+        else:
+            instrumentation.finish_operation(result.outcome.value, process_instance_id=process_instance_id, task_guid=task_guid)
+        return result.celery_result()
+    except ProcessInstanceOperationError as exception:
+        instrumentation.finish_operation("failed", process_instance_id=process_instance_id, task_guid=task_guid)
+        error_message = f"{logger_prefix}: {str(exception)}"
         raise SpiffCeleryWorkerError(error_message) from exception
+    except Exception as exception:
+        instrumentation.finish_operation("failed", process_instance_id=process_instance_id, task_guid=task_guid)
+        raise SpiffCeleryWorkerError(f"{logger_prefix}: Error adapting background job delivery. {str(exception)}") from exception
 
 
 @shared_task(ignore_result=False, time_limit=TEN_MINUTES, bind=True)
@@ -185,41 +141,36 @@ def celery_task_process_instance_start_from_message(
 ) -> dict:
     celery_task_id = self.request.id
     logger_prefix = f"celery_task_process_instance_start_from_message[{celery_task_id}]"
-    current_app.logger.info(
-        f"{logger_prefix}: process_instance_id: {process_instance_id}, message_instance_id: {message_instance_id}"
+    arguments = {
+        "process_instance_id": process_instance_id,
+        "message_instance_id": message_instance_id,
+        "message_triggerable_process_model_id": message_triggerable_process_model_id,
+    }
+    envelope = BackgroundJobEnvelope.from_delivery(
+        CELERY_TASK_PROCESS_INSTANCE_START_FROM_MESSAGE,
+        arguments,
+        getattr(self.request, "headers", None),
+        delivery_job_id=celery_task_id,
     )
-    ProcessInstanceLockService.set_thread_local_locking_context("celery:message-start")
-
-    process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-    message_instance = MessageInstanceModel.query.filter_by(id=message_instance_id).first()
-    message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
-        id=message_triggerable_process_model_id
-    ).first()
-    if process_instance is None:
-        raise SpiffCeleryWorkerError(f"Could not find reserved process instance with id {process_instance_id}")
-    if message_instance is None:
-        raise SpiffCeleryWorkerError(f"Could not find message instance with id {message_instance_id}")
-    if message_triggerable_process_model is None:
-        raise SpiffCeleryWorkerError(
-            f"Could not find message-triggerable process model with id {message_triggerable_process_model_id}"
-        )
-
+    instrumentation = BackgroundJobInstrumentation(envelope)
     try:
-        receiver_message = MessageService.start_reserved_process_from_message(
-            process_instance,
-            message_instance,
-            message_triggerable_process_model,
+        with background_job_context(envelope):
+            result = start_reserved_process_from_message(
+                process_instance_id,
+                message_instance_id,
+                message_triggerable_process_model_id,
+                instrumentation=instrumentation,
+            )
+        instrumentation.finish_operation(
+            result.outcome.value,
+            process_instance_id=process_instance_id,
+            message_instance_id=message_instance_id,
+            receiver_message_instance_id=result.receiver_message_instance_id,
         )
-        return {
-            "ok": True,
-            "process_instance_id": process_instance_id,
-            "message_instance_id": message_instance_id,
-            "receiver_message_instance_id": receiver_message.id,
-        }
-    except Exception as exception:
-        db.session.rollback()
-        error_message = (
-            f"{logger_prefix}: Error starting reserved process instance {process_instance_id} "
-            f"from message instance {message_instance_id}. {str(exception)}"
+        return result.celery_result()
+    except ProcessInstanceOperationError as exception:
+        instrumentation.finish_operation(
+            "failed", process_instance_id=process_instance_id, message_instance_id=message_instance_id
         )
+        error_message = f"{logger_prefix}: {str(exception)}"
         raise SpiffCeleryWorkerError(error_message) from exception
