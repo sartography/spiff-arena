@@ -19,6 +19,44 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestAuthorizationService(BaseTest):
+    def test_uses_configured_open_id_groups_claim(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(AuthorizationService, "load_permissions_yaml", lambda: {})
+        user_info = {
+            "preferred_username": "cognito-user",
+            "sub": "cognito-user",
+            "iss": "https://cognito.example.com",
+            "groups": ["wrong-provider-group"],
+            "cognito:groups": ["admin", "operators"],
+        }
+
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", True),
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_GROUPS_CLAIM", "cognito:groups"),
+        ):
+            user = AuthorizationService.create_user_from_sign_in(user_info)
+            assert sorted(group.identifier for group in user.groups) == ["admin", "everybody", "operators"]
+
+            user_info["cognito:groups"] = []
+            user = AuthorizationService.create_user_from_sign_in(user_info)
+            assert [group.identifier for group in user.groups] == ["everybody"]
+
+            user_info["cognito:groups"] = ["admin"]
+            AuthorizationService.create_user_from_sign_in(user_info)
+            del user_info["cognito:groups"]
+            user = AuthorizationService.create_user_from_sign_in(user_info)
+            assert [group.identifier for group in user.groups] == ["everybody"]
+
+            user_info["cognito:groups"] = ["admin"]
+            AuthorizationService.create_user_from_sign_in(user_info)
+            user_info["cognito:groups"] = "admin"
+            user = AuthorizationService.create_user_from_sign_in(user_info)
+            assert sorted(group.identifier for group in user.groups) == ["admin", "everybody"]
+
     def test_sign_in_preserves_yaml_managed_group_assignment_when_oidc_is_authoritative(
         self,
         app: Flask,

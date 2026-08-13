@@ -130,6 +130,9 @@ config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_POOL_PRE_PING", default=True)
 ### open id
 config_from_env("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", default=False)
+# Name of the ID/access-token claim containing the user's group identifiers.
+# Most providers use "groups"; Amazon Cognito uses "cognito:groups".
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_GROUPS_CLAIM", default="groups")
 # Tenant specific fields is a comma separated list of field names that we will be converted to list of strings
 # and store in the user table's tenant_specific_field_n columns. You can have up to three items in this
 # comma-separated list.
