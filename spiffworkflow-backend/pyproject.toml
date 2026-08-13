@@ -66,6 +66,7 @@ dependencies = [
     "starlette>=0.47.2",
     "uvicorn-worker>=0.3.0",
     "httpx2>=2.7.0",
+    "mangum>=0.19.0",
 ]
 
 [dependency-groups]
