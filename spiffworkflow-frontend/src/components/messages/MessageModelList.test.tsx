@@ -7,10 +7,17 @@ const SYSTEM_MESSAGE_SOURCE_LOCATION = 'misc/system-message-notification';
 const SYSTEM_MESSAGE_GROUP_LOCATION = 'misc';
 const MESSAGE_EDITOR_TEST_ID = 'message-editor';
 
-const { makeCallToBackend, messageEditorMock } = vi.hoisted(() => {
+const {
+  makeCallToBackend,
+  messageEditorMock,
+  permissionFetcherMock,
+  canUpdateProcessGroup,
+} = vi.hoisted(() => {
   return {
     makeCallToBackend: vi.fn(),
     messageEditorMock: vi.fn(),
+    permissionFetcherMock: vi.fn(),
+    canUpdateProcessGroup: vi.fn(),
   };
 });
 
@@ -18,6 +25,37 @@ vi.mock('../../services/HttpService', () => {
   return {
     default: {
       makeCallToBackend,
+    },
+  };
+});
+
+vi.mock('../../hooks/useProcessGroups', () => {
+  return {
+    default: () => ({
+      processGroups: [
+        {
+          id: 'order',
+          process_groups: [
+            {
+              id: 'order/request-for-information',
+              process_groups: [],
+            },
+          ],
+        },
+        { id: 'misc', process_groups: [] },
+      ],
+    }),
+  };
+});
+
+vi.mock('../../hooks/PermissionService', () => {
+  return {
+    usePermissionFetcher: (permissionRequestData: Record<string, string[]>) => {
+      permissionFetcherMock(permissionRequestData);
+      return {
+        ability: { can: canUpdateProcessGroup },
+        permissionsLoaded: true,
+      };
     },
   };
 });
@@ -65,6 +103,9 @@ describe('MessageModelList', () => {
   beforeEach(() => {
     makeCallToBackend.mockReset();
     messageEditorMock.mockReset();
+    permissionFetcherMock.mockClear();
+    canUpdateProcessGroup.mockReset();
+    canUpdateProcessGroup.mockReturnValue(true);
   });
 
   it('renders message models from the current api response shape', async () => {
@@ -231,6 +272,55 @@ describe('MessageModelList', () => {
 
     expect(
       screen.queryByTestId(MESSAGE_EDITOR_TEST_ID),
+    ).not.toBeInTheDocument();
+  });
+
+  it('hides message model mutations without PUT permission on the process group', async () => {
+    canUpdateProcessGroup.mockReturnValue(false);
+
+    render(
+      <MemoryRouter>
+        <MessageModelList />
+      </MemoryRouter>,
+    );
+
+    expect(permissionFetcherMock).toHaveBeenCalledWith({
+      '/v1.0/process-groups/order': ['PUT'],
+      '/v1.0/process-groups/order:request-for-information': ['PUT'],
+      '/v1.0/process-groups/misc': ['PUT'],
+    });
+
+    const listCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === '/all-message-models');
+
+    await act(async () => {
+      listCall.successCallback({
+        messages: [
+          {
+            id: 1442,
+            identifier: 'request-for-information-received',
+            location: 'order',
+            schema: {},
+            correlation_properties: [],
+            process_model_identifiers: [],
+          },
+        ],
+      });
+    });
+
+    expect(
+      screen.queryByRole('button', { name: 'add_message_model' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'delete' }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'edit' }));
+
+    expect(screen.getByTestId(MESSAGE_EDITOR_TEST_ID)).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'save' }),
     ).not.toBeInTheDocument();
   });
 
