@@ -25,6 +25,8 @@ SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES="openid,profile,email"
 ```bash
 # Group management
 SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS=false
+# Token claim containing a list of group identifiers (default: groups)
+SPIFFWORKFLOW_BACKEND_OPEN_ID_GROUPS_CLAIM=groups
 
 # Token validation settings
 SPIFFWORKFLOW_BACKEND_OPEN_ID_VERIFY_IAT=true
@@ -50,6 +52,16 @@ SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS=<field1,field2,field3>
 # Internal URL configuration
 SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_INTERNAL_URL=<internal_url>
 SPIFFWORKFLOW_BACKEND_OPEN_ID_INTERNAL_URL_IS_VALID_ISSUER=false
+```
+
+When OpenID is authoritative, Arena synchronizes the user's memberships from
+the configured claim each time the user signs in. A missing or empty claim
+removes memberships that are not also assigned by the permissions file or the
+default user group. Amazon Cognito names this claim `cognito:groups`, so use:
+
+```bash
+SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS=true
+SPIFFWORKFLOW_BACKEND_OPEN_ID_GROUPS_CLAIM=cognito:groups
 ```
 
 ## Multi-Provider Configuration
