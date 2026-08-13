@@ -26,7 +26,7 @@ export default function PaginationForTable({
   paginationDataTestidTag = 'pagination-options',
 }: OwnProps) {
   const { t } = useTranslation();
-  const PER_PAGE_OPTIONS = [2, 10, 50, 100];
+  const PER_PAGE_OPTIONS = [10, 50, 100];
   const [searchParams, setSearchParams] = useSearchParams();
   const paginationQueryParamPrefixToUse = paginationQueryParamPrefix
     ? `${paginationQueryParamPrefix}_`
