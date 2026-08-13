@@ -57,12 +57,8 @@ SPIFFWORKFLOW_BACKEND_OPEN_ID_INTERNAL_URL_IS_VALID_ISSUER=false
 When OpenID is authoritative, Arena synchronizes the user's memberships from
 the configured claim each time the user signs in. A missing or empty claim
 removes memberships that are not also assigned by the permissions file or the
-default user group. Amazon Cognito names this claim `cognito:groups`, so use:
-
-```bash
-SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS=true
-SPIFFWORKFLOW_BACKEND_OPEN_ID_GROUPS_CLAIM=cognito:groups
-```
+default user group. If a provider uses a claim other than `groups`, configure
+that provider-specific claim with `SPIFFWORKFLOW_BACKEND_OPEN_ID_GROUPS_CLAIM`.
 
 ## Multi-Provider Configuration
 
@@ -81,10 +77,9 @@ the expected audience of an ID token returned during login. An access-token
 audience identifies the Arena API that will consume the token. Arena validates
 these independently.
 
-`authorization_resource` is provider-dependent. Amazon Cognito uses the RFC
-8707 `resource` parameter to bind an access token to an API. Keycloak usually
-sets the access-token audience with an audience mapper, and Okta custom
-authorization servers define it in the authorization-server configuration.
+`authorization_resource` and the resulting access-token audience are
+provider-dependent. Configure them only when the provider is set up to issue
+access tokens for the Arena API. See the provider-specific guides for details.
 
 For backward compatibility, configurations without
 `access_token_audiences` continue to accept the legacy client-ID and Keycloak
