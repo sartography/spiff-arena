@@ -202,7 +202,7 @@ export default forwardRef(function TreePanel(
             },
           }}
         >
-          {processGroups?.length && buildTree(processGroups)}
+          {processGroups.length > 0 && buildTree(processGroups)}
         </SimpleTreeView>
       </Stack>
     </Paper>
