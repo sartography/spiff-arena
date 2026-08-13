@@ -1751,8 +1751,11 @@ export default function ProcessInstanceListTableWithFilters({
 
   const onProcessInstanceTableListUpdate = useCallback(
     (result: any) => {
-      // mostly for pagination so we do not set the page to 1 if the report did not change
+      // mostly for pagination so we do not set the page to 1 if the report did not change.
+      // reportHash is null on the initial load, and that does not count as a report
+      // change, so a page number specified in the url is honored on page load.
       if (result.report_hash && result.report_hash !== reportHash) {
+        const reportChanged = reportHash !== null;
         setReportHash(result.report_hash);
         const { page } = getPageInfoFromSearchParams(
           searchParams,
@@ -1760,8 +1763,11 @@ export default function ProcessInstanceListTableWithFilters({
           undefined,
           paginationQueryParamPrefix,
         );
-        if (page !== 1) {
-          searchParams.set('page', '1');
+        if (reportChanged && page !== 1) {
+          const pageParamName = paginationQueryParamPrefix
+            ? `${paginationQueryParamPrefix}_page`
+            : 'page';
+          searchParams.set(pageParamName, '1');
           setSearchParams(searchParams);
         }
       }

@@ -200,7 +200,7 @@ export default function ProcessModelTabs({
                   field_value: processModel.id,
                 },
               ]}
-              perPageOptions={[2, 5, 25]}
+              perPageOptions={[5, 25]}
               showLinkToReport
               variant="for-me"
             />
