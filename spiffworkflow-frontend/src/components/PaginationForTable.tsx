@@ -1,6 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
 import { TablePagination } from '@mui/material';
-import { ChangeEvent, MouseEvent } from 'react';
+import { ChangeEvent, MouseEvent, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PaginationObject } from '../interfaces';
 
@@ -26,21 +26,37 @@ export default function PaginationForTable({
   paginationDataTestidTag = 'pagination-options',
 }: OwnProps) {
   const { t } = useTranslation();
-  const PER_PAGE_OPTIONS = [2, 10, 50, 100];
+  const PER_PAGE_OPTIONS = [10, 50, 100];
   const [searchParams, setSearchParams] = useSearchParams();
   const paginationQueryParamPrefixToUse = paginationQueryParamPrefix
     ? `${paginationQueryParamPrefix}_`
     : '';
 
+  const setPageSearchParam = useCallback(
+    (newPage: number) => {
+      searchParams.set(
+        `${paginationQueryParamPrefixToUse}page`,
+        String(newPage),
+      );
+      setSearchParams(searchParams);
+    },
+    [searchParams, setSearchParams, paginationQueryParamPrefixToUse],
+  );
+
+  // a page beyond the data, e.g. from a hand-edited or stale url, snaps back
+  // to the last page that actually exists.
+  const lastPage = pagination ? Math.max(pagination.pages, 1) : null;
+  useEffect(() => {
+    if (lastPage !== null && page > lastPage) {
+      setPageSearchParam(lastPage);
+    }
+  }, [lastPage, page, setPageSearchParam]);
+
   const updateRows = (
     _event: MouseEvent<HTMLButtonElement> | null,
     newPage: number,
   ) => {
-    searchParams.set(
-      `${paginationQueryParamPrefixToUse}page`,
-      String(newPage + 1),
-    );
-    setSearchParams(searchParams);
+    setPageSearchParam(newPage + 1);
   };
 
   const handleChangeRowsPerPage = (event: ChangeEvent<HTMLInputElement>) => {
@@ -53,10 +69,6 @@ export default function PaginationForTable({
   };
 
   if (pagination) {
-    const maxPages = 1000;
-    const totalItems =
-      pagination.pages < maxPages ? pagination.total : maxPages * perPage;
-
     return (
       <>
         {tableToDisplay}
@@ -64,12 +76,14 @@ export default function PaginationForTable({
           className={paginationClassName}
           data-testid={paginationDataTestidTag}
           component="div"
-          count={totalItems}
+          count={pagination.total}
           page={page - 1}
           onPageChange={updateRows}
           rowsPerPage={perPage}
           onRowsPerPageChange={handleChangeRowsPerPage}
           rowsPerPageOptions={perPageOptions || PER_PAGE_OPTIONS}
+          showFirstButton
+          showLastButton
           labelRowsPerPage={t('pagination_items_per_page')}
           labelDisplayedRows={({ from, to, count }) =>
             t('pagination_display', { from, to, count })
