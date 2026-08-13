@@ -378,7 +378,15 @@ export default function MessageModelList({
 
   const closeEditor = useCallback(() => {
     setEditorState(null);
-    // Clear message_id and source_location params when closing editor
+    if (
+      !searchParams.has('message_id') &&
+      !searchParams.has('source_location')
+    ) {
+      return;
+    }
+
+    // Clear message_id and source_location params when the editor was opened
+    // from a URL that selected a specific message model.
     const nextSearchParams = new URLSearchParams(searchParams);
     nextSearchParams.delete('message_id');
     nextSearchParams.delete('source_location');
