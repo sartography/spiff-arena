@@ -269,7 +269,7 @@ class CustomEnvironment(TaskDataEnvironment):
             "process_model_identifier": "local",
         }
         external_context["get_url_for_task"] = lambda task_guid, public=False: (
-            f"http://localhost:5173{'/public' if public is True else ''}/tasks/0/{task_guid}"
+            f"http://local.spiff{'/public' if public is True else ''}/tasks/0/{task_guid}"
         )
         external_context["get_task_potential_owners"] = lambda task_guid: {
             "users": ["task_owner_1@example.com", "task_owner_2@example.com"],

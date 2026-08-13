@@ -98,8 +98,8 @@ def test_custom_environment_get_url_for_task_returns_local_task_urls():
     )
 
     assert result is True
-    assert context["task_url"] == "http://localhost:5173/tasks/0/task-guid-123"
-    assert context["public_task_url"] == "http://localhost:5173/public/tasks/0/task-guid-123"
+    assert context["task_url"] == "http://local.spiff/tasks/0/task-guid-123"
+    assert context["public_task_url"] == "http://local.spiff/public/tasks/0/task-guid-123"
 
 
 def test_custom_environment_get_task_potential_owners_returns_local_stub_owners():
