@@ -2,9 +2,11 @@ import { useSearchParams } from 'react-router-dom';
 import {
   FormControl,
   InputLabel,
+  MenuItem,
   Select,
   Stack,
   TablePagination,
+  Typography,
 } from '@mui/material';
 import { ChangeEvent, MouseEvent, useCallback, useEffect, useId } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -84,17 +86,26 @@ export default function PaginationForTable({
     const totalItems =
       pagination.pages < MAX_PAGES ? pagination.total : MAX_PAGES * perPage;
 
-    // native select options stay fast even with the MAX_PAGES worst case.
     // each option shows the page number and the item range it covers, so the
-    // meaning of a page is clear regardless of the per-page setting.
+    // meaning of a page is clear regardless of the per-page setting. this
+    // replaces the default displayed-rows label, which repeated the same range.
     const pageOptions = [];
     for (let pageOption = 1; pageOption <= totalPages; pageOption += 1) {
       const from = (pageOption - 1) * perPage + 1;
       const to = Math.min(pageOption * perPage, totalItems);
       pageOptions.push(
-        <option key={pageOption} value={pageOption}>
+        <MenuItem dense key={pageOption} value={pageOption}>
           {`${pageOption} (${from}-${to})`}
-        </option>,
+        </MenuItem>,
+      );
+    }
+    if (isCapped) {
+      // the ui stops paginating at MAX_PAGES even though more data exists, so
+      // say so where the user would go looking for the missing pages.
+      pageOptions.push(
+        <MenuItem dense disabled key="capped">
+          {t('pagination_more_items', { count: totalItems })}
+        </MenuItem>,
       );
     }
 
@@ -106,6 +117,13 @@ export default function PaginationForTable({
           spacing={1}
           sx={{ alignItems: 'center', justifyContent: 'flex-end' }}
         >
+          {isCapped ? (
+            // more data exists than the ui will paginate through: say so
+            // whenever the cap is in effect, not just at the dead end.
+            <Typography variant="caption" color="text.secondary">
+              {t('pagination_page_limit_reached', { count: totalItems })}
+            </Typography>
+          ) : null}
           <TablePagination
             className={paginationClassName}
             data-testid={paginationDataTestidTag}
@@ -119,24 +137,18 @@ export default function PaginationForTable({
             showFirstButton
             showLastButton
             labelRowsPerPage={t('pagination_items_per_page')}
-            labelDisplayedRows={({ from, to, count }) =>
-              t(
-                isCapped
-                  ? 'pagination_display_more_than'
-                  : 'pagination_display',
-                { from, to, count },
-              )
-            }
+            // the go-to-page select shows the current page's item range, so the
+            // default 'x-y of z' label would say the same thing twice.
+            labelDisplayedRows={() => null}
           />
-          <FormControl size="small" variant="standard">
-            <InputLabel htmlFor={goToPageSelectId}>
+          <FormControl size="small" variant="standard" sx={{ minWidth: 130 }}>
+            <InputLabel id={goToPageSelectId}>
               {t('pagination_go_to_page')}
             </InputLabel>
             <Select
-              native
+              labelId={goToPageSelectId}
               value={page}
               data-testid="pagination-page-select"
-              inputProps={{ id: goToPageSelectId }}
               onChange={(event) => {
                 const newPage = Number(event.target.value);
                 if (newPage !== page) {
