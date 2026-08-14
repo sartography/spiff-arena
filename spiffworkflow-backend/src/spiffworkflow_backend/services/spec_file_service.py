@@ -317,9 +317,20 @@ class SpecFileService(FileSystemService):
             else:
                 existing_model_identifier = message_triggerable_process_model.process_model_identifier
                 if existing_model_identifier != ref.relative_location:
-                    raise ProcessModelFileInvalidError(
-                        f"Message model is already used to start process model {existing_model_identifier}"
+                    old_file_path = SpecFileService.full_path_from_relative_path(
+                        SpecFileService.path_join(existing_model_identifier, message_triggerable_process_model.file_name)
                     )
+                    # A missing old file means the process model moved. Preserve
+                    # the trigger row (and its id) while updating its location.
+                    # If the old file still exists, this is a real duplicate
+                    # message-start declaration and must remain an error.
+                    if os.path.isfile(old_file_path):
+                        raise ProcessModelFileInvalidError(
+                            f"Message model is already used to start process model {existing_model_identifier}"
+                        )
+                    message_triggerable_process_model.process_model_identifier = ref.relative_location
+                    message_triggerable_process_model.file_name = ref.file_name
+                    db.session.add(message_triggerable_process_model)
                 elif message_triggerable_process_model.file_name != ref.file_name:
                     message_triggerable_process_model.file_name = ref.file_name
                     db.session.add(message_triggerable_process_model)

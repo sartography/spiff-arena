@@ -9,6 +9,7 @@ from hmac import HMAC
 from hmac import compare_digest
 from typing import Any
 from typing import cast
+from urllib.parse import urlencode
 
 if sys.version_info < (3, 11):
     from typing_extensions import NotRequired
@@ -105,6 +106,8 @@ class AuthenticationOption(AuthenticationOptionForApi):
     client_id: str
     client_secret: str
     additional_valid_issuers: NotRequired[list[str]]
+    access_token_audiences: NotRequired[list[str] | str]
+    authorization_resource: NotRequired[str]
 
 
 class AuthenticationOptionNotFoundError(Exception):
@@ -227,7 +230,26 @@ class AuthenticationService:
 
     @classmethod
     def valid_audiences(cls, authentication_identifier: str) -> list[str]:
+        """Return legacy token audiences for configurations that have not migrated."""
         return [*cls.valid_client_ids(authentication_identifier), "account"]
+
+    @classmethod
+    def access_token_audiences(cls, authentication_identifier: str) -> list[str]:
+        auth_options = cls.authentication_option_for_identifier(authentication_identifier)
+        configured_audiences = auth_options.get("access_token_audiences")
+        if configured_audiences is None:
+            return cls.valid_audiences(authentication_identifier)
+        if isinstance(configured_audiences, str):
+            return [value.strip() for value in configured_audiences.split(",") if value.strip()]
+        return configured_audiences
+
+    @classmethod
+    def has_explicit_access_token_audiences(cls, authentication_identifier: str) -> bool:
+        return cls.authentication_option_for_identifier(authentication_identifier).get("access_token_audiences") is not None
+
+    @classmethod
+    def authorization_resource(cls, authentication_identifier: str) -> str | None:
+        return cls.authentication_option_for_identifier(authentication_identifier).get("authorization_resource")
 
     @classmethod
     def valid_issuers(cls, authentication_identifier: str) -> list[str]:
@@ -446,6 +468,10 @@ class AuthenticationService:
             + f"redirect_uri={redirect_url}"
         )
 
+        authorization_resource = self.authorization_resource(authentication_identifier)
+        if authorization_resource:
+            login_redirect_url += f"&{urlencode({'resource': authorization_resource})}"
+
         if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"]:
             code_verifier = PKCE.generate_code_verifier()
             # Store the verifier server-side for use when exchanging the authorization code.
@@ -525,8 +551,50 @@ class AuthenticationService:
         return azp in cls.valid_client_ids(authentication_identifier)
 
     @classmethod
+    def _is_valid_access_token_client(cls, decoded_token: dict, authentication_identifier: str) -> bool:
+        client_claims = [decoded_token.get(claim) for claim in ("client_id", "cid", "azp")]
+        presented_client_ids = [value for value in client_claims if isinstance(value, str)]
+        if not presented_client_ids:
+            return True
+        valid_client_ids = cls.valid_client_ids(authentication_identifier)
+        return all(value in valid_client_ids for value in presented_client_ids)
+
+    @classmethod
+    def validate_decoded_id_token(cls, decoded_token: dict, authentication_identifier: str) -> bool:
+        """Validate an OIDC ID token returned during the login flow."""
+        return cls._validate_decoded_token(
+            decoded_token,
+            authentication_identifier,
+            valid_audience_values=cls.valid_client_ids(authentication_identifier),
+            expected_use="id",
+            validate_access_token_client=False,
+        )
+
+    @classmethod
+    def validate_decoded_access_token(cls, decoded_token: dict, authentication_identifier: str) -> bool:
+        """Validate an OAuth access token presented to the Arena API."""
+        return cls._validate_decoded_token(
+            decoded_token,
+            authentication_identifier,
+            valid_audience_values=cls.access_token_audiences(authentication_identifier),
+            expected_use="access",
+            validate_access_token_client=cls.has_explicit_access_token_audiences(authentication_identifier),
+        )
+
+    @classmethod
     def validate_decoded_token(cls, decoded_token: dict, authentication_identifier: str) -> bool:
-        """Https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation."""
+        """Backward-compatible alias for access-token validation."""
+        return cls.validate_decoded_access_token(decoded_token, authentication_identifier)
+
+    @classmethod
+    def _validate_decoded_token(
+        cls,
+        decoded_token: dict,
+        authentication_identifier: str,
+        valid_audience_values: list[str],
+        expected_use: str,
+        validate_access_token_client: bool,
+    ) -> bool:
         valid = True
         now = round(time.time())
 
@@ -537,8 +605,8 @@ class AuthenticationService:
         aud = decoded_token["aud"] if "aud" in decoded_token else None
         azp = decoded_token["azp"] if "azp" in decoded_token else None
         iat = decoded_token["iat"]
+        token_use = decoded_token.get("token_use")
 
-        valid_audience_values = cls.valid_audiences(authentication_identifier)
         overlapping_aud_values = []
         if aud is not None:
             audience_array_in_token = aud
@@ -563,12 +631,22 @@ class AuthenticationService:
                 f"TOKEN INVALID because ISS '{iss}' does not match any of the trusted issuer urls '{trusted_issuer_urls}'"
             )
             valid = False
+        elif token_use is not None and token_use != expected_use:
+            _record_token_validation_failure("token_use")
+            current_app.logger.info(
+                f"TOKEN INVALID because token_use '{token_use}' does not match expected token use '{expected_use}'"
+            )
+            valid = False
         # aud could be an array or a string
         elif len(overlapping_aud_values) < 1:
             _record_token_validation_failure("audience")
             current_app.logger.info(
-                f"TOKEN INVALID because audience '{aud}' does not match client id '{cls.client_id(authentication_identifier)}'"
+                f"TOKEN INVALID because audience '{aud}' does not match any expected audience '{valid_audience_values}'"
             )
+            valid = False
+        elif validate_access_token_client and not cls._is_valid_access_token_client(decoded_token, authentication_identifier):
+            _record_token_validation_failure("client_id")
+            current_app.logger.info("TOKEN INVALID because an access-token client claim does not match any configured client id")
             valid = False
         elif not cls.is_valid_azp(authentication_identifier, azp):
             _record_token_validation_failure("azp")
@@ -591,6 +669,7 @@ class AuthenticationService:
                 f"ISS: {iss} "
                 f"AUD: {aud} "
                 f"AZP: {azp} "
+                f"TOKEN_USE: {token_use} "
                 f"IAT: {iat} "
                 f"SERVER_URL: {cls.server_url(authentication_identifier)} "
                 f"CLIENT_ID: {cls.client_id(authentication_identifier)} "

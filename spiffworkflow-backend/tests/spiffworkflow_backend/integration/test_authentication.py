@@ -294,7 +294,7 @@ class TestAuthentication(BaseTest):
         assert adopted_user.service_id == "keycloak-duplicate"
         assert UserModel.query.filter_by(id=newer_user_id).one().username == "newer_duplicate"
 
-    def test_additional_valid_client_ids_are_valid_token_audiences(self, app: Flask) -> None:
+    def test_legacy_access_token_audiences_remain_backward_compatible(self, app: Flask) -> None:
         auth_configs = [
             {
                 **app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0],
@@ -309,7 +309,7 @@ class TestAuthentication(BaseTest):
                 "other-client",
                 "account",
             ]
-            assert AuthenticationService.validate_decoded_token(
+            assert AuthenticationService.validate_decoded_access_token(
                 {
                     "iss": auth_configs[0]["uri"],
                     "sub": "samwise",
@@ -318,6 +318,90 @@ class TestAuthentication(BaseTest):
                     "iat": now,
                     "exp": now + 60,
                 },
+                "default",
+            )
+
+    def test_id_and_access_tokens_use_separate_audiences(self, app: Flask) -> None:
+        api_audience = "https://arena.example.com/api"
+        auth_config = {
+            **app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0],
+            "access_token_audiences": [api_audience],
+            "authorization_resource": api_audience,
+        }
+        now = round(time.time())
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS", [auth_config]):
+            assert AuthenticationService.validate_decoded_id_token(
+                {
+                    "iss": auth_config["uri"],
+                    "sub": "samwise",
+                    "aud": auth_config["client_id"],
+                    "token_use": "id",
+                    "iat": now,
+                    "exp": now + 60,
+                },
+                "default",
+            )
+            assert AuthenticationService.validate_decoded_access_token(
+                {
+                    "iss": auth_config["uri"],
+                    "sub": "samwise",
+                    "aud": api_audience,
+                    "client_id": auth_config["client_id"],
+                    "token_use": "access",
+                    "iat": now,
+                    "exp": now + 60,
+                },
+                "default",
+            )
+
+    @pytest.mark.parametrize(
+        "provider_client_claim",
+        ["azp", "cid"],
+        ids=["keycloak", "okta"],
+    )
+    def test_explicit_access_token_audience_supports_provider_client_claims(
+        self,
+        app: Flask,
+        provider_client_claim: str,
+    ) -> None:
+        api_audience = "https://arena.example.com/api"
+        auth_config = {
+            **app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0],
+            "access_token_audiences": api_audience,
+        }
+        now = round(time.time())
+        decoded_token = {
+            "iss": auth_config["uri"],
+            "sub": "samwise",
+            "aud": api_audience,
+            provider_client_claim: auth_config["client_id"],
+            "iat": now,
+            "exp": now + 60,
+        }
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS", [auth_config]):
+            assert AuthenticationService.validate_decoded_access_token(decoded_token, "default")
+
+    def test_explicit_access_token_audience_rejects_wrong_token_type_and_client(self, app: Flask) -> None:
+        api_audience = "https://arena.example.com/api"
+        auth_config = {
+            **app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0],
+            "access_token_audiences": [api_audience],
+        }
+        now = round(time.time())
+        common_claims = {
+            "iss": auth_config["uri"],
+            "sub": "samwise",
+            "aud": api_audience,
+            "iat": now,
+            "exp": now + 60,
+        }
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS", [auth_config]):
+            assert not AuthenticationService.validate_decoded_access_token(
+                {**common_claims, "client_id": auth_config["client_id"], "token_use": "id"},
+                "default",
+            )
+            assert not AuthenticationService.validate_decoded_access_token(
+                {**common_claims, "cid": "different-client"},
                 "default",
             )
 
@@ -402,6 +486,33 @@ class TestAuthentication(BaseTest):
         assert redirect_location.startswith(auth_uri)
         assert re.search(r"\bredirect_uri=" + re.escape(login_return_uri), redirect_location) is not None
 
+    def test_login_redirect_includes_configured_authorization_resource(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+        client: TestClient,
+    ) -> None:
+        api_audience = "https://arena.example.com/api"
+        auth_uri = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
+        auth_config = {
+            **app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0],
+            "authorization_resource": api_audience,
+        }
+        mocker.patch.object(AuthenticationService, "open_id_endpoint_for_name", return_value=auth_uri)
+
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS", [auth_config]):
+            response = client.get(
+                "/v1.0/login",
+                params={
+                    "redirect_url": f"{app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/after-login",
+                    "authentication_identifier": "default",
+                },
+            )
+
+        assert response.status_code == 302
+        params = urllib.parse.parse_qs(urllib.parse.urlparse(response.headers["location"]).query)
+        assert params["resource"] == [api_audience]
+
     def test_login_return_uses_access_token_for_api_cookie(
         self,
         app: Flask,
@@ -460,7 +571,7 @@ class TestAuthentication(BaseTest):
         db.session.commit()
         mocker.patch.object(
             AuthenticationService,
-            "validate_decoded_token",
+            "validate_decoded_access_token",
             side_effect=TokenExpiredError("expired"),
         )
         mocker.patch.object(AuthenticationService, "get_refresh_token", return_value="stored-refresh-token")

@@ -8,7 +8,13 @@ The setup involves creating an OpenID Connect (OIDC) application, configuring en
 1. Follow the [Okta App Integration Wizard](https://help.okta.com/en-us/content/topics/apps/apps_app_integration_wizard_oidc.htm) to create an **OpenID Connect (OIDC) Web Application**.
    - This step provides you with a **Client ID** and a **Client Secret** key.
 
-2. **Key Requirements**:
+2. Create or select an Okta **custom authorization server** for the Arena API.
+   Do not use an Okta org authorization-server access token: those tokens are
+   intended for Okta APIs. Set the custom authorization server's audience to
+   the Arena API identifier, for example `https://arena.example.com/api` or
+   `api://spiffworkflow`.
+
+3. **Key Requirements**:
    - Obtain the following details:
      - OpenID Server URL
      - Client ID
@@ -26,11 +32,14 @@ SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL=<YOUR_OKTA_ISSUER_URL>
 SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID=<YOUR_CLIENT_ID>
 SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY=<YOUR_CLIENT_SECRET_KEY>
 
+# Audience configured on the Okta custom authorization server
+SPIFFWORKFLOW_BACKEND_OPEN_ID_ACCESS_TOKEN_AUDIENCES=<YOUR_ARENA_API_AUDIENCE>
+
 # OpenID Scopes (includes groups)
-SPIFFWORKFLOW_BACKEND_OPENID_SCOPE="openid profile email groups"
+SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES="openid,profile,email,groups"
 
 # Allow OpenID Provider to manage user groups
-SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS: true
+SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS=true
 ```
 
 ## **3. Adding a Groups Claim for Authorization Server**
@@ -81,4 +90,4 @@ For one of our users, the following setup was used to pass group information to 
 🔗 **Helpful Links**:  
 - [Okta App Integration Wizard](https://help.okta.com/en-us/content/topics/apps/apps_app_integration_wizard_oidc.htm)  
 - [Groups Claim Documentation](https://developer.okta.com/docs/guides/customize-tokens-groups-claim/main/)  
-- [Active Directory Groups in Okta](https://support.okta.com/help/s/article/Can-we-retrieve-both-Active-Directory-and-Okta-groups-in-OpenID-Connect-claims?language=en_US).  
+- [Active Directory Groups in Okta](https://support.okta.com/help/s/article/Can-we-retrieve-both-Active-Directory-and-Okta-groups-in-OpenID-Connect-claims?language=en_US).
