@@ -88,6 +88,18 @@ def test_custom_environment_get_toplevel_process_info_returns_local_stub():
     }
 
 
+def test_custom_environment_get_frontend_url_returns_local_stub():
+    context = {}
+
+    result = runner.CustomEnvironment().execute(
+        "frontend_url = get_frontend_url()",
+        context,
+    )
+
+    assert result is True
+    assert context["frontend_url"] == "http://local.spiff"
+
+
 def test_custom_environment_get_url_for_task_returns_local_task_urls():
     context = {}
 

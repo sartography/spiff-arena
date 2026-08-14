@@ -286,6 +286,7 @@ class CustomEnvironment(TaskDataEnvironment):
             "process_instance_id": 0,
             "process_model_identifier": "local",
         }
+        external_context["get_frontend_url"] = lambda: "http://local.spiff"
         external_context["get_url_for_task"] = lambda task_guid, public=False: (
             f"http://local.spiff{'/public' if public is True else ''}/tasks/0/{task_guid}"
         )
