@@ -5,7 +5,7 @@
   "type": "module",
   "dependencies": {
     "@bpmn-io/properties-panel": "^3.41.2",
-    "@casl/ability": "^6.7.1",
+    "@casl/ability": "^7.0.1",
     "@casl/react": "^6.0.0",
     "@codemirror/lang-json": "^6.0.2",
     "@codemirror/lang-python": "^6.2.1",
