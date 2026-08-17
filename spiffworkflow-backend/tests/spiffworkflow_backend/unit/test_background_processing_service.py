@@ -192,7 +192,6 @@ class TestBackgroundProcessingService(BaseTest):
                     "process_model_identifier": process_instance.process_model_identifier,
                     "event_type": "human_tasks_changed",
                 }
-                assert mock.call_args.kwargs["headers"]["spiff_background_job_process_instance_id"] == process_instance.id
                 assert mock.call_count == 1
 
     def test_queues_event_notifier_when_complete(
@@ -219,7 +218,6 @@ class TestBackgroundProcessingService(BaseTest):
                     "process_model_identifier": process_instance.process_model_identifier,
                     "event_type": "process_instance_complete",
                 }
-                assert mock.call_args.kwargs["headers"]["spiff_background_job_process_instance_id"] == process_instance.id
                 assert mock.call_count == 1
 
     def test_event_notifier_worker_wraps_missing_process_model_without_api_error(

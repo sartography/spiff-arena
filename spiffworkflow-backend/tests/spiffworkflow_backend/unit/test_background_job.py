@@ -14,7 +14,7 @@ from spiffworkflow_backend.background_processing.background_job_instrumentation 
 from spiffworkflow_backend.services.operation_instrumentation_service import OperationInstrumentation
 
 
-def test_publisher_attaches_versioned_envelope_headers() -> None:
+def test_publisher_attaches_background_job_headers() -> None:
     calls: list[tuple[tuple[object, ...], dict[str, object]]] = []
 
     def send_task(*args: object, **kwargs: object) -> SimpleNamespace:
@@ -38,19 +38,23 @@ def test_publisher_attaches_versioned_envelope_headers() -> None:
     assert calls[0][1]["countdown"] == 5.25
     headers = calls[0][1]["headers"]
     assert isinstance(headers, dict)
-    assert headers[f"{HEADER_PREFIX}envelope_version"] == 1
     assert headers[f"{HEADER_PREFIX}published_at"] == 100.125
     assert headers[f"{HEADER_PREFIX}eligible_at"] == 105.375
     assert headers[f"{HEADER_PREFIX}correlation_id"] == "correlation-1"
-    assert headers[f"{HEADER_PREFIX}process_instance_id"] == 42
+    assert f"{HEADER_PREFIX}process_instance_id" not in headers
 
 
-def test_decodes_previous_legacy_header_version_and_missing_headers() -> None:
-    legacy = BackgroundJobEnvelope.from_delivery(
+def test_decodes_publisher_headers_and_headerless_deliveries() -> None:
+    published = BackgroundJobEnvelope.from_delivery(
         CELERY_TASK_PROCESS_INSTANCE_RUN,
         {"process_instance_id": 42},
-        {"published_at": 10.25, "eligible_at": 12.5, "correlation_id": "legacy-correlation"},
-        delivery_job_id="legacy-job",
+        {
+            f"{HEADER_PREFIX}published_at": 10.25,
+            f"{HEADER_PREFIX}eligible_at": 12.5,
+            f"{HEADER_PREFIX}correlation_id": "correlation-1",
+        },
+        delivery_job_id="job-1",
+        process_instance_id=42,
         now=20.0,
     )
     missing = BackgroundJobEnvelope.from_delivery(
@@ -58,40 +62,39 @@ def test_decodes_previous_legacy_header_version_and_missing_headers() -> None:
         {"process_instance_id": 43},
         None,
         delivery_job_id="headerless-job",
+        process_instance_id=43,
         now=30.5,
     )
 
-    assert legacy.version == 0
-    assert legacy.published_at == 10.25
-    assert legacy.eligible_at == 12.5
-    assert legacy.correlation_id == "legacy-correlation"
-    assert missing.version == 0
+    assert published.published_at == 10.25
+    assert published.eligible_at == 12.5
+    assert published.correlation_id == "correlation-1"
+    assert published.process_instance_id == 42
     assert missing.published_at == 30.5
     assert missing.eligible_at == 30.5
     assert missing.correlation_id == "headerless-job"
+    assert missing.process_instance_id == 43
 
 
-def test_malformed_or_unknown_headers_fall_back_without_failing_delivery() -> None:
+def test_malformed_timestamps_fall_back_without_failing_delivery() -> None:
     envelope = BackgroundJobEnvelope.from_delivery(
         CELERY_TASK_PROCESS_INSTANCE_RUN,
         {"process_instance_id": 42},
         {
-            f"{HEADER_PREFIX}envelope_version": 999,
             f"{HEADER_PREFIX}published_at": "not-a-timestamp",
-            f"{HEADER_PREFIX}attempt": "not-an-attempt",
         },
         delivery_job_id="delivered-job",
+        process_instance_id=42,
         now=30.5,
     )
 
-    assert envelope.version == 0
     assert envelope.published_at == 30.5
     assert envelope.eligible_at == 30.5
-    assert envelope.attempt == 1
     assert envelope.job_id == "delivered-job"
+    assert envelope.process_instance_id == 42
 
 
-def test_retry_preserves_lineage_and_increments_attempt() -> None:
+def test_requeue_preserves_correlation_id() -> None:
     original = BackgroundJobEnvelope.create(
         CELERY_TASK_PROCESS_INSTANCE_RUN,
         {"process_instance_id": 42},
@@ -106,9 +109,7 @@ def test_retry_preserves_lineage_and_increments_attempt() -> None:
         )
 
     assert retry.job_id != original.job_id
-    assert retry.original_job_id == original.original_job_id
     assert retry.correlation_id == original.correlation_id
-    assert retry.attempt == 2
 
 
 @pytest.mark.parametrize(
@@ -133,7 +134,6 @@ def test_queue_wait_excludes_eligibility_and_clamps_clock_skew(
         eligible_at=eligible_at,
         correlation_id="correlation-1",
         job_id="job-1",
-        original_job_id="job-1",
     )
 
     instrumentation = BackgroundJobInstrumentation(envelope, started_at=started_at)
@@ -156,24 +156,3 @@ def test_observability_failure_does_not_change_operation_result(mocker: MockerFi
     assert result == "customer-result"
     assert instrumentation.finished is True
     assert instrumentation.observability_failures == 3
-
-
-def test_before_publish_handler_fills_missing_headers_without_overwriting() -> None:
-    from spiffworkflow_backend.background_processing.background_job import ENVELOPE_VERSION
-    from spiffworkflow_backend.background_processing.background_job import before_task_publish_handler
-
-    headers: dict[str, object] = {}
-    before_task_publish_handler(headers=headers)
-    assert headers[f"{HEADER_PREFIX}envelope_version"] == ENVELOPE_VERSION
-    published = float(headers[f"{HEADER_PREFIX}published_at"])  # type: ignore[arg-type]
-    assert published > 0
-    assert headers[f"{HEADER_PREFIX}eligible_at"] == headers[f"{HEADER_PREFIX}published_at"]
-    assert headers[f"{HEADER_PREFIX}job_id"]
-    assert headers[f"{HEADER_PREFIX}attempt"] == 1
-
-    existing = {f"{HEADER_PREFIX}job_id": "keep-me", f"{HEADER_PREFIX}attempt": 3}
-    before_task_publish_handler(headers=existing)
-    assert existing[f"{HEADER_PREFIX}job_id"] == "keep-me"
-    assert existing[f"{HEADER_PREFIX}attempt"] == 3
-
-    before_task_publish_handler(headers=None)

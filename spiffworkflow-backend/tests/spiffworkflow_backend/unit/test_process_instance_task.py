@@ -28,13 +28,10 @@ def test_run_adapter_maps_delivery_metadata_and_operation_result(
         return_value=mocker.Mock(index=1),
     )
     headers = {
-        f"{HEADER_PREFIX}envelope_version": 1,
         f"{HEADER_PREFIX}published_at": 10.0,
         f"{HEADER_PREFIX}eligible_at": 12.0,
         f"{HEADER_PREFIX}correlation_id": "correlation-1",
         f"{HEADER_PREFIX}job_id": "job-1",
-        f"{HEADER_PREFIX}original_job_id": "original-1",
-        f"{HEADER_PREFIX}attempt": 2,
     }
     task = celery_task_process_instance_run
 
@@ -49,8 +46,8 @@ def test_run_adapter_maps_delivery_metadata_and_operation_result(
     instrumentation = operation.call_args.kwargs["instrumentation"]
     assert instrumentation.envelope.job_name == CELERY_TASK_PROCESS_INSTANCE_RUN
     assert instrumentation.envelope.correlation_id == "correlation-1"
-    assert instrumentation.envelope.original_job_id == "original-1"
-    assert instrumentation.envelope.attempt == 2
+    assert instrumentation.envelope.process_instance_id == 42
+    assert instrumentation.envelope.task_guid == "task-1"
 
 
 def test_run_adapter_maps_operation_error_to_celery_error(app: Flask, mocker: MockerFixture) -> None:

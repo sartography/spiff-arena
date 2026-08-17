@@ -78,6 +78,8 @@ def celery_task_process_instance_run(self, process_instance_id: int, task_guid: 
         {"process_instance_id": process_instance_id, "task_guid": task_guid},
         getattr(self.request, "headers", None),
         delivery_job_id=celery_task_id,
+        process_instance_id=process_instance_id,
+        task_guid=task_guid,
     )
     instrumentation = BackgroundJobInstrumentation(envelope)
     try:
@@ -151,6 +153,7 @@ def celery_task_process_instance_start_from_message(
         arguments,
         getattr(self.request, "headers", None),
         delivery_job_id=celery_task_id,
+        process_instance_id=process_instance_id,
     )
     instrumentation = BackgroundJobInstrumentation(envelope)
     try:

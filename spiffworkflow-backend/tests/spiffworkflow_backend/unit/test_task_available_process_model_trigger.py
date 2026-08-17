@@ -48,7 +48,6 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
                 "task_guid": "task_guid_456",
                 "user_id": 1,
             }
-            assert mock_send_task.call_args.kwargs["headers"]["spiff_background_job_task_guid"] == "task_guid_456"
 
     @patch("spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceRuntime.setup_runtime_with_process_instance")
     @patch(
