@@ -62,14 +62,9 @@ def test_run_adapter_maps_operation_error_to_celery_error(app: Flask, mocker: Mo
         "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process",
         return_value=mocker.Mock(index=1),
     )
-    mocker.patch(
-        "spiffworkflow_backend.background_processing.background_job_instrumentation.BACKGROUND_JOB_OPERATION_TOTAL.labels",
-        side_effect=RuntimeError("metrics unavailable"),
-    )
     task: Any = celery_task_process_instance_run
 
     with app.app_context():
-        mocker.patch.object(app.logger, "info", side_effect=RuntimeError("logging unavailable"))
         task.push_request(id="delivery-1", headers={})
         try:
             with pytest.raises(SpiffCeleryWorkerError, match="domain failed"):
