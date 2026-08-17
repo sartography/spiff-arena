@@ -88,6 +88,18 @@ def test_custom_environment_get_toplevel_process_info_returns_local_stub():
     }
 
 
+def test_custom_environment_get_frontend_url_returns_local_stub():
+    context = {}
+
+    result = runner.CustomEnvironment().execute(
+        "frontend_url = get_frontend_url()",
+        context,
+    )
+
+    assert result is True
+    assert context["frontend_url"] == "http://local.spiff"
+
+
 def test_custom_environment_get_url_for_task_returns_local_task_urls():
     context = {}
 
@@ -168,6 +180,129 @@ def test_custom_environment_uses_configured_process_initiator_and_cleans_transpo
     assert context["first_user"]["username"] == "changed"
     assert context["second_user"] == configured_user
     assert "spiff__external_context" not in context
+
+
+def test_service_task_property_evaluation_has_all_local_stubs():
+    bpmn = """
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_service_stub_context" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_service_stub_context" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_start_service</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_start_service" sourceRef="StartEvent_1" targetRef="ServiceTask_1" />
+    <bpmn:serviceTask id="ServiceTask_1" name="Service Task">
+      <bpmn:extensionElements>
+        <spiffworkflow:serviceTaskOperator id="http/GetRequest" resultVariable="response">
+          <spiffworkflow:parameters>
+            <spiffworkflow:parameter id="task_data_value" type="str" value="get_task_data_value(&quot;case_id&quot;)" />
+            <spiffworkflow:parameter id="process_instance_id" type="int" value="get_toplevel_process_info()[&quot;process_instance_id&quot;]" />
+            <spiffworkflow:parameter id="frontend_url" type="str" value="get_frontend_url()" />
+            <spiffworkflow:parameter id="task_url" type="str" value="get_url_for_task(&quot;task-guid-123&quot;)" />
+            <spiffworkflow:parameter id="task_owners" type="json" value="get_task_potential_owners(&quot;task-guid-123&quot;)" />
+            <spiffworkflow:parameter id="current_user" type="json" value="get_current_user()" />
+            <spiffworkflow:parameter id="initiator_user" type="json" value="get_process_initiator_user()" />
+            <spiffworkflow:parameter id="group_members" type="json" value="get_group_members(&quot;reviewers&quot;)" />
+            <spiffworkflow:parameter id="current_task_data" type="json" value="get_current_task_data()" />
+          </spiffworkflow:parameters>
+        </spiffworkflow:serviceTaskOperator>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_start_service</bpmn:incoming>
+      <bpmn:outgoing>Flow_service_end</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_service_end" sourceRef="ServiceTask_1" targetRef="EndEvent_1" />
+    <bpmn:endEvent id="EndEvent_1">
+      <bpmn:incoming>Flow_service_end</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+</bpmn:definitions>
+"""
+    configured_user = {
+        "id": 23,
+        "username": "bob",
+        "email": "bob@example.com",
+        "display_name": "Bob Example",
+    }
+    specs, err = runner.specs_from_xml([("service_stub_context.bpmn", bpmn)])
+    assert err is None
+
+    session_id = "service-stub-context-test"
+    first_step = json.loads(
+        runner.advance_workflow(
+            specs,
+            {},
+            None,
+            "oneAtATime",
+            {
+                "data": {
+                    "case_id": "case-1",
+                    "spiff__external_context": {
+                        "get_process_initiator_user": configured_user,
+                    },
+                },
+            },
+            session_id=session_id,
+        )
+    )
+    start_task = next(
+        task
+        for task in first_step["pending_tasks"]
+        if task["task_spec"]["typename"] == "StartEvent"
+    )
+    service_ready_step = json.loads(
+        runner.advance_workflow(
+            specs,
+            None,
+            {"id": start_task["id"], "data": {}},
+            "oneAtATime",
+            None,
+            session_id=session_id,
+        )
+    )
+    service_task = next(
+        task
+        for task in service_ready_step["pending_tasks"]
+        if task["task_spec"]["bpmn_id"] == "ServiceTask_1"
+    )
+    result = json.loads(
+        runner.advance_workflow(
+            specs,
+            None,
+            {"id": service_task["id"], "data": {}},
+            "oneAtATime",
+            None,
+            session_id=session_id,
+        )
+    )
+
+    assert result["status"] == "ok", result.get("message")
+    started_service_task = next(
+        task
+        for task in result["pending_tasks"]
+        if task["id"] == service_task["id"]
+    )
+    params = started_service_task["data"]["response"]["operation_params"]
+    assert params == {
+        "task_data_value": "case-1",
+        "process_instance_id": 0,
+        "frontend_url": "http://local.spiff",
+        "task_url": "http://local.spiff/tasks/0/task-guid-123",
+        "task_owners": {
+            "users": ["task_owner_1@example.com", "task_owner_2@example.com"],
+            "groups": ["task_owners"],
+        },
+        "current_user": {
+            "email": "current_user@example.com",
+            "display_name": "Mr. Current User",
+        },
+        "initiator_user": configured_user,
+        "group_members": [
+            "group_member_1@example.com",
+            "group_member_2@example.com",
+            "group_member_3@example.com",
+        ],
+        "current_task_data": {"case_id": "case-1"},
+        "spiff__task_data": {"case_id": "case-1"},
+    }
 
 
 def test_custom_script_engine_supplies_external_context_to_each_script():

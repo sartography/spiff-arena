@@ -271,7 +271,7 @@ class CustomEnvironment(TaskDataEnvironment):
             "timedelta": datetime.timedelta,
         })
 
-    def execute(self, script, context, external_context=None):
+    def _build_external_context(self, context, external_context=None):
         if external_context is None:
             external_context = {}
 
@@ -286,6 +286,7 @@ class CustomEnvironment(TaskDataEnvironment):
             "process_instance_id": 0,
             "process_model_identifier": "local",
         }
+        external_context["get_frontend_url"] = lambda: "http://local.spiff"
         external_context["get_url_for_task"] = lambda task_guid, public=False: (
             f"http://local.spiff{'/public' if public is True else ''}/tasks/0/{task_guid}"
         )
@@ -311,7 +312,14 @@ class CustomEnvironment(TaskDataEnvironment):
             for k, v in DefaultRegistry().convert(context).items()
             if k not in hidden_keys and not callable(v) and not isinstance(v, ModuleType)
         }
+        return external_context
 
+    def evaluate(self, expression, context, external_context=None):
+        external_context = self._build_external_context(context, external_context)
+        return super().evaluate(expression, context, external_context)
+
+    def execute(self, script, context, external_context=None):
+        external_context = self._build_external_context(context, external_context)
         return super().execute(script or "", context, external_context)
 
 
@@ -320,9 +328,16 @@ class CustomScriptEngine(PythonScriptEngine):
         super().__init__(environment=CustomEnvironment())
         self.external_context = external_context or {}
 
-    def execute(self, task, script, external_context=None):
+    def _apply_external_context(self, task):
         if self.external_context:
             task.data[_EXTERNAL_CONTEXT_KEY] = self.external_context
+
+    def evaluate(self, task, expression, external_context=None):
+        self._apply_external_context(task)
+        return super().evaluate(task, expression, external_context)
+
+    def execute(self, task, script, external_context=None):
+        self._apply_external_context(task)
         return super().execute(task, script, external_context)
 
     def call_service(
