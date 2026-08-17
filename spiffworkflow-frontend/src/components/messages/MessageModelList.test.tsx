@@ -1,16 +1,40 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { useEffect } from 'react';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MessageModelList from './MessageModelList';
 
 const SYSTEM_MESSAGE_SOURCE_LOCATION = 'misc/system-message-notification';
 const SYSTEM_MESSAGE_GROUP_LOCATION = 'misc';
 const MESSAGE_EDITOR_TEST_ID = 'message-editor';
+const ALL_MESSAGE_MODELS_PATH = '/all-message-models';
+const REQUEST_FOR_INFORMATION_MESSAGE_ID = 'request-for-information-received';
 
-const { makeCallToBackend, messageEditorMock } = vi.hoisted(() => {
+function LocationObserver({
+  onLocationChange,
+}: {
+  onLocationChange: (locationKey: string) => void;
+}) {
+  const location = useLocation();
+
+  useEffect(() => {
+    onLocationChange(location.key);
+  }, [location.key, onLocationChange]);
+
+  return null;
+}
+
+const {
+  makeCallToBackend,
+  messageEditorMock,
+  permissionFetcherMock,
+  canUpdateProcessGroup,
+} = vi.hoisted(() => {
   return {
     makeCallToBackend: vi.fn(),
     messageEditorMock: vi.fn(),
+    permissionFetcherMock: vi.fn(),
+    canUpdateProcessGroup: vi.fn(),
   };
 });
 
@@ -18,6 +42,37 @@ vi.mock('../../services/HttpService', () => {
   return {
     default: {
       makeCallToBackend,
+    },
+  };
+});
+
+vi.mock('../../hooks/useProcessGroups', () => {
+  return {
+    default: () => ({
+      processGroups: [
+        {
+          id: 'order',
+          process_groups: [
+            {
+              id: 'order/request-for-information',
+              process_groups: [],
+            },
+          ],
+        },
+        { id: 'misc', process_groups: [] },
+      ],
+    }),
+  };
+});
+
+vi.mock('../../hooks/PermissionService', () => {
+  return {
+    usePermissionFetcher: (permissionRequestData: Record<string, string[]>) => {
+      permissionFetcherMock(permissionRequestData);
+      return {
+        ability: { can: canUpdateProcessGroup },
+        permissionsLoaded: true,
+      };
     },
   };
 });
@@ -65,6 +120,9 @@ describe('MessageModelList', () => {
   beforeEach(() => {
     makeCallToBackend.mockReset();
     messageEditorMock.mockReset();
+    permissionFetcherMock.mockClear();
+    canUpdateProcessGroup.mockReset();
+    canUpdateProcessGroup.mockReturnValue(true);
   });
 
   it('renders message models from the current api response shape', async () => {
@@ -76,7 +134,7 @@ describe('MessageModelList', () => {
 
     const listCall = makeCallToBackend.mock.calls
       .map((call) => call[0])
-      .find((call) => call.path === '/all-message-models');
+      .find((call) => call.path === ALL_MESSAGE_MODELS_PATH);
 
     expect(listCall).toBeTruthy();
 
@@ -85,7 +143,7 @@ describe('MessageModelList', () => {
         messages: [
           {
             id: 1442,
-            identifier: 'request-for-information-received',
+            identifier: REQUEST_FOR_INFORMATION_MESSAGE_ID,
             location: 'order',
             schema: {},
             correlation_properties: [
@@ -100,7 +158,7 @@ describe('MessageModelList', () => {
     });
 
     expect(
-      screen.getByText('request-for-information-received'),
+      screen.getByText(REQUEST_FOR_INFORMATION_MESSAGE_ID),
     ).toBeInTheDocument();
     expect(screen.getByText('order')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'edit' })).toBeInTheDocument();
@@ -110,7 +168,7 @@ describe('MessageModelList', () => {
     render(
       <MemoryRouter>
         <MessageModelList
-          initialMessageId="request-for-information-received"
+          initialMessageId={REQUEST_FOR_INFORMATION_MESSAGE_ID}
           initialSourceLocation="order/request-for-information/request-for-information"
         />
       </MemoryRouter>,
@@ -118,7 +176,7 @@ describe('MessageModelList', () => {
 
     const listCall = makeCallToBackend.mock.calls
       .map((call) => call[0])
-      .find((call) => call.path === '/all-message-models');
+      .find((call) => call.path === ALL_MESSAGE_MODELS_PATH);
 
     expect(listCall).toBeTruthy();
 
@@ -127,7 +185,7 @@ describe('MessageModelList', () => {
         messages: [
           {
             id: 1441,
-            identifier: 'request-for-information-received',
+            identifier: REQUEST_FOR_INFORMATION_MESSAGE_ID,
             location: 'order',
             schema: {},
             correlation_properties: [],
@@ -135,7 +193,7 @@ describe('MessageModelList', () => {
           },
           {
             id: 1442,
-            identifier: 'request-for-information-received',
+            identifier: REQUEST_FOR_INFORMATION_MESSAGE_ID,
             location: 'order/request-for-information',
             schema: {},
             correlation_properties: [],
@@ -168,7 +226,7 @@ describe('MessageModelList', () => {
 
     const listCall = makeCallToBackend.mock.calls
       .map((call) => call[0])
-      .find((call) => call.path === '/all-message-models');
+      .find((call) => call.path === ALL_MESSAGE_MODELS_PATH);
 
     expect(listCall).toBeTruthy();
 
@@ -198,22 +256,24 @@ describe('MessageModelList', () => {
   });
 
   it('provides an explicit close action for the message editor dialog', async () => {
+    const onLocationChange = vi.fn();
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={['/messages?tab=models']}>
+        <LocationObserver onLocationChange={onLocationChange} />
         <MessageModelList />
       </MemoryRouter>,
     );
 
     const listCall = makeCallToBackend.mock.calls
       .map((call) => call[0])
-      .find((call) => call.path === '/all-message-models');
+      .find((call) => call.path === ALL_MESSAGE_MODELS_PATH);
 
     await act(async () => {
       listCall.successCallback({
         messages: [
           {
             id: 1442,
-            identifier: 'request-for-information-received',
+            identifier: REQUEST_FOR_INFORMATION_MESSAGE_ID,
             location: 'order',
             schema: {},
             correlation_properties: [],
@@ -232,6 +292,56 @@ describe('MessageModelList', () => {
     expect(
       screen.queryByTestId(MESSAGE_EDITOR_TEST_ID),
     ).not.toBeInTheDocument();
+    expect(onLocationChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides message model mutations without PUT permission on the process group', async () => {
+    canUpdateProcessGroup.mockReturnValue(false);
+
+    render(
+      <MemoryRouter>
+        <MessageModelList />
+      </MemoryRouter>,
+    );
+
+    expect(permissionFetcherMock).toHaveBeenCalledWith({
+      '/v1.0/process-groups/order': ['PUT'],
+      '/v1.0/process-groups/order:request-for-information': ['PUT'],
+      '/v1.0/process-groups/misc': ['PUT'],
+    });
+
+    const listCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === ALL_MESSAGE_MODELS_PATH);
+
+    await act(async () => {
+      listCall.successCallback({
+        messages: [
+          {
+            id: 1442,
+            identifier: REQUEST_FOR_INFORMATION_MESSAGE_ID,
+            location: 'order',
+            schema: {},
+            correlation_properties: [],
+            process_model_identifiers: [],
+          },
+        ],
+      });
+    });
+
+    expect(
+      screen.queryByRole('button', { name: 'add_message_model' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'delete' }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'edit' }));
+
+    expect(screen.getByTestId(MESSAGE_EDITOR_TEST_ID)).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'save' }),
+    ).not.toBeInTheDocument();
   });
 
   it('opens a blank message editor after validating the chosen create location', async () => {
@@ -243,7 +353,7 @@ describe('MessageModelList', () => {
 
     const listCall = makeCallToBackend.mock.calls
       .map((call) => call[0])
-      .find((call) => call.path === '/all-message-models');
+      .find((call) => call.path === ALL_MESSAGE_MODELS_PATH);
 
     await act(async () => {
       listCall.successCallback({ messages: [] });
@@ -292,14 +402,14 @@ describe('MessageModelList', () => {
 
     const listCall = makeCallToBackend.mock.calls
       .map((call) => call[0])
-      .find((call) => call.path === '/all-message-models');
+      .find((call) => call.path === ALL_MESSAGE_MODELS_PATH);
 
     await act(async () => {
       listCall.successCallback({
         messages: [
           {
             id: 1442,
-            identifier: 'request-for-information-received',
+            identifier: REQUEST_FOR_INFORMATION_MESSAGE_ID,
             location: 'order',
             schema: {},
             correlation_properties: [],
@@ -340,7 +450,7 @@ describe('MessageModelList', () => {
         id: 'order',
         display_name: 'Order',
         messages: {
-          'request-for-information-received': {
+          [REQUEST_FOR_INFORMATION_MESSAGE_ID]: {
             schema: {},
           },
           'keep-me': {

@@ -218,7 +218,7 @@ def login_return(
         access_token = auth_token_object["access_token"]
         decoded_token = _get_decoded_token(id_token)
 
-        if AuthenticationService.validate_decoded_token(decoded_token, authentication_identifier=authentication_identifier):
+        if AuthenticationService.validate_decoded_id_token(decoded_token, authentication_identifier=authentication_identifier):
             if decoded_token and "error" not in decoded_token:
                 user_model = AuthorizationService.create_user_from_sign_in(decoded_token)
                 g.user = user_model
@@ -269,7 +269,7 @@ def login_with_access_token(authentication_identifier: str) -> Response:
 
     decoded_token = _get_decoded_token(access_token)
 
-    if AuthenticationService.validate_decoded_token(decoded_token, authentication_identifier=authentication_identifier):
+    if AuthenticationService.validate_decoded_access_token(decoded_token, authentication_identifier=authentication_identifier):
         if decoded_token and "error" not in decoded_token:
             AuthorizationService.create_user_from_sign_in(decoded_token)
     else:
@@ -406,7 +406,7 @@ def _get_user_model_from_token(decoded_token: dict) -> UserModel | None:
                 user_info = None
                 authentication_identifier = _get_authentication_identifier_from_request()
                 try:
-                    if AuthenticationService.validate_decoded_token(
+                    if AuthenticationService.validate_decoded_access_token(
                         decoded_token, authentication_identifier=authentication_identifier
                     ):
                         user_info = decoded_token
