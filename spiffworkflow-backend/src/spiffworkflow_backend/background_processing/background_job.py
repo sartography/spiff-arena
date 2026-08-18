@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import time
 import uuid
 from collections.abc import Generator
@@ -9,6 +10,8 @@ from contextvars import ContextVar
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
+from typing import Protocol
+from typing import cast
 
 import celery
 from flask import current_app
@@ -93,6 +96,31 @@ class BackgroundJobEnvelope:
             f"{HEADER_PREFIX}job_id": self.job_id,
         }
 
+    def message(self) -> dict[str, object]:
+        return {
+            "job_name": self.job_name,
+            "arguments": self.arguments,
+            "published_at": self.published_at,
+            "eligible_at": self.eligible_at,
+            "correlation_id": self.correlation_id,
+            "job_id": self.job_id,
+            "process_instance_id": self.process_instance_id,
+            "task_guid": self.task_guid,
+        }
+
+    @classmethod
+    def from_message(cls, message: Mapping[str, object]) -> BackgroundJobEnvelope:
+        return cls(
+            job_name=cast(str, message["job_name"]),
+            arguments=dict(cast(Mapping[str, JobArgument], message["arguments"])),
+            published_at=cast(float, message["published_at"]),
+            eligible_at=cast(float, message["eligible_at"]),
+            correlation_id=cast(str, message["correlation_id"]),
+            job_id=cast(str, message["job_id"]),
+            process_instance_id=cast(int | None, message.get("process_instance_id")),
+            task_guid=cast(str | None, message.get("task_guid")),
+        )
+
     def structured_fields(self) -> dict[str, JobArgument]:
         return {
             "job_name": self.job_name,
@@ -108,6 +136,10 @@ class PublishedBackgroundJob:
     delivery_id: str
 
 
+class BackgroundJobPublisherInterface(Protocol):
+    def publish(self, envelope: BackgroundJobEnvelope, *, countdown: float | None = None) -> PublishedBackgroundJob: ...
+
+
 @dataclass
 class BackgroundJobPublisher:
     send_task: Any = field(default_factory=lambda: celery.current_app.send_task)
@@ -120,15 +152,30 @@ class BackgroundJobPublisher:
             **({"countdown": countdown} if countdown is not None else {}),
         )
         delivery_id = str(async_result.task_id)
-        _safe_lifecycle_log(
-            "Background job enqueued",
-            "background_job_enqueued",
-            envelope,
-            delivery_id=delivery_id,
-            published_at=envelope.published_at,
-            eligible_at=envelope.eligible_at,
-        )
-        return PublishedBackgroundJob(delivery_id=delivery_id)
+        return published_background_job(envelope, delivery_id)
+
+
+def configured_background_job_publisher() -> BackgroundJobPublisherInterface:
+    factory_path = current_app.config.get("SPIFFWORKFLOW_BACKEND_BACKGROUND_JOB_PUBLISHER_FACTORY")
+    if not factory_path:
+        return BackgroundJobPublisher()
+    module_name, separator, factory_name = factory_path.partition(":")
+    if not separator:
+        raise RuntimeError("Background job publisher factory must use module:function syntax")
+    factory = getattr(importlib.import_module(module_name), factory_name)
+    return cast(BackgroundJobPublisherInterface, factory())
+
+
+def published_background_job(envelope: BackgroundJobEnvelope, delivery_id: str) -> PublishedBackgroundJob:
+    _safe_lifecycle_log(
+        "Background job enqueued",
+        "background_job_enqueued",
+        envelope,
+        delivery_id=delivery_id,
+        published_at=envelope.published_at,
+        eligible_at=envelope.eligible_at,
+    )
+    return PublishedBackgroundJob(delivery_id=delivery_id)
 
 
 _CURRENT_BACKGROUND_JOB: ContextVar[BackgroundJobEnvelope | None] = ContextVar("current_background_job", default=None)

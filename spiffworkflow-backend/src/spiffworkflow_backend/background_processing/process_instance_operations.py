@@ -4,6 +4,8 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 
+from flask import current_app
+
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
@@ -11,12 +13,14 @@ from spiffworkflow_backend.models.message_triggerable_process_model import Messa
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.operation_instrumentation_service import OperationInstrumentation
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 
 
@@ -40,7 +44,7 @@ class RunQueuedProcessInstanceResult:
     should_requeue: bool = False
     requeue_task_guid: str | None = None
 
-    def celery_result(self) -> dict[str, object]:
+    def result(self) -> dict[str, object]:
         result: dict[str, object] = {
             "ok": self.outcome != BackgroundOperationOutcome.locked,
             "process_instance_id": self.process_instance_id,
@@ -60,13 +64,56 @@ class StartReservedProcessFromMessageResult:
     message_instance_id: int
     receiver_message_instance_id: int
 
-    def celery_result(self) -> dict[str, object]:
+    def result(self) -> dict[str, object]:
         return {
             "ok": True,
             "process_instance_id": self.process_instance_id,
             "message_instance_id": self.message_instance_id,
             "receiver_message_instance_id": self.receiver_message_instance_id,
         }
+
+
+def notify_process_instance_update(
+    updated_process_instance_id: int,
+    process_model_identifier: str,
+    event_type: str,
+) -> dict[str, object]:
+    data = {
+        "event": {
+            "event_type": event_type,
+            "data": {
+                "process_instance_id": updated_process_instance_id,
+                "process_model_identifier": process_model_identifier,
+            },
+        }
+    }
+    process_model = ProcessModelService.get_process_model(
+        current_app.config["SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL"]
+    )
+    ProcessInstanceService.create_and_run_process_instance(
+        process_model=process_model,
+        data_to_inject=data,
+        persistence_level="none",
+    )
+    return {"ok": True, **data}
+
+
+def start_process_instance_from_model(
+    process_model_identifier: str,
+    task_guid: str,
+    user_id: int,
+) -> dict[str, object]:
+    process_model = ProcessModelService.get_process_model(process_model_identifier)
+    user = UserModel.query.filter_by(id=user_id).first()
+    if user is None:
+        raise ProcessInstanceOperationError(f"Could not find user with id {user_id}")
+    process_instance = ProcessInstanceService.create_and_run_process_instance(
+        process_model,
+        persistence_level="full",
+        data_to_inject={"task_guid": task_guid},
+        user=user,
+    ).process_instance_model
+    return {"ok": True, "process_instance_id": process_instance.id, "task_guid": task_guid}
 
 
 def run_queued_process_instance(

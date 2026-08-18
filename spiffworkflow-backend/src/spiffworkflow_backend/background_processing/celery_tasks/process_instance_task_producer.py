@@ -7,7 +7,7 @@ from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INST
 from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_START_FROM_MESSAGE
 from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL
 from spiffworkflow_backend.background_processing.background_job import BackgroundJobEnvelope
-from spiffworkflow_backend.background_processing.background_job import BackgroundJobPublisher
+from spiffworkflow_backend.background_processing.background_job import configured_background_job_publisher
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -55,7 +55,7 @@ def queue_future_task_if_appropriate(
         # (maybe due to subsecond stuff, maybe because of clock skew within the cluster of computers running spiff)
         # celery_task_process_instance_run.apply_async(kwargs=args_to_celery, countdown=countdown + 1)  # type: ignore
 
-        published_job = BackgroundJobPublisher().publish(
+        published_job = configured_background_job_publisher().publish(
             BackgroundJobEnvelope.create(
                 CELERY_TASK_PROCESS_INSTANCE_RUN,
                 args_to_celery,
@@ -67,7 +67,7 @@ def queue_future_task_if_appropriate(
         )
         message = (
             f"Queueing process instance ({process_instance.id}) for future task ({task_guid}). "
-            f"new celery task id: ({published_job.delivery_id})"
+            f"new background job id: ({published_job.delivery_id})"
         )
         current_app.logger.info(message)
         return True
@@ -92,7 +92,7 @@ def queue_process_instance_if_appropriate(
     #     )
 
     if should_queue_process_instance(execution_mode):
-        published_job = BackgroundJobPublisher().publish(
+        published_job = configured_background_job_publisher().publish(
             BackgroundJobEnvelope.create(
                 CELERY_TASK_PROCESS_INSTANCE_RUN,
                 {"process_instance_id": process_instance.id, "task_guid": task_guid},
@@ -100,7 +100,9 @@ def queue_process_instance_if_appropriate(
                 task_guid=task_guid,
             )
         )
-        current_app.logger.info(f"Queueing process instance ({process_instance.id}) for celery ({published_job.delivery_id})")
+        current_app.logger.info(
+            f"Queueing process instance ({process_instance.id}) for background processing ({published_job.delivery_id})"
+        )
         return True
     return False
 
@@ -114,7 +116,7 @@ def queue_event_notifier_if_appropriate(updated_process_instance: ProcessInstanc
             != updated_process_instance.process_model_identifier
         )
     ):
-        published_job = BackgroundJobPublisher().publish(
+        published_job = configured_background_job_publisher().publish(
             BackgroundJobEnvelope.create(
                 CELERY_TASK_EVENT_NOTIFIER,
                 {
@@ -126,7 +128,7 @@ def queue_event_notifier_if_appropriate(updated_process_instance: ProcessInstanc
             )
         )
         current_app.logger.info(
-            f"Queueing process instance ({updated_process_instance.id}) for celery ({published_job.delivery_id})"
+            f"Queueing process instance ({updated_process_instance.id}) for background processing ({published_job.delivery_id})"
         )
         return True
     return False
@@ -138,7 +140,7 @@ def queue_start_process_instance_if_appropriate(
     initiator_user_id: int,
 ) -> bool:
     if queue_enabled_for_process_model():
-        BackgroundJobPublisher().publish(
+        configured_background_job_publisher().publish(
             BackgroundJobEnvelope.create(
                 CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL,
                 {
@@ -158,7 +160,7 @@ def queue_message_start_process_instance(
     message_instance_id: int,
     message_triggerable_process_model_id: int,
 ) -> str:
-    published_job = BackgroundJobPublisher().publish(
+    published_job = configured_background_job_publisher().publish(
         BackgroundJobEnvelope.create(
             CELERY_TASK_PROCESS_INSTANCE_START_FROM_MESSAGE,
             {
@@ -170,6 +172,7 @@ def queue_message_start_process_instance(
         )
     )
     current_app.logger.info(
-        f"Queueing reserved message-start process instance ({process_instance_id}) for celery ({published_job.delivery_id})"
+        f"Queueing reserved message-start process instance ({process_instance_id}) for background processing "
+        f"({published_job.delivery_id})"
     )
     return published_job.delivery_id

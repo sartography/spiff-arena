@@ -3,6 +3,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
+from flask import Flask
 from pytest_mock import MockerFixture
 
 from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_RUN
@@ -10,6 +11,7 @@ from spiffworkflow_backend.background_processing.background_job import HEADER_PR
 from spiffworkflow_backend.background_processing.background_job import BackgroundJobEnvelope
 from spiffworkflow_backend.background_processing.background_job import BackgroundJobPublisher
 from spiffworkflow_backend.background_processing.background_job import background_job_context
+from spiffworkflow_backend.background_processing.background_job import configured_background_job_publisher
 from spiffworkflow_backend.background_processing.background_job_instrumentation import BackgroundJobInstrumentation
 from spiffworkflow_backend.services.operation_instrumentation_service import OperationInstrumentation
 
@@ -42,6 +44,40 @@ def test_publisher_attaches_background_job_headers() -> None:
     assert headers[f"{HEADER_PREFIX}eligible_at"] == 105.375
     assert headers[f"{HEADER_PREFIX}correlation_id"] == "correlation-1"
     assert f"{HEADER_PREFIX}process_instance_id" not in headers
+
+
+def test_envelope_message_round_trip() -> None:
+    envelope = BackgroundJobEnvelope.create(
+        CELERY_TASK_PROCESS_INSTANCE_RUN,
+        {"process_instance_id": 42, "task_guid": "task-1"},
+        countdown=5.25,
+        process_instance_id=42,
+        task_guid="task-1",
+        correlation_id="correlation-1",
+        now=100.125,
+    )
+
+    assert BackgroundJobEnvelope.from_message(envelope.message()) == envelope
+
+
+def test_configured_publisher_defaults_to_celery_and_loads_configured_factory(app: Flask, mocker: MockerFixture) -> None:
+    external_publisher = object()
+    module = SimpleNamespace(create_publisher=mocker.Mock(return_value=external_publisher))
+    import_module = mocker.patch(
+        "spiffworkflow_backend.background_processing.background_job.importlib.import_module", return_value=module
+    )
+    with app.app_context():
+        assert isinstance(configured_background_job_publisher(), BackgroundJobPublisher)
+        original_factory = app.config.get("SPIFFWORKFLOW_BACKEND_BACKGROUND_JOB_PUBLISHER_FACTORY")
+        try:
+            app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_JOB_PUBLISHER_FACTORY"] = "deployment.publisher:create_publisher"
+            publisher = configured_background_job_publisher()
+        finally:
+            app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_JOB_PUBLISHER_FACTORY"] = original_factory
+
+    assert publisher is external_publisher
+    import_module.assert_called_once_with("deployment.publisher")
+    module.create_publisher.assert_called_once_with()
 
 
 def test_decodes_publisher_headers_and_headerless_deliveries() -> None:

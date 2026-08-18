@@ -31,7 +31,7 @@ def test_run_operation_skips_missing_process_instance(mocker: MockerFixture) -> 
     result = run_queued_process_instance(42, "task-1")
 
     assert result.outcome == BackgroundOperationOutcome.skipped
-    assert result.celery_result()["ok"] is True
+    assert result.result()["ok"] is True
     assert result.should_requeue is False
 
 

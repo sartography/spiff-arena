@@ -79,6 +79,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_USER_INPUT_REQUIRED_
 
 ### background with celery
 config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", default=False)
+config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_JOB_PUBLISHER_FACTORY", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL", default="redis://localhost")
 config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_CELERY_SQS_URL", default=None)
