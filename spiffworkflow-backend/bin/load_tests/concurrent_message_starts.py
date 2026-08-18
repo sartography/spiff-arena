@@ -460,6 +460,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--api-key")
     parser.add_argument("--group-id", help="Use an existing or deterministic process group path")
     parser.add_argument("--message-name", help="Use an existing or deterministic message name")
+    parser.add_argument(
+        "--skip-model-setup",
+        action="store_true",
+        help="Send to an existing message; requires --group-id and --message-name",
+    )
     parser.add_argument("--suffix", help="Suffix for generated group/model/message identifiers")
     return parser.parse_args()
 
@@ -481,7 +486,12 @@ def main() -> int:
         )
         check_response(response, "login_with_access_token", {200, 204, 302})
 
-    group_id, message_name = ensure_process_model(session, args, headers)
+    if args.skip_model_setup:
+        if not args.group_id or not args.message_name:
+            raise SystemExit("--skip-model-setup requires --group-id and --message-name")
+        group_id, message_name = args.group_id, args.message_name
+    else:
+        group_id, message_name = ensure_process_model(session, args, headers)
     results, request_batch_elapsed_seconds = run_load(args, headers, group_id, message_name)
     print_summary(results, request_batch_elapsed_seconds, args.max_http_latency_seconds)
     all_requests_succeeded = all_message_starts_landed(results)

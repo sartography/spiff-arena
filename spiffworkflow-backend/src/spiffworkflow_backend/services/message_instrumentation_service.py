@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import time
-from collections.abc import Generator
-from contextlib import contextmanager
 from dataclasses import dataclass
-from dataclasses import field
 
 from flask import current_app
 from prometheus_client import Counter
 from prometheus_client import Histogram
+
+from spiffworkflow_backend.services.operation_instrumentation_service import OperationInstrumentation
 
 MESSAGE_SEND_TOTAL = Counter(
     "spiff_message_send_total",
@@ -36,29 +34,22 @@ def _execution_mode_label(execution_mode: str | None) -> str:
 
 
 @dataclass
-class MessageSendInstrumentation:
+class MessageSendInstrumentation(OperationInstrumentation):
     modified_message_name: str
     message_name: str
     execution_mode: str | None
     ttl: int
     message_instance_uuid: str | None
-    started_at: float = field(default_factory=time.perf_counter)
-    phase_durations_ms: dict[str, float] = field(default_factory=dict)
     correlation_result: str | None = None
-    finished: bool = False
 
-    @contextmanager
-    def phase(self, phase_name: str) -> Generator[None, None, None]:
-        phase_started_at = time.perf_counter()
-        try:
-            yield
-        finally:
-            duration_seconds = time.perf_counter() - phase_started_at
-            self.phase_durations_ms[phase_name] = round(duration_seconds * 1000, 3)
-            MESSAGE_SEND_PHASE_DURATION_SECONDS.labels(
-                phase=phase_name,
-                execution_mode=_execution_mode_label(self.execution_mode),
-            ).observe(duration_seconds)
+    def __post_init__(self) -> None:
+        super().__init__()
+
+    def _record_phase(self, phase_name: str, duration_seconds: float) -> None:
+        MESSAGE_SEND_PHASE_DURATION_SECONDS.labels(
+            phase=phase_name,
+            execution_mode=_execution_mode_label(self.execution_mode),
+        ).observe(duration_seconds)
 
     def set_correlation_result(self, result: str) -> None:
         self.correlation_result = result
@@ -72,19 +63,25 @@ class MessageSendInstrumentation:
         process_instance_id: int | None = None,
         error_code: str | None = None,
     ) -> None:
-        if self.finished:
-            return
-        self.finished = True
+        self.finish_operation(
+            result,
+            message_instance_id=message_instance_id,
+            receiver_message_instance_id=receiver_message_instance_id,
+            process_instance_id=process_instance_id,
+            error_code=error_code,
+        )
 
-        duration_seconds = time.perf_counter() - self.started_at
+    def _record_completion(self, result: str, duration_seconds: float) -> None:
         execution_mode = _execution_mode_label(self.execution_mode)
         MESSAGE_SEND_TOTAL.labels(result=result, execution_mode=execution_mode).inc()
         MESSAGE_SEND_DURATION_SECONDS.labels(result=result, execution_mode=execution_mode).observe(duration_seconds)
 
+    def _log_completion(self, result: str, duration_seconds: float, fields: dict[str, object]) -> None:
         try:
             logger = current_app.logger
         except RuntimeError:
             return
+        execution_mode = _execution_mode_label(self.execution_mode)
 
         logger.info(
             "Message send completed",
@@ -99,10 +96,7 @@ class MessageSendInstrumentation:
                     "execution_mode": execution_mode,
                     "ttl": self.ttl,
                     "has_message_instance_uuid": self.message_instance_uuid is not None,
-                    "message_instance_id": message_instance_id,
-                    "receiver_message_instance_id": receiver_message_instance_id,
-                    "process_instance_id": process_instance_id,
-                    "error_code": error_code,
+                    **fields,
                 }
             },
         )

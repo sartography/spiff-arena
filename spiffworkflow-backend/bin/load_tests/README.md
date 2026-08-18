@@ -36,6 +36,16 @@ Useful options:
 uv run python bin/load_tests/concurrent_message_starts.py --help
 ```
 
+To exercise a message start that is already deployed without creating a
+temporary process model:
+
+```sh
+uv run python bin/load_tests/concurrent_message_starts.py \
+  --skip-model-setup \
+  --group-id existing-group \
+  --message-name existing-message
+```
+
 ## Message Start Double Delivery Race
 
 Use this for message-start races between API requests and background message processing. It covers the shape where a
