@@ -1071,11 +1071,7 @@ class TestProcessInstanceRuntime(BaseTest):
         with (
             self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True),
             patch("celery.current_app.send_task") as send_task,
-            patch(
-                "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
-            ) as current_process,
         ):
-            current_process.return_value.index = 0
             response = process_instance_resume(process_instance.id, "test_group/script_with_error")
             assert response.status_code == 200
             assert send_task.call_count == 1
