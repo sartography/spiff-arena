@@ -437,8 +437,8 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
                         if name.startswith(logger_to_exclude):
                             exclude_logger_name_from_logging = True
 
-                    # it's very verbose so set all obscure loggers to ERROR if not in DEBUG
-                    if exclude_logger_name_from_logging or upper_log_level_string != "DEBUG":
+                    # Obscure loggers stay quiet unless explicitly enabled.
+                    if exclude_logger_name_from_logging:
                         log_level_to_use = "ERROR"
 
                     # only need to set the log level here if it is not already excluded from main logging
