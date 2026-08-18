@@ -145,6 +145,7 @@ def run_queued_process_instance(
     try:
         task_guid_for_requeueing = task_guid
         future_task_was_rescheduled = False
+        task_runnability = TaskRunnability.unknown_if_ready_tasks
         with instrumentation.phase("lock"), ProcessInstanceQueueService.dequeued(process_instance):
             with instrumentation.phase("engine_run"):
                 ProcessInstanceService.run_process_instance_with_runtime(
