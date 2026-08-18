@@ -23,6 +23,11 @@ class UnsupportedBackgroundJobError(Exception):
     pass
 
 
+# Order of operations:
+#   src/spiffworkflow_backend/background_processing/celery_tasks/process_instance_task_producer.py
+#   src/spiffworkflow_backend/background_processing/celery_tasks/process_instance_task.py
+#   src/spiffworkflow_backend/background_processing/background_job_executor.py # this file :D
+#   src/spiffworkflow_backend/background_processing/process_instance_operations.py
 def execute_background_job(envelope: BackgroundJobEnvelope) -> dict[str, object]:
     arguments = envelope.arguments
     if envelope.job_name == CELERY_TASK_PROCESS_INSTANCE_RUN:
