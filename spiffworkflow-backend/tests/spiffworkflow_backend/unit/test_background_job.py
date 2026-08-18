@@ -12,6 +12,7 @@ from spiffworkflow_backend.background_processing.background_job import Backgroun
 from spiffworkflow_backend.background_processing.background_job import BackgroundJobPublisher
 from spiffworkflow_backend.background_processing.background_job import background_job_context
 from spiffworkflow_backend.background_processing.background_job import configured_background_job_publisher
+from spiffworkflow_backend.background_processing.background_job import init_background_job_publisher
 from spiffworkflow_backend.background_processing.background_job_instrumentation import BackgroundJobInstrumentation
 from spiffworkflow_backend.services.operation_instrumentation_service import OperationInstrumentation
 
@@ -60,24 +61,29 @@ def test_envelope_message_round_trip() -> None:
     assert BackgroundJobEnvelope.from_message(envelope.message()) == envelope
 
 
-def test_configured_publisher_defaults_to_celery_and_loads_configured_factory(app: Flask, mocker: MockerFixture) -> None:
-    external_publisher = object()
-    module = SimpleNamespace(create_publisher=mocker.Mock(return_value=external_publisher))
-    import_module = mocker.patch(
-        "spiffworkflow_backend.background_processing.background_job.importlib.import_module", return_value=module
-    )
-    with app.app_context():
-        assert isinstance(configured_background_job_publisher(), BackgroundJobPublisher)
-        original_factory = app.config.get("SPIFFWORKFLOW_BACKEND_BACKGROUND_JOB_PUBLISHER_FACTORY")
-        try:
-            app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_JOB_PUBLISHER_FACTORY"] = "deployment.publisher:create_publisher"
-            publisher = configured_background_job_publisher()
-        finally:
-            app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_JOB_PUBLISHER_FACTORY"] = original_factory
+def test_background_job_publisher_is_initialized_once_for_the_application() -> None:
+    app = Flask(__name__)
+    external_publisher = BackgroundJobPublisher(send_task=lambda *args, **kwargs: None)
+    factory_calls: list[Flask] = []
 
-    assert publisher is external_publisher
-    import_module.assert_called_once_with("deployment.publisher")
-    module.create_publisher.assert_called_once_with()
+    def factory(factory_app: Flask) -> BackgroundJobPublisher:
+        factory_calls.append(factory_app)
+        return external_publisher
+
+    initialized_publisher = init_background_job_publisher(app, factory)
+    with app.app_context():
+        configured_publisher = configured_background_job_publisher()
+
+    assert initialized_publisher is external_publisher
+    assert configured_publisher is external_publisher
+    assert factory_calls == [app]
+
+
+def test_application_defaults_to_celery_background_job_publisher(app: Flask) -> None:
+    with app.app_context():
+        publisher = configured_background_job_publisher()
+
+    assert isinstance(publisher, BackgroundJobPublisher)
 
 
 def test_decodes_publisher_headers_and_headerless_deliveries() -> None:

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import importlib
 import time
 import uuid
 from collections.abc import Generator
@@ -8,15 +7,16 @@ from collections.abc import Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
-from dataclasses import field
 from typing import Any
 from typing import Protocol
 from typing import cast
 
 import celery
+from flask import Flask
 from flask import current_app
 
 HEADER_PREFIX = "spiff_background_job_"
+BACKGROUND_JOB_PUBLISHER_EXTENSION = "spiff_background_job_publisher"
 
 JobArgument = str | int | float | bool | None
 
@@ -140,12 +140,17 @@ class BackgroundJobPublisherInterface(Protocol):
     def publish(self, envelope: BackgroundJobEnvelope, *, countdown: float | None = None) -> PublishedBackgroundJob: ...
 
 
+class BackgroundJobPublisherFactory(Protocol):
+    def __call__(self, app: Flask, /) -> BackgroundJobPublisherInterface: ...
+
+
 @dataclass
 class BackgroundJobPublisher:
-    send_task: Any = field(default_factory=lambda: celery.current_app.send_task)
+    send_task: Any = None
 
     def publish(self, envelope: BackgroundJobEnvelope, *, countdown: float | None = None) -> PublishedBackgroundJob:
-        async_result = self.send_task(
+        send_task = self.send_task or celery.current_app.send_task
+        async_result = send_task(
             envelope.job_name,
             kwargs=envelope.arguments,
             headers=envelope.headers(),
@@ -155,15 +160,19 @@ class BackgroundJobPublisher:
         return published_background_job(envelope, delivery_id)
 
 
+def init_background_job_publisher(
+    app: Flask, factory: BackgroundJobPublisherFactory | None = None
+) -> BackgroundJobPublisherInterface:
+    publisher = BackgroundJobPublisher() if factory is None else factory(app)
+    app.extensions[BACKGROUND_JOB_PUBLISHER_EXTENSION] = publisher
+    return publisher
+
+
 def configured_background_job_publisher() -> BackgroundJobPublisherInterface:
-    factory_path = current_app.config.get("SPIFFWORKFLOW_BACKEND_BACKGROUND_JOB_PUBLISHER_FACTORY")
-    if not factory_path:
-        return BackgroundJobPublisher()
-    module_name, separator, factory_name = factory_path.partition(":")
-    if not separator:
-        raise RuntimeError("Background job publisher factory must use module:function syntax")
-    factory = getattr(importlib.import_module(module_name), factory_name)
-    return cast(BackgroundJobPublisherInterface, factory())
+    try:
+        return cast(BackgroundJobPublisherInterface, current_app.extensions[BACKGROUND_JOB_PUBLISHER_EXTENSION])
+    except KeyError as exception:
+        raise RuntimeError("The background-job publisher was not initialized for this application") from exception
 
 
 def published_background_job(envelope: BackgroundJobEnvelope, delivery_id: str) -> PublishedBackgroundJob:
