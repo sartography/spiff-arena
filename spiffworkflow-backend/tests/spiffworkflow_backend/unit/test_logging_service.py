@@ -41,8 +41,18 @@ def test_setup_logger_obscures_preconfigured_sqlalchemy_handler_at_debug(monkeyp
     preconfigured_handler = logging.StreamHandler()
     monkeypatch.setattr(sqlalchemy_logger, "handlers", [preconfigured_handler])
     monkeypatch.setattr(logging.root.manager, "loggerDict", {sqlalchemy_logger.name: sqlalchemy_logger})
+    previous_logger_level = sqlalchemy_logger.level
+    previous_logger_propagate = sqlalchemy_logger.propagate
+    previous_handler_level = preconfigured_handler.level
+    previous_handler_formatter = preconfigured_handler.formatter
 
-    setup_logger_for_app(app, logging)
+    try:
+        setup_logger_for_app(app, logging)
 
-    assert sqlalchemy_logger.level == logging.ERROR
-    assert preconfigured_handler.level == logging.ERROR
+        assert sqlalchemy_logger.level == logging.ERROR
+        assert preconfigured_handler.level == logging.ERROR
+    finally:
+        sqlalchemy_logger.setLevel(previous_logger_level)
+        sqlalchemy_logger.propagate = previous_logger_propagate
+        preconfigured_handler.setLevel(previous_handler_level)
+        preconfigured_handler.setFormatter(previous_handler_formatter)
