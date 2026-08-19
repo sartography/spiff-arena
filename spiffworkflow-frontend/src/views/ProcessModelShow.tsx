@@ -17,7 +17,7 @@ import {
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
-import { Can } from '@casl/react';
+import { Can } from '../contexts/Can';
 // Example icon
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';

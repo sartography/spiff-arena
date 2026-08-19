@@ -10,9 +10,8 @@ import {
   InputLabel,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { Can } from '@casl/react'; // Corrected import
+import { Can, type AppAbility } from '../contexts/Can';
 import { useNavigate } from 'react-router-dom';
-import { PureAbility } from '@casl/ability';
 import ProcessInstanceListTable from './ProcessInstanceListTable';
 import ProcessModelFileList from './ProcessModelFileList';
 import { ProcessFile } from '../interfaces';
@@ -20,7 +19,7 @@ import ProcessModelReadmeArea from './ProcessModelReadmeArea';
 
 interface ProcessModelTabsProps {
   processModel: any;
-  ability: PureAbility;
+  ability: AppAbility;
   targetUris: any;
   modifiedProcessModelId: string;
   selectedTabIndex: number;
