@@ -32,7 +32,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Can } from '@casl/react';
+import { Can } from '../../contexts/Can';
 import { Subject } from 'rxjs';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {

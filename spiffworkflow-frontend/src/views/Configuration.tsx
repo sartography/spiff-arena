@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Tabs, Tab } from '@mui/material'; // Use MUI Tabs and Tab
-import { Can } from '@casl/react';
+import { Can } from '../contexts/Can';
 import SecretList from './SecretList';
 import SecretNew from './SecretNew';
 import SecretShow from './SecretShow';

@@ -1,7 +1,7 @@
 // @ts-ignore
 import { Tabs, Tab } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { Can } from '@casl/react';
+import { Can } from '../contexts/Can';
 import { useNavigate } from 'react-router-dom';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';

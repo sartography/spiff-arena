@@ -17,8 +17,7 @@ import {
   TableContainer,
   IconButton,
 } from '@mui/material';
-import { Can } from '@casl/react';
-import { PureAbility } from '@casl/ability';
+import { Can, type AppAbility } from '../contexts/Can';
 import ConfirmIconButton from './ConfirmIconButton';
 import ProcessModelTestRun from './ProcessModelTestRun';
 import { ProcessFile } from '../interfaces';
@@ -28,7 +27,7 @@ import useAPIError from '../hooks/UseApiError';
 
 interface ProcessModelFileListProps {
   processModel: any;
-  ability: PureAbility;
+  ability: AppAbility;
   targetUris: any;
   modifiedProcessModelId: string;
   onDeleteFile: (fileName: string) => void;

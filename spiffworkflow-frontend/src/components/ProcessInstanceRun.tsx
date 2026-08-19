@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import Button from '@mui/material/Button'; // Updated import for MUI Button
-import { Can } from '@casl/react';
+import { Can } from '../contexts/Can';
 import { useState } from 'react';
 import {
   PermissionsToCheck,
