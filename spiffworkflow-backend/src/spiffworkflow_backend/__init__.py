@@ -7,13 +7,17 @@ import sqlalchemy
 from connexion import FlaskApp
 from connexion.middleware import MiddlewarePosition
 from flask.json.provider import DefaultJSONProvider
+from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 import spiffworkflow_backend.load_database_models  # noqa: F401
 from spiffworkflow_backend.background_processing.apscheduler import start_apscheduler_if_appropriate
+from spiffworkflow_backend.background_processing.background_job import BackgroundJobPublisherFactory
+from spiffworkflow_backend.background_processing.background_job import init_background_job_publisher
 from spiffworkflow_backend.background_processing.celery import init_celery_if_appropriate
 from spiffworkflow_backend.config import setup_config
 from spiffworkflow_backend.exceptions.api_error import handle_exception
+from spiffworkflow_backend.middleware.asgi_proxy_fix import ASGIProxyFix
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import migrate
 from spiffworkflow_backend.routes.authentication_controller import _set_new_access_token_in_cookie
@@ -61,7 +65,7 @@ def create_app_for_flask() -> Any:
     return create_app().app
 
 
-def create_app() -> FlaskApp:
+def create_app(*, background_job_publisher_factory: BackgroundJobPublisherFactory | None = None) -> FlaskApp:
     faulthandler.enable()
 
     # We need to create the sqlite database in a known location.
@@ -123,7 +127,35 @@ def create_app() -> FlaskApp:
     # This is particularly helpful for forms that are generated from json schemas.
     app.json.sort_keys = False
 
-    start_apscheduler_if_appropriate(app)
     init_celery_if_appropriate(app)
+    init_background_job_publisher(app, background_job_publisher_factory)
+    start_apscheduler_if_appropriate(app)
 
     return connexion_app
+
+
+def create_asgi_app(*, background_job_publisher_factory: BackgroundJobPublisherFactory | None = None) -> Any:
+    connexion_app = create_app(background_job_publisher_factory=background_job_publisher_factory)
+
+    num_proxies = 0
+    if connexion_app.app.config["SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX"]:
+        num_proxies = 1
+    if connexion_app.app.config["SPIFFWORKFLOW_BACKEND_PROXY_COUNT_FOR_PROXY_FIX"]:
+        num_proxies = int(connexion_app.app.config["SPIFFWORKFLOW_BACKEND_PROXY_COUNT_FOR_PROXY_FIX"])
+    if num_proxies > 0:
+        connexion_app.add_middleware(
+            ASGIProxyFix,
+            x_for=num_proxies,
+            x_proto=num_proxies,
+            x_host=num_proxies,
+            x_prefix=num_proxies,
+        )
+
+    if os.environ.get("SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA") == "true":
+        # Loading this at module import time causes migrations to depend on fixture data.
+        from spiffworkflow_backend.services.acceptance_test_fixtures import load_acceptance_test_fixtures  # noqa: PLC0415
+
+        with connexion_app.app.app_context():
+            load_acceptance_test_fixtures()
+
+    return SentryAsgiMiddleware(connexion_app)

@@ -41,10 +41,13 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
 
             from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL
 
-            mock_send_task.assert_called_once_with(
-                CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL,
-                (task_available_pm_id, "task_guid_456", 1),
-            )
+            mock_send_task.assert_called_once()
+            assert mock_send_task.call_args.args == (CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL,)
+            assert mock_send_task.call_args.kwargs["kwargs"] == {
+                "process_model_identifier": task_available_pm_id,
+                "task_guid": "task_guid_456",
+                "user_id": 1,
+            }
 
     @patch("spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceRuntime.setup_runtime_with_process_instance")
     @patch(

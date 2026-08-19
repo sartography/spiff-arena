@@ -186,10 +186,12 @@ class TestBackgroundProcessingService(BaseTest):
                 process_instance = self.create_process_instance_from_process_model(process_model=process_model)
                 runtime = ProcessInstanceRuntime(process_instance)
                 runtime.do_engine_steps(save=True)
-                mock.assert_called_with(
-                    CELERY_TASK_EVENT_NOTIFIER,
-                    (process_instance.id, process_instance.process_model_identifier, "human_tasks_changed"),
-                )
+                assert mock.call_args.args == (CELERY_TASK_EVENT_NOTIFIER,)
+                assert mock.call_args.kwargs["kwargs"] == {
+                    "updated_process_instance_id": process_instance.id,
+                    "process_model_identifier": process_instance.process_model_identifier,
+                    "event_type": "human_tasks_changed",
+                }
                 assert mock.call_count == 1
 
     def test_queues_event_notifier_when_complete(
@@ -210,10 +212,12 @@ class TestBackgroundProcessingService(BaseTest):
                 )
                 runtime = ProcessInstanceRuntime(process_instance)
                 runtime.do_engine_steps(save=True)
-                mock.assert_called_with(
-                    CELERY_TASK_EVENT_NOTIFIER,
-                    (process_instance.id, process_instance.process_model_identifier, "process_instance_complete"),
-                )
+                assert mock.call_args.args == (CELERY_TASK_EVENT_NOTIFIER,)
+                assert mock.call_args.kwargs["kwargs"] == {
+                    "updated_process_instance_id": process_instance.id,
+                    "process_model_identifier": process_instance.process_model_identifier,
+                    "event_type": "process_instance_complete",
+                }
                 assert mock.call_count == 1
 
     def test_event_notifier_worker_wraps_missing_process_model_without_api_error(

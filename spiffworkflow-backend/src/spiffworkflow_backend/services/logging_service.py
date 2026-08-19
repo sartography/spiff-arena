@@ -431,16 +431,16 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
                 logger_for_name.propagate = False
                 logger_for_name.addHandler(spiff_logger_filehandler)
             else:
+                exclude_logger_name_from_logging = False
+                for logger_to_exclude in obscure_loggers_to_exclude_from_main_logging:
+                    if name.startswith(logger_to_exclude):
+                        exclude_logger_name_from_logging = True
+
+                # Obscure loggers stay quiet unless explicitly enabled.
+                if exclude_logger_name_from_logging:
+                    log_level_to_use = "ERROR"
+
                 if len(logger_for_name.handlers) < 1:
-                    exclude_logger_name_from_logging = False
-                    for logger_to_exclude in obscure_loggers_to_exclude_from_main_logging:
-                        if name.startswith(logger_to_exclude):
-                            exclude_logger_name_from_logging = True
-
-                    # it's very verbose so set all obscure loggers to ERROR if not in DEBUG
-                    if exclude_logger_name_from_logging or upper_log_level_string != "DEBUG":
-                        log_level_to_use = "ERROR"
-
                     # only need to set the log level here if it is not already excluded from main logging
                     if not exclude_logger_name_from_logging and upper_log_level_string == "DEBUG":
                         exclude_logger_name_from_debug = False

@@ -22,6 +22,8 @@ def celery_init_app(app: flask.app.Flask) -> Celery:
         "accept_content": ["json"],
         "enable_utc": True,
         "worker_redirect_stdouts_level": "DEBUG",
+        "worker_send_task_events": True,
+        "task_send_sent_event": True,
     }
 
     broker_url = app.config["SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL"]
