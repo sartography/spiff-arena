@@ -72,6 +72,14 @@ BPMN_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 
 
 @dataclass
+class CreatedResources:
+    group_id: str
+    message_name: str
+    created_groups: list[str]
+    created_model: bool
+
+
+@dataclass
 class MessageResult:
     index: int
     status_code: int
@@ -146,7 +154,7 @@ def request_headers(args: argparse.Namespace, access_token: str | None = None) -
     return headers
 
 
-def create_process_group(session: requests.Session, args: argparse.Namespace, headers: dict[str, str], group_id: str) -> None:
+def create_process_group(session: requests.Session, args: argparse.Namespace, headers: dict[str, str], group_id: str) -> bool:
     payload = {
         "id": group_id,
         "display_name": group_id,
@@ -156,8 +164,9 @@ def create_process_group(session: requests.Session, args: argparse.Namespace, he
     }
     response = session.post(f"{args.backend_base_url}/v1.0/process-groups", headers=headers, json=payload, timeout=args.timeout)
     if response.status_code == 400 and "already_exists" in response.text:
-        return
+        return False
     check_response(response, "create process group", {201})
+    return True
 
 
 def create_process_model(
@@ -166,7 +175,7 @@ def create_process_model(
     headers: dict[str, str],
     group_id: str,
     process_model_id: str,
-) -> None:
+) -> bool:
     payload = {
         "id": process_model_id,
         "display_name": process_model_id,
@@ -181,8 +190,9 @@ def create_process_model(
         timeout=args.timeout,
     )
     if response.status_code == 400 and "already_exists" in response.text:
-        return
+        return False
     check_response(response, "create process model", {201})
+    return True
 
 
 def upload_bpmn(
@@ -229,7 +239,7 @@ def set_primary_bpmn(
     check_response(response, "set primary BPMN", {200})
 
 
-def ensure_process_model(session: requests.Session, args: argparse.Namespace, headers: dict[str, str]) -> tuple[str, str]:
+def ensure_process_model(session: requests.Session, args: argparse.Namespace, headers: dict[str, str]) -> CreatedResources:
     suffix = args.suffix or str(int(time.time()))
     group_id = args.group_id or f"load_test/concurrent_message_starts_{suffix}"
     process_model_id = f"{group_id}/message_receiver"
@@ -237,9 +247,12 @@ def ensure_process_model(session: requests.Session, args: argparse.Namespace, he
     message_name = args.message_name or f"concurrent_message_start_{suffix}"
     file_name = "message_start_load_test.bpmn"
 
-    create_process_group(session, args, headers, "load_test")
-    create_process_group(session, args, headers, group_id)
-    create_process_model(session, args, headers, group_id, process_model_id)
+    created_groups = []
+    if create_process_group(session, args, headers, "load_test"):
+        created_groups.append("load_test")
+    if create_process_group(session, args, headers, group_id):
+        created_groups.append(group_id)
+    created_model = create_process_model(session, args, headers, group_id, process_model_id)
     upload_bpmn(
         session,
         args,
@@ -250,7 +263,12 @@ def ensure_process_model(session: requests.Session, args: argparse.Namespace, he
     )
     set_primary_bpmn(session, args, headers, process_model_id, file_name, process_id)
 
-    return group_id, message_name
+    return CreatedResources(
+        group_id=group_id,
+        message_name=message_name,
+        created_groups=created_groups,
+        created_model=created_model,
+    )
 
 
 def send_message(args: argparse.Namespace, headers: dict[str, str], modified_message_name: str, index: int) -> MessageResult:
@@ -369,6 +387,66 @@ def wait_for_process_instances(
             f"process instance did not finish within {args.completion_timeout:.1f}s; "
             f"last status was {result.final_process_instance_status!r}"
         )
+
+
+def cleanup_created_resources(
+    args: argparse.Namespace,
+    headers: dict[str, str],
+    resources: CreatedResources,
+    results: list[MessageResult],
+) -> bool:
+    """Delete created instances, then the model and groups. Returns True if all deletions succeeded."""
+    failures: list[str] = []
+    process_instance_ids = sorted({result.process_instance_id for result in results if result.accepted})
+
+    thread_local = threading.local()
+
+    def delete_url(url: str, label: str) -> None:
+        session = getattr(thread_local, "session", None)
+        if session is None:
+            session = requests.Session()
+            thread_local.session = session
+        try:
+            response = session.delete(url, headers=headers, timeout=args.timeout)
+            if response.status_code != 200:
+                failures.append(f"{label}: HTTP {response.status_code}: {response.text[:200]}")
+        except requests.RequestException as exception:
+            failures.append(f"{label}: {exception}")
+
+    if process_instance_ids:
+        modified_process_model_identifier = modified_identifier(f"{resources.group_id}/message_receiver")
+        print(f"\nDeleting {len(process_instance_ids)} process instances...")
+        started_at = time.perf_counter()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
+            futures = [
+                executor.submit(
+                    delete_url,
+                    f"{args.backend_base_url}/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}",
+                    f"instance {process_instance_id}",
+                )
+                for process_instance_id in process_instance_ids
+            ]
+            for future in concurrent.futures.as_completed(futures):
+                future.result()
+        elapsed = time.perf_counter() - started_at
+        deleted_count = len(process_instance_ids) - sum(1 for failure in failures if failure.startswith("instance "))
+        print(f"Deleted {deleted_count}/{len(process_instance_ids)} process instances in {elapsed:.1f}s")
+
+    # The model must be deleted before its group; groups before their parent.
+    if resources.created_model:
+        model_url = f"{args.backend_base_url}/v1.0/process-models/{modified_identifier(f'{resources.group_id}/message_receiver')}"
+        delete_url(model_url, f"process model {resources.group_id}/message_receiver")
+    for group_id in reversed(resources.created_groups):
+        group_url = f"{args.backend_base_url}/v1.0/process-groups/{modified_identifier(group_id)}"
+        delete_url(group_url, f"process group {group_id}")
+
+    if failures:
+        for failure in failures[:10]:
+            print(f"- {failure}")
+        if len(failures) > 10:
+            print(f"... and {len(failures) - 10} more")
+        return False
+    return True
 
 
 def percentile(values: list[float], fraction: float) -> float:
@@ -497,6 +575,11 @@ def parse_args() -> argparse.Namespace:
         help="Send to an existing message; requires --group-id and --message-name",
     )
     parser.add_argument("--suffix", help="Suffix for generated group/model/message identifiers")
+    parser.add_argument(
+        "--no-cleanup",
+        action="store_true",
+        help="Do not delete the created process instances, model, or groups after the run",
+    )
     return parser.parse_args()
 
 
@@ -520,14 +603,23 @@ def main() -> int:
     if args.skip_model_setup:
         if not args.group_id or not args.message_name:
             raise SystemExit("--skip-model-setup requires --group-id and --message-name")
-        group_id, message_name = args.group_id, args.message_name
+        resources = CreatedResources(group_id=args.group_id, message_name=args.message_name, created_groups=[], created_model=False)
     else:
-        group_id, message_name = ensure_process_model(session, args, headers)
-    results, request_batch_elapsed_seconds = run_load(args, headers, group_id, message_name)
+        resources = ensure_process_model(session, args, headers)
+    results, request_batch_elapsed_seconds = run_load(args, headers, resources.group_id, resources.message_name)
     print_summary(results, request_batch_elapsed_seconds, args.max_http_latency_seconds)
+
+    if args.no_cleanup:
+        print("\nSkipping cleanup (--no-cleanup)")
+        cleanup_succeeded = True
+    else:
+        cleanup_succeeded = cleanup_created_resources(args, headers, resources, results)
+
     all_requests_succeeded = all_message_starts_landed(results)
     latency_threshold_met = all_requests_within_http_latency(results, args.max_http_latency_seconds)
-    return 0 if all_requests_succeeded and latency_threshold_met else 1
+    if all_requests_succeeded and latency_threshold_met and cleanup_succeeded:
+        return 0
+    return 1
 
 
 if __name__ == "__main__":
