@@ -33,7 +33,10 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
     # note that a call activity is its own row in this table, with its own hash,
     # and therefore it only gets stored once per version, and can be reused
     # by multiple calling processes.
-    single_process_hash: str = db.Column(db.String(255), nullable=False)
+    # index=True: the BPMN parse / callActivity resolution path filters on this
+    # column alone, which the composite process_hash_unique(full_process_model_hash,
+    # single_process_hash) index cannot serve as a seek.
+    single_process_hash: str = db.Column(db.String(255), nullable=False, index=True)
 
     # only the top level parent will have this set
     # it includes all subprocesses and call activities
