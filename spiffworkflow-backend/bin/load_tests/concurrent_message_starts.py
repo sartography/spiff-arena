@@ -432,13 +432,24 @@ def cleanup_created_resources(
         deleted_count = len(process_instance_ids) - sum(1 for failure in failures if failure.startswith("instance "))
         print(f"Deleted {deleted_count}/{len(process_instance_ids)} process instances in {elapsed:.1f}s")
 
-    # The model must be deleted before its group; groups before their parent.
-    if resources.created_model:
+    # A single group delete cascades: the backend removes the whole subtree
+    # (child groups and models) as long as no nested model has remaining
+    # instances. So delete the highest-level group we created and let it
+    # cascade. Only fall back to narrower deletions when every candidate
+    # group pre-existed and might contain models we did not create.
+    if "load_test" in resources.created_groups:
+        delete_url(
+            f"{args.backend_base_url}/v1.0/process-groups/{modified_identifier('load_test')}",
+            "process group load_test",
+        )
+    elif resources.group_id in resources.created_groups:
+        delete_url(
+            f"{args.backend_base_url}/v1.0/process-groups/{modified_identifier(resources.group_id)}",
+            f"process group {resources.group_id}",
+        )
+    elif resources.created_model:
         model_url = f"{args.backend_base_url}/v1.0/process-models/{modified_identifier(f'{resources.group_id}/message_receiver')}"
         delete_url(model_url, f"process model {resources.group_id}/message_receiver")
-    for group_id in reversed(resources.created_groups):
-        group_url = f"{args.backend_base_url}/v1.0/process-groups/{modified_identifier(group_id)}"
-        delete_url(group_url, f"process group {group_id}")
 
     if failures:
         for failure in failures[:10]:
