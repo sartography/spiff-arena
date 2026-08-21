@@ -14,6 +14,7 @@ import base64
 import concurrent.futures
 import json
 import statistics
+import threading
 import time
 from dataclasses import dataclass
 from typing import Any
@@ -296,42 +297,72 @@ def send_message(args: argparse.Namespace, headers: dict[str, str], modified_mes
         )
 
 
+TERMINAL_PROCESS_INSTANCE_STATUSES = {"complete", "error", "terminated"}
+
+
 def wait_for_process_instances(
     args: argparse.Namespace,
     headers: dict[str, str],
     results: list[MessageResult],
 ) -> None:
     pending = {result.index: result for result in results if result.accepted}
+
+    # Trust terminal statuses already reported by the message-start response.
+    # With synchronous execution mode this usually covers everything.
+    seeded = 0
+    for index, result in list(pending.items()):
+        if result.process_instance_status in TERMINAL_PROCESS_INSTANCE_STATUSES:
+            result.final_process_instance_status = result.process_instance_status
+            del pending[index]
+            seeded += 1
+    if seeded:
+        print(f"{seeded} process instances already finished per the message-start responses; skipping their polls")
+
     deadline = time.monotonic() + args.completion_timeout
+    thread_local = threading.local()
 
-    while pending and time.monotonic() < deadline:
-        for index, result in list(pending.items()):
-            try:
-                response = requests.get(
-                    f"{args.backend_base_url}/v1.0/process-instances/find-by-id/{result.process_instance_id}",
-                    headers=headers,
-                    timeout=args.timeout,
-                )
-            except requests.RequestException as exception:
-                result.completion_error = f"poll failed: {exception}"
-                continue
-            if response.status_code != 200:
-                result.completion_error = f"poll returned HTTP {response.status_code}: {response.text[:500]}"
-                continue
+    def poll(index: int) -> None:
+        result = pending.get(index)
+        if result is None:
+            return
+        session = getattr(thread_local, "session", None)
+        if session is None:
+            session = requests.Session()
+            thread_local.session = session
+        try:
+            response = session.get(
+                f"{args.backend_base_url}/v1.0/process-instances/find-by-id/{result.process_instance_id}",
+                headers=headers,
+                timeout=args.timeout,
+            )
+        except requests.RequestException as exception:
+            result.completion_error = f"poll failed: {exception}"
+            return
+        if response.status_code != 200:
+            result.completion_error = f"poll returned HTTP {response.status_code}: {response.text[:500]}"
+            return
 
-            try:
-                data = response.json()
-            except ValueError:
-                result.completion_error = f"poll returned invalid JSON: {response.text[:500]}"
-                continue
-            process_instance = data.get("process_instance", {})
-            result.final_process_instance_status = process_instance.get("status")
-            result.completion_error = None
-            if result.final_process_instance_status in {"complete", "error", "terminated"}:
-                pending.pop(index)
+        try:
+            data = response.json()
+        except ValueError:
+            result.completion_error = f"poll returned invalid JSON: {response.text[:500]}"
+            return
+        process_instance = data.get("process_instance", {})
+        result.final_process_instance_status = process_instance.get("status")
+        result.completion_error = None
 
-        if pending:
-            time.sleep(args.poll_interval)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
+        while pending and time.monotonic() < deadline:
+            futures = [executor.submit(poll, index) for index in pending]
+            for future in concurrent.futures.as_completed(futures):
+                future.result()
+            pending = {
+                index: result
+                for index, result in pending.items()
+                if result.final_process_instance_status not in TERMINAL_PROCESS_INSTANCE_STATUSES
+            }
+            if pending and time.monotonic() < deadline:
+                time.sleep(args.poll_interval)
 
     for result in pending.values():
         result.completion_error = (
