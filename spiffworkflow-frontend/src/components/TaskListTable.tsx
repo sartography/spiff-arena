@@ -462,7 +462,7 @@ export default function TaskListTable({
         <PaginationForTable
           page={page}
           perPage={perPage}
-          perPageOptions={[2, defaultPerPage, 25]}
+          perPageOptions={[defaultPerPage, 25]}
           pagination={pagination}
           tableToDisplay={buildTable()}
           paginationQueryParamPrefix={paginationQueryParamPrefix}

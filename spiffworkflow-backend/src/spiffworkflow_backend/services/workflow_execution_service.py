@@ -29,6 +29,7 @@ from SpiffWorkflow.bpmn.specs.control import BoundaryEventSplit
 from SpiffWorkflow.bpmn.specs.control import UnstructuredJoin
 from SpiffWorkflow.bpmn.specs.event_definitions.item_aware_event import CodeEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.specs.event_definitions.message import MessageEventDefinition  # type: ignore
+from SpiffWorkflow.bpmn.specs.event_definitions.simple import TerminateEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins import SubWorkflowTaskMixin  # type: ignore
 from SpiffWorkflow.bpmn.specs.mixins.events.intermediate_event import BoundaryEvent  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
@@ -87,7 +88,16 @@ class WorkflowExecutionServiceError(WorkflowTaskException):  # type: ignore
         task: SpiffTask,
         unhandled_events: dict[str, list[Any]],
     ) -> WorkflowExecutionServiceError:
-        events = {k: [e.event_definition.code for e in v] for k, v in unhandled_events.items()}
+        # Error and escalation events are identified by code; other events by name.
+        events = {
+            event_type: [
+                event.event_definition.code
+                if isinstance(event.event_definition, CodeEventDefinition)
+                else event.event_definition.name
+                for event in event_group
+            ]
+            for event_type, event_group in unhandled_events.items()
+        }
 
         return cls(
             error_msg=f"The process completed with unhandled events: {events}",
@@ -827,6 +837,8 @@ class WorkflowExecutionService:
     def process_bpmn_events(self) -> None:
         bpmn_event_groups = self.group_bpmn_events()
         message_events = bpmn_event_groups.pop(MessageEventDefinition.__name__, [])
+        # A terminate end event is normal completion, not an unhandled event.
+        bpmn_event_groups.pop(TerminateEventDefinition.__name__, [])
 
         if bpmn_event_groups:
             raise WorkflowExecutionServiceError.from_completion_with_unhandled_events(

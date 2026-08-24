@@ -37,6 +37,8 @@ import PaginationForTable from '../PaginationForTable';
 import { MessageEditor } from './MessageEditor';
 import { findNearestAncestorLocation } from './MessageHelper';
 import ConfirmButton from '../ConfirmButton';
+import useProcessGroups from '../../hooks/useProcessGroups';
+import { usePermissionFetcher } from '../../hooks/PermissionService';
 
 type OwnProps = {
   processGroupId?: string;
@@ -151,6 +153,22 @@ const processGroupLocationForSource = (sourceLocation: string) => {
   return pathParts.slice(0, -1).join('/');
 };
 
+const processGroupPermissionPath = (processGroupIdentifier: string) => {
+  return `/v1.0/process-groups/${modifyProcessIdentifierForPathParam(
+    processGroupIdentifier,
+  )}`;
+};
+
+const flattenProcessGroupIdentifiers = (processGroups: ProcessGroup[]) => {
+  const identifiers: string[] = [];
+  const addProcessGroup = (processGroup: ProcessGroup) => {
+    identifiers.push(processGroup.id);
+    (processGroup.process_groups || []).forEach(addProcessGroup);
+  };
+  processGroups.forEach(addProcessGroup);
+  return identifiers;
+};
+
 const initialUnsavedMessageModel = (
   messages: MessageModelResponse[],
   initialMessageId?: string,
@@ -201,6 +219,34 @@ export default function MessageModelList({
   const hasInitializedEditor = useRef(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
+  const { processGroups } = useProcessGroups({ processInfo: {} });
+  const processGroupIdentifiers = useMemo(
+    () => flattenProcessGroupIdentifiers(processGroups || []),
+    [processGroups],
+  );
+  const permissionRequestData = useMemo(() => {
+    return Object.fromEntries(
+      processGroupIdentifiers.map((identifier) => [
+        processGroupPermissionPath(identifier),
+        ['PUT'],
+      ]),
+    );
+  }, [processGroupIdentifiers]);
+  const { ability, permissionsLoaded } = usePermissionFetcher(
+    permissionRequestData,
+  );
+  const canUpdateProcessGroup = useCallback(
+    (processGroupIdentifier: string) => {
+      return (
+        permissionsLoaded &&
+        ability.can('PUT', processGroupPermissionPath(processGroupIdentifier))
+      );
+    },
+    [ability, permissionsLoaded],
+  );
+  const canAddMessageModel = processGroupId
+    ? canUpdateProcessGroup(processGroupId)
+    : processGroupIdentifiers.some(canUpdateProcessGroup);
   const { page, perPage } = getPageInfoFromSearchParams(
     searchParams,
     undefined,
@@ -332,7 +378,15 @@ export default function MessageModelList({
 
   const closeEditor = useCallback(() => {
     setEditorState(null);
-    // Clear message_id and source_location params when closing editor
+    if (
+      !searchParams.has('message_id') &&
+      !searchParams.has('source_location')
+    ) {
+      return;
+    }
+
+    // Clear message_id and source_location params when the editor was opened
+    // from a URL that selected a specific message model.
     const nextSearchParams = new URLSearchParams(searchParams);
     nextSearchParams.delete('message_id');
     nextSearchParams.delete('source_location');
@@ -414,34 +468,36 @@ export default function MessageModelList({
               >
                 {t('edit')}
               </Button>
-              <ConfirmButton
-                buttonLabel={t('delete')}
-                onConfirmation={() => deleteMessageModel(messageModel)}
-                title={t('delete_message_model_confirmation')}
-                description={
-                  (messageModel.process_model_identifiers || []).length > 0
-                    ? t('delete_message_model_description_used_in', {
-                        identifier: messageModel.identifier,
-                        location: messageModel.location,
-                        usedIn: (
-                          messageModel.process_model_identifiers || []
-                        ).join(', '),
-                      })
-                    : t('delete_message_model_description', {
-                        identifier: messageModel.identifier,
-                        location: messageModel.location,
-                      })
-                }
-                confirmButtonLabel={t('delete')}
-                variant="text"
-                color="error"
-              />
+              {canUpdateProcessGroup(messageModel.location) ? (
+                <ConfirmButton
+                  buttonLabel={t('delete')}
+                  onConfirmation={() => deleteMessageModel(messageModel)}
+                  title={t('delete_message_model_confirmation')}
+                  description={
+                    (messageModel.process_model_identifiers || []).length > 0
+                      ? t('delete_message_model_description_used_in', {
+                          identifier: messageModel.identifier,
+                          location: messageModel.location,
+                          usedIn: (
+                            messageModel.process_model_identifiers || []
+                          ).join(', '),
+                        })
+                      : t('delete_message_model_description', {
+                          identifier: messageModel.identifier,
+                          location: messageModel.location,
+                        })
+                  }
+                  confirmButtonLabel={t('delete')}
+                  variant="text"
+                  color="error"
+                />
+              ) : null}
             </Box>
           </TableCell>
         </TableRow>
       );
     });
-  }, [deleteMessageModel, paginatedMessageModels, t]);
+  }, [canUpdateProcessGroup, deleteMessageModel, paginatedMessageModels, t]);
 
   const table = (
     <TableContainer component={Paper} variant="outlined">
@@ -494,11 +550,13 @@ export default function MessageModelList({
           })}
         </Notification>
       ) : null}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-        <Button variant="contained" onClick={openCreateDialog}>
-          {t('add_message_model')}
-        </Button>
-      </Box>
+      {canAddMessageModel ? (
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+          <Button variant="contained" onClick={openCreateDialog}>
+            {t('add_message_model')}
+          </Button>
+        </Box>
+      ) : null}
       {pagination ? (
         <PaginationForTable
           page={page}
@@ -548,18 +606,21 @@ export default function MessageModelList({
               </Box>
             </DialogContent>
             <DialogActions>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => {
-                  const submitButton = document.getElementById('submit-button');
-                  if (submitButton) {
-                    (submitButton as HTMLButtonElement).click();
-                  }
-                }}
-              >
-                {t('save')}
-              </Button>
+              {canUpdateProcessGroup(editorState.location) ? (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => {
+                    const submitButton =
+                      document.getElementById('submit-button');
+                    if (submitButton) {
+                      (submitButton as HTMLButtonElement).click();
+                    }
+                  }}
+                >
+                  {t('save')}
+                </Button>
+              ) : null}
               <Button onClick={closeEditor}>{t('close')}</Button>
             </DialogActions>
           </>
@@ -596,7 +657,10 @@ export default function MessageModelList({
           <Button
             variant="contained"
             onClick={validateCreateLocation}
-            disabled={isValidatingCreateLocation}
+            disabled={
+              isValidatingCreateLocation ||
+              !canUpdateProcessGroup(createLocation.trim())
+            }
           >
             {t('continue')}
           </Button>

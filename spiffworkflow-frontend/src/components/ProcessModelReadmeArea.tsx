@@ -2,16 +2,15 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, IconButton } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { Can } from '@casl/react';
+import { Can, type AppAbility } from '../contexts/Can';
 import EditIcon from '@mui/icons-material/Edit';
-import { PureAbility } from '@casl/ability';
 import { Link } from 'react-router-dom';
 import MarkdownDisplayForFile from './MarkdownDisplayForFile';
 import { ProcessFile } from '../interfaces';
 
 interface ProcessModelReadmeAreaProps {
   readmeFile: ProcessFile | null;
-  ability: PureAbility;
+  ability: AppAbility;
   targetUris: any;
   modifiedProcessModelId: string;
 }

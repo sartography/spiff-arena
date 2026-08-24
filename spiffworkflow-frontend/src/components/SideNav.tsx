@@ -372,10 +372,9 @@ function SideNav({
                             ? 'background.light'
                             : 'inherit',
                         color: selectedTab === item.id ? mainBlue : 'inherit',
-                        borderColor:
+                        borderLeft: '4px solid',
+                        borderLeftColor:
                           selectedTab === item.id ? mainBlue : 'transparent',
-                        borderLeftWidth: '4px',
-                        borderStyle: 'solid',
                         justifyContent: isCollapsed ? 'center' : 'flex-start',
                       }}
                     >

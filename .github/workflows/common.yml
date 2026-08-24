@@ -21,7 +21,7 @@ jobs:
     name: Build and publish Python 🐍 distributions 📦 to PyPI
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
         with:
           persist-credentials: false
       - name: Set up Python 3.12
@@ -34,7 +34,7 @@ jobs:
         run: uv build spiff-arena-common
       - name: Publish distribution 📦 to PyPI
         if: github.ref == 'refs/heads/main'
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           user: __token__
           password: ${{ secrets.COMMON_PYPI_KEY }}

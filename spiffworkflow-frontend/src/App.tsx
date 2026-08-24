@@ -1,9 +1,7 @@
-import { defineAbility } from '@casl/ability';
-
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AbilityContext } from './contexts/Can';
+import { AbilityContext, createAppAbility } from './contexts/Can';
 import APIErrorProvider from './contexts/APIErrorContext';
 import ContainerForExtensions from './ContainerForExtensions';
 import PublicRoutes from './views/PublicRoutes';
@@ -12,7 +10,7 @@ import { CONFIGURATION_ERRORS } from './config';
 const queryClient = new QueryClient();
 
 export default function App() {
-  const ability = defineAbility(() => {});
+  const ability = createAppAbility();
   const routeComponents = () => {
     return [
       { path: 'public/*', element: <PublicRoutes /> },
@@ -61,12 +59,5 @@ export default function App() {
       children: routeComponents(),
     },
   ]);
-  return (
-    <RouterProvider
-      router={router}
-      future={{
-        v7_startTransition: true,
-      }}
-    />
-  );
+  return <RouterProvider router={router} />;
 }

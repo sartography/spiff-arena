@@ -15,7 +15,7 @@ import {
   Stack,
   useTheme,
 } from '@mui/material';
-import { Can } from '@casl/react';
+import { Can } from '../contexts/Can';
 import MDEditor from '@uiw/react-md-editor';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';

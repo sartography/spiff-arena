@@ -130,6 +130,9 @@ config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_POOL_PRE_PING", default=True)
 ### open id
 config_from_env("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", default=False)
+# Name of the ID/access-token claim containing the user's group identifiers.
+# Most providers use "groups"; Amazon Cognito uses "cognito:groups".
+config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_GROUPS_CLAIM", default="groups")
 # Tenant specific fields is a comma separated list of field names that we will be converted to list of strings
 # and store in the user table's tenant_specific_field_n columns. You can have up to three items in this
 # comma-separated list.
@@ -173,6 +176,11 @@ else:
         #       if client-B is added to this list, then an api user can auth with keycloak
         #           and use that token successfully with backend
         config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_CLIENT_IDS")
+        # Optional comma-separated API audiences for access-token validation. When omitted,
+        # the legacy client-id/account audience behavior remains in effect.
+        config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_ACCESS_TOKEN_AUDIENCES")
+        # Optional RFC 8707 resource indicator to include in authorization requests.
+        config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_AUTHORIZATION_RESOURCE")
     else:
         SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS = [
             {
@@ -184,6 +192,8 @@ else:
                 "client_secret": "JXeQExm0JhQPLumgHtIIqf52bDalHz0q",
                 "additional_valid_client_ids": None,
                 "additional_valid_issuers": [],
+                "access_token_audiences": None,
+                "authorization_resource": None,
             }
         ]
 

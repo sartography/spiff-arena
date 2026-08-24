@@ -253,9 +253,6 @@ class TestServiceTaskRetries(BaseTest):
 
             with (
                 patch(
-                    "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
-                ) as current_process,
-                patch(
                     "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer.time.time",
                     return_value=self.fake_now + 3,
                 ),
@@ -263,7 +260,6 @@ class TestServiceTaskRetries(BaseTest):
                 patch("spiffworkflow_backend.services.workflow_execution_service.time.time", return_value=self.fake_now + 3),
                 patch("celery.current_app.send_task") as send_task,
             ):
-                current_process.return_value.index = 0
                 with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
                     cast(SupportsCeleryTaskRun, celery_task_process_instance_run).run(
                         reloaded_process_instance.id, str(service_task.id)
@@ -415,11 +411,7 @@ class TestServiceTaskRetries(BaseTest):
         with (
             self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True),
             patch("celery.current_app.send_task") as send_task,
-            patch(
-                "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
-            ) as current_process,
         ):
-            current_process.return_value.index = 0
             response = process_instance_resume(process_instance.id, "test_group/retries")
             assert response.status_code == 200
             assert send_task.call_count == 1
@@ -465,15 +457,11 @@ class TestServiceTaskRetries(BaseTest):
             self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True),
             patch("celery.current_app.send_task") as send_task,
             patch("requests.get") as mock_get,
-            patch(
-                "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
-            ) as current_process,
         ):
             mock_get.return_value.status_code = 200
             mock_get.return_value.headers = {"Content-Type": "application/json"}
             mock_get.return_value.ok = True
             mock_get.return_value.text = "{}"
-            current_process.return_value.index = 0
 
             response = process_instance_resume(process_instance.id, "test_group/retries")
             assert response.status_code == 200

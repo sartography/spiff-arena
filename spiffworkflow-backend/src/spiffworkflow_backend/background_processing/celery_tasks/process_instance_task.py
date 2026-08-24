@@ -1,28 +1,14 @@
-import time
 from typing import Any
 
-from billiard import current_process  # type: ignore
 from celery import shared_task
-from flask import current_app
 
-from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import (
-    queue_process_instance_if_appropriate,
-)
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.future_task import FutureTaskModel
-from spiffworkflow_backend.models.message_instance import MessageInstanceModel
-from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.task import TaskModel
-from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.message_service import MessageService
-from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
-from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
-from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
-from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
+from spiffworkflow_backend.background_processing import CELERY_TASK_EVENT_NOTIFIER
+from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_RUN
+from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_START_FROM_MESSAGE
+from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL
+from spiffworkflow_backend.background_processing.background_job import BackgroundJobEnvelope
+from spiffworkflow_backend.background_processing.background_job import JobArgument
+from spiffworkflow_backend.background_processing.background_job_executor import execute_background_job
 
 TEN_MINUTES = 60 * 10
 
@@ -31,124 +17,53 @@ class SpiffCeleryWorkerError(Exception):
     pass
 
 
+def _execute(envelope: BackgroundJobEnvelope) -> dict[str, object]:
+    try:
+        return execute_background_job(envelope)
+    except Exception as exception:
+        raise SpiffCeleryWorkerError(f"Error executing background job {envelope.job_name}. {str(exception)}") from exception
+
+
 @shared_task(ignore_result=False, time_limit=TEN_MINUTES, bind=True)
 def celery_task_event_notifier_run(
     self: Any,
     updated_process_instance_id: int,
     process_model_identifier: str,
     event_type: str,
-) -> dict:
-    celery_task_id = self.request.id
-    logger_prefix = f"celery_task_event_notifier_run[{celery_task_id}]"
-    worker_intro_log_message = f"{logger_prefix}: updated_process_instance_id: {updated_process_instance_id}"
-    current_app.logger.info(worker_intro_log_message)
-
-    data = {
-        "event": {
-            "event_type": event_type,
-            "data": {
-                "process_instance_id": updated_process_instance_id,
-                "process_model_identifier": process_model_identifier,
-            },
-        }
+) -> dict[str, object]:
+    arguments: dict[str, JobArgument] = {
+        "updated_process_instance_id": updated_process_instance_id,
+        "process_model_identifier": process_model_identifier,
+        "event_type": event_type,
     }
-    try:
-        process_model = ProcessModelService.get_process_model(
-            current_app.config["SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL"]
+    return _execute(
+        BackgroundJobEnvelope.from_delivery(
+            CELERY_TASK_EVENT_NOTIFIER,
+            arguments,
+            getattr(self.request, "headers", None),
+            delivery_job_id=self.request.id,
+            process_instance_id=updated_process_instance_id,
         )
-        ProcessInstanceService.create_and_run_process_instance(
-            process_model=process_model,
-            data_to_inject=data,
-            persistence_level="none",
-        )
-    except Exception as exception:
-        error_message = (
-            f"{logger_prefix}: Error notifying about updating process_instance {updated_process_instance_id}. {str(exception)}"
-        )
-        raise SpiffCeleryWorkerError(error_message) from exception
-
-    return {**{"ok": True}, **data}
+    )
 
 
-# ignore types so we can use self and get the celery task id from self.request.id.
 @shared_task(ignore_result=False, time_limit=TEN_MINUTES, bind=True)
-def celery_task_process_instance_run(self, process_instance_id: int, task_guid: str | None = None) -> dict:  # type: ignore
-    proc_index = current_process().index
-
-    celery_task_id = self.request.id
-    logger_prefix = f"celery_task_process_instance_run[{celery_task_id}]"
-    worker_intro_log_message = f"{logger_prefix}: process_instance_id: {process_instance_id}"
-    if task_guid:
-        worker_intro_log_message += f" task_guid: {task_guid}"
-    current_app.logger.info(worker_intro_log_message)
-
-    ProcessInstanceLockService.set_thread_local_locking_context("celery:worker")
-    process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-
-    skipped_mesage = None
-    if process_instance is None:
-        skipped_mesage = "Skipped because the process instance no longer exists in the database. It could have been deleted."
-    elif task_guid is None and ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
-        skipped_mesage = "Skipped because the process instance is set to run in the future."
-    if skipped_mesage is not None:
-        return {
-            "ok": True,
-            "process_instance_id": process_instance_id,
-            "task_guid": task_guid,
-            "message": skipped_mesage,
-        }
-
-    try:
-        task_guid_for_requeueing = task_guid
-        future_task_was_rescheduled = False
-        with ProcessInstanceQueueService.dequeued(process_instance):
-            # run ready tasks to force them to run in case they have instructions on them since queue_instructions_for_end_user
-            # has a should_break_before that will exit if there are instructions.
-            ProcessInstanceService.run_process_instance_with_runtime(
-                process_instance, execution_strategy_name="run_current_ready_tasks", should_schedule_waiting_timer_events=False
-            )
-            # we need to save instructions to the db so the frontend progress page can view them,
-            # and this is the only way to do it
-            _runtime, task_runnability = ProcessInstanceService.run_process_instance_with_runtime(
-                process_instance,
-                execution_strategy_name="queue_instructions_for_end_user",
-            )
-            # currently, whenever we get a task_guid, that means that that task, which was a future task, is ready to run.
-            # there is an assumption that it was successfully processed by run_process_instance_with_runtime above.
-            # we might want to check that assumption.
-            if task_guid is not None:
-                completed_task_model = (
-                    TaskModel.query.filter_by(guid=task_guid)
-                    .filter(TaskModel.state.in_(["COMPLETED", "ERROR", "CANCELLED"]))  # type: ignore
-                    .first()
-                )
-                future_task = FutureTaskModel.query.filter_by(completed=False, guid=task_guid).first()
-                if completed_task_model is not None:
-                    if future_task is not None:
-                        future_task.completed = True
-                        db.session.add(future_task)
-                        db.session.commit()
-                        task_guid_for_requeueing = None
-                elif future_task is not None and future_task.run_at_in_seconds > round(time.time()):
-                    future_task_was_rescheduled = True
-                    task_guid_for_requeueing = None
-        if task_runnability == TaskRunnability.has_ready_tasks and not future_task_was_rescheduled:
-            queue_process_instance_if_appropriate(process_instance, task_guid=task_guid_for_requeueing)
-        return {"ok": True, "process_instance_id": process_instance_id, "task_guid": task_guid}
-    except (ProcessInstanceIsAlreadyLockedError, ProcessInstanceCannotBeRunError) as exception:
-        current_app.logger.info(
-            f"{logger_prefix}: Could not run process instance with worker: {current_app.config['PROCESS_UUID']}"
-            f" - {proc_index}. Error was: {str(exception)}"
+def celery_task_process_instance_run(
+    self: Any,
+    process_instance_id: int,
+    task_guid: str | None = None,
+) -> dict[str, object]:
+    arguments = {"process_instance_id": process_instance_id, "task_guid": task_guid}
+    return _execute(
+        BackgroundJobEnvelope.from_delivery(
+            CELERY_TASK_PROCESS_INSTANCE_RUN,
+            arguments,
+            getattr(self.request, "headers", None),
+            delivery_job_id=self.request.id,
+            process_instance_id=process_instance_id,
+            task_guid=task_guid,
         )
-        return {"ok": False, "process_instance_id": process_instance_id, "task_guid": task_guid, "exception": str(exception)}
-    except Exception as exception:
-        db.session.rollback()  # in case the above left the database with a bad transaction
-        error_message = (
-            f"{logger_prefix}: Error running process_instance {process_instance_id} task_guid {task_guid}. {str(exception)}"
-        )
-        db.session.add(process_instance)
-        db.session.commit()
-        raise SpiffCeleryWorkerError(error_message) from exception
+    )
 
 
 @shared_task(ignore_result=False, time_limit=TEN_MINUTES, bind=True)
@@ -157,23 +72,21 @@ def celery_task_process_instance_start_from_model(
     process_model_identifier: str,
     task_guid: str,
     user_id: int,
-) -> dict:
-    try:
-        process_model = ProcessModelService.get_process_model(process_model_identifier)
-        user = UserModel.query.filter_by(id=user_id).first()
-        if user is None:
-            raise SpiffCeleryWorkerError(f"Could not find user with id {user_id}")
-
-        process_instance = ProcessInstanceService.create_and_run_process_instance(
-            process_model,
-            persistence_level="full",
-            data_to_inject={"task_guid": task_guid},
-            user=user,
-        ).process_instance_model
-        return {"ok": True, "process_instance_id": process_instance.id, "task_guid": task_guid}
-    except Exception as exception:
-        error_message = f"Error in celery_task_process_instance_start_from_model: {str(exception)}"
-        raise SpiffCeleryWorkerError(error_message) from exception
+) -> dict[str, object]:
+    arguments: dict[str, JobArgument] = {
+        "process_model_identifier": process_model_identifier,
+        "task_guid": task_guid,
+        "user_id": user_id,
+    }
+    return _execute(
+        BackgroundJobEnvelope.from_delivery(
+            CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL,
+            arguments,
+            getattr(self.request, "headers", None),
+            delivery_job_id=self.request.id,
+            task_guid=task_guid,
+        )
+    )
 
 
 @shared_task(ignore_result=False, time_limit=TEN_MINUTES, bind=True)
@@ -182,44 +95,18 @@ def celery_task_process_instance_start_from_message(
     process_instance_id: int,
     message_instance_id: int,
     message_triggerable_process_model_id: int,
-) -> dict:
-    celery_task_id = self.request.id
-    logger_prefix = f"celery_task_process_instance_start_from_message[{celery_task_id}]"
-    current_app.logger.info(
-        f"{logger_prefix}: process_instance_id: {process_instance_id}, message_instance_id: {message_instance_id}"
+) -> dict[str, object]:
+    arguments = {
+        "process_instance_id": process_instance_id,
+        "message_instance_id": message_instance_id,
+        "message_triggerable_process_model_id": message_triggerable_process_model_id,
+    }
+    return _execute(
+        BackgroundJobEnvelope.from_delivery(
+            CELERY_TASK_PROCESS_INSTANCE_START_FROM_MESSAGE,
+            arguments,
+            getattr(self.request, "headers", None),
+            delivery_job_id=self.request.id,
+            process_instance_id=process_instance_id,
+        )
     )
-    ProcessInstanceLockService.set_thread_local_locking_context("celery:message-start")
-
-    process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
-    message_instance = MessageInstanceModel.query.filter_by(id=message_instance_id).first()
-    message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
-        id=message_triggerable_process_model_id
-    ).first()
-    if process_instance is None:
-        raise SpiffCeleryWorkerError(f"Could not find reserved process instance with id {process_instance_id}")
-    if message_instance is None:
-        raise SpiffCeleryWorkerError(f"Could not find message instance with id {message_instance_id}")
-    if message_triggerable_process_model is None:
-        raise SpiffCeleryWorkerError(
-            f"Could not find message-triggerable process model with id {message_triggerable_process_model_id}"
-        )
-
-    try:
-        receiver_message = MessageService.start_reserved_process_from_message(
-            process_instance,
-            message_instance,
-            message_triggerable_process_model,
-        )
-        return {
-            "ok": True,
-            "process_instance_id": process_instance_id,
-            "message_instance_id": message_instance_id,
-            "receiver_message_instance_id": receiver_message.id,
-        }
-    except Exception as exception:
-        db.session.rollback()
-        error_message = (
-            f"{logger_prefix}: Error starting reserved process instance {process_instance_id} "
-            f"from message instance {message_instance_id}. {str(exception)}"
-        )
-        raise SpiffCeleryWorkerError(error_message) from exception

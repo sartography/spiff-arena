@@ -475,9 +475,10 @@ class AuthorizationService:
         desired_group_identifiers = None
 
         if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS"]:
+            groups_claim = current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_GROUPS_CLAIM"]
             desired_group_identifiers = []
-            if "groups" in user_info:
-                desired_group_identifiers = user_info["groups"]
+            if groups_claim in user_info:
+                desired_group_identifiers = user_info[groups_claim]
 
         for field_index, tenant_specific_field in enumerate(
             current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"]
@@ -512,7 +513,8 @@ class AuthorizationService:
         if desired_group_identifiers is not None:
             if not isinstance(desired_group_identifiers, list):
                 current_app.logger.error(  # type: ignore
-                    f"Invalid groups property in token: {desired_group_identifiers}.If groups is specified, it must be a list"
+                    f"Invalid {groups_claim} property in token: {desired_group_identifiers}. "
+                    "If the configured groups claim is specified, it must be a list"
                 )
                 desired_group_identifiers = None
             else:

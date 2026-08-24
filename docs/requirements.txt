@@ -6,7 +6,7 @@ Babel==2.17.0
 beautifulsoup4==4.12.3
 cattrs==25.1.1
 certifi==2026.5.20
-charset-normalizer==3.4.9
+charset-normalizer==3.5.0
 click==8.4.2
 colorama==0.4.6
 esbonio==0.16.4
@@ -19,9 +19,9 @@ livereload==2.7.0
 lsprotocol==2025.0.0
 markdown-it-py==4.2.0
 MarkupSafe==3.0.3
-mdit-py-plugins==0.5.0
+mdit-py-plugins==0.6.1
 mdurl==0.1.2
-myst-parser==5.0.0
+myst-parser==5.1.0
 packaging==25.0
 pygls==2.1.1
 Pygments==2.20.0

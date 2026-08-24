@@ -1,4 +1,6 @@
+import dataclasses
 import os
+import shutil
 
 import pytest
 from flask import Flask
@@ -302,6 +304,39 @@ class TestSpecFileService(BaseTest):
 
         process_caller_relationships = ProcessCallerRelationshipModel.query.all()
         assert len(process_caller_relationships) == 2
+
+    def test_updates_message_trigger_when_process_model_moves(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        old_process_model_id = "test_group/message_move"
+        new_process_model_id = "test_group/message_move_renamed"
+        process_model = load_test_spec(
+            process_model_id=old_process_model_id,
+            process_model_source_directory="simple-message-send-receive",
+            bpmn_file_name="message_start_event.bpmn",
+        )
+        reference = next(
+            ref for ref in SpecFileService.get_references_for_process(process_model) if "message_one" in ref.start_messages
+        )
+        old_path = SpecFileService.process_model_full_path(process_model)
+        new_path = SpecFileService.full_path_from_id(new_process_model_id)
+        os.makedirs(os.path.dirname(new_path), exist_ok=True)
+        shutil.move(old_path, new_path)
+
+        try:
+            moved_reference = dataclasses.replace(reference, relative_location=new_process_model_id)
+            SpecFileService.update_message_trigger_cache(moved_reference)
+            db.session.commit()
+
+            trigger = MessageTriggerableProcessModel.query.filter_by(message_name="message_one").one()
+            assert trigger.process_model_identifier == new_process_model_id
+            assert trigger.file_name == reference.file_name
+        finally:
+            if os.path.isdir(new_path):
+                shutil.move(new_path, old_path)
 
     def test_can_rename_bpmn_file_with_message_start_event(
         self,

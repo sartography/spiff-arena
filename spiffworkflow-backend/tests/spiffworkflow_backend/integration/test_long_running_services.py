@@ -120,9 +120,6 @@ class TestLongRunningService(BaseTest):
     ) -> None:
         with (
             patch(
-                "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
-            ) as current_process,
-            patch(
                 "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer.time.time",
                 return_value=now,
             ),
@@ -132,7 +129,6 @@ class TestLongRunningService(BaseTest):
             patch("spiffworkflow_backend.services.service_task_delegate.http_connector.does", return_value=False),
             patch("celery.current_app.send_task"),
         ):
-            current_process.return_value.index = 0
             mock_post.return_value.status_code = 202
             mock_post.return_value.ok = True
             mock_post.return_value.text = json.dumps({})
@@ -457,12 +453,8 @@ class TestLongRunningService(BaseTest):
 
         with (
             self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True),
-            patch(
-                "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.current_process"
-            ) as current_process,
             patch("celery.current_app.send_task"),
         ):
-            current_process.return_value.index = 0
             worker_response = cast(SupportsCeleryTaskRun, celery_task_process_instance_run).run(process_instance.id)
 
         assert worker_response["ok"] is True
