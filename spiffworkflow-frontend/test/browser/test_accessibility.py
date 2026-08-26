@@ -119,3 +119,138 @@ def test_guest_task_form_has_no_wcag_violations(page: Page) -> None:
     assert public_task_url
     page.goto(public_task_url)
     assert_no_violations(page, "guest_task_form")
+
+
+def test_home_page_has_no_wcag_violations(page: Page) -> None:
+    """The authenticated home/task-list page -- previously reported to have
+    numerous missing-accessible-name findings when checked manually with a
+    browser extension (the "Group by" combobox fix earlier in this effort
+    came from this page)."""
+    login(page)
+    page.goto(BASE_URL)
+    expect(page.get_by_text("Tasks assigned to me", exact=True)).to_be_visible(
+        timeout=10000
+    )
+    assert_no_violations(page, "home_page")
+    logout(page)
+
+
+def test_task_show_has_no_wcag_violations(page: Page) -> None:
+    """The task-completion form itself -- the actual participant-facing
+    surface this effort's remediation is meant to serve, and previously the
+    single biggest coverage gap in this suite (every other test scanned
+    admin/list views, not a real task form)."""
+    login(page)
+    page.goto(BASE_URL)
+    page.get_by_role("button", name="Complete task").first.click()
+    expect(page.locator("h3")).to_contain_text("Task:", timeout=10000)
+    assert_no_violations(page, "task_show")
+    logout(page)
+
+
+def test_started_by_me_has_no_wcag_violations(page: Page) -> None:
+    login(page)
+    page.goto(f"{BASE_URL}/started-by-me")
+    expect(page.locator("h1")).to_be_visible(timeout=10000)
+    assert_no_violations(page, "started_by_me")
+    logout(page)
+
+
+def test_messages_page_has_no_wcag_violations(page: Page) -> None:
+    login(page)
+    page.goto(f"{BASE_URL}/messages")
+    expect(page.locator("h1")).to_have_text("Messages", timeout=10000)
+    assert_no_violations(page, "messages_page")
+    logout(page)
+
+
+def test_data_stores_has_no_wcag_violations(page: Page) -> None:
+    login(page)
+    page.goto(f"{BASE_URL}/data-stores")
+    expect(page.locator("h1")).to_have_text("Data Stores", timeout=10000)
+    assert_no_violations(page, "data_stores")
+    logout(page)
+
+
+def test_configuration_has_no_wcag_violations(page: Page) -> None:
+    login(page)
+    page.goto(f"{BASE_URL}/configuration")
+    expect(page.locator("h1")).to_be_visible(timeout=10000)
+    assert_no_violations(page, "configuration")
+    logout(page)
+
+
+def test_secret_new_has_no_wcag_violations(page: Page) -> None:
+    login(page)
+    page.goto(f"{BASE_URL}/secrets/new")
+    expect(page.locator("h1")).to_have_text("Add Secret", timeout=10000)
+    assert_no_violations(page, "secret_new")
+    logout(page)
+
+
+def test_about_page_has_no_wcag_violations(page: Page) -> None:
+    login(page)
+    page.goto(f"{BASE_URL}/about")
+    expect(page.locator("h1")).to_have_text("About", timeout=10000)
+    assert_no_violations(page, "about_page")
+    logout(page)
+
+
+def test_process_group_new_has_no_wcag_violations(page: Page) -> None:
+    login(page)
+    page.goto(f"{BASE_URL}/process-groups/new")
+    expect(page.locator("h1")).to_have_text("Add Process Group", timeout=10000)
+    assert_no_violations(page, "process_group_new")
+    logout(page)
+
+
+def test_process_group_edit_has_no_wcag_violations(page: Page) -> None:
+    login(page)
+    page.goto(f"{BASE_URL}/process-groups/misc/edit")
+    expect(page.locator("h1")).to_contain_text("Edit Process Group", timeout=10000)
+    assert_no_violations(page, "process_group_edit")
+    logout(page)
+
+
+def test_process_model_new_has_no_wcag_violations(page: Page) -> None:
+    login(page)
+    page.goto(f"{BASE_URL}/process-models/misc/new")
+    expect(page.locator("h1")).to_have_text("Add Process Model", timeout=10000)
+    assert_no_violations(page, "process_model_new")
+    logout(page)
+
+
+def test_process_model_edit_has_no_wcag_violations(page: Page) -> None:
+    login(page)
+    page.goto(
+        f"{BASE_URL}/process-models/"
+        "misc:acceptance-tests-group-one:acceptance-tests-model-1/edit"
+    )
+    expect(page.locator("h1")).to_contain_text("Edit Process Model", timeout=10000)
+    assert_no_violations(page, "process_model_edit")
+    logout(page)
+
+
+def test_form_file_editor_has_no_wcag_violations(page: Page) -> None:
+    """The generic JSON/XML file editor (ThemedCodeMirror) -- also reachable
+    from the BPMN/DMN diagram editor's "View XML" action, which is the
+    equivalent-facilitation fallback for editing a process definition
+    without the visual canvas. See 508_bpmn_diagram_editor_scope_notes.md."""
+    login(page)
+    page.goto(
+        f"{BASE_URL}/process-models/extensions:superset-reports/form/"
+        "extension_uischema.json"
+    )
+    expect(page.locator("h1")).to_contain_text(
+        "Process Model File", timeout=10000
+    )
+    assert_no_violations(page, "form_file_editor")
+    logout(page)
+
+
+def test_superset_reports_extension_has_no_wcag_violations(page: Page) -> None:
+    login(page)
+    page.goto(f"{BASE_URL}/extensions/superset-reports")
+    expect(page.locator("h1")).to_have_text("Superset Reports", timeout=10000)
+    assert_no_violations(page, "superset_reports_extension")
+    logout(page)

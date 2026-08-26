@@ -274,6 +274,11 @@ export default function ReactFormEditor() {
         value={processModelFileContents || ''}
         extensions={extensions}
         onChange={(value) => setProcessModelFileContents(value || '')}
+        ariaLabel={
+          params.file_name
+            ? t('code_editor_for_file', { filename: params.file_name })
+            : undefined
+        }
       />
     );
   };

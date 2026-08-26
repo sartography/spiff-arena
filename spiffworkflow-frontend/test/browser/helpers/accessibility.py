@@ -29,6 +29,18 @@ def scan(page: Page, name: str, context: str | list | dict | None = None) -> Axe
     artifact, so every scan is retained as evidence for the ACR even when a
     test doesn't fail.
     """
+    # The app's layout wraps every route in a .fadeIn opacity transition
+    # (assets/styles/transitions.css, 0.5s), applied uniformly regardless of
+    # how the page was reached. A caller's "content is ready" wait (e.g.
+    # waiting for a heading's text) can resolve well before that animation
+    # finishes, and scanning mid-fade catches real elements at reduced
+    # opacity, which axe correctly reports as failing color-contrast even
+    # though the final, settled state is fine. Wait for in-flight
+    # animations/transitions to finish before scanning, so results reflect
+    # the real rendered page rather than an animation-timing artifact.
+    page.evaluate(
+        "() => Promise.all(document.getAnimations().map((a) => a.finished)).catch(() => {})"
+    )
     results = _AXE.run(
         page,
         context=context,

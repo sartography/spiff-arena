@@ -558,6 +558,7 @@ export default function ProcessInstanceListTable({
           <IconButton
             href={piLink}
             target="_blank"
+            aria-label={t('open_process_instance')}
             style={{ width: '50px' }}
             size="small"
           >
