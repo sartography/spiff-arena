@@ -7,9 +7,13 @@ import time
 from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
+from string import Formatter
 from typing import Any
 from typing import cast
+from urllib.parse import parse_qsl
 from urllib.parse import urlencode
+from urllib.parse import urlsplit
+from urllib.parse import urlunsplit
 
 if sys.version_info < (3, 11):
     from typing_extensions import NotRequired
@@ -69,9 +73,27 @@ TOKEN_VALIDATION_FAILURES = Counter(
     ["reason"],
 )
 
+DEFAULT_LOGOUT_QUERY_TEMPLATE = "post_logout_redirect_uri={redirect_url}&id_token_hint={id_token}"
+
 
 def _record_token_validation_failure(reason: str) -> None:
     TOKEN_VALIDATION_FAILURES.labels(reason=reason).inc()
+
+
+def _render_logout_query_string_template(query_template: str, template_values: dict[str, str]) -> list[tuple[str, str]]:
+    rendered_parameters: list[tuple[str, str]] = []
+    for parameter_name, value_template in parse_qsl(query_template, keep_blank_values=True, strict_parsing=True):
+        if not parameter_name:
+            raise ValueError("Logout query template parameter names cannot be empty")
+        for _, field_name, format_spec, conversion in Formatter().parse(value_template):
+            if field_name is None:
+                continue
+            if field_name not in template_values:
+                raise ValueError(f"Unsupported logout query template value: '{field_name}'")
+            if format_spec or conversion:
+                raise ValueError("Logout query template values do not support format specifications or conversions")
+        rendered_parameters.append((parameter_name, value_template.format_map(template_values)))
+    return rendered_parameters
 
 
 class JWKSKeyConfig(TypedDict):
@@ -108,6 +130,7 @@ class AuthenticationOption(AuthenticationOptionForApi):
     additional_valid_issuers: NotRequired[list[str]]
     access_token_audiences: NotRequired[list[str] | str]
     authorization_resource: NotRequired[str]
+    logout_query_string_template: NotRequired[str]
 
 
 class AuthenticationOptionNotFoundError(Exception):
@@ -409,11 +432,22 @@ class AuthenticationService:
     def logout(self, id_token: str, authentication_identifier: str, redirect_url: str | None = None) -> Response:
         if redirect_url is None:
             redirect_url = build_public_api_v1_url(self.get_backend_url(), "logout_return")
-        request_url = (
-            self.__class__.open_id_endpoint_for_name("end_session_endpoint", authentication_identifier=authentication_identifier)
-            + f"?post_logout_redirect_uri={redirect_url}&"
-            + f"id_token_hint={id_token}"
+        end_session = self.__class__.open_id_endpoint_for_name(
+            "end_session_endpoint", authentication_identifier=authentication_identifier
         )
+        authentication_option = self.authentication_option_for_identifier(authentication_identifier)
+        query_parameters = _render_logout_query_string_template(
+            authentication_option.get("logout_query_string_template", DEFAULT_LOGOUT_QUERY_TEMPLATE),
+            {
+                "client_id": self.client_id(authentication_identifier),
+                "id_token": id_token,
+                "redirect_url": redirect_url,
+            },
+        )
+
+        parsed_end_session = urlsplit(end_session)
+        query_parameters = [*parse_qsl(parsed_end_session.query, keep_blank_values=True), *query_parameters]
+        request_url = urlunsplit(parsed_end_session._replace(query=urlencode(query_parameters)))
 
         return redirect(request_url)
 

@@ -131,7 +131,7 @@ config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_POOL_PRE_PING", default=True)
 config_from_env("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_IS_AUTHORITY_FOR_USER_GROUPS", default=False)
 # Name of the ID/access-token claim containing the user's group identifiers.
-# Most providers use "groups"; Amazon Cognito uses "cognito:groups".
+# Defaults to the conventional "groups" claim and can be changed per provider.
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_GROUPS_CLAIM", default="groups")
 # Tenant specific fields is a comma separated list of field names that we will be converted to list of strings
 # and store in the user table's tenant_specific_field_n columns. You can have up to three items in this
@@ -147,6 +147,10 @@ config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", default=False)  # 
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_KEY")
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_PUBLIC_KEY")
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CACHE_DIR")
+config_from_env(
+    "SPIFFWORKFLOW_BACKEND_OPEN_ID_LOGOUT_QUERY_STRING_TEMPLATE",
+    default="post_logout_redirect_uri={redirect_url}&id_token_hint={id_token}",
+)
 
 
 # Open ID server
@@ -194,6 +198,7 @@ else:
                 "additional_valid_issuers": [],
                 "access_token_audiences": None,
                 "authorization_resource": None,
+                "logout_query_string_template": "post_logout_redirect_uri={redirect_url}&id_token_hint={id_token}",
             }
         ]
 

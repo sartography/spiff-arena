@@ -102,8 +102,36 @@ class TestAuthentication(BaseTest):
 
         assert response.location == (
             "https://auth.example.com/logout"
-            "?post_logout_redirect_uri=https://backend.example.com/api/v1.0/logout_return&"
+            "?post_logout_redirect_uri=https%3A%2F%2Fbackend.example.com%2Fapi%2Fv1.0%2Flogout_return&"
             "id_token_hint=test-id-token"
+        )
+
+    def test_logout_request_can_be_configured_per_authentication_provider(self, app: Flask) -> None:
+        authentication_options = [
+            app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0],
+            {
+                **app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0],
+                "identifier": "provider-with-custom-logout",
+                "client_id": "custom-client-id",
+                "logout_query_string_template": "client_id={client_id}&return_to={redirect_url}",
+            },
+        ]
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS", authentication_options):
+            with app.test_request_context():
+                with patch.object(
+                    AuthenticationService,
+                    "open_id_endpoint_for_name",
+                    return_value="https://auth.example.com/logout?existing=value",
+                ):
+                    response = AuthenticationService().logout(
+                        "test-id-token",
+                        "provider-with-custom-logout",
+                        "https://arena.example.com/signed-out?from=logout",
+                    )
+
+        assert response.location == (
+            "https://auth.example.com/logout?existing=value&client_id=custom-client-id&"
+            "return_to=https%3A%2F%2Farena.example.com%2Fsigned-out%3Ffrom%3Dlogout"
         )
 
     def test_get_login_state_without_pkce_enabled(self, app: Flask) -> None:
