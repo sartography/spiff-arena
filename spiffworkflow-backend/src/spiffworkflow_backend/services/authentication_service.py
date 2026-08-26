@@ -7,8 +7,8 @@ import time
 from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
+from string import Formatter
 from typing import Any
-from typing import Literal
 from typing import cast
 from urllib.parse import parse_qsl
 from urllib.parse import urlencode
@@ -73,9 +73,27 @@ TOKEN_VALIDATION_FAILURES = Counter(
     ["reason"],
 )
 
+DEFAULT_LOGOUT_QUERY_TEMPLATE = "post_logout_redirect_uri={redirect_url}&id_token_hint={id_token}"
+
 
 def _record_token_validation_failure(reason: str) -> None:
     TOKEN_VALIDATION_FAILURES.labels(reason=reason).inc()
+
+
+def _render_logout_query_template(query_template: str, template_values: dict[str, str]) -> list[tuple[str, str]]:
+    rendered_parameters: list[tuple[str, str]] = []
+    for parameter_name, value_template in parse_qsl(query_template, keep_blank_values=True, strict_parsing=True):
+        if not parameter_name:
+            raise ValueError("Logout query template parameter names cannot be empty")
+        for _, field_name, format_spec, conversion in Formatter().parse(value_template):
+            if field_name is None:
+                continue
+            if field_name not in template_values:
+                raise ValueError(f"Unsupported logout query template value: '{field_name}'")
+            if format_spec or conversion:
+                raise ValueError("Logout query template values do not support format specifications or conversions")
+        rendered_parameters.append((parameter_name, value_template.format_map(template_values)))
+    return rendered_parameters
 
 
 class JWKSKeyConfig(TypedDict):
@@ -112,9 +130,7 @@ class AuthenticationOption(AuthenticationOptionForApi):
     additional_valid_issuers: NotRequired[list[str]]
     access_token_audiences: NotRequired[list[str] | str]
     authorization_resource: NotRequired[str]
-    logout_redirect_uri_parameter: NotRequired[str]
-    logout_include_client_id: NotRequired[bool | str]
-    logout_include_id_token_hint: NotRequired[bool | str]
+    logout_query_template: NotRequired[str]
 
 
 class AuthenticationOptionNotFoundError(Exception):
@@ -420,36 +436,20 @@ class AuthenticationService:
             "end_session_endpoint", authentication_identifier=authentication_identifier
         )
         authentication_option = self.authentication_option_for_identifier(authentication_identifier)
-        query_parameters: list[tuple[str, str]] = []
-        if self._logout_option_enabled(authentication_option, "logout_include_client_id", default=False):
-            query_parameters.append(("client_id", self.client_id(authentication_identifier)))
-        query_parameters.append(
-            (authentication_option.get("logout_redirect_uri_parameter", "post_logout_redirect_uri"), redirect_url)
+        query_parameters = _render_logout_query_template(
+            authentication_option.get("logout_query_template", DEFAULT_LOGOUT_QUERY_TEMPLATE),
+            {
+                "client_id": self.client_id(authentication_identifier),
+                "id_token": id_token,
+                "redirect_url": redirect_url,
+            },
         )
-        if self._logout_option_enabled(authentication_option, "logout_include_id_token_hint", default=True):
-            query_parameters.append(("id_token_hint", id_token))
 
         parsed_end_session = urlsplit(end_session)
         query_parameters = [*parse_qsl(parsed_end_session.query, keep_blank_values=True), *query_parameters]
         request_url = urlunsplit(parsed_end_session._replace(query=urlencode(query_parameters)))
 
         return redirect(request_url)
-
-    @staticmethod
-    def _logout_option_enabled(
-        authentication_option: AuthenticationOption,
-        option_name: Literal["logout_include_client_id", "logout_include_id_token_hint"],
-        *,
-        default: bool,
-    ) -> bool:
-        configured_value = authentication_option.get(option_name, default)
-        if isinstance(configured_value, bool):
-            return configured_value
-        if configured_value.lower() == "true":
-            return True
-        if configured_value.lower() == "false":
-            return False
-        raise ValueError(f"Authentication option '{option_name}' must be true or false")
 
     class StatePayload(TypedDict):
         final_url: str | None

@@ -147,9 +147,10 @@ config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", default=False)  # 
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_KEY")
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_PUBLIC_KEY")
 config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_CACHE_DIR")
-config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_LOGOUT_REDIRECT_URI_PARAMETER", default="post_logout_redirect_uri")
-config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_LOGOUT_INCLUDE_CLIENT_ID", default=False)
-config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_LOGOUT_INCLUDE_ID_TOKEN_HINT", default=True)
+config_from_env(
+    "SPIFFWORKFLOW_BACKEND_OPEN_ID_LOGOUT_QUERY_TEMPLATE",
+    default="post_logout_redirect_uri={redirect_url}&id_token_hint={id_token}",
+)
 
 
 # Open ID server
@@ -197,9 +198,7 @@ else:
                 "additional_valid_issuers": [],
                 "access_token_audiences": None,
                 "authorization_resource": None,
-                "logout_redirect_uri_parameter": "post_logout_redirect_uri",
-                "logout_include_client_id": False,
-                "logout_include_id_token_hint": True,
+                "logout_query_template": "post_logout_redirect_uri={redirect_url}&id_token_hint={id_token}",
             }
         ]
 

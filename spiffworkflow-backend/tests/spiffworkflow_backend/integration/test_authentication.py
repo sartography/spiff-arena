@@ -113,9 +113,7 @@ class TestAuthentication(BaseTest):
                 **app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0],
                 "identifier": "provider-with-custom-logout",
                 "client_id": "custom-client-id",
-                "logout_redirect_uri_parameter": "return_to",
-                "logout_include_client_id": "true",
-                "logout_include_id_token_hint": "false",
+                "logout_query_template": "client_id={client_id}&return_to={redirect_url}",
             },
         ]
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS", authentication_options):
