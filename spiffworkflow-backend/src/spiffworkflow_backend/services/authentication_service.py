@@ -409,11 +409,12 @@ class AuthenticationService:
     def logout(self, id_token: str, authentication_identifier: str, redirect_url: str | None = None) -> Response:
         if redirect_url is None:
             redirect_url = build_public_api_v1_url(self.get_backend_url(), "logout_return")
-        request_url = (
-            self.__class__.open_id_endpoint_for_name("end_session_endpoint", authentication_identifier=authentication_identifier)
-            + f"?post_logout_redirect_uri={redirect_url}&"
-            + f"id_token_hint={id_token}"
-        )
+        end_session = self.__class__.open_id_endpoint_for_name("end_session_endpoint", authentication_identifier=authentication_identifier)
+        if "amazoncognito.com" in end_session:
+            client_id = current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID", "")
+            request_url = f"{end_session}?client_id={client_id}&logout_uri={redirect_url}"
+        else:
+            request_url = f"{end_session}?post_logout_redirect_uri={redirect_url}&id_token_hint={id_token}"
 
         return redirect(request_url)
 
