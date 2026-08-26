@@ -8,8 +8,12 @@ from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
 from typing import Any
+from typing import Literal
 from typing import cast
+from urllib.parse import parse_qsl
 from urllib.parse import urlencode
+from urllib.parse import urlsplit
+from urllib.parse import urlunsplit
 
 if sys.version_info < (3, 11):
     from typing_extensions import NotRequired
@@ -108,6 +112,9 @@ class AuthenticationOption(AuthenticationOptionForApi):
     additional_valid_issuers: NotRequired[list[str]]
     access_token_audiences: NotRequired[list[str] | str]
     authorization_resource: NotRequired[str]
+    logout_redirect_uri_parameter: NotRequired[str]
+    logout_include_client_id: NotRequired[bool | str]
+    logout_include_id_token_hint: NotRequired[bool | str]
 
 
 class AuthenticationOptionNotFoundError(Exception):
@@ -409,14 +416,40 @@ class AuthenticationService:
     def logout(self, id_token: str, authentication_identifier: str, redirect_url: str | None = None) -> Response:
         if redirect_url is None:
             redirect_url = build_public_api_v1_url(self.get_backend_url(), "logout_return")
-        end_session = self.__class__.open_id_endpoint_for_name("end_session_endpoint", authentication_identifier=authentication_identifier)
-        if "amazoncognito.com" in end_session:
-            client_id = current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID", "")
-            request_url = f"{end_session}?client_id={client_id}&logout_uri={redirect_url}"
-        else:
-            request_url = f"{end_session}?post_logout_redirect_uri={redirect_url}&id_token_hint={id_token}"
+        end_session = self.__class__.open_id_endpoint_for_name(
+            "end_session_endpoint", authentication_identifier=authentication_identifier
+        )
+        authentication_option = self.authentication_option_for_identifier(authentication_identifier)
+        query_parameters: list[tuple[str, str]] = []
+        if self._logout_option_enabled(authentication_option, "logout_include_client_id", default=False):
+            query_parameters.append(("client_id", self.client_id(authentication_identifier)))
+        query_parameters.append(
+            (authentication_option.get("logout_redirect_uri_parameter", "post_logout_redirect_uri"), redirect_url)
+        )
+        if self._logout_option_enabled(authentication_option, "logout_include_id_token_hint", default=True):
+            query_parameters.append(("id_token_hint", id_token))
+
+        parsed_end_session = urlsplit(end_session)
+        query_parameters = [*parse_qsl(parsed_end_session.query, keep_blank_values=True), *query_parameters]
+        request_url = urlunsplit(parsed_end_session._replace(query=urlencode(query_parameters)))
 
         return redirect(request_url)
+
+    @staticmethod
+    def _logout_option_enabled(
+        authentication_option: AuthenticationOption,
+        option_name: Literal["logout_include_client_id", "logout_include_id_token_hint"],
+        *,
+        default: bool,
+    ) -> bool:
+        configured_value = authentication_option.get(option_name, default)
+        if isinstance(configured_value, bool):
+            return configured_value
+        if configured_value.lower() == "true":
+            return True
+        if configured_value.lower() == "false":
+            return False
+        raise ValueError(f"Authentication option '{option_name}' must be true or false")
 
     class StatePayload(TypedDict):
         final_url: str | None
