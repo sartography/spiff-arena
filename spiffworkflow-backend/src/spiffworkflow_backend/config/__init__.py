@@ -301,7 +301,7 @@ def setup_config(app: Flask) -> None:
                 "additional_valid_issuers": additional_valid_issuers,
                 "access_token_audiences": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_ACCESS_TOKEN_AUDIENCES"),
                 "authorization_resource": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_AUTHORIZATION_RESOURCE"),
-                "logout_query_template": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_LOGOUT_QUERY_TEMPLATE"),
+                "logout_query_string_template": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_LOGOUT_QUERY_STRING_TEMPLATE"),
                 "client_id": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID"),
                 "client_secret": app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY"),
                 "identifier": "default",

@@ -80,7 +80,7 @@ def _record_token_validation_failure(reason: str) -> None:
     TOKEN_VALIDATION_FAILURES.labels(reason=reason).inc()
 
 
-def _render_logout_query_template(query_template: str, template_values: dict[str, str]) -> list[tuple[str, str]]:
+def _render_logout_query_string_template(query_template: str, template_values: dict[str, str]) -> list[tuple[str, str]]:
     rendered_parameters: list[tuple[str, str]] = []
     for parameter_name, value_template in parse_qsl(query_template, keep_blank_values=True, strict_parsing=True):
         if not parameter_name:
@@ -130,7 +130,7 @@ class AuthenticationOption(AuthenticationOptionForApi):
     additional_valid_issuers: NotRequired[list[str]]
     access_token_audiences: NotRequired[list[str] | str]
     authorization_resource: NotRequired[str]
-    logout_query_template: NotRequired[str]
+    logout_query_string_template: NotRequired[str]
 
 
 class AuthenticationOptionNotFoundError(Exception):
@@ -436,8 +436,8 @@ class AuthenticationService:
             "end_session_endpoint", authentication_identifier=authentication_identifier
         )
         authentication_option = self.authentication_option_for_identifier(authentication_identifier)
-        query_parameters = _render_logout_query_template(
-            authentication_option.get("logout_query_template", DEFAULT_LOGOUT_QUERY_TEMPLATE),
+        query_parameters = _render_logout_query_string_template(
+            authentication_option.get("logout_query_string_template", DEFAULT_LOGOUT_QUERY_TEMPLATE),
             {
                 "client_id": self.client_id(authentication_identifier),
                 "id_token": id_token,
