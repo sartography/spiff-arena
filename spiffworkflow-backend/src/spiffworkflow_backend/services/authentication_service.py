@@ -524,49 +524,75 @@ class AuthenticationService:
         authentication_identifier: str,
         pkce_id: str | None = None,
     ) -> dict:
-        backend_basic_auth_string = (
-            f"{self.client_id(authentication_identifier)}:{self.__class__.secret_key(authentication_identifier)}"
-        )
-        backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
-        backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
+        client_secret = self.__class__.secret_key(authentication_identifier)
+        is_public_client = not client_secret
         redirect_to_use = self.get_redirect_uri_for_login_to_server()
 
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
-            "Authorization": f"Basic {backend_basic_auth.decode('utf-8')}",
         }
 
-        data = {
+        data: dict[str, str] = {
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": redirect_to_use,
         }
 
-        # Attach PKCE verifier for the authorization_code exchange when enabled.
-        if current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"):
+        if is_public_client:
+            # Public clients (e.g. Cognito without a secret) must not use HTTP Basic
+            # authentication and must use PKCE per RFC 7636 / Cognito public-client contract.
+            data["client_id"] = self.client_id(authentication_identifier)
             if not pkce_id:
-                # We enforced PKCE when sending the user out; missing pkce_id means something broke.
                 raise ApiError(
                     error_code="missing_pkce_id",
                     message=(
-                        "PKCE is enforced but PKCE identifier is missing from state. "
+                        "PKCE is required for public clients but PKCE identifier is missing from state. "
                         "This may indicate a session timeout or configuration issue."
                     ),
                     status_code=400,
                 )
-
             code_verifier = PKCE.consume_pkce_code_verifier(pkce_id=pkce_id)
             if not code_verifier:
                 raise ApiError(
                     error_code="missing_pkce_verifier",
                     message=(
-                        "PKCE is enforced but code verifier is missing from storage. "
+                        "PKCE is required for public clients but code verifier is missing from storage. "
                         "This may indicate a session timeout or configuration issue."
                     ),
                     status_code=400,
                 )
-
             data[PKCE.CODE_VERIFIER_KEY] = code_verifier
+        else:
+            backend_basic_auth_string = f"{self.client_id(authentication_identifier)}:{client_secret}"
+            backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
+            backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
+            headers["Authorization"] = f"Basic {backend_basic_auth.decode('utf-8')}"
+
+            # Attach PKCE verifier for the authorization_code exchange when enabled.
+            if current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"):
+                if not pkce_id:
+                    # We enforced PKCE when sending the user out; missing pkce_id means something broke.
+                    raise ApiError(
+                        error_code="missing_pkce_id",
+                        message=(
+                            "PKCE is enforced but PKCE identifier is missing from state. "
+                            "This may indicate a session timeout or configuration issue."
+                        ),
+                        status_code=400,
+                    )
+
+                code_verifier = PKCE.consume_pkce_code_verifier(pkce_id=pkce_id)
+                if not code_verifier:
+                    raise ApiError(
+                        error_code="missing_pkce_verifier",
+                        message=(
+                            "PKCE is enforced but code verifier is missing from storage. "
+                            "This may indicate a session timeout or configuration issue."
+                        ),
+                        status_code=400,
+                    )
+
+                data[PKCE.CODE_VERIFIER_KEY] = code_verifier
 
         request_url = self.open_id_endpoint_for_name(
             "token_endpoint", authentication_identifier=authentication_identifier, internal=True
@@ -745,20 +771,25 @@ class AuthenticationService:
     @classmethod
     def get_auth_token_from_refresh_token(cls, refresh_token: str, authentication_identifier: str) -> dict:
         """Converts a refresh token to an Auth Token by calling the openid's auth endpoint."""
-        backend_basic_auth_string = f"{cls.client_id(authentication_identifier)}:{cls.secret_key(authentication_identifier)}"
-        backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
-        backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
+        client_secret = cls.secret_key(authentication_identifier)
+        is_public_client = not client_secret
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
-            "Authorization": f"Basic {backend_basic_auth.decode('utf-8')}",
         }
-
-        data = {
+        data: dict[str, str] = {
             "grant_type": "refresh_token",
             "refresh_token": refresh_token,
             "client_id": cls.client_id(authentication_identifier),
-            "client_secret": cls.secret_key(authentication_identifier),
         }
+        if is_public_client:
+            # Public clients omit Basic auth and client_secret; Cognito validates via client_id alone.
+            pass
+        else:
+            backend_basic_auth_string = f"{cls.client_id(authentication_identifier)}:{client_secret}"
+            backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
+            backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
+            headers["Authorization"] = f"Basic {backend_basic_auth.decode('utf-8')}"
+            data["client_secret"] = client_secret
 
         request_url = cls.open_id_endpoint_for_name(
             "token_endpoint", authentication_identifier=authentication_identifier, internal=True
