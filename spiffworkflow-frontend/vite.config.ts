@@ -1,13 +1,30 @@
 import preact from '@preact/preset-vite';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import svgr from 'vite-plugin-svgr';
 
 const host = process.env.HOST ?? 'localhost';
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 7001;
 
-export default defineConfig({
-  // depending on your application, base can also be "/"
-  base: '/',
+export function resolveBasePath(env: Record<string, string | undefined>): string {
+  // Build-time setting. Not a runtime SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_* var
+  // because `base` is baked into asset URLs at `vite build` time.
+  // Vite-agnostic name so it survives a bundler switch; existing build-time
+  // VITE_* vars (VITE_VERSION_INFO etc.) are vite-specific client exposures
+  // via import.meta.env and would need a compat layer if we switch.
+  const raw = env.SPIFFWORKFLOW_FRONTEND_BUILD_TIME_BASE_PATH ?? '/';
+  let base = raw.trim();
+  if (!base) base = '/';
+  if (!base.startsWith('/')) base = `/${base}`;
+  if (!base.endsWith('/')) base += '/';
+  return base;
+}
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  // Allow both Vite-loaded env and direct process.env (for CI shell vars).
+  const mergedEnv: Record<string, string | undefined> = { ...env, ...process.env };
+  return {
+  base: resolveBasePath(mergedEnv),
   plugins: [
     // react(),
     // seems to replace preact. hot module replacement doesn't work, so commented out. also causes errors when navigating with TabList:
@@ -53,4 +70,5 @@ export default defineConfig({
     preserveSymlinks: true,
     tsconfigPaths: true,
   },
+  };
 });
