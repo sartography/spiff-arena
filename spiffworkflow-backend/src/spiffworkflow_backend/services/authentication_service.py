@@ -301,6 +301,12 @@ class AuthenticationService:
     def pkce_required(cls, authentication_identifier: str) -> bool:
         return current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"] or not cls.secret_key(authentication_identifier)
 
+    @staticmethod
+    def _basic_auth_header(client_id: str, client_secret: str) -> str:
+        credentials = f"{client_id}:{client_secret}".encode("ascii")
+        encoded_credentials = base64.b64encode(credentials).decode("ascii")
+        return f"Basic {encoded_credentials}"
+
     @classmethod
     def open_id_endpoint_for_name(cls, name: str, authentication_identifier: str, internal: bool = False) -> str:
         """All openid systems provide a mapping of static names to the full path of that endpoint."""
@@ -540,10 +546,7 @@ class AuthenticationService:
         }
 
         if client_secret:
-            backend_basic_auth_string = f"{self.client_id(authentication_identifier)}:{client_secret}"
-            backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
-            backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
-            headers["Authorization"] = f"Basic {backend_basic_auth.decode('utf-8')}"
+            headers["Authorization"] = self._basic_auth_header(self.client_id(authentication_identifier), client_secret)
         else:
             data["client_id"] = self.client_id(authentication_identifier)
 
@@ -758,10 +761,7 @@ class AuthenticationService:
             "client_id": cls.client_id(authentication_identifier),
         }
         if client_secret:
-            backend_basic_auth_string = f"{cls.client_id(authentication_identifier)}:{client_secret}"
-            backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
-            backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
-            headers["Authorization"] = f"Basic {backend_basic_auth.decode('utf-8')}"
+            headers["Authorization"] = cls._basic_auth_header(cls.client_id(authentication_identifier), client_secret)
             data["client_secret"] = client_secret
 
         request_url = cls.open_id_endpoint_for_name(
