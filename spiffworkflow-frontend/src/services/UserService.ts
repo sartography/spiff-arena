@@ -99,13 +99,15 @@ const doLogin = (
 const doLogout = () => {
   const idToken = getIdToken();
 
-  const frontendBaseUrl = window.location.origin;
+  if (idToken === null) {
+    window.location.href = withBasePath('/');
+    return;
+  }
+
+  const frontendBaseUrl = `${window.location.origin}${withBasePath('/')}`;
   let logoutRedirectUrl = `${BACKEND_BASE_URL}/logout?redirect_url=${frontendBaseUrl}&id_token=${idToken}&authentication_identifier=${getAuthenticationIdentifier()}`;
 
-  // edge case. if the user is already logged out, just take them somewhere that will force them to sign in.
-  if (idToken === null) {
-    logoutRedirectUrl = SIGN_IN_PATH;
-  } else if (isPublicUser()) {
+  if (isPublicUser()) {
     logoutRedirectUrl += '&backend_only=true';
   }
 
