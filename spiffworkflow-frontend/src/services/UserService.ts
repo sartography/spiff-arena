@@ -3,6 +3,7 @@ import * as cookie from 'cookie';
 import { BACKEND_BASE_URL } from '../config';
 import { AuthenticationOption } from '../interfaces';
 import { parseTaskShowUrl } from '../helpers';
+import { withBasePath } from '../helpers/basePath';
 
 // The backend sets separate browser-readable cookies for the OAuth access token
 // and OIDC ID token. The access token authenticates API requests; the ID token
@@ -34,7 +35,7 @@ const getCurrentLocation = (queryParams: string = window.location.search) => {
 
 const redirectToLogin = () => {
   const encodedUrl = getCurrentLocation();
-  const loginUrl = `/login?original_url=${encodedUrl}`;
+  const loginUrl = `${withBasePath('/login')}?original_url=${encodedUrl}`;
   window.location.replace(loginUrl);
 };
 

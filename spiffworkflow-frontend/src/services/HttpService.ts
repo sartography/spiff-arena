@@ -1,5 +1,6 @@
 import { BACKEND_BASE_URL } from '../config';
 import { objectIsEmpty } from '../helpers';
+import { stripBasePath, withBasePath } from '../helpers/basePath';
 import UserService from './UserService';
 
 const HttpMethods = {
@@ -151,7 +152,7 @@ const makeCallToBackend = ({
         if (onUnauthorized) {
           onUnauthorized(jsonResult);
         } else if (UserService.isPublicUser()) {
-          window.location.href = '/public/sign-out';
+          window.location.href = withBasePath('/public/sign-out');
         } else {
           // Hopefully we can make this service a hook and use the error message context directly
 
@@ -180,7 +181,7 @@ const makeCallToBackend = ({
         } else {
           console.error(error.message);
         }
-      } else if (window.location.pathname !== '/login') {
+      } else if (stripBasePath(window.location.pathname) !== '/login') {
         // The block is for authentication errors.
         // If we're already on the login page, do nothing.
         // Otherwise, redirect to login page.
