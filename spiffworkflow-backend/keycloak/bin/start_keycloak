@@ -26,6 +26,11 @@ if ! docker network inspect spiffworkflow >/dev/null 2>&1; then
   docker network create spiffworkflow
 fi
 
+script_dir="$(
+  cd -- "$(dirname "$0")" >/dev/null 2>&1
+  pwd -P
+)"
+
 # https://stackoverflow.com/a/60579344/6090676
 container_name="keycloak"
 container_regex="^keycloak$"
@@ -60,6 +65,7 @@ docker run \
   -d \
   --network=spiffworkflow \
   --name keycloak \
+  -v "${script_dir}/../spifftheme:/opt/keycloak/themes/spifftheme:ro" \
   -e KEYCLOAK_LOGLEVEL=ALL \
   -e ROOT_LOGLEVEL=ALL \
   -e KC_BOOTSTRAP_ADMIN_USERNAME=admin \
@@ -71,10 +77,6 @@ docker run \
   -D--spi-theme-cache-themes=false \
   -D--spi-theme-cache-templates=false
 
-script_dir="$(
-  cd -- "$(dirname "$0")" >/dev/null 2>&1
-  pwd -P
-)"
 file_path=/tmp/${realm_name}-realm.json
 cp "${script_dir}/../realm_exports/${realm_name}-realm.json" "$file_path"
 spiff_subdomain="for-local-dev.spiffworkflow.org"
@@ -91,6 +93,8 @@ fi
 token=$(curl --fail -s -X POST "http://localhost:7002/realms/master/protocol/openid-connect/token" -H 'Content-Type: application/x-www-form-urlencoded' -d 'grant_type=password&client_id=admin-cli&username=admin&password=admin' | jq -r .access_token)
 curl --fail -s -X POST "http://localhost:7002/admin/realms" -H "Authorization: Bearer $token" -H 'Content-Type: application/json' --data "@$file_path" -v
 echo 'imported realms'
+curl --fail -s -X PUT "http://localhost:7002/admin/realms/${realm_name}" -H "Authorization: Bearer $token" -H 'Content-Type: application/json' --data '{"loginTheme":"spifftheme"}'
+echo "set ${realm_name} login theme to spifftheme"
 
 # finally turn off ssl for spiffworkflow-local realm
 if [ "${TURN_OFF_SSL:-}" == "true" ]; then
