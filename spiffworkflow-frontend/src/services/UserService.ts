@@ -13,8 +13,6 @@ import { withBasePath } from '../helpers/basePath';
 // Some explanation:
 // https://dev.to/nilanth/how-to-secure-jwt-in-a-single-page-application-cko
 
-const SIGN_IN_PATH = '/';
-
 const getCookie = (key: string) => {
   const parsedCookies = cookie.parse(document.cookie);
   if (key in parsedCookies) {
