@@ -126,7 +126,7 @@ class AuthenticationOptionForApi(TypedDict):
 
 class AuthenticationOption(AuthenticationOptionForApi):
     client_id: str
-    client_secret: str
+    client_secret: NotRequired[str]
     additional_valid_issuers: NotRequired[list[str]]
     access_token_audiences: NotRequired[list[str] | str]
     authorization_resource: NotRequired[str]
@@ -293,10 +293,13 @@ class AuthenticationService:
         return config
 
     @classmethod
-    def secret_key(cls, authentication_identifier: str) -> str:
-        """Returns the secret key from the config."""
-        config: str = cls.authentication_option_for_identifier(authentication_identifier)["client_secret"]
-        return config
+    def secret_key(cls, authentication_identifier: str) -> str | None:
+        """Returns the optional client secret from the config."""
+        return cls.authentication_option_for_identifier(authentication_identifier).get("client_secret")
+
+    @classmethod
+    def pkce_required(cls, authentication_identifier: str) -> bool:
+        return current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"] or not cls.secret_key(authentication_identifier)
 
     @classmethod
     def open_id_endpoint_for_name(cls, name: str, authentication_identifier: str, internal: bool = False) -> str:
@@ -456,8 +459,8 @@ class AuthenticationService:
         authentication_identifier: str
         pkce_id: NotRequired[str]
 
-    @staticmethod
-    def generate_state_payload(authentication_identifier: str, final_url: str | None = None) -> StatePayload:
+    @classmethod
+    def generate_state_payload(cls, authentication_identifier: str, final_url: str | None = None) -> StatePayload:
         # The final_url is where we want to return the user to, within the application - in case they
         # where headed to a specific page. This is different than the "redirect url" we specify to
         # the open id server - we want the open id server to always send us back to the login_return
@@ -470,7 +473,7 @@ class AuthenticationService:
             "final_url": my_final_url,
             "authentication_identifier": authentication_identifier,
         }
-        if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"]:
+        if cls.pkce_required(authentication_identifier):
             pkce_id = secrets.token_urlsafe(32)  # Associate a unique PKCE id with the request for cross-reference later
             state_payload["pkce_id"] = pkce_id
         return state_payload
@@ -506,7 +509,7 @@ class AuthenticationService:
         if authorization_resource:
             login_redirect_url += f"&{urlencode({'resource': authorization_resource})}"
 
-        if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"]:
+        if self.pkce_required(authentication_identifier):
             code_verifier = PKCE.generate_code_verifier()
             # Store the verifier server-side for use when exchanging the authorization code.
             PKCE.store_pkce_code_verifier(pkce_id=state_payload["pkce_id"], code_verifier=code_verifier)
@@ -525,74 +528,48 @@ class AuthenticationService:
         pkce_id: str | None = None,
     ) -> dict:
         client_secret = self.__class__.secret_key(authentication_identifier)
-        is_public_client = not client_secret
         redirect_to_use = self.get_redirect_uri_for_login_to_server()
 
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
         }
-
         data: dict[str, str] = {
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": redirect_to_use,
         }
 
-        if is_public_client:
-            # Public clients (e.g. Cognito without a secret) must not use HTTP Basic
-            # authentication and must use PKCE per RFC 7636 / Cognito public-client contract.
+        if client_secret:
+            backend_basic_auth_string = f"{self.client_id(authentication_identifier)}:{client_secret}"
+            backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
+            backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
+            headers["Authorization"] = f"Basic {backend_basic_auth.decode('utf-8')}"
+        else:
             data["client_id"] = self.client_id(authentication_identifier)
+
+        if self.pkce_required(authentication_identifier):
             if not pkce_id:
                 raise ApiError(
                     error_code="missing_pkce_id",
                     message=(
-                        "PKCE is required for public clients but PKCE identifier is missing from state. "
+                        "PKCE is enforced but PKCE identifier is missing from state. "
                         "This may indicate a session timeout or configuration issue."
                     ),
                     status_code=400,
                 )
+
             code_verifier = PKCE.consume_pkce_code_verifier(pkce_id=pkce_id)
             if not code_verifier:
                 raise ApiError(
                     error_code="missing_pkce_verifier",
                     message=(
-                        "PKCE is required for public clients but code verifier is missing from storage. "
+                        "PKCE is enforced but code verifier is missing from storage. "
                         "This may indicate a session timeout or configuration issue."
                     ),
                     status_code=400,
                 )
+
             data[PKCE.CODE_VERIFIER_KEY] = code_verifier
-        else:
-            backend_basic_auth_string = f"{self.client_id(authentication_identifier)}:{client_secret}"
-            backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
-            backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
-            headers["Authorization"] = f"Basic {backend_basic_auth.decode('utf-8')}"
-
-            # Attach PKCE verifier for the authorization_code exchange when enabled.
-            if current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"):
-                if not pkce_id:
-                    # We enforced PKCE when sending the user out; missing pkce_id means something broke.
-                    raise ApiError(
-                        error_code="missing_pkce_id",
-                        message=(
-                            "PKCE is enforced but PKCE identifier is missing from state. "
-                            "This may indicate a session timeout or configuration issue."
-                        ),
-                        status_code=400,
-                    )
-
-                code_verifier = PKCE.consume_pkce_code_verifier(pkce_id=pkce_id)
-                if not code_verifier:
-                    raise ApiError(
-                        error_code="missing_pkce_verifier",
-                        message=(
-                            "PKCE is enforced but code verifier is missing from storage. "
-                            "This may indicate a session timeout or configuration issue."
-                        ),
-                        status_code=400,
-                    )
-
-                data[PKCE.CODE_VERIFIER_KEY] = code_verifier
 
         request_url = self.open_id_endpoint_for_name(
             "token_endpoint", authentication_identifier=authentication_identifier, internal=True
@@ -772,7 +749,6 @@ class AuthenticationService:
     def get_auth_token_from_refresh_token(cls, refresh_token: str, authentication_identifier: str) -> dict:
         """Converts a refresh token to an Auth Token by calling the openid's auth endpoint."""
         client_secret = cls.secret_key(authentication_identifier)
-        is_public_client = not client_secret
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
         }
@@ -781,10 +757,7 @@ class AuthenticationService:
             "refresh_token": refresh_token,
             "client_id": cls.client_id(authentication_identifier),
         }
-        if is_public_client:
-            # Public clients omit Basic auth and client_secret; Cognito validates via client_id alone.
-            pass
-        else:
+        if client_secret:
             backend_basic_auth_string = f"{cls.client_id(authentication_identifier)}:{client_secret}"
             backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
             backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
