@@ -15,7 +15,7 @@ setup_traps
 
 set -o errtrace -o errexit -o nounset -o pipefail
 
-keycloak_version=26.0.7
+keycloak_version=26.7.2
 
 realm_name="${1:-}"
 if [[ -z "$realm_name" ]]; then
@@ -62,12 +62,11 @@ docker run \
   --name keycloak \
   -e KEYCLOAK_LOGLEVEL=ALL \
   -e ROOT_LOGLEVEL=ALL \
-  -e KEYCLOAK_ADMIN=admin \
-  -e KEYCLOAK_ADMIN_PASSWORD=admin \
+  -e KC_BOOTSTRAP_ADMIN_USERNAME=admin \
+  -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
   -e KC_HEALTH_ENABLED="true" \
+  -e KC_FEATURES="token-exchange,admin-fine-grained-authz:v1" \
   quay.io/keycloak/keycloak:${keycloak_version} start-dev \
-  -Dkeycloak.profile.feature.token_exchange=enabled \
-  -Dkeycloak.profile.feature.admin_fine_grained_authz=enabled \
   -D--spi-theme-static-max-age=-1 \
   -D--spi-theme-cache-themes=false \
   -D--spi-theme-cache-templates=false
