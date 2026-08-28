@@ -6,6 +6,7 @@ import APIErrorProvider from './contexts/APIErrorContext';
 import ContainerForExtensions from './ContainerForExtensions';
 import PublicRoutes from './views/PublicRoutes';
 import { CONFIGURATION_ERRORS } from './config';
+import { getRouterBasename } from './helpers/basePath';
 
 const queryClient = new QueryClient();
 
@@ -52,12 +53,15 @@ export default function App() {
       </div>
     );
   };
-  const router = createBrowserRouter([
-    {
-      path: '*',
-      Component: layout,
-      children: routeComponents(),
-    },
-  ]);
+  const router = createBrowserRouter(
+    [
+      {
+        path: '*',
+        Component: layout,
+        children: routeComponents(),
+      },
+    ],
+    { basename: getRouterBasename() },
+  );
   return <RouterProvider router={router} />;
 }
