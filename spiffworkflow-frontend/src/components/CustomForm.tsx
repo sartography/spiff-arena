@@ -20,7 +20,7 @@ import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWid
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
 import {
-  applyCalculatedFields,
+  applyFormEnhancements,
   CalculatedField,
   FormattedNumberWidget,
 } from '../rjsf/formEnhancements';
@@ -535,65 +535,58 @@ export default function CustomForm({
     );
   }
 
-  const calculatedFieldsResult = useMemo(
-    () => applyCalculatedFields(schema, uiSchema, formData),
+  const enhancementsResult = useMemo(
+    () => applyFormEnhancements(rjsfValidator, schema, uiSchema, formData),
     [schema, uiSchema, formData],
   );
-  const formDataWithCalculatedFields = calculatedFieldsResult.formState;
+  const formDataWithEnhancements = enhancementsResult.formState;
   const [calculationWarning, setCalculationWarning] = useState<string | null>(
     null,
   );
 
   useEffect(() => {
-    if (calculatedFieldsResult.warning) {
-      setCalculationWarning(calculatedFieldsResult.warning);
+    if (enhancementsResult.warning) {
+      setCalculationWarning(enhancementsResult.warning);
     } else {
       setCalculationWarning(null);
     }
-  }, [calculatedFieldsResult.warning]);
+  }, [enhancementsResult.warning]);
 
-  const onChangeWithCalculatedFields = (event: any, fieldId?: string) => {
+  const onChangeWithEnhancements = (event: any, fieldId?: string) => {
     if (!onChange) {
       return;
     }
-    const nextCalculatedFieldsResult = applyCalculatedFields(
+    const nextEnhancementsResult = applyFormEnhancements(
+      rjsfValidator,
       schema,
       uiSchema,
       event.formData,
     );
-    if (
-      !nextCalculatedFieldsResult.stabilized &&
-      nextCalculatedFieldsResult.warning
-    ) {
-      setCalculationWarning(nextCalculatedFieldsResult.warning);
+    if (!nextEnhancementsResult.stabilized && nextEnhancementsResult.warning) {
+      setCalculationWarning(nextEnhancementsResult.warning);
     } else {
       setCalculationWarning(null);
     }
-    onChange(
-      { ...event, formData: nextCalculatedFieldsResult.formState },
-      fieldId,
-    );
+    onChange({ ...event, formData: nextEnhancementsResult.formState }, fieldId);
   };
 
-  const onSubmitWithCalculatedFields = (event: any, nativeEvent?: any) => {
+  const onSubmitWithEnhancements = (event: any, nativeEvent?: any) => {
     if (!onSubmit) {
       return;
     }
-    const nextCalculatedFieldsResult = applyCalculatedFields(
+    const nextEnhancementsResult = applyFormEnhancements(
+      rjsfValidator,
       schema,
       uiSchema,
       event.formData,
     );
-    if (
-      !nextCalculatedFieldsResult.stabilized &&
-      nextCalculatedFieldsResult.warning
-    ) {
-      setCalculationWarning(nextCalculatedFieldsResult.warning);
+    if (!nextEnhancementsResult.stabilized && nextEnhancementsResult.warning) {
+      setCalculationWarning(nextEnhancementsResult.warning);
     } else {
       setCalculationWarning(null);
     }
     onSubmit(
-      { ...event, formData: nextCalculatedFieldsResult.formState },
+      { ...event, formData: nextEnhancementsResult.formState },
       nativeEvent,
     );
   };
@@ -603,9 +596,9 @@ export default function CustomForm({
     key,
     className,
     disabled,
-    formData: formDataWithCalculatedFields,
-    onChange: onChangeWithCalculatedFields,
-    onSubmit: onSubmitWithCalculatedFields,
+    formData: formDataWithEnhancements,
+    onChange: onChangeWithEnhancements,
+    onSubmit: onSubmitWithEnhancements,
     schema,
     uiSchema,
     widgets: rjsfWidgets,

@@ -1,4 +1,9 @@
-import { FieldProps, WidgetProps } from '@rjsf/utils';
+import {
+  FieldProps,
+  retrieveSchema,
+  ValidatorType,
+  WidgetProps,
+} from '@rjsf/utils';
 import { TextField } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { getCommonAttributes } from './helpers';
@@ -464,6 +469,223 @@ export type ApplyCalculatedFieldsResult = {
   formState: any;
   stabilized: boolean;
   warning?: string;
+};
+
+const AUTO_SELECT_SINGLE_OPTION = 'autoSelectSingleOption';
+
+const nodeAutoSelectOption = (uiSchema: any) => {
+  const options = uiSchema?.['ui:options'];
+  if (
+    isPlainObject(options) &&
+    typeof options[AUTO_SELECT_SINGLE_OPTION] === 'boolean'
+  ) {
+    return options[AUTO_SELECT_SINGLE_OPTION];
+  }
+  const bareOption = uiSchema?.[`ui:${AUTO_SELECT_SINGLE_OPTION}`];
+  return typeof bareOption === 'boolean' ? bareOption : undefined;
+};
+
+const uiSchemaEnablesAutoSelect = (uiSchema: any): boolean => {
+  if (!isPlainObject(uiSchema)) {
+    return false;
+  }
+  if (nodeAutoSelectOption(uiSchema) === true) {
+    return true;
+  }
+  return Object.values(uiSchema).some((value) => {
+    if (isPlainObject(value)) {
+      return uiSchemaEnablesAutoSelect(value);
+    }
+    if (Array.isArray(value)) {
+      return value.some(
+        (entry) => isPlainObject(entry) && uiSchemaEnablesAutoSelect(entry),
+      );
+    }
+    return false;
+  });
+};
+
+const isEmptyValue = (value: any) =>
+  value === undefined || value === null || value === '';
+
+const isPrimitiveValue = (value: any) =>
+  ['string', 'number', 'boolean'].includes(typeof value);
+
+type SingleOptionChange = { path: (string | number)[]; value: any };
+
+const setByPath = (data: any, path: (string | number)[], value: any) => {
+  let container = data;
+  for (let index = 0; index < path.length - 1; index += 1) {
+    container = container?.[path[index]];
+  }
+  if (isPlainObject(container) || Array.isArray(container)) {
+    container[path[path.length - 1]] = value;
+  }
+};
+
+const collectSingleOptionChanges = (
+  validator: ValidatorType,
+  schema: any,
+  rootSchema: any,
+  uiSchema: any,
+  formData: any,
+  inheritedOption: boolean | undefined,
+  path: (string | number)[],
+  changes: SingleOptionChange[],
+) => {
+  if (!isPlainObject(formData)) {
+    return;
+  }
+  const resolvedSchema = retrieveSchema(
+    validator,
+    schema ?? {},
+    rootSchema ?? {},
+    formData,
+  );
+  const nodeOption = nodeAutoSelectOption(uiSchema);
+  const effectiveOption =
+    typeof nodeOption === 'boolean' ? nodeOption : inheritedOption;
+  Object.entries(resolvedSchema?.properties ?? {}).forEach(
+    ([propertyKey, propertySchema]) => {
+      const propertySchemaToUse = propertySchema as any;
+      const propertyUiSchema = uiSchema?.[propertyKey];
+      const propertyOption = nodeAutoSelectOption(propertyUiSchema);
+      const propertyEffectiveOption =
+        typeof propertyOption === 'boolean' ? propertyOption : effectiveOption;
+      if (propertyEffectiveOption) {
+        const enumValues = propertySchemaToUse?.enum;
+        if (Array.isArray(enumValues) && enumValues.length === 1) {
+          const currentValue = formData[propertyKey];
+          const [onlyValue] = enumValues;
+          const isMissing = isEmptyValue(currentValue);
+          const isStale =
+            !isMissing &&
+            isPrimitiveValue(currentValue) &&
+            !enumValues.includes(currentValue);
+          if (isMissing || isStale) {
+            changes.push({ path: [...path, propertyKey], value: onlyValue });
+          }
+        }
+      }
+      if (propertySchemaToUse?.properties) {
+        collectSingleOptionChanges(
+          validator,
+          propertySchemaToUse,
+          rootSchema,
+          propertyUiSchema,
+          formData[propertyKey],
+          propertyEffectiveOption,
+          [...path, propertyKey],
+          changes,
+        );
+      }
+      if (propertySchemaToUse?.items && Array.isArray(formData[propertyKey])) {
+        formData[propertyKey].forEach((item: any, index: number) => {
+          collectSingleOptionChanges(
+            validator,
+            propertySchemaToUse.items,
+            rootSchema,
+            propertyUiSchema?.items,
+            item,
+            propertyEffectiveOption,
+            [...path, propertyKey, index],
+            changes,
+          );
+        });
+      }
+    },
+  );
+};
+
+export type ApplySingleOptionResult = {
+  formState: any;
+  stabilized: boolean;
+};
+
+// Auto-selects values for enum fields that resolve to exactly one option,
+// when opted in through the ui schema option "autoSelectSingleOption".
+// The option may be set for a single property or for the whole form at the
+// ui schema root, and can be disabled per property by setting it to false.
+export const applySingleOptionDefaults = (
+  validator: ValidatorType,
+  schema: any = {},
+  uiSchema: any = {},
+  formData: any = {},
+): ApplySingleOptionResult => {
+  if (!uiSchemaEnablesAutoSelect(uiSchema)) {
+    return { formState: formData, stabilized: true };
+  }
+
+  const rootOption = nodeAutoSelectOption(uiSchema);
+  const changes: SingleOptionChange[] = [];
+  collectSingleOptionChanges(
+    validator,
+    schema,
+    schema,
+    uiSchema,
+    formData,
+    rootOption,
+    [],
+    changes,
+  );
+  if (!changes.length) {
+    return { formState: formData, stabilized: true };
+  }
+
+  const workingData = cloneData(formData ?? {});
+  const maxPasses = 20;
+  let stabilized = true;
+
+  for (let pass = 0; pass < maxPasses; pass += 1) {
+    changes.forEach(({ path, value }) => {
+      setByPath(workingData, path, value);
+    });
+    changes.length = 0;
+    collectSingleOptionChanges(
+      validator,
+      schema,
+      schema,
+      uiSchema,
+      workingData,
+      rootOption,
+      [],
+      changes,
+    );
+    if (!changes.length) {
+      break;
+    }
+    if (pass === maxPasses - 1) {
+      stabilized = false;
+    }
+  }
+
+  return { formState: workingData, stabilized };
+};
+
+export type ApplyFormEnhancementsResult = {
+  formState: any;
+  stabilized: boolean;
+  warning?: string;
+};
+
+export const applyFormEnhancements = (
+  validator: ValidatorType,
+  schema: any = {},
+  uiSchema: any = {},
+  formData: any = {},
+): ApplyFormEnhancementsResult => {
+  const calculatedResult = applyCalculatedFields(schema, uiSchema, formData);
+  const singleOptionResult = applySingleOptionDefaults(
+    validator,
+    schema,
+    uiSchema,
+    calculatedResult.formState,
+  );
+  return {
+    formState: singleOptionResult.formState,
+    stabilized: calculatedResult.stabilized && singleOptionResult.stabilized,
+    warning: calculatedResult.warning,
+  };
 };
 
 export const applyCalculatedFields = (

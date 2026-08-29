@@ -411,6 +411,87 @@ UI Schema example:
 }
 ```
 
+#### Single-Option Auto-Selection
+
+Use `ui:options.autoSelectSingleOption: true` when a dropdown should select itself when it has exactly one option.
+This is useful for dependent dropdowns that are driven by json schema dependencies, where picking one value
+narrows another field down to a single choice, and the user would otherwise have to select the only option by hand.
+
+For example, with this structure, selecting the client fills in the project automatically when the selected client
+only has one project:
+
+JSON Schema example:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "client": {
+      "title": "Client",
+      "type": "string",
+      "enum": ["GSA", "Sartography"]
+    }
+  },
+  "dependencies": {
+    "client": {
+      "oneOf": [
+        {
+          "properties": {
+            "client": { "enum": ["GSA"] },
+            "project": {
+              "title": "Project",
+              "type": "string",
+              "enum": ["Discussions & Meetings"]
+            }
+          }
+        },
+        {
+          "properties": {
+            "client": { "enum": ["Sartography"] },
+            "project": {
+              "title": "Project",
+              "type": "string",
+              "enum": ["Business Development", "Professional Development"]
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+UI Schema example:
+
+```json
+{
+  "ui:options": {
+    "autoSelectSingleOption": true
+  }
+}
+```
+
+The option can be set at the ui schema root to apply to every field in the form, or on a single property to
+apply only to that field. Setting it to `false` for a property disables it for that property, which allows
+enabling it for an entire form while leaving a few fields alone.
+
+```json
+{
+  "ui:options": {
+    "autoSelectSingleOption": true
+  },
+  "project": {
+    "ui:options": {
+      "autoSelectSingleOption": false
+    }
+  }
+}
+```
+
+A value is only set when the field is empty, or when the current value is no longer valid for the field,
+such as when a value selected for one client is no longer valid after switching to a different client.
+Values that the user entered are never overwritten when they are still valid.
+
 #### Date Range Selector
 
 The date range selector allows users to select a range of dates, such as a start and end date, within a form.
