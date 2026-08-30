@@ -411,86 +411,23 @@ UI Schema example:
 }
 ```
 
-#### Single-Option Auto-Selection
+#### Auto-Select a Single Option
 
-Use `ui:options.autoSelectSingleOption: true` when a dropdown should select itself when it has exactly one option.
-This is useful for dependent dropdowns that are driven by json schema dependencies, where picking one value
-narrows another field down to a single choice, and the user would otherwise have to select the only option by hand.
-
-For example, with this structure, selecting the client fills in the project automatically when the selected client
-only has one project:
-
-JSON Schema example:
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "client": {
-      "title": "Client",
-      "type": "string",
-      "enum": ["GSA", "Sartography"]
-    }
-  },
-  "dependencies": {
-    "client": {
-      "oneOf": [
-        {
-          "properties": {
-            "client": { "enum": ["GSA"] },
-            "project": {
-              "title": "Project",
-              "type": "string",
-              "enum": ["Discussions & Meetings"]
-            }
-          }
-        },
-        {
-          "properties": {
-            "client": { "enum": ["Sartography"] },
-            "project": {
-              "title": "Project",
-              "type": "string",
-              "enum": ["Business Development", "Professional Development"]
-            }
-          }
-        }
-      ]
-    }
-  }
-}
-```
+Use the `auto-select-single-option` widget when a dropdown should automatically select its only valid option.
+This works with static enums and with enums narrowed to one option by a JSON Schema dependency.
 
 UI Schema example:
 
 ```json
 {
-  "ui:options": {
-    "autoSelectSingleOption": true
-  }
-}
-```
-
-The option can be set at the ui schema root to apply to every field in the form, or on a single property to
-apply only to that field. Setting it to `false` for a property disables it for that property, which allows
-enabling it for an entire form while leaving a few fields alone.
-
-```json
-{
-  "ui:options": {
-    "autoSelectSingleOption": true
-  },
   "project": {
-    "ui:options": {
-      "autoSelectSingleOption": false
-    }
+    "ui:widget": "auto-select-single-option"
   }
 }
 ```
 
-A value is only set when the field is empty, or when the current value is no longer valid for the field,
-such as when a value selected for one client is no longer valid after switching to a different client.
-Values that the user entered are never overwritten when they are still valid.
+The widget replaces an existing value only when that value is no longer one of the field's options.
+It leaves dropdowns with zero or multiple options unchanged.
 
 #### Date Range Selector
 

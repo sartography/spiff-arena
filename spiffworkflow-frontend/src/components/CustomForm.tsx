@@ -19,8 +19,9 @@ import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRa
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
+import AutoSelectSingleOptionWidget from '../rjsf/custom_widgets/AutoSelectSingleOptionWidget';
 import {
-  applyFormEnhancements,
+  applyCalculatedFields,
   CalculatedField,
   FormattedNumberWidget,
 } from '../rjsf/formEnhancements';
@@ -109,6 +110,7 @@ export default function CustomForm({
     markdown: MarkDownFieldWidget,
     typeahead: customTypeaheadWidget,
     formattedNumber: FormattedNumberWidget,
+    'auto-select-single-option': AutoSelectSingleOptionWidget,
   };
 
   // set in uiSchema using the "ui:field" key for a property
@@ -535,58 +537,65 @@ export default function CustomForm({
     );
   }
 
-  const enhancementsResult = useMemo(
-    () => applyFormEnhancements(rjsfValidator, schema, uiSchema, formData),
+  const calculatedFieldsResult = useMemo(
+    () => applyCalculatedFields(schema, uiSchema, formData),
     [schema, uiSchema, formData],
   );
-  const formDataWithEnhancements = enhancementsResult.formState;
+  const formDataWithCalculatedFields = calculatedFieldsResult.formState;
   const [calculationWarning, setCalculationWarning] = useState<string | null>(
     null,
   );
 
   useEffect(() => {
-    if (enhancementsResult.warning) {
-      setCalculationWarning(enhancementsResult.warning);
+    if (calculatedFieldsResult.warning) {
+      setCalculationWarning(calculatedFieldsResult.warning);
     } else {
       setCalculationWarning(null);
     }
-  }, [enhancementsResult.warning]);
+  }, [calculatedFieldsResult.warning]);
 
-  const onChangeWithEnhancements = (event: any, fieldId?: string) => {
+  const onChangeWithCalculatedFields = (event: any, fieldId?: string) => {
     if (!onChange) {
       return;
     }
-    const nextEnhancementsResult = applyFormEnhancements(
-      rjsfValidator,
+    const nextCalculatedFieldsResult = applyCalculatedFields(
       schema,
       uiSchema,
       event.formData,
     );
-    if (!nextEnhancementsResult.stabilized && nextEnhancementsResult.warning) {
-      setCalculationWarning(nextEnhancementsResult.warning);
+    if (
+      !nextCalculatedFieldsResult.stabilized &&
+      nextCalculatedFieldsResult.warning
+    ) {
+      setCalculationWarning(nextCalculatedFieldsResult.warning);
     } else {
       setCalculationWarning(null);
     }
-    onChange({ ...event, formData: nextEnhancementsResult.formState }, fieldId);
+    onChange(
+      { ...event, formData: nextCalculatedFieldsResult.formState },
+      fieldId,
+    );
   };
 
-  const onSubmitWithEnhancements = (event: any, nativeEvent?: any) => {
+  const onSubmitWithCalculatedFields = (event: any, nativeEvent?: any) => {
     if (!onSubmit) {
       return;
     }
-    const nextEnhancementsResult = applyFormEnhancements(
-      rjsfValidator,
+    const nextCalculatedFieldsResult = applyCalculatedFields(
       schema,
       uiSchema,
       event.formData,
     );
-    if (!nextEnhancementsResult.stabilized && nextEnhancementsResult.warning) {
-      setCalculationWarning(nextEnhancementsResult.warning);
+    if (
+      !nextCalculatedFieldsResult.stabilized &&
+      nextCalculatedFieldsResult.warning
+    ) {
+      setCalculationWarning(nextCalculatedFieldsResult.warning);
     } else {
       setCalculationWarning(null);
     }
     onSubmit(
-      { ...event, formData: nextEnhancementsResult.formState },
+      { ...event, formData: nextCalculatedFieldsResult.formState },
       nativeEvent,
     );
   };
@@ -596,9 +605,9 @@ export default function CustomForm({
     key,
     className,
     disabled,
-    formData: formDataWithEnhancements,
-    onChange: onChangeWithEnhancements,
-    onSubmit: onSubmitWithEnhancements,
+    formData: formDataWithCalculatedFields,
+    onChange: onChangeWithCalculatedFields,
+    onSubmit: onSubmitWithCalculatedFields,
     schema,
     uiSchema,
     widgets: rjsfWidgets,
