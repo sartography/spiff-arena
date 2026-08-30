@@ -12,6 +12,8 @@ from lxml import etree  # type: ignore
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.source_artifact_service import SourceArtifactValidationError
+from spiffworkflow_backend.services.source_artifact_service import validate_source_artifact_package
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 
@@ -76,6 +78,14 @@ class ProcessModelImportService:
 
     @classmethod
     def import_from_filestore_package(cls, package: dict[str, Any], process_group_id: str) -> list[ProcessModelInfo]:
+        try:
+            source_artifact_ref = validate_source_artifact_package(package)
+        except SourceArtifactValidationError as exception:
+            raise InvalidFilestorePackageError(
+                message=str(exception),
+                error_code="invalid_filestore_package",
+            ) from exception
+
         process_group = cls._ensure_process_group(process_group_id)
         files = cls._filestore_files_relative_to_explicit_model(cls._filestore_files(package), package)
         model_dirs = cls._filestore_model_dirs(files)
@@ -109,8 +119,15 @@ class ProcessModelImportService:
                     id=full_process_model_id,
                     display_name=display_name,
                     description=description,
+                    source_artifact_ref=source_artifact_ref,
                 )
                 ProcessModelService.add_process_model(process_model)
+
+            if source_artifact_ref is not None and process_model.source_artifact_ref != source_artifact_ref:
+                ProcessModelService.update_process_model(
+                    process_model,
+                    {"source_artifact_ref": source_artifact_ref},
+                )
 
             for file_name, file_content in model_files.items():
                 if file_name == "process_model.json":

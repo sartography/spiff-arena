@@ -104,6 +104,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     bpmn_version_control_type: str | None = db.Column(db.String(50))
     # this could also be a blank string for older instances since we were putting blank strings in here as well
     bpmn_version_control_identifier: str | None = db.Column(db.String(255))
+    source_artifact_ref: dict[str, str] | None = db.Column(db.JSON, nullable=True)
     last_milestone_bpmn_name: str | None = db.Column(db.String(255), index=True)
 
     bpmn_xml_file_contents: str | None = None
@@ -153,6 +154,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             "process_initiator_username": self.process_initiator.username,
             "process_model_display_name": self.process_model_display_name,
             "process_model_identifier": self.process_model_identifier,
+            "source_artifact_ref": self.source_artifact_ref,
             "start_in_seconds": self.start_in_seconds,
             "status": self.status,
             "summary": self.summary,

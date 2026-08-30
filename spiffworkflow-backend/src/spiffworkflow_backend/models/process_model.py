@@ -19,6 +19,7 @@ PROCESS_MODEL_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION = [
     "fault_or_suspend_on_exception",
     "exception_notification_addresses",
     "metadata_extraction_paths",
+    "source_artifact_ref",
 ]
 
 
@@ -40,6 +41,7 @@ class ProcessModelInfo:
     fault_or_suspend_on_exception: str = NotificationType.fault.value
     exception_notification_addresses: list[str] = field(default_factory=list)
     metadata_extraction_paths: list[dict[str, str]] | None = None
+    source_artifact_ref: dict[str, str] | None = None
 
     process_group: Any | None = None
     files: list[File] | None = field(default_factory=list[File])

@@ -1,3 +1,4 @@
+import json
 from sys import exc_info
 
 import jinja2
@@ -7,6 +8,7 @@ from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_instructions_for_end_user import TaskInstructionsForEndUserModel
 from spiffworkflow_backend.services.task_service import TaskModelError
@@ -92,11 +94,43 @@ class JinjaService:
                 task_guid = str(spiff_task.id)
                 if task_guid in tasks_that_have_been_seen:
                     continue
+                instruction_template = spiff_task.task_spec.extensions["instructionsForEndUser"]
                 instruction = JinjaService.render_instructions_for_end_user(spiff_task)
                 if instruction != "":
+                    process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+                    task_data = {key: value for key, value in spiff_task.data.items() if cls._is_jsonable(value)}
                     TaskInstructionsForEndUserModel.insert_or_update_record(
                         task_guid=str(spiff_task.id),
                         process_instance_id=process_instance_id,
                         instruction=instruction,
+                        instruction_template=instruction_template,
+                        task_data=task_data,
+                        process_model_identifier=(process_instance.process_model_identifier if process_instance else None),
+                        bpmn_file_name=getattr(spiff_task.workflow.spec, "file", None),
+                        bpmn_process_identifier=spiff_task.workflow.spec.name,
+                        task_bpmn_identifier=spiff_task.task_spec.bpmn_id,
+                        source_artifact_ref=(process_instance.source_artifact_ref if process_instance else None),
+                        bpmn_version_control_identifier=(
+                            process_instance.bpmn_version_control_identifier if process_instance else None
+                        ),
                     )
                     tasks_that_have_been_seen.add(str(spiff_task.id))
+
+    @staticmethod
+    def _is_jsonable(value: object) -> bool:
+        try:
+            json.dumps(value)
+            return True
+        except (TypeError, OverflowError, ValueError):
+            return False
+
+    @classmethod
+    def render_queued_instruction(
+        cls,
+        queued_instruction: TaskInstructionsForEndUserModel,
+        translated_template: str | None = None,
+    ) -> str:
+        template = translated_template if translated_template is not None else queued_instruction.instruction_template
+        if template is None or queued_instruction.task_data is None:
+            return queued_instruction.instruction
+        return cls.render_jinja_template(template, task_data=queued_instruction.task_data)

@@ -168,6 +168,7 @@ class ProcessInstanceService:
                 start_in_seconds=round(time.time()),
                 bpmn_version_control_type="git",
                 bpmn_version_control_identifier=current_git_revision,
+                source_artifact_ref=(dict(process_model.source_artifact_ref) if process_model.source_artifact_ref else None),
             )
             db.session.add(process_instance_model)
 
@@ -999,6 +1000,7 @@ class ProcessInstanceService:
                 process_initiator_id=user_id,
                 process_model_identifier=process_model.id,
                 process_model_display_name=process_model.display_name,
+                source_artifact_ref=(dict(process_model.source_artifact_ref) if process_model.source_artifact_ref else None),
                 persistence_level=persistence_level,
             )
         else:

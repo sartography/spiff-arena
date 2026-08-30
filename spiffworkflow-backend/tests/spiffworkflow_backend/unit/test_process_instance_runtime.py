@@ -1511,6 +1511,12 @@ class TestProcessInstanceRuntime(BaseTest):
         user_instructions = TaskInstructionsForEndUserModel.entries_for_process_instance(process_instance.id)
         assert len(user_instructions) == 1
         assert user_instructions[0].instruction == "We run script one"
+        assert user_instructions[0].instruction_template == "We run script one"
+        assert user_instructions[0].task_data is not None
+        assert user_instructions[0].process_model_identifier == process_model.id
+        assert user_instructions[0].bpmn_file_name == "script_task_with_instruction.bpmn"
+        assert user_instructions[0].bpmn_process_identifier is not None
+        assert user_instructions[0].task_bpmn_identifier is not None
         runtime.do_engine_steps(execution_strategy_name="run_current_ready_tasks")
 
         runtime.do_engine_steps(save=True, execution_strategy_name="queue_instructions_for_end_user")

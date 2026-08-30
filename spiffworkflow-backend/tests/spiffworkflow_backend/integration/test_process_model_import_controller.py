@@ -16,14 +16,109 @@ from starlette.testclient import TestClient
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_import_service import InvalidFilestorePackageError
 from spiffworkflow_backend.services.process_model_import_service import ProcessModelImportService
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.source_artifact_service import sha256
+from spiffworkflow_backend.services.source_artifact_service import source_manifest_digest
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessModelImportController(BaseTest):
+    @staticmethod
+    def filestore_package_with_source_artifact(bpmn: str) -> tuple[dict, dict[str, str]]:
+        manifest_files = [
+            {
+                "path": "main.bpmn",
+                "revision": 1,
+                "content_type": "application/xml",
+                "content_sha256": sha256(bpmn),
+            }
+        ]
+        source_artifact_ref = {
+            "contract_version": "1.0",
+            "tenant_id": "tenant-1",
+            "provider": "filestore",
+            "project_id": "files-project",
+            "snapshot_id": "snapshot-1",
+            "manifest_sha256": source_manifest_digest(manifest_files),
+        }
+        return (
+            {
+                "tenant_id": "tenant-1",
+                "project_id": "files-project",
+                "project_name": "Source Project",
+                "snapshot_id": "snapshot-1",
+                "source_artifact_ref": source_artifact_ref,
+                "files": [
+                    {
+                        "path": "main.bpmn",
+                        "source_path": "main.bpmn",
+                        "revision": 1,
+                        "content_type": "application/xml",
+                        "content_sha256": sha256(bpmn),
+                        "content": bpmn,
+                    }
+                ],
+            },
+            source_artifact_ref,
+        )
+
+    def test_process_model_import_persists_verified_source_artifact_reference(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        bpmn = Path("tests/data/simple_script/simple_script.bpmn").read_text()
+        package, source_artifact_ref = self.filestore_package_with_source_artifact(bpmn)
+
+        process_models = ProcessModelImportService.import_from_filestore_package(package, "filestore")
+
+        assert process_models[0].source_artifact_ref == source_artifact_ref
+        reloaded_model = ProcessModelService.get_process_model(process_models[0].id)
+        assert reloaded_model.source_artifact_ref == source_artifact_ref
+
+    def test_process_instance_pins_the_imported_source_artifact_reference(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        bpmn = Path("tests/data/simple_script/simple_script.bpmn").read_text()
+        package, source_artifact_ref = self.filestore_package_with_source_artifact(bpmn)
+        process_model = ProcessModelImportService.import_from_filestore_package(package, "filestore")[0]
+        user = self.find_or_create_user()
+
+        process_instance, _ = ProcessInstanceService.create_process_instance(
+            process_model,
+            user,
+            start_configuration=(0, 0, 0),
+            load_bpmn_process_model=False,
+        )
+
+        assert process_instance.source_artifact_ref == source_artifact_ref
+        assert process_model.source_artifact_ref is not None
+        process_model.source_artifact_ref["snapshot_id"] = "later-source-snapshot"
+        assert process_instance.source_artifact_ref == source_artifact_ref
+        process_instance.process_initiator = user
+        assert process_instance.serialized()["source_artifact_ref"] == source_artifact_ref
+
+    def test_process_model_import_rejects_mismatched_source_artifact_reference(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        bpmn = Path("tests/data/simple_script/simple_script.bpmn").read_text()
+        package, _ = self.filestore_package_with_source_artifact(bpmn)
+        package["snapshot_id"] = "different-snapshot"
+
+        with pytest.raises(InvalidFilestorePackageError) as exception_info:
+            ProcessModelImportService.import_from_filestore_package(package, "filestore")
+
+        assert "snapshot_id does not match" in exception_info.value.message
+
     def test_process_model_import_from_filestore_package_preserves_process_model_directories(
         self,
         app: Flask,
