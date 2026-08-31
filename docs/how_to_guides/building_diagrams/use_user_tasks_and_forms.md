@@ -461,7 +461,7 @@ The field stores an object so its value remains portable through nested forms, a
 }
 ```
 
-Configure an installed Arena extension by identifier. Arbitrary resolver URLs and output paths are not supported:
+Configure an installed Arena extension by identifier. Arbitrary resolver URLs and output paths are not supported. Every `ui:options` key other than `resolver`, `idleMilliseconds`, `examples`, and `emptyMessage` is passed through verbatim to the extension as `extension_input`:
 
 ```json
 {
@@ -469,19 +469,23 @@ Configure an installed Arena extension by identifier. Arbitrary resolver URLs an
     "ui:field": "natural-language-time-range",
     "ui:options": {
       "resolver": "natural-language-time-range",
-      "dateOrder": "MDY",
-      "preferCompletedRange": true,
-      "maximumHours": 16
+      "date_order": "MDY",
+      "prefer_completed_range": true,
+      "maximum_hours": 16
     }
   }
 }
 ```
 
+The `ui:field` renders the expression input, shows the resolver's interpretation, and owns the submit contracts. It is a thin wrapper around the generic `extension-expression-field`, which any deployment can register against its own extension resolver: the field posts the expression plus the passthrough options to `/v1.0/extensions/<resolver>` and renders the structured result (`status`, `value`, `assumptions`, `errors`) without knowing what the expression means.
+
 The extension API must be enabled and the named resolver must be installed in the configured extensions process group. The resolver receives the expression, one reference instant, browser IANA time zone, locale, date order, completed-range preference, and maximum duration. It returns structured data; it does not return JavaScript or form patches.
 
-Supported expressions include `12-1`, `9-11:30am yesterday`, `3-5 8/12`, `3am-5am Aug 12`, and `23:00-01:00 yesterday`. Set `dateOrder` to `MDY`, `DMY`, or `YMD` instead of relying on deployment locale for numeric dates.
+Supported expressions include `12-1`, `9-11:30am yesterday`, `3-5 8/12`, `3am-5am Aug 12`, and `23:00-01:00 yesterday`. Set `date_order` to `MDY`, `DMY`, or `YMD` instead of relying on deployment locale for numeric dates.
 
 Successful values contain UTC ISO start and end instants plus the browser IANA time zone. Invalid or unavailable resolver responses preserve the last valid instants and prevent submission until the expression is corrected. Nonexistent daylight-saving times are rejected. When a local time occurs twice, exact editing requires the user to choose its UTC offset.
+
+The expression is optional: clearing it keeps the existing start and end times, so editing a record stays equivalent to editing one that never had an expression. If the form is submitted while an interpretation is still resolving, submission waits for the interpretation and then continues automatically, so recorded times always match the submitted expression. A submit that arrives while the current expression is invalid or ambiguous is held until the expression is corrected.
 
 #### Date Validation
 

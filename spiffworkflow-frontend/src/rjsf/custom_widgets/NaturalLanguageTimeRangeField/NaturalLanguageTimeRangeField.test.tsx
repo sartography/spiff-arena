@@ -1,6 +1,10 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CustomForm from '../../../components/CustomForm';
+
+const NY_START = '2026-08-30T16:00:00Z';
+const NY_END = '2026-08-30T17:00:00Z';
 
 const { makeCallToBackend } = vi.hoisted(() => ({
   makeCallToBackend: vi.fn(),
@@ -32,8 +36,9 @@ const uiSchema = {
     'ui:field': 'natural-language-time-range',
     'ui:options': {
       resolver: 'natural-language-time-range',
-      dateOrder: 'MDY',
-      preferCompletedRange: true,
+      date_order: 'MDY',
+      prefer_completed_range: true,
+      maximum_hours: 16,
     },
   },
 };
@@ -95,8 +100,8 @@ describe('NaturalLanguageTimeRangeField', () => {
             status: 'valid',
             value: {
               expression: '12-1',
-              start: '2026-08-30T16:00:00Z',
-              end: '2026-08-30T17:00:00Z',
+              start: NY_START,
+              end: NY_END,
               time_zone: 'America/New_York',
             },
             assumptions: ['assuming PM', 'today'],
@@ -110,8 +115,8 @@ describe('NaturalLanguageTimeRangeField', () => {
         formData: {
           work_period: {
             expression: '12-1',
-            start: '2026-08-30T16:00:00Z',
-            end: '2026-08-30T17:00:00Z',
+            start: NY_START,
+            end: NY_END,
             time_zone: 'America/New_York',
           },
         },
@@ -146,8 +151,8 @@ describe('NaturalLanguageTimeRangeField', () => {
         key="time-form"
         formData={{
           work_period: {
-            start: '2026-08-30T16:00:00Z',
-            end: '2026-08-30T17:00:00Z',
+            start: NY_START,
+            end: NY_END,
             time_zone: 'UTC',
           },
         }}
@@ -247,8 +252,8 @@ describe('NaturalLanguageTimeRangeField', () => {
             status: 'valid',
             value: {
               expression: '12-1',
-              start: '2026-08-30T16:00:00Z',
-              end: '2026-08-30T17:00:00Z',
+              start: NY_START,
+              end: NY_END,
               time_zone: 'UTC',
             },
           },
@@ -291,8 +296,8 @@ describe('NaturalLanguageTimeRangeField', () => {
         formData={{
           work_period: {
             expression: '12-1',
-            start: '2026-08-30T16:00:00Z',
-            end: '2026-08-30T17:00:00Z',
+            start: NY_START,
+            end: NY_END,
             time_zone: 'UTC',
           },
         }}
@@ -328,13 +333,237 @@ describe('NaturalLanguageTimeRangeField', () => {
         formData: {
           work_period: {
             expression: 'not a range',
-            start: '2026-08-30T16:00:00Z',
-            end: '2026-08-30T17:00:00Z',
+            start: NY_START,
+            end: NY_END,
             time_zone: 'UTC',
           },
         },
       }),
       expect.anything(),
     );
+  });
+
+  it('keeps a cleared expression submittable when valid instants remain', () => {
+    const onChange = vi.fn();
+    // Mirrors TaskShow, which feeds each change back into the form so the
+    // rendered error state follows the field's emitted value.
+    function StatefulForm() {
+      const [formData, setFormData] = useState({
+        work_period: {
+          expression: '12-1',
+          start: NY_START,
+          end: NY_END,
+          time_zone: 'UTC',
+        },
+      });
+      return (
+        <CustomForm
+          id="time-form"
+          key="time-form"
+          formData={formData}
+          schema={schema}
+          uiSchema={uiSchema}
+          onChange={(...args: any[]) => {
+            onChange(...args);
+            setFormData(args[0].formData);
+          }}
+        />
+      );
+    }
+    render(<StatefulForm />);
+
+    const input = screen.getByRole('textbox', { name: 'Work time' });
+    fireEvent.change(input, { target: { value: '' } });
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    expect(makeCallToBackend).not.toHaveBeenCalled();
+    expect(screen.queryByText('Interpretation pending.')).toBeNull();
+    expect(screen.queryByText('Enter a time range.')).toBeNull();
+    expect(screen.getByText(/Aug 30/)).toBeVisible();
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        formData: {
+          work_period: {
+            expression: '',
+            start: NY_START,
+            end: NY_END,
+            time_zone: 'UTC',
+          },
+        },
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('does not re-parse on blur when the expression is unchanged', () => {
+    render(
+      <CustomForm
+        id="time-form"
+        key="time-form"
+        formData={{
+          work_period: {
+            expression: '12-1',
+            start: NY_START,
+            end: NY_END,
+            time_zone: 'UTC',
+          },
+        }}
+        schema={schema}
+        uiSchema={uiSchema}
+        onChange={vi.fn()}
+      />,
+    );
+
+    const input = screen.getByRole('textbox', { name: 'Work time' });
+    fireEvent.focus(input);
+    fireEvent.blur(input);
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(makeCallToBackend).not.toHaveBeenCalled();
+  });
+
+  it('defers submission until a raced interpretation resolves', () => {
+    const onSubmit = vi.fn();
+    render(
+      <CustomForm
+        id="time-form"
+        key="time-form"
+        formData={{}}
+        schema={schema}
+        uiSchema={uiSchema}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    const input = screen.getByRole('textbox', { name: 'Work time' });
+    fireEvent.change(input, { target: { value: '12-1' } });
+    fireEvent.submit(document.querySelector('form')!);
+
+    // The submit was held; the interpretation request went out immediately.
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(makeCallToBackend).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      makeCallToBackend.mock.calls[0][0].successCallback({
+        task_data: {
+          result: {
+            status: 'valid',
+            value: {
+              expression: '12-1',
+              start: NY_START,
+              end: NY_END,
+              time_zone: 'America/New_York',
+            },
+            assumptions: [],
+          },
+        },
+      });
+    });
+    act(() => {
+      vi.advanceTimersByTime(0);
+    });
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit.mock.calls[0][0].formData).toEqual({
+      work_period: {
+        expression: '12-1',
+        start: NY_START,
+        end: NY_END,
+        time_zone: 'America/New_York',
+      },
+    });
+  });
+
+  it('blocks submission while the current expression is invalid', () => {
+    const onSubmit = vi.fn();
+    render(
+      <CustomForm
+        id="time-form"
+        key="time-form"
+        formData={{
+          work_period: {
+            start: NY_START,
+            end: NY_END,
+            time_zone: 'UTC',
+          },
+        }}
+        schema={schema}
+        uiSchema={uiSchema}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    const input = screen.getByRole('textbox', { name: 'Work time' });
+    fireEvent.change(input, { target: { value: 'banana' } });
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    act(() => {
+      makeCallToBackend.mock.calls[0][0].successCallback({
+        task_data: {
+          result: {
+            status: 'invalid',
+            errors: [
+              { code: 'invalid_expression', message: 'Enter a time range.' },
+            ],
+          },
+        },
+      });
+    });
+
+    fireEvent.submit(document.querySelector('form')!);
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText('Enter a time range.')).toBeVisible();
+  });
+
+  it('does not submit after an invalid interpretation that raced the submit', () => {
+    const onSubmit = vi.fn();
+    render(
+      <CustomForm
+        id="time-form"
+        key="time-form"
+        formData={{
+          work_period: {
+            start: NY_START,
+            end: NY_END,
+            time_zone: 'UTC',
+          },
+        }}
+        schema={schema}
+        uiSchema={uiSchema}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    const input = screen.getByRole('textbox', { name: 'Work time' });
+    fireEvent.change(input, { target: { value: 'not a range' } });
+    fireEvent.submit(document.querySelector('form')!);
+
+    act(() => {
+      makeCallToBackend.mock.calls[0][0].successCallback({
+        task_data: {
+          result: {
+            status: 'invalid',
+            errors: [
+              { code: 'invalid_expression', message: 'Enter a time range.' },
+            ],
+          },
+        },
+      });
+    });
+    act(() => {
+      vi.advanceTimersByTime(0);
+    });
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText('Enter a time range.')).toBeVisible();
   });
 });

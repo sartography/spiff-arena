@@ -3,17 +3,15 @@ import { Check, EditCalendar } from '@mui/icons-material';
 import {
   Box,
   Button,
-  CircularProgress,
   FormControl,
   InputLabel,
   MenuItem,
   Select,
   Stack,
   TextField,
-  Typography,
 } from '@mui/material';
-import { KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
-import HttpService from '../../../services/HttpService';
+import { useMemo, useState } from 'react';
+import ExtensionExpressionField from '../ExtensionExpressionField/ExtensionExpressionField';
 
 type WorkPeriod = {
   expression?: string;
@@ -21,15 +19,6 @@ type WorkPeriod = {
   end?: string;
   time_zone?: string;
 };
-
-type ResolverResult = {
-  status: 'valid' | 'invalid' | 'ambiguous';
-  value?: WorkPeriod;
-  assumptions?: string[];
-  errors?: { code: string; message: string }[];
-};
-
-const errorSchema = (message: string) => ({ __errors: [message] });
 
 export default function NaturalLanguageTimeRangeField({
   schema,
@@ -41,166 +30,21 @@ export default function NaturalLanguageTimeRangeField({
   onFocus,
   disabled,
   readonly,
-  required,
   label,
+  name,
+  registry,
 }: FieldProps<WorkPeriod>) {
   const options = getUiOptions(uiSchema || {});
-  const resolver = String(options.resolver || '');
-  const dateOrder = String(options.dateOrder || 'MDY');
-  const preferCompletedRange = options.preferCompletedRange !== false;
-  const maximumHours = Number(options.maximumHours || 16);
-  const idleMilliseconds = Number(options.idleMilliseconds || 500);
+  const maximumHours = Number(options.maximum_hours || 16);
   const browserTimeZone =
     formData.time_zone ||
     Intl.DateTimeFormat().resolvedOptions().timeZone ||
     'UTC';
-  const [expression, setExpression] = useState(formData.expression || '');
-  const [assumptions, setAssumptions] = useState<string[]>([]);
-  const [message, setMessage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [exactEditing, setExactEditing] = useState(false);
   const [exactStart, setExactStart] = useState('');
   const [exactEnd, setExactEnd] = useState('');
   const [exactStartChoice, setExactStartChoice] = useState('');
   const [exactEndChoice, setExactEndChoice] = useState('');
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const requestRef = useRef<{ controller: AbortController; id: number } | null>(
-    null,
-  );
-  const requestIdRef = useRef(0);
-
-  useEffect(() => {
-    if (formData.start && formData.end && !formData.time_zone) {
-      onChange(
-        { ...formData, time_zone: browserTimeZone },
-        fieldPathId.path,
-        undefined,
-        fieldPathId.$id,
-      );
-    }
-  }, [browserTimeZone, fieldPathId.$id, fieldPathId.path, formData, onChange]);
-
-  useEffect(
-    () => () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-      requestRef.current?.controller.abort();
-    },
-    [],
-  );
-
-  const emitError = (nextValue: WorkPeriod, errorMessage: string) => {
-    setMessage(errorMessage);
-    onChange(
-      nextValue,
-      fieldPathId.path,
-      errorSchema(errorMessage),
-      fieldPathId.$id,
-    );
-  };
-
-  const parse = (value: string) => {
-    if (!value.trim()) {
-      emitError({ ...formData, expression: value }, 'Enter a time range.');
-      return;
-    }
-    if (!resolver.match(/^[a-zA-Z0-9][a-zA-Z0-9/_-]*$/)) {
-      emitError(
-        { ...formData, expression: value },
-        'The configured time-range resolver is invalid.',
-      );
-      return;
-    }
-
-    requestRef.current?.controller.abort();
-    const controller = new AbortController();
-    requestIdRef.current += 1;
-    const requestId = requestIdRef.current;
-    requestRef.current = { controller, id: requestId };
-    setLoading(true);
-    setMessage(null);
-
-    const resolvedOptions = Intl.DateTimeFormat().resolvedOptions();
-    HttpService.makeCallToBackend({
-      path: `/v1.0/extensions/${resolver}`,
-      httpMethod: 'POST',
-      signal: controller.signal,
-      postBody: {
-        extension_input: {
-          expression: value,
-          reference_instant: new Date().toISOString(),
-          time_zone: resolvedOptions.timeZone,
-          locale: resolvedOptions.locale,
-          date_order: dateOrder,
-          prefer_completed_range: preferCompletedRange,
-          maximum_hours: maximumHours,
-        },
-      },
-      successCallback: (response: {
-        task_data?: { result?: ResolverResult };
-      }) => {
-        if (requestIdRef.current !== requestId) {
-          return;
-        }
-        setLoading(false);
-        const result = response.task_data?.result;
-        if (result?.status === 'valid' && result.value) {
-          setAssumptions(result.assumptions || []);
-          setMessage(null);
-          onChange(result.value, fieldPathId.path, undefined, fieldPathId.$id);
-          return;
-        }
-        const resultMessage =
-          result?.errors?.[0]?.message ||
-          'The time range could not be interpreted.';
-        emitError({ ...formData, expression: value }, resultMessage);
-      },
-      failureCallback: (error: { name?: string }) => {
-        if (
-          requestIdRef.current !== requestId ||
-          error?.name === 'AbortError'
-        ) {
-          return;
-        }
-        setLoading(false);
-        emitError(
-          { ...formData, expression: value },
-          'The time range could not be checked. Your last valid times are unchanged.',
-        );
-      },
-    });
-  };
-
-  const scheduleParse = (value: string) => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
-    timerRef.current = setTimeout(() => parse(value), idleMilliseconds);
-  };
-
-  const updateExpression = (value: string) => {
-    setExpression(value);
-    setAssumptions([]);
-    const nextValue = { ...formData, expression: value };
-    onChange(
-      nextValue,
-      fieldPathId.path,
-      errorSchema('Interpretation pending.'),
-      fieldPathId.$id,
-    );
-    scheduleParse(value);
-  };
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-      parse(expression);
-    }
-  };
 
   const exactStartChoices = useMemo(
     () =>
@@ -218,15 +62,15 @@ export default function NaturalLanguageTimeRangeField({
     setExactStartChoice('');
     setExactEndChoice('');
     setExactEditing(true);
-    setMessage(null);
   };
 
-  const applyExactTimes = () => {
+  const applyExactTimes = (
+    markValid: (value: WorkPeriod, assumptions?: string[]) => void,
+    showError: (message: string) => void,
+    expression: string,
+  ) => {
     if (exactStartChoices.length === 0 || exactEndChoices.length === 0) {
-      emitError(
-        { ...formData, expression },
-        'One of those local times does not exist.',
-      );
+      showError('One of those local times does not exist.');
       return;
     }
     const start =
@@ -234,77 +78,120 @@ export default function NaturalLanguageTimeRangeField({
     const end =
       exactEndChoices.length === 1 ? exactEndChoices[0] : exactEndChoice;
     if (!start || !end) {
-      emitError(
-        { ...formData, expression },
-        'Choose a UTC offset for the duplicated local time.',
-      );
+      showError('Choose a UTC offset for the duplicated local time.');
       return;
     }
     const durationHours =
       (new Date(end).getTime() - new Date(start).getTime()) / 3_600_000;
     if (durationHours <= 0 || durationHours > maximumHours) {
-      emitError(
-        { ...formData, expression },
+      showError(
         `Exact times must have an end after the start and be no longer than ${maximumHours} hours.`,
       );
       return;
     }
-    setAssumptions(['exact times']);
-    setMessage(null);
     setExactEditing(false);
-    onChange(
+    markValid(
       { expression, start, end, time_zone: browserTimeZone },
-      fieldPathId.path,
-      undefined,
-      fieldPathId.$id,
+      ['exact times'],
     );
   };
 
-  const preview =
-    formData.start && formData.end
-      ? formatRange(formData.start, formData.end, browserTimeZone)
-      : null;
-  const title = schema.title || label || 'Time range';
-
   return (
-    <Stack spacing={1.5}>
-      <TextField
-        id={`${fieldPathId.$id}-expression`}
-        label={title}
-        required={required}
-        disabled={disabled}
-        slotProps={{ htmlInput: { readOnly: readonly } }}
-        value={expression}
-        onChange={(event) => updateExpression(event.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={() => {
-          onBlur(fieldPathId.$id, expression);
-          if (expression) {
-            parse(expression);
-          }
-        }}
-        onFocus={() => onFocus(fieldPathId.$id, expression)}
-        error={Boolean(message)}
-        helperText={message || 'Examples: 12-1, 9-11:30am yesterday, 3-5 8/12'}
-        fullWidth
-      />
-      {loading && (
-        <Box
-          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-          role="status"
-        >
-          <CircularProgress size={16} />
-          <Typography variant="body2">Interpreting time range...</Typography>
-        </Box>
+    <ExtensionExpressionField
+      schema={schema}
+      uiSchema={uiSchema}
+      fieldPathId={fieldPathId}
+      formData={formData}
+      onChange={onChange}
+      onBlur={onBlur}
+      onFocus={onFocus}
+      disabled={disabled}
+      readonly={readonly}
+      label={label}
+      name={name}
+      registry={registry}
+      examples={String(
+        options.examples || 'Examples: 12-1, 9-11:30am yesterday, 3-5 8/12',
       )}
-      {preview && (
-        <Typography variant="body2" aria-live="polite">
-          {preview}
-          {assumptions.length > 0 ? ` (${assumptions.join(', ')})` : ''}
-        </Typography>
-      )}
-      {!exactEditing && !disabled && !readonly && (
-        <Box>
+      emptyMessage="Enter a time range."
+      initialize={(value) => {
+        if (value.start && value.end && !value.time_zone) {
+          return { ...value, time_zone: browserTimeZone };
+        }
+        return undefined;
+      }}
+      renderPreview={(value, assumptions) => {
+        if (typeof value.start !== 'string' || typeof value.end !== 'string') {
+          return null;
+        }
+        const preview = formatRange(value.start, value.end, browserTimeZone);
+        return preview + (assumptions.length > 0 ? ` (${assumptions.join(', ')})` : '');
+      }}
+      renderExtra={({ value, expression, markValid, showError }) => {
+        if (exactEditing) {
+          return (
+            <Stack spacing={1.5}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                <TextField
+                  label="Exact start"
+                  type="datetime-local"
+                  value={exactStart}
+                  onChange={(event) => {
+                    setExactStart(event.target.value);
+                    setExactStartChoice('');
+                  }}
+                  fullWidth
+                />
+                <TextField
+                  label="Exact end"
+                  type="datetime-local"
+                  value={exactEnd}
+                  onChange={(event) => {
+                    setExactEnd(event.target.value);
+                    setExactEndChoice('');
+                  }}
+                  fullWidth
+                />
+              </Stack>
+              {exactStartChoices.length > 1 && (
+                <UtcOffsetSelect
+                  id={`${fieldPathId.$id}-start-offset`}
+                  label="Start UTC offset"
+                  choices={exactStartChoices}
+                  timeZone={browserTimeZone}
+                  value={exactStartChoice}
+                  onChange={setExactStartChoice}
+                />
+              )}
+              {exactEndChoices.length > 1 && (
+                <UtcOffsetSelect
+                  id={`${fieldPathId.$id}-end-offset`}
+                  label="End UTC offset"
+                  choices={exactEndChoices}
+                  timeZone={browserTimeZone}
+                  value={exactEndChoice}
+                  onChange={setExactEndChoice}
+                />
+              )}
+              <Box>
+                <Button
+                  startIcon={<Check />}
+                  onClick={() =>
+                    applyExactTimes(markValid, showError, expression)
+                  }
+                  variant="outlined"
+                  size="small"
+                >
+                  Apply exact times
+                </Button>
+              </Box>
+            </Stack>
+          );
+        }
+        if (disabled || readonly) {
+          return null;
+        }
+        return (
           <Button
             startIcon={<EditCalendar />}
             onClick={beginExactEditing}
@@ -312,65 +199,9 @@ export default function NaturalLanguageTimeRangeField({
           >
             Edit exact times
           </Button>
-        </Box>
-      )}
-      {exactEditing && (
-        <Stack spacing={1.5}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-            <TextField
-              label="Exact start"
-              type="datetime-local"
-              value={exactStart}
-              onChange={(event) => {
-                setExactStart(event.target.value);
-                setExactStartChoice('');
-              }}
-              fullWidth
-            />
-            <TextField
-              label="Exact end"
-              type="datetime-local"
-              value={exactEnd}
-              onChange={(event) => {
-                setExactEnd(event.target.value);
-                setExactEndChoice('');
-              }}
-              fullWidth
-            />
-          </Stack>
-          {exactStartChoices.length > 1 && (
-            <UtcOffsetSelect
-              id={`${fieldPathId.$id}-start-offset`}
-              label="Start UTC offset"
-              choices={exactStartChoices}
-              timeZone={browserTimeZone}
-              value={exactStartChoice}
-              onChange={setExactStartChoice}
-            />
-          )}
-          {exactEndChoices.length > 1 && (
-            <UtcOffsetSelect
-              id={`${fieldPathId.$id}-end-offset`}
-              label="End UTC offset"
-              choices={exactEndChoices}
-              timeZone={browserTimeZone}
-              value={exactEndChoice}
-              onChange={setExactEndChoice}
-            />
-          )}
-          <Box>
-            <Button
-              startIcon={<Check />}
-              onClick={applyExactTimes}
-              variant="outlined"
-              size="small"
-            >
-              Apply exact times
-            </Button>
-          </Box>
-        </Stack>
-      )}
-    </Stack>
+        );
+      }}
+    />
   );
 }
 

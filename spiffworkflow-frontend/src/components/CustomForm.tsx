@@ -19,6 +19,7 @@ import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRa
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
+import ExtensionExpressionField from '../rjsf/custom_widgets/ExtensionExpressionField/ExtensionExpressionField';
 import NaturalLanguageTimeRangeField from '../rjsf/custom_widgets/NaturalLanguageTimeRangeField/NaturalLanguageTimeRangeField';
 import {
   applyCalculatedFields,
@@ -115,6 +116,7 @@ export default function CustomForm({
   // set in uiSchema using the "ui:field" key for a property
   const rjsfFields: RegistryFieldsType = {
     'numeric-range': NumericRangeField,
+    'extension-expression-field': ExtensionExpressionField,
     'natural-language-time-range': NaturalLanguageTimeRangeField,
     calculated: CalculatedField,
   };

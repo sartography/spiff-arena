@@ -8,7 +8,7 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestExtensionsController(BaseTest):
-    def test_natural_language_time_range_extension_returns_structured_value(
+    def test_extension_returns_structured_value_from_resolver(
         self,
         app: Flask,
         client: TestClient,
@@ -48,7 +48,7 @@ class TestExtensionsController(BaseTest):
                     "end": "2026-08-30T17:00:00Z",
                     "time_zone": "America/New_York",
                 },
-                "assumptions": ["assuming PM", "today"],
+                "assumptions": ["stub"],
             }
 
     def test_basic_extension(

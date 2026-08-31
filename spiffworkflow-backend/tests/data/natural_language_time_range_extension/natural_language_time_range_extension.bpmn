@@ -8,16 +8,18 @@
     <bpmn:scriptTask id="resolve_time_range" name="Resolve time range">
       <bpmn:incoming>Flow_to_resolver</bpmn:incoming>
       <bpmn:outgoing>Flow_to_end</bpmn:outgoing>
-      <bpmn:script><![CDATA[from spiffworkflow_backend.services.natural_language_time_range_service import NaturalLanguageTimeRangeService
-
-result = NaturalLanguageTimeRangeService.resolve(
-    expression=expression,
-    reference_instant=reference_instant,
-    time_zone=time_zone,
-    date_order=date_order,
-    prefer_completed_range=prefer_completed_range,
-    maximum_hours=maximum_hours,
-)
+      <bpmn:script><![CDATA[# Stub resolver: the real parser lives in the deployment's extension process
+# model. This fixture only verifies the extension endpoint plumbing.
+result = {
+    "status": "valid",
+    "value": {
+        "expression": expression,
+        "start": "2026-08-30T16:00:00Z",
+        "end": "2026-08-30T17:00:00Z",
+        "time_zone": time_zone,
+    },
+    "assumptions": ["stub"],
+}
 ]]></bpmn:script>
     </bpmn:scriptTask>
     <bpmn:sequenceFlow id="Flow_to_end" sourceRef="resolve_time_range" targetRef="EndEvent_1" />
