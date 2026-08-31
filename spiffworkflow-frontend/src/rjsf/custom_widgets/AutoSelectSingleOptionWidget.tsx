@@ -5,23 +5,26 @@ export default function AutoSelectSingleOptionWidget(props: WidgetProps) {
   const { disabled, multiple, onChange, options, readonly, registry, value } =
     props;
   const { enumDisabled, enumOptions } = options;
-  const onlyValue =
-    enumOptions?.length === 1 ? enumOptions[0].value : undefined;
+  const enabledEnumOptions = enumOptions?.filter(
+    (enumOption) => !enumDisabled?.includes(enumOption.value),
+  );
+  const hasOneEnabledOption = enabledEnumOptions?.length === 1;
+  const onlyValue = hasOneEnabledOption
+    ? enabledEnumOptions[0].value
+    : undefined;
 
   useEffect(() => {
     if (
       !disabled &&
       !readonly &&
-      enumOptions?.length === 1 &&
-      !enumDisabled?.includes(onlyValue) &&
+      hasOneEnabledOption &&
       !enumOptionsIsSelected(onlyValue, value)
     ) {
       onChange(multiple ? [onlyValue] : onlyValue);
     }
   }, [
     disabled,
-    enumDisabled,
-    enumOptions,
+    hasOneEnabledOption,
     multiple,
     onChange,
     onlyValue,

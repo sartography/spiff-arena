@@ -109,6 +109,24 @@ describe('AutoSelectSingleOptionWidget', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('selects the only enabled option', () => {
+    const onChange = vi.fn();
+
+    render(
+      <AutoSelectSingleOptionWidget
+        {...widgetProps(
+          ['disabled option', 'enabled option'],
+          undefined,
+          onChange,
+          { enumDisabled: ['disabled option'] },
+        )}
+      />,
+    );
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith('enabled option');
+  });
+
   it('leaves multiple options unchanged', () => {
     const onChange = vi.fn();
 
