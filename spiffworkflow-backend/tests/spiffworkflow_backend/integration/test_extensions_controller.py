@@ -8,6 +8,49 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestExtensionsController(BaseTest):
+    def test_natural_language_time_range_extension_returns_structured_value(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED", True):
+            process_model = self.create_group_and_model_with_bpmn(
+                client=client,
+                user=with_super_admin_user,
+                process_group_id="extensions",
+                process_model_id="natural_language_time_range_extension",
+                bpmn_file_location="natural_language_time_range_extension",
+            )
+
+            response = client.post(
+                f"/v1.0/extensions/{self.modify_process_identifier_for_path_param(process_model.id)}",
+                headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+                json={
+                    "extension_input": {
+                        "expression": "12-1",
+                        "reference_instant": "2026-08-30T18:00:00Z",
+                        "time_zone": "America/New_York",
+                        "date_order": "MDY",
+                        "prefer_completed_range": True,
+                        "maximum_hours": 16,
+                    }
+                },
+            )
+
+            assert response.status_code == 200
+            assert response.json()["task_data"]["result"] == {
+                "status": "valid",
+                "value": {
+                    "expression": "12-1",
+                    "start": "2026-08-30T16:00:00Z",
+                    "end": "2026-08-30T17:00:00Z",
+                    "time_zone": "America/New_York",
+                },
+                "assumptions": ["assuming PM", "today"],
+            }
+
     def test_basic_extension(
         self,
         app: Flask,

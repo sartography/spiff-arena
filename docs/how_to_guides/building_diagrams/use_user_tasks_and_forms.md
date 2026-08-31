@@ -411,24 +411,6 @@ UI Schema example:
 }
 ```
 
-#### Auto-Select a Single Option
-
-Use the `auto-select-single-option` widget when a dropdown should automatically select its only valid option.
-This works with static enums and with enums narrowed to one option by a JSON Schema dependency.
-
-UI Schema example:
-
-```json
-{
-  "project": {
-    "ui:widget": "auto-select-single-option"
-  }
-}
-```
-
-The widget replaces an existing value only when that value is no longer one of the field's options.
-It leaves dropdowns with zero or multiple options unchanged.
-
 #### Date Range Selector
 
 The date range selector allows users to select a range of dates, such as a start and end date, within a form.
@@ -452,6 +434,55 @@ Example for UI schema:
         "ui:help": "Indicate the travel start and end dates"
     },
 ```
+
+#### Natural-Language Time Range Field
+
+Use `ui:field: "natural-language-time-range"` when a user should enter a completed start and end time in one field. The field displays the interpreted date, times, time-zone abbreviation, UTC offset, and every inferred component before submission. It also provides exact start and end controls for corrections.
+
+The field stores an object so its value remains portable through nested forms, arrays, autosave, and task submission:
+
+```json
+{
+  "type": "object",
+  "required": ["work_period"],
+  "properties": {
+    "work_period": {
+      "title": "Work time",
+      "type": "object",
+      "required": ["start", "end", "time_zone"],
+      "properties": {
+        "expression": { "type": "string" },
+        "start": { "type": "string", "format": "date-time" },
+        "end": { "type": "string", "format": "date-time" },
+        "time_zone": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
+```
+
+Configure an installed Arena extension by identifier. Arbitrary resolver URLs and output paths are not supported:
+
+```json
+{
+  "work_period": {
+    "ui:field": "natural-language-time-range",
+    "ui:options": {
+      "resolver": "natural-language-time-range",
+      "dateOrder": "MDY",
+      "preferCompletedRange": true,
+      "maximumHours": 16
+    }
+  }
+}
+```
+
+The extension API must be enabled and the named resolver must be installed in the configured extensions process group. The resolver receives the expression, one reference instant, browser IANA time zone, locale, date order, completed-range preference, and maximum duration. It returns structured data; it does not return JavaScript or form patches.
+
+Supported expressions include `12-1`, `9-11:30am yesterday`, `3-5 8/12`, `3am-5am Aug 12`, and `23:00-01:00 yesterday`. Set `dateOrder` to `MDY`, `DMY`, or `YMD` instead of relying on deployment locale for numeric dates.
+
+Successful values contain UTC ISO start and end instants plus the browser IANA time zone. Invalid or unavailable resolver responses preserve the last valid instants and prevent submission until the expression is corrected. Nonexistent daylight-saving times are rejected. When a local time occurs twice, exact editing requires the user to choose its UTC offset.
+
 #### Date Validation
 
 Spiff Arena supports `minimumDate` and `maximumDate` schema extensions for comparing date fields to `today` or to another field in the same form.
