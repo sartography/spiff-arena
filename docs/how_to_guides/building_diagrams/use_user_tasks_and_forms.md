@@ -411,6 +411,24 @@ UI Schema example:
 }
 ```
 
+#### Auto-Select a Single Option
+
+Use the `auto-select-single-option` widget when a dropdown should automatically select its only valid option.
+This works with static enums and with enums narrowed to one option by a JSON Schema dependency.
+
+UI Schema example:
+
+```json
+{
+  "project": {
+    "ui:widget": "auto-select-single-option"
+  }
+}
+```
+
+The widget replaces an existing value only when that value is no longer one of the field's options.
+It leaves dropdowns with zero or multiple options unchanged.
+
 #### Date Range Selector
 
 The date range selector allows users to select a range of dates, such as a start and end date, within a form.
