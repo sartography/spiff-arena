@@ -102,6 +102,12 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
             # Then there is nothing more to match on -- we accept any message with the given name.
             return True
 
+        if len(self.correlation_rules) == 0:
+            # The message defines no correlation properties, so we correlate on the name alone.
+            # This mirrors MessageEventDefinition.catches, which accepts any event when the
+            # event definition has no correlation properties.
+            return True
+
         # Loop over the receives' correlation keys - if any of the keys fully match, then we match.
         for expected_values in self.correlation_keys.values():
             if self.payload_matches_expected_values(other.payload, expected_values, expression_engine):
@@ -121,6 +127,7 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
         expression_engine: PythonScriptEngine,
     ) -> bool:
         """Compares the payload of a 'send' message against a single correlation key's expected values."""
+        checked_rule_count = 0
         for correlation_key in self.correlation_rules:
             expected_value = expected_values.get(correlation_key.name, None)
             if expected_value is None:  # This key is not required for this instance to match.
@@ -139,7 +146,14 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
                 return False
             if result != expected_value:
                 return False
-        return True
+            checked_rule_count += 1
+        # A correlation key that none of this message's correlation properties apply to cannot
+        # vouch for a match.  The correlation_keys of a receive message hold the entire workflow
+        # scope's correlations, which can include keys established by other messages (for example
+        # a boundary event active alongside a receive task).  If we returned True here without
+        # having checked anything, any send with the right name would "fully match" via such an
+        # unrelated key and be delivered to an arbitrary process instance.
+        return checked_rule_count > 0
 
 
 # This runs for ALL db flushes for ANY model, not just this one even if it's in the MessageInstanceModel class

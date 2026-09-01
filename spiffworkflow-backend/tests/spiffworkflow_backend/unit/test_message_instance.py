@@ -4,7 +4,9 @@ from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_instance_correlation import MessageInstanceCorrelationRuleModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.services.process_instance_script_engine import CustomBpmnScriptEngine
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -151,3 +153,107 @@ class TestMessageInstance(BaseTest):
         db.session.commit()
         assert queued_message.id is not None
         assert queued_message.failure_cause == "THIS TEST FAILURE"
+
+    def _create_receive_with_rules(
+        self,
+        process_instance_id: int,
+        user_id: int,
+        correlation_keys: dict,
+        rules: list[tuple[str, str, list[str]]],
+    ) -> MessageInstanceModel:
+        receive_message = MessageInstanceModel(
+            process_instance_id=process_instance_id,
+            user_id=user_id,
+            message_type="receive",
+            name="assessment_outcome",
+            correlation_keys=correlation_keys,
+        )
+        db.session.add(receive_message)
+        for name, retrieval_expression, correlation_key_names in rules:
+            db.session.add(
+                MessageInstanceCorrelationRuleModel(
+                    message_instance=receive_message,
+                    name=name,
+                    retrieval_expression=retrieval_expression,
+                    correlation_key_names=correlation_key_names,
+                )
+            )
+        db.session.commit()
+        return receive_message
+
+    def test_does_not_correlate_on_a_key_no_rule_applies_to(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """A correlation key established by another message in the receiving scope is not a wildcard.
+
+        The receive message's correlation_keys hold the whole workflow scope's correlations, which can
+        include keys from other messages (e.g. a boundary event active alongside a receive task).  A key
+        that none of this message's own correlation properties apply to must not count as a "full match",
+        otherwise any send with the right name gets delivered to an arbitrary process instance.
+        """
+        process_model = self.setup_message_tests()
+        process_instance = self.create_process_instance_from_process_model(process_model, "waiting")
+
+        receive_message = self._create_receive_with_rules(
+            process_instance.id,
+            process_instance.process_initiator_id,
+            correlation_keys={
+                "ProcessUuid": {"process_uuid_property": "uuid-instance-a"},
+                # Established in the same scope by a different message (boundary event); this
+                # message has no rule for it.
+                "AwaitedEvent": {"awaited_event_property": "event-instance-a"},
+            },
+            rules=[("process_uuid_property", "process_uuid", ["ProcessUuid"])],
+        )
+
+        send_for_another_instance = MessageInstanceModel(
+            process_instance_id=process_instance.id,
+            user_id=process_instance.process_initiator_id,
+            message_type="send",
+            name="assessment_outcome",
+            payload={"process_uuid": "uuid-instance-b"},
+        )
+        db.session.add(send_for_another_instance)
+        db.session.commit()
+        assert receive_message.correlates(send_for_another_instance, CustomBpmnScriptEngine()) is False
+
+        send_for_this_instance = MessageInstanceModel(
+            process_instance_id=process_instance.id,
+            user_id=process_instance.process_initiator_id,
+            message_type="send",
+            name="assessment_outcome",
+            payload={"process_uuid": "uuid-instance-a"},
+        )
+        db.session.add(send_for_this_instance)
+        db.session.commit()
+        assert receive_message.correlates(send_for_this_instance, CustomBpmnScriptEngine()) is True
+
+    def test_correlates_on_name_alone_when_message_has_no_rules(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """A message with no correlation properties still correlates by name, even when the scope has keys."""
+        process_model = self.setup_message_tests()
+        process_instance = self.create_process_instance_from_process_model(process_model, "waiting")
+
+        receive_message = self._create_receive_with_rules(
+            process_instance.id,
+            process_instance.process_initiator_id,
+            correlation_keys={"SomeKey": {"some_property": "some-value"}},
+            rules=[],
+        )
+        send_message = MessageInstanceModel(
+            process_instance_id=process_instance.id,
+            user_id=process_instance.process_initiator_id,
+            message_type="send",
+            name="assessment_outcome",
+            payload={"unrelated": "payload"},
+        )
+        db.session.add(send_message)
+        db.session.commit()
+        assert receive_message.correlates(send_message, CustomBpmnScriptEngine()) is True

@@ -3,6 +3,7 @@ import * as cookie from 'cookie';
 import { BACKEND_BASE_URL } from '../config';
 import { AuthenticationOption } from '../interfaces';
 import { parseTaskShowUrl } from '../helpers';
+import { withBasePath } from '../helpers/basePath';
 
 // The backend sets separate browser-readable cookies for the OAuth access token
 // and OIDC ID token. The access token authenticates API requests; the ID token
@@ -11,8 +12,6 @@ import { parseTaskShowUrl } from '../helpers';
 //
 // Some explanation:
 // https://dev.to/nilanth/how-to-secure-jwt-in-a-single-page-application-cko
-
-const SIGN_IN_PATH = '/';
 
 const getCookie = (key: string) => {
   const parsedCookies = cookie.parse(document.cookie);
@@ -34,7 +33,7 @@ const getCurrentLocation = (queryParams: string = window.location.search) => {
 
 const redirectToLogin = () => {
   const encodedUrl = getCurrentLocation();
-  const loginUrl = `/login?original_url=${encodedUrl}`;
+  const loginUrl = `${withBasePath('/login')}?original_url=${encodedUrl}`;
   window.location.replace(loginUrl);
 };
 
@@ -98,13 +97,15 @@ const doLogin = (
 const doLogout = () => {
   const idToken = getIdToken();
 
-  const frontendBaseUrl = window.location.origin;
+  if (idToken === null) {
+    window.location.href = withBasePath('/');
+    return;
+  }
+
+  const frontendBaseUrl = `${window.location.origin}${withBasePath('/')}`;
   let logoutRedirectUrl = `${BACKEND_BASE_URL}/logout?redirect_url=${frontendBaseUrl}&id_token=${idToken}&authentication_identifier=${getAuthenticationIdentifier()}`;
 
-  // edge case. if the user is already logged out, just take them somewhere that will force them to sign in.
-  if (idToken === null) {
-    logoutRedirectUrl = SIGN_IN_PATH;
-  } else if (isPublicUser()) {
+  if (isPublicUser()) {
     logoutRedirectUrl += '&backend_only=true';
   }
 
