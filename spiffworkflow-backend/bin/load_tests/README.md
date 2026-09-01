@@ -57,19 +57,13 @@ message whose correlation matches no instance (correct code must reject it witho
 correctly-correlated send per instance concurrently.
 
 ```sh
-uv run python bin/load_tests/concurrent_message_correlation_race.py --instances 6
+uv run python bin/load_tests/concurrent_message_correlation_race.py
 ```
 
-Use `--fast-fail` for a small, quick profile (2 instances, 10s timeouts) that surfaces failures in a few seconds:
-
-```sh
-uv run python bin/load_tests/concurrent_message_correlation_race.py --fast-fail
-```
-
-Message requests are sent with `execution_mode=synchronous` by default, so the test does not depend on a Celery worker
+Defaults to 4 instances with short 15s waits, so failures surface quickly; scale up with `--instances` if you want more
+load. Message requests are sent with `execution_mode=synchronous`, so the test does not depend on a Celery worker
 draining queued message starts (without that parameter, a backend with `SPIFFWORKFLOW_BACKEND_CELERY_ENABLED=true`
-queues message processing and the instances stay `not_started` until a worker picks them up). Override with
-`--execution-mode asynchronous` if you specifically want to exercise the queued path.
+queues message processing and the instances stay `not_started` until a worker picks them up).
 
 The script exits nonzero if any process instance errors, if any send is delivered to a process instance other than the
 one whose scope holds its correlation values, or if any instance fails to complete. Starts are sent sequentially (the
