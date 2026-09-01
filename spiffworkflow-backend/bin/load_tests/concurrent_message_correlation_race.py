@@ -43,6 +43,7 @@ import concurrent.futures
 import json
 import statistics
 import time
+import uuid
 from dataclasses import dataclass
 from typing import Any
 
@@ -300,6 +301,7 @@ def set_primary_bpmn(
 
 @dataclass
 class ModelNames:
+    suffix: str
     group_id: str
     process_id: str
     start_message_name: str
@@ -308,11 +310,14 @@ class ModelNames:
 
 
 def ensure_process_model(args: argparse.Namespace, headers: dict[str, str]) -> ModelNames:
-    suffix = str(int(time.time()))
+    # Collision-resistant suffix so concurrent runs cannot reuse the same process
+    # model, message names, or correlation values.
+    suffix = uuid.uuid4().hex[:12]
     group_id = f"load_test/concurrent_message_correlation_race_{suffix}"
     process_model_id = f"{group_id}/message_receiver"
     process_id = f"Process_message_correlation_race_{suffix}".replace("-", "_")
     names = ModelNames(
+        suffix=suffix,
         group_id=group_id,
         process_id=process_id,
         start_message_name=f"assessment_start_{suffix}",
@@ -368,14 +373,18 @@ def post_message(
 
 
 def start_one_instance(
-    args: argparse.Namespace, headers: dict[str, str], modified_start_message_name: str, index: int
+    args: argparse.Namespace,
+    headers: dict[str, str],
+    modified_start_message_name: str,
+    process_uuid_prefix: str,
+    index: int,
 ) -> tuple[int | None, str]:
     """Start one process instance via the message start. Returns (instance_id, error_detail)."""
     status_code, data, _elapsed = post_message(
         args,
         headers,
         modified_start_message_name,
-        {"process_uuid": f"proc-{index}", "awaited_event": f"evt-{index}"},
+        {"process_uuid": f"{process_uuid_prefix}-{index}", "awaited_event": f"evt-{index}"},
     )
     process_instance = data.get("process_instance") if isinstance(data, dict) else None
     instance_id = process_instance.get("id") if isinstance(process_instance, dict) else None
@@ -705,18 +714,22 @@ def main() -> int:
     modified_start_message_name = f"{modified_identifier(names.group_id)}:{names.start_message_name}"
     modified_assessment_message_name = f"{modified_identifier(names.group_id)}:{names.assessment_message_name}"
     print(f"Starting {args.instances} instances against message '{modified_start_message_name}'...")
+    process_uuid_prefix = f"proc-{names.suffix}"
 
     # Starts are sent one at a time: each start is consumed by the new instance before the
     # next one begins. Firing starts concurrently is a separate pre-existing race (start
     # receivers match on name alone until their correlations exist) and would only muddy
     # the correlation race this script targets.
-    start_results = [start_one_instance(args, headers, modified_start_message_name, index) for index in range(args.instances)]
+    start_results = [
+        start_one_instance(args, headers, modified_start_message_name, process_uuid_prefix, index)
+        for index in range(args.instances)
+    ]
 
     failed_starts = [(index, detail) for index, (_instance_id, detail) in enumerate(start_results) if detail]
     if failed_starts:
         print("\nFailed to start process instances:")
         for index, detail in failed_starts:
-            print(f"- start={index} uuid=proc-{index} detail={detail}")
+            print(f"- start={index} uuid={process_uuid_prefix}-{index} detail={detail}")
         return 1
 
     instance_ids = [instance_id for instance_id, _detail in start_results if instance_id is not None]
