@@ -430,7 +430,7 @@ def discover_uuid_mapping(
 ) -> tuple[dict[int, str], list[int]]:
     """Read each instance's expected ProcessUuidKey correlation from its ready assessment receiver.
 
-    Returns the discovered process_uuid -> instance id mapping and the ids without a usable receiver.
+    Returns the discovered instance id -> process_uuid mapping and the ids without a usable receiver.
     """
     mapping: dict[int, str] = {}
     unusable: list[int] = []
@@ -528,8 +528,13 @@ def run_mismatch_probe(
     errored = {instance_id: status for instance_id, status in statuses.items() if status == "error"}
     if errored:
         problems.append(f"innocent process instances errored during mismatch probe: {sorted(errored)}")
+    unreadable = {instance_id: status for instance_id, status in statuses.items() if status is None}
+    if unreadable:
+        print(f"Could not read statuses during mismatch probe (ignored): {sorted(unreadable)}")
     unexpected = {
-        instance_id: status for instance_id, status in statuses.items() if status not in {"waiting", "complete"}
+        instance_id: status
+        for instance_id, status in statuses.items()
+        if status is not None and status not in {"waiting", "complete"}
     }
     if unexpected:
         problems.append(f"unexpected instance statuses after mismatch probe: {unexpected}")
@@ -558,11 +563,12 @@ def run_concurrent_delivery(
     args: argparse.Namespace,
     headers: dict[str, str],
     modified_assessment_message_name: str,
-    uuid_to_instance: dict[str, int],
+    instance_to_uuid: dict[int, str],
 ) -> tuple[list[SendResult], float]:
     """Fire one correctly-correlated send per instance, concurrently."""
     batch = sorted(
-        (index, instance_id, process_uuid) for index, (instance_id, process_uuid) in enumerate(uuid_to_instance.items())
+        (index, instance_id, process_uuid)
+        for index, (instance_id, process_uuid) in enumerate(instance_to_uuid.items())
     )
     started_at = time.perf_counter()
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(batch)) as executor:
@@ -731,20 +737,24 @@ def main() -> int:
         print_readiness_diagnostics(args, headers, names.assessment_message_name, not_ready)
         return 1
 
-    # Derive the process_uuid -> instance mapping from each receiver's stored scope
+    # Derive the instance -> process_uuid mapping from each receiver's stored scope
     # correlations instead of trusting the start responses, so the delivery assertions
     # check the real invariant: a send must reach the instance whose scope holds its uuid.
-    uuid_to_instance, unusable = discover_uuid_mapping(args, headers, names.assessment_message_name, instance_ids)
+    instance_to_uuid, unusable = discover_uuid_mapping(args, headers, names.assessment_message_name, instance_ids)
     if unusable:
         print(f"\nProcess instances without a usable assessment receiver correlation: {unusable}")
         return 1
-    if len(set(uuid_to_instance.values())) != len(uuid_to_instance):
-        print(f"\nDuplicate process_uuid correlations across receivers: {uuid_to_instance}")
+    if len(set(instance_to_uuid.values())) != len(instance_to_uuid):
+        print(f"\nDuplicate process_uuid correlations across receivers: {instance_to_uuid}")
         return 1
-    print(f"Discovered correlations: {uuid_to_instance}")
+    print(f"Discovered correlations: {instance_to_uuid}")
 
-    print(f"\nFiring {len(uuid_to_instance)} correctly-correlated sends against message '{modified_assessment_message_name}'...")
-    results, batch_elapsed_seconds = run_concurrent_delivery(args, headers, modified_assessment_message_name, uuid_to_instance)
+    print(
+        f"\nFiring {len(instance_to_uuid)} correctly-correlated sends against message '{modified_assessment_message_name}'..."
+    )
+    results, batch_elapsed_seconds = run_concurrent_delivery(
+        args, headers, modified_assessment_message_name, instance_to_uuid
+    )
     statuses = poll_instance_statuses(args, headers, instance_ids)
     all_ok = print_summary(results, batch_elapsed_seconds, statuses)
 
