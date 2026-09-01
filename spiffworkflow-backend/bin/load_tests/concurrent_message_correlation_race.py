@@ -266,9 +266,7 @@ def create_process_model(args: argparse.Namespace, headers: dict[str, str], grou
     check_response(response, "create process model", {201})
 
 
-def upload_bpmn(
-    args: argparse.Namespace, headers: dict[str, str], process_model_id: str, file_name: str, bpmn: str
-) -> None:
+def upload_bpmn(args: argparse.Namespace, headers: dict[str, str], process_model_id: str, file_name: str, bpmn: str) -> None:
     upload_headers = {k: v for k, v in headers.items() if k.lower() != "content-type"}
     response = requests.post(
         f"{args.backend_base_url}/v1.0/process-models/{modified_identifier(process_model_id)}/files",
@@ -477,9 +475,7 @@ def fetch_all_instance_statuses(
     return {instance_id: fetch_process_instance_status(args, headers, instance_id) for instance_id in instance_ids}
 
 
-def poll_instance_statuses(
-    args: argparse.Namespace, headers: dict[str, str], instance_ids: list[int]
-) -> dict[int, str | None]:
+def poll_instance_statuses(args: argparse.Namespace, headers: dict[str, str], instance_ids: list[int]) -> dict[int, str | None]:
     statuses: dict[int, str | None] = dict.fromkeys(instance_ids)
     pending = set(instance_ids)
     deadline = time.monotonic() + args.completion_timeout
@@ -518,8 +514,7 @@ def run_mismatch_probe(
         problems.append(f"mismatch probe returned unexpected HTTP {status_code}: {json.dumps(data)[:500]}")
     elif error_code == "workflow_error" and "not waiting for" in str(detail):
         problems.append(
-            "mismatch probe hit the vacuous-match signature (engine rejected a delivery the API matcher accepted): "
-            f"{detail}"
+            f"mismatch probe hit the vacuous-match signature (engine rejected a delivery the API matcher accepted): {detail}"
         )
 
     # Error marking happens synchronously with the rejected POST, so a short settle is enough.
@@ -567,8 +562,7 @@ def run_concurrent_delivery(
 ) -> tuple[list[SendResult], float]:
     """Fire one correctly-correlated send per instance, concurrently."""
     batch = sorted(
-        (index, instance_id, process_uuid)
-        for index, (instance_id, process_uuid) in enumerate(instance_to_uuid.items())
+        (index, instance_id, process_uuid) for index, (instance_id, process_uuid) in enumerate(instance_to_uuid.items())
     )
     started_at = time.perf_counter()
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(batch)) as executor:
@@ -592,9 +586,7 @@ def run_concurrent_delivery(
                     intended_process_instance_id=intended_instance_id,
                     status_code=status_code,
                     elapsed_seconds=elapsed,
-                    delivered_process_instance_id=(
-                        process_instance.get("id") if isinstance(process_instance, dict) else None
-                    ),
+                    delivered_process_instance_id=(process_instance.get("id") if isinstance(process_instance, dict) else None),
                     error_code=data.get("error_code") if isinstance(data, dict) else None,
                     response_text=json.dumps(data)[:500],
                 )
@@ -718,9 +710,7 @@ def main() -> int:
     # next one begins. Firing starts concurrently is a separate pre-existing race (start
     # receivers match on name alone until their correlations exist) and would only muddy
     # the correlation race this script targets.
-    start_results = [
-        start_one_instance(args, headers, modified_start_message_name, index) for index in range(args.instances)
-    ]
+    start_results = [start_one_instance(args, headers, modified_start_message_name, index) for index in range(args.instances)]
 
     failed_starts = [(index, detail) for index, (_instance_id, detail) in enumerate(start_results) if detail]
     if failed_starts:
@@ -749,12 +739,8 @@ def main() -> int:
         return 1
     print(f"Discovered correlations: {instance_to_uuid}")
 
-    print(
-        f"\nFiring {len(instance_to_uuid)} correctly-correlated sends against message '{modified_assessment_message_name}'..."
-    )
-    results, batch_elapsed_seconds = run_concurrent_delivery(
-        args, headers, modified_assessment_message_name, instance_to_uuid
-    )
+    print(f"\nFiring {len(instance_to_uuid)} correctly-correlated sends against message '{modified_assessment_message_name}'...")
+    results, batch_elapsed_seconds = run_concurrent_delivery(args, headers, modified_assessment_message_name, instance_to_uuid)
     statuses = poll_instance_statuses(args, headers, instance_ids)
     all_ok = print_summary(results, batch_elapsed_seconds, statuses)
 
