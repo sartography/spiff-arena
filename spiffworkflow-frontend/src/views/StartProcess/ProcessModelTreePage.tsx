@@ -202,6 +202,7 @@ function CatalogAccordion({
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls={panelId}
+          id={`${panelId}-header`}
         >
           <Box
             sx={{
@@ -1175,7 +1176,8 @@ export default function ProcessModelTreePage({
           tabIndex={0}
           onClick={() => navigateToViewModel(model)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
               navigateToViewModel(model);
             }
           }}
