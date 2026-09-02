@@ -332,11 +332,12 @@ export default function ProcessInstanceMigratePage() {
       <>
         <h3>{t('previous_migrations')}</h3>
         <DataGrid
-          sx={{
+          sx={(theme) => ({
             '& .MuiDataGrid-cell:focus': {
-              outline: 'none',
+              outline: `2px solid ${theme.palette.primary.main}`,
+              outlineOffset: '-2px',
             },
-          }}
+          })}
           initialState={{
             columns: {
               columnVisibilityModel: {

@@ -13,6 +13,7 @@ import {
   Typography,
 } from '@mui/material';
 import { MdDelete } from 'react-icons/md';
+import ConfirmIconButton from '../components/ConfirmIconButton';
 import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';
 import { getPageInfoFromSearchParams } from '../helpers';
@@ -92,8 +93,13 @@ export default function SecretList() {
             </Link>
           </TableCell>
           <TableCell>{(row as any).username}</TableCell>
-          <TableCell aria-label="Delete">
-            <MdDelete onClick={() => handleDeleteSecret((row as any).key)} />
+          <TableCell>
+            <ConfirmIconButton
+              renderIcon={<MdDelete />}
+              iconDescription={t('delete_secret')}
+              description={t('delete_secret_confirmation')}
+              onConfirmation={() => handleDeleteSecret((row as any).key)}
+            />
           </TableCell>
         </TableRow>
       );

@@ -294,6 +294,8 @@ function SideNav({
     return (
       <>
         <Box
+          component="nav"
+          aria-label={t('main_navigation')}
           sx={{
             width: isCollapsed ? collapsedDrawerWidth : drawerWidth,
             flexShrink: 0,

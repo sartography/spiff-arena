@@ -1,0 +1,2624 @@
+title: SpiffWorks Arena Accessibility Conformance Report
+product:
+  name: SpiffWorks Arena
+  version: v3.1.0
+  description: >-
+    SpiffWorks Arena (also known as SpiffArena) is an open-source, web-based
+    business process automation platform: a BPMN/DMN process modeler and a
+    runtime for executing those process models, with a React-based web frontend
+    (spiffworkflow-frontend) and a Python REST API backend
+    (spiffworkflow-backend). 
+author:
+  name: Dan Funk
+  company_name: Sartography (d/b/a SpiffWorks)
+  email: dan@spiff.works
+  website: https://spiff.works
+  address: 510 Victoria Dr. Staunton, Va 24401
+  phone: 540-457-0024
+report_date: '2026-08-13'
+last_modified_date: '2026-09-02'
+version: 3
+catalog: 2.4-edition-wcag-2.1-508-en
+notes: >-
+  This report reflects the accessibility remediation effort completed on the
+  spiffworkflow-frontend web application ahead of the v3.1.0 release. It
+  documents the specific, verified findings and fixes made during this effort
+  and is explicit about what has and has not been evaluated. Criteria marked
+  "Not Evaluated" should be read literally: absence of a known issue is not
+  evidence of conformance for those criteria. See the Notes field on the WCAG
+  2.1 chapters below for the specific page states and methods covered by
+  testing to date.
+evaluation_methods_used: >-
+  Automated testing with axe-core 4.12.1 (via the axe-playwright-python
+  package), scoped to the WCAG 2.1 A/AA rule tags, run against a locally-running
+  instance of the application via Playwright (Python), both interactively during
+  development and as an automated regression suite wired into CI. This report
+  also includes manual screen reader testing (NVDA/JAWS/VoiceOver) and
+  zoom/reflow testing. Keyboard operability was checked via targeted, per-page
+  spot verification and tab-order review rather than an exhaustive dedicated
+  keyboard-only walkthrough of the entire application; see the 2.1.1 entry for
+  what that covered and did not cover. No formal criterion-by-criterion manual
+  review beyond what is described in the per-criterion remarks below has been
+  performed.
+legal_disclaimer: >-
+  The information herein is provided in good faith based on the specific
+  automated and manual testing described in this report. This report was
+  completed by the open source developers of the application as part of an
+  effort to come into compliance with WCAG 2.1 AA and Section 508. It is not a
+  comprehensive conformance audit and does not represent a legally-binding
+  claim of WCAG 2.1 AA or Section 508 conformance. Contact the author to
+  report any errors in this report or in the underlying accessibility
+  findings.
+repository: https://github.com/sartography/spiff-arena
+feedback: https://github.com/sartography/spiff-arena/issues
+license: CC-BY-4.0
+chapters:
+  success_criteria_level_a:
+    notes: >-
+      Automated scanning (axe-core, via axe-playwright-python, WCAG 2.1 A/AA
+      rule set, impact level serious/critical) is wired into the Playwright
+      browser test suite
+      (spiffworkflow-frontend/test/browser/test_accessibility.py) and into CI
+      (the playwright-run GitHub Actions job), gating merges on new
+      serious/critical findings on the page states it covers. As of this report,
+      that suite scans 21 page states -- effectively the whole application. 
+      Additional defects reported outside that automated suite (via manual
+      browser extension testing) were investigated and fixed individually during
+      this effort: see the per-criterion remarks below. 
+    criteria:
+      - num: 1.1.1
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                Automated image-alt-text sweep found zero findings across all 21
+                pages. The application uses SVG icons exclusively and has no 
+                elements or role=img anywhere in the frontend.   All SVG images
+                are accompanied by text, or in rare circumstances where only an
+                icon is presented, there is an alt-text option.  
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: partially-supports
+              notes: >-
+                Not itself separately reviewed for this criterion;
+                cross-references the 2.1.1 Authoring Tool finding in this same
+                chapter rather than a separate manual review of the diagram
+                canvas's roughly 16 non-hidden SVGs, since 2.1.1 already
+                documents that surface as unreachable via keyboard regardless of
+                whether its icons carry text alternatives.
+      - num: 1.2.1
+        components:
+          - name: web
+            adherence:
+              level: not-applicable
+              notes: >-
+                There is no timed content on the site that would require
+                alternative formats. 
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 1.2.2
+        components:
+          - name: web
+            adherence:
+              level: not-applicable
+              notes: >-
+                There is no timed content on the site that would require
+                alternative formats. 
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 1.2.3
+        components:
+          - name: web
+            adherence:
+              level: not-applicable
+              notes: >-
+                There is no timed content on the site that would require
+                alternative formats. 
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 1.3.1
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                Reviewed both programmatically (automated axe-core WCAG 2.1 A/AA
+                scans across all 21 application pages, integrated into the CI
+                regression suite) and manually (tab-order verification and a
+                browser accessibility-extension review).
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 1.3.2
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                Data is largely represented as a paragraph text or in simple
+                structured tables where sequence is preserved for screen
+                readers.  
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 1.3.3
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                Sensory content may be presented in the BPMN diagrams - as these
+                are visual components that are, by their nature, only useful for
+                visual inspection.  All other application features and
+                documentation do not contain sensory characteristics. 
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 1.4.1
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                BPMN diagrams use color to identify completed and non-completed
+                tasks when rendering the flow-chart like diagrams.  An
+                alternative "Milestone" and "Events" view each provide a written
+                table of the major milestones and detailed events respectively,
+                that have been completed in the workflow.  
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 1.4.2
+        components:
+          - name: web
+            adherence:
+              level: not-applicable
+              notes: 'No audio is used in the application. '
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 2.1.1
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                Automated and interactive tests fixed all identified
+                keyboard-reachability bugs, but no exhastive dedicated
+                keyboard-only walkthrough of the rest of the app has been
+                performed. 
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: partially-supports
+              notes: >-
+                The visual diagram canvas (bpmn.io / bpmn-js, third-party) is
+                not operable via keyboard alone and has no non-visual equivalent
+                for its core drawing/authoring task -- a recognized category
+                under ATAG 2.0, which distinguishes an authoring tool's chrome
+                (expected to be accessible) from an inherently visual core
+                creation task (which may not be). A weaker
+                equivalent-facilitation path exists via the "View XML" action,
+                which opens the process definition as plain, keyboard-operable
+                text in a code editor, but this requires raw BPMN XML literacy
+                with no guided UI or validation. This affects the
+                process-designer audience (authoring BPMN/DMN diagrams); the
+                process-participant surfaces (task completion, form-filling)
+                that this effort's remediation has focused on are a separate,
+                unaffected part of the application.
+      - num: 2.1.2
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                Click testing and automated tests did not expose any keyboard
+                traps.  Text areas allow you to press the escape key, followed
+                by the tab to exit these components.  
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 2.1.4
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                We use minimal keyboard shortcuts in our Arena application.  The
+                Process Instance Show Page offers 3 simple keyboard shortcuts. 
+                These can not be overridden, but are designed for administrative
+                use only, and are not critical for end users of the
+                application.  
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 2.2.1
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                There are no timed forms or data intake in the interface.  The
+                only timed events are those that would be defined as a part of a
+                BPMN Workflow, but this is at the discretion of the author of
+                that workflow and is not a direct part of the application. 
+                Authentication timeouts are handled through an OpenID provider,
+                and are also outside the control of this application. 
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 2.2.2
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                There is no blinking, scrolling or moving of application data.  
+                Several pages poll for updates, and will present new information
+                of a workflow's state has changed or the information the server
+                has been updated, which could be considered an essential
+                operation, as the purpose of the application is to provide
+                information about the current state of running workflows.  
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 2.3.1
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                There are no flashing components that are apart of the
+                application. 
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 2.4.1
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                The side navigation now renders as a <nav aria-label> landmark,
+                so a screen-reader user can jump past it via landmark
+                navigation. Kept at Partially Supports rather than Supports:
+                this covers assistive-tech landmark-jump but not a pure
+                keyboard-only user tabbing through the page (no skip link
+                exists), and the routed content area still isn't marked
+                <main>/role="main".
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 2.4.2
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                All pages use standard h1 page headings to indicate the overall
+                content of the page. 
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 2.4.3
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                Focus order was manually tested on all web pages and was also
+                reviewed with AXE dev tools to detect errors in tab order
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 2.4.4
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                We performed an exhaustive review of all links across web pages
+                to assure the contained text describes the link's purpose in
+                context. That review found one real defect (a process-group
+                "edit" icon link with no accessible name), which was fixed.
+                Kept at Partially Supports rather than Supports: a new instance
+                of the failure mode was found during this pass, which is
+                itself evidence more may be unfound.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 2.5.1
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                We do not use gestures in the web interface for navigating or
+                participating in workflows.  
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 2.5.2
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                We do not operate on mouse-up operations, and utilize the
+                browsers built in rendering of standard form components. 
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 2.5.3
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                Audited every Button/Link/FormControlLabel for a
+                visible-text/aria-label mismatch (zero found) and every
+                Select+InputLabel pairing (all three use labelId/aria-labelledby
+                pointing directly at the visible label -- name exactly equals
+                label). One stylistic outlier ("Group by" select using an
+                aria-label instead of the labelId pattern) is still technically
+                correct per WCAG's own guidance that a control's current value
+                isn't its label. This is code review plus axe-core's
+                label-content-name-mismatch rule (running clean across all 21
+                scanned pages), not live voice-control (Dragon/Voice Access)
+                testing.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 2.5.4
+        components:
+          - name: web
+            adherence:
+              level: not-applicable
+              notes: >-
+                No devicemotion/deviceorientation/accelerometer or shake-gesture
+                APIs anywhere in the frontend
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 3.1.1
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                The document's lang attribute is programmatically kept in sync
+                with the active i18n locale on every language change, not only
+                at initial page load, verified by an automated regression test
+                (src/i18n.test.ts). This is a global, app-wide behavior rather
+                than something scoped to specific pages, so it is marked
+                Supports rather than Partially Supports.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 3.2.1
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                There is exactly one onFocus handler across the complete
+                application, and that is to track a "touched" state on web
+                forms.  It is not used for navigation, submission or new
+                windows.  
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 3.2.2
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                Filter/report selects updating results in place on change is
+                expected behavior, not a violation. But an "Add File" select on
+                the process model tabs page navigated away directly via
+                onChange for several options, with no submit step or advance
+                warning. Fixed by replacing it with a Button + Menu action
+                menu, so each item now requires a direct, explicit activation.
+                Kept at Partially Supports rather than Supports: a new instance
+                of this failure mode was found during this pass, which is
+                itself evidence more may be unfound.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 3.3.1
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                Errors are always described in text, and never in color or icon
+                alone. 
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 3.3.2
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                All text field usages carry a label or aria-label (checked
+                programmatically, zero exceptions), and RJSF forms derive
+                labels from the schema. One exception was found: the
+                file-upload input had no label of its own and was wrapped in a
+                tooltip mislabeled for a delete action -- an apparent
+                copy-paste leftover. Fixed by removing the incorrect tooltip
+                and adding a correct aria-label directly on the input. Kept at
+                Partially Supports rather than Supports: a new instance of this
+                failure mode was found during this pass, which is itself
+                evidence more may be unfound.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 4.1.1
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                We comply to the HTML and XML standards and all pages support
+                automated parsing.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 4.1.2
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                Automated testing found, and this effort fixed, multiple
+                missing-accessible-name defects: unlabeled icon buttons and
+                icon-only links, an unlabeled combobox, an unlabeled code
+                editor region, process-instance "open in new tab" icon links,
+                and an invalid aria-controls reference. Fixed and covered by an
+                automated regression suite scanning the page states listed in
+                this chapter's Notes; the application has more views and
+                interactive states (e.g. most task forms, the DMN editor, most
+                modal dialogs) that have not yet been scanned or manually
+                reviewed.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+    disabled: false
+  success_criteria_level_aa:
+    notes: >-
+      Automated scanning (axe-core, via axe-playwright-python, WCAG 2.1 A/AA
+      rule set, impact level serious/critical) is wired into the Playwright
+      browser test suite
+      (spiffworkflow-frontend/test/browser/test_accessibility.py) and into CI
+      (the playwright-run GitHub Actions job), gating merges on new
+      serious/critical findings on the page states it covers. As of this report,
+      that suite scans 21 page states -- effectively the whole application
+      rather than a limited set: the login page (unauthenticated); the process
+      groups list, both collapsed and with a tree node expanded to reveal model
+      rows; a process model detail page; the BPMN diagram editor; the process
+      instance list; the public (unauthenticated) guest task form; the
+      authenticated home/task-list page; the task-completion form itself (the
+      primary participant-facing surface, and previously the single biggest
+      coverage gap in this suite); started-by-me; messages; data stores;
+      configuration; add-secret; about; add and edit process group; add and edit
+      process model; the generic process-model file editor (its CodeMirror
+      instance); and the Superset Reports extension page. Additional defects
+      reported outside that automated suite (via manual browser extension
+      testing) were investigated and fixed individually during this effort: see
+      the per-criterion remarks below.
+    criteria:
+      - num: 1.2.4
+        components:
+          - name: web
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This criterion requires captions for live
+                audio/video content; the application has no live (or any
+                other) audio or video content of any kind.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 1.2.5
+        components:
+          - name: web
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This criterion requires audio description for
+                prerecorded video; the application has no video content of any
+                kind.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 1.3.4
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                Zero orientation media queries or screen.orientation/lock API
+                calls anywhere in the frontend; index.html's viewport meta has
+                no orientation restriction.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 1.3.5
+        components:
+          - name: web
+            adherence:
+              level: not-applicable
+              notes: >-
+                Actual username / password fields live outside the application -
+                we rely on being connected to an OpenID provider. 
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 1.4.3
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                Contrast levels were reviewed through Axe and code evaluation
+                and CI testing.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 1.4.4
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                Live testing of the application showed that all UI components
+                were accessible at 200%.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 1.4.5
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                Only one branded asset exists (the logo component, rendered as
+                real SVG <text> elements, not a raster wordmark), and per
+                1.4.5's own logotype exemption this is excluded from the
+                criterion regardless. No other image is used as UI content
+                anywhere.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 1.4.10
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: some data tables require a horizontal scroll at 350px.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 1.4.11
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: 'Confirmed through manual testing of the application. '
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 1.4.12
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                Confirmed that nothing would prevent this from working, but a
+                full confirmation has not occured.  
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 1.4.13
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                WE use Material UI and it's Tooltip feature, which is fully
+                compliant. 
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 2.4.5
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                Side navigation, search filter, and breadcrumb links provide
+                multiple ways to locate process instances and models.  
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 2.4.6
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                Sampled 19 page-heading usages across 17 views -- all resolve
+                to entity-specific, non-generic text via named i18n keys (e.g.
+                "Secrets", "Process Instance {{id}}"). No blank or generic
+                headings found in the sample, but this was a sample, not an
+                exhaustive pass over every heading/label in the app.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 2.4.7
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                Grepped all CSS and inline style props app-wide for outline
+                suppression; found exactly one instance with no replacement, on
+                the process instance migration page's data grid (Material UI
+                DataGrid), which removed the keyboard focus ring entirely.
+                Fixed by replacing it with an explicit visible outline instead
+                of just deleting the override. No other instance found
+                anywhere else -- everything else relies on Material UI's
+                untouched default focus-visible styling. Kept at Partially
+                Supports rather than Supports: a new instance of this failure
+                mode was found during this pass, which is itself evidence more
+                may be unfound.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 3.1.2
+        components:
+          - name: web
+            adherence:
+              level: not-applicable
+              notes: >-
+                There is no embedded foreign language, and the current language
+                is specified app wide.  
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 3.2.3
+        components:
+          - name: web
+            adherence:
+              level: supports
+              notes: >-
+                Our side navigation menu is defined in a single location and is
+                available site wide. 
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 3.2.4
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                i18n keys for repeated actions (edit process model/group, edit
+                data store, delete process group/model/secret, download file)
+                are entity-specific and centrally reused -- every callsite for
+                the same function looks up the same key, so identical wording
+                is structurally guaranteed. Not verified exhaustively across
+                every icon instance in the app.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 3.3.3
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                Field-level error messages generally describe the correction,
+                not just "invalid" (e.g. named i18n keys for identifier,
+                key-format, and schema requirements). Kept at Partially
+                Supports rather than Supports: RJSF field-error text ultimately
+                comes from each process/form author's own JSON Schema message
+                -- the frontend surfaces whatever the schema author wrote; it
+                can't guarantee every process author writes an actionable
+                suggestion.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 3.3.4
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                Most destructive actions are gated by a confirm step (process
+                model/group deletion, data store clear/delete, saved-report
+                deletion, and secret deletion from the secret's detail page).
+                One exception found: the secrets list page deleted a secret
+                directly from a bare icon with no confirmation, unlike the
+                confirmed delete on that same secret's detail page. Fixed by
+                replacing it with the same confirmation dialog used on the
+                detail page. Kept at Partially Supports rather than Supports:
+                a new instance of this failure mode was found during this
+                pass, which is itself evidence more may be unfound.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+      - num: 4.1.3
+        components:
+          - name: web
+            adherence:
+              level: partially-supports
+              notes: >-
+                Both status-message paths (the reusable toast notification and
+                the single app-wide API-error surface) funnel through Material
+                UI's Alert component, which defaults to role="alert" and
+                auto-announces via the live-region role without requiring
+                focus. Not confirmed via live screen-reader testing of every
+                status-message trigger in the app.
+          - name: electronic-docs
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena does not ship a standalone electronic
+                document (e.g. PDF, Word, PowerPoint) as a product deliverable
+                -- all content is delivered through the web application itself.
+          - name: software
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffArena has no native or installed software
+                component; the entire product is delivered through the browser
+                as a web application.
+          - name: authoring-tool
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The BPMN/DMN diagram editor (this product's Authoring Tool
+                component, per the ATAG 2.0 chrome/core-task distinction) has
+                not been evaluated against this criterion as part of this
+                effort. See the 2.1.1 entry for the one Authoring Tool finding
+                made to date.
+    disabled: false
+  success_criteria_level_aaa:
+    disabled: true
+    notes: >-
+      Level AAA conformance is not required by the Revised Section 508 standards
+      and has not been evaluated as part of this effort.
+  functional_performance_criteria:
+    notes: Not evaluated as a distinct exercise; see the per-criterion note.
+    criteria:
+      - num: '302.1'
+        components:
+          - name: none
+            adherence:
+              level: does-not-support
+              notes: >-
+                Direct consequence of the 2.1.1 Authoring Tool finding above:
+                the BPMN/DMN diagram canvas (bpmn.io / bpmn-js) has no
+                non-visual equivalent for its core drawing/authoring task, so a
+                user without vision cannot author a process definition through
+                it. A weaker equivalent-facilitation path exists via the diagram
+                editor's "View XML" action; see the 2.1.1 Authoring Tool remarks
+                in the WCAG 2.1 chapters above for detail.
+      - num: '302.2'
+        components:
+          - name: none
+            adherence:
+              level: not-evaluated
+              notes: >-
+                Functional Performance Criteria are typically assessed
+                holistically from a completed WCAG 2.1 A/AA evaluation, which
+                has not yet been completed for this product -- see the WCAG 2.1
+                chapters above for what has and has not been tested.
+      - num: '302.3'
+        components:
+          - name: none
+            adherence:
+              level: not-evaluated
+              notes: >-
+                Functional Performance Criteria are typically assessed
+                holistically from a completed WCAG 2.1 A/AA evaluation, which
+                has not yet been completed for this product -- see the WCAG 2.1
+                chapters above for what has and has not been tested.
+      - num: '302.4'
+        components:
+          - name: none
+            adherence:
+              level: not-evaluated
+              notes: >-
+                Functional Performance Criteria are typically assessed
+                holistically from a completed WCAG 2.1 A/AA evaluation, which
+                has not yet been completed for this product -- see the WCAG 2.1
+                chapters above for what has and has not been tested.
+      - num: '302.5'
+        components:
+          - name: none
+            adherence:
+              level: not-evaluated
+              notes: >-
+                Functional Performance Criteria are typically assessed
+                holistically from a completed WCAG 2.1 A/AA evaluation, which
+                has not yet been completed for this product -- see the WCAG 2.1
+                chapters above for what has and has not been tested.
+      - num: '302.6'
+        components:
+          - name: none
+            adherence:
+              level: not-evaluated
+              notes: >-
+                Functional Performance Criteria are typically assessed
+                holistically from a completed WCAG 2.1 A/AA evaluation, which
+                has not yet been completed for this product -- see the WCAG 2.1
+                chapters above for what has and has not been tested.
+      - num: '302.7'
+        components:
+          - name: none
+            adherence:
+              level: does-not-support
+              notes: >-
+                Direct consequence of the 2.1.1 Authoring Tool finding above:
+                the BPMN/DMN diagram canvas requires precise mouse/drag
+                manipulation to draw and connect shapes, with no keyboard or
+                alternative-input equivalent for that core task. See the 2.1.1
+                Authoring Tool remarks in the WCAG 2.1 chapters above for
+                detail.
+      - num: '302.8'
+        components:
+          - name: none
+            adherence:
+              level: not-evaluated
+              notes: >-
+                Functional Performance Criteria are typically assessed
+                holistically from a completed WCAG 2.1 A/AA evaluation, which
+                has not yet been completed for this product -- see the WCAG 2.1
+                chapters above for what has and has not been tested.
+      - num: '302.9'
+        components:
+          - name: none
+            adherence:
+              level: not-evaluated
+              notes: >-
+                Functional Performance Criteria are typically assessed
+                holistically from a completed WCAG 2.1 A/AA evaluation, which
+                has not yet been completed for this product -- see the WCAG 2.1
+                chapters above for what has and has not been tested.
+    disabled: false
+  hardware:
+    notes: Not applicable -- web application, no hardware component.
+    criteria:
+      - num: 402.2.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 402.2.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 402.2.3
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 402.2.4
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 402.2.5
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 402.3.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 402.3.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '402.4'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '402.5'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '403.1'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '404.1'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '405.1'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '406.1'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '407.2'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 407.3.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 407.3.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 407.3.3
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '407.4'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '407.5'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '407.6'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '407.7'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 407.8.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 407.8.1.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 407.8.1.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 407.8.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 407.8.2.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 407.8.2.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 407.8.3
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 407.8.3.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 407.8.3.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 407.8.3.2.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 407.8.3.2.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '408.2'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '408.3'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '409.1'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '410.1'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '411.1'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 412.2.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 412.2.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 412.3.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 412.3.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '412.4'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '412.5'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '412.6'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: '412.7'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 412.8.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 412.8.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 412.8.3
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 412.8.4
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 413.1.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 413.1.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 414.1.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 414.1.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 415.1.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+      - num: 415.1.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. SpiffWorks Arena is a web application accessed
+                through a browser; it has no hardware component.
+    disabled: false
+  software:
+    notes: Not applicable -- web application, no native software component.
+    criteria:
+      - num: 502.2.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 502.2.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 502.3.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 502.3.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 502.3.3
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 502.3.4
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 502.3.5
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 502.3.6
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 502.3.7
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 502.3.8
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 502.3.9
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 502.3.10
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 502.3.11
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 502.3.12
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 502.3.13
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 502.3.14
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: '502.4'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: '503.2'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: '503.3'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 503.4.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 503.4.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: '504.2'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 504.2.1
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: 504.2.2
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: '504.3'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+      - num: '504.4'
+        components:
+          - name: none
+            adherence:
+              level: not-applicable
+              notes: >-
+                Not applicable. This chapter addresses platform/native software
+                accessibility (e.g. integration with OS accessibility APIs).
+                SpiffWorks Arena is a web application with no native/installed
+                software component.
+    disabled: false
+  support_documentation_and_services:
+    notes: Not evaluated as part of this effort.
+    criteria:
+      - num: '602.2'
+        components:
+          - name: none
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The accessibility of support documentation and support/help
+                channels has not been reviewed as part of this effort.
+      - num: '602.3'
+        components:
+          - name: none
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The accessibility of support documentation and support/help
+                channels has not been reviewed as part of this effort.
+      - num: '602.4'
+        components:
+          - name: none
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The accessibility of support documentation and support/help
+                channels has not been reviewed as part of this effort.
+      - num: '603.2'
+        components:
+          - name: none
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The accessibility of support documentation and support/help
+                channels has not been reviewed as part of this effort.
+      - num: '603.3'
+        components:
+          - name: none
+            adherence:
+              level: not-evaluated
+              notes: >-
+                The accessibility of support documentation and support/help
+                channels has not been reviewed as part of this effort.
+    disabled: false
+vendor:
+  name: ''
+  company_name: ''
+  address: ''
+  email: ''
+  phone: ''
+  website: ''
+related_openacrs: []

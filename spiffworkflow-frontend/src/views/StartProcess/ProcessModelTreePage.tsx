@@ -303,6 +303,9 @@ function ProcessGroupHeader({
           <Can I="PUT" a={targetUris.processGroupShowPath} ability={ability}>
             <IconButton
               data-testid="edit-process-group-button"
+              aria-label={t('edit_process_group_with_id', {
+                id: currentProcessGroup.id,
+              })}
               href={`/process-groups/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/edit`}
             >
               <Edit />
