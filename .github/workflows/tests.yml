@@ -520,7 +520,7 @@ jobs:
           if not files:
               print("No axe results found.")
           else:
-              print("Fails the build on `serious`/`critical` impact violations; `minor`/`moderate` are recorded but non-blocking.")
+              print("Fails the build on any non-allowlisted violation, at any impact level (`minor` through `critical`); allowlisted rule IDs are documented at their test call sites. This automated scan is one input to the project's Accessibility Conformance Report, not a Section 508 conformance claim on its own -- see accessability_conformance_report-v3.1.0-3.yaml at the repository root for that.")
               print()
               print("| Page | Critical | Serious | Moderate | Minor |")
               print("|---|---|---|---|---|")

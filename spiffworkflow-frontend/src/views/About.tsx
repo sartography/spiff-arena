@@ -53,7 +53,7 @@ function About() {
           <Typography variant="h2" gutterBottom>
             {title}
           </Typography>
-          <TableContainer component={Paper}>
+          <TableContainer component={Paper} tabIndex={0}>
             <Table>
               <TableBody>{tableRows}</TableBody>
             </Table>

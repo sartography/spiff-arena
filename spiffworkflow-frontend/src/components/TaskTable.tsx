@@ -186,6 +186,7 @@ export default function TaskTable({
     return (
       <TableContainer
         component={Paper}
+        tabIndex={0}
         sx={{
           bgcolor: 'background.paper',
           boxShadow: 'none',

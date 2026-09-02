@@ -10,6 +10,12 @@ from playwright.sync_api import Page
 # WCAG 2.1 Level A and AA success criteria by reference. These are the
 # axe-core rule tags that correspond to a VPAT 2.4 508 + WCAG (Revised 508)
 # edition scan.
+#
+# This module only runs automated axe-core rules -- it cannot itself
+# establish or claim WCAG/508 conformance. For the authoritative,
+# criterion-by-criterion conformance statement (including manual testing this
+# module cannot perform), see accessability_conformance_report-v3.1.0-3.yaml
+# at the repository root.
 WCAG_508_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]
 
 # axe-core's four impact levels, least to most severe.
@@ -26,8 +32,10 @@ def scan(page: Page, name: str, context: str | list | dict | None = None) -> Axe
     Persists the full result set (violations, passes, incomplete,
     inapplicable) as JSON under test-results/axe/<name>.json, regardless of
     whether the caller asserts on it. That directory is uploaded as a CI
-    artifact, so every scan is retained as evidence for the ACR even when a
-    test doesn't fail.
+    artifact, so every scan is retained as supporting evidence for the
+    Accessibility Conformance Report
+    (accessability_conformance_report-v3.1.0-3.yaml) even when a test doesn't
+    fail. This is evidence feeding that report, not the report itself.
     """
     # The app's layout wraps every route in a .fadeIn opacity transition
     # (assets/styles/transitions.css, 0.5s), applied uniformly regardless of
@@ -56,17 +64,18 @@ def assert_no_violations(
     name: str,
     context: str | list | dict | None = None,
     allowed_rule_ids: tuple[str, ...] = (),
-    min_impact: str = "serious",
+    min_impact: str = "minor",
 ) -> AxeResults:
     """Scan the page and fail the test on WCAG 2.1 A/AA violations at or
     above `min_impact`.
 
-    `min_impact` defaults to "serious" -- axe-core's impact levels, least to
-    most severe, are minor/moderate/serious/critical. "serious"/"critical"
-    are the ones that actually block a screen reader or keyboard user
-    (unlabeled controls, invalid ARIA, unreachable content); "minor"/
-    "moderate" (e.g. borderline contrast ratios) are recorded in the saved
-    JSON but don't fail the test on their own.
+    `min_impact` defaults to "minor" -- axe-core's impact levels, least to
+    most severe, are minor/moderate/serious/critical -- so every
+    non-allowlisted violation at any impact level fails the test. A caller
+    may raise `min_impact` for a specific page if it has documented, already
+    known lower-impact findings that aren't yet fixed; that should come with
+    an `allowed_rule_ids` entry (or a comment) explaining why, not be used to
+    quietly widen what passes.
 
     `allowed_rule_ids` is only for specific, already-tracked findings (name
     the backlog item in a comment at the call site) -- not a general escape

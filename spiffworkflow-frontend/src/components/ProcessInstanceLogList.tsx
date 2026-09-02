@@ -391,7 +391,7 @@ export default function ProcessInstanceLogList({
     }
     tableHeaders.push(<TableCell>{t('timestamp')}</TableCell>);
     return (
-      <TableContainer>
+      <TableContainer tabIndex={0}>
         <Table size="medium">
           <TableHead>
             <TableRow>{tableHeaders}</TableRow>

@@ -613,7 +613,7 @@ export default function ProcessInstanceListTable({
     }
 
     return (
-      <TableContainer>
+      <TableContainer tabIndex={0}>
         <Table size="medium" {...tableProps} className="process-instance-list">
           <TableHead>
             <TableRow>

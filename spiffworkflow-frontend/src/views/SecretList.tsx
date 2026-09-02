@@ -105,7 +105,7 @@ export default function SecretList() {
       );
     });
     return (
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} tabIndex={0}>
         <Table>
           <TableHead>
             <TableRow>
