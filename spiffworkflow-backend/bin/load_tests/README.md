@@ -46,6 +46,36 @@ uv run python bin/load_tests/concurrent_message_starts.py \
   --message-name existing-message
 ```
 
+## Concurrent Message Correlation Race
+
+Use this for the vacuous message-correlation match, where a send whose correlation values belong to no waiting process
+instance is still accepted by the API matcher and delivered to an arbitrary (oldest) ready receiver. The engine then
+rejects the mismatched delivery and the innocent receiving process instance errors. The script creates a temporary
+process model with two correlation keys per instance - one that the assessment message correlates on and one it has no
+property for (like a scope key from a boundary message event) - starts the requested number of instances, sends a
+message whose correlation matches no instance (correct code must reject it without erroring anything), then fires one
+correctly-correlated send per instance concurrently.
+
+```sh
+uv run python bin/load_tests/concurrent_message_correlation_race.py
+```
+
+Defaults to 4 instances with short 15s waits, so failures surface quickly; scale up with `--instances` if you want more
+load. Message requests are sent with `execution_mode=synchronous`, so the test does not depend on a Celery worker
+draining queued message starts (without that parameter, a backend with `SPIFFWORKFLOW_BACKEND_CELERY_ENABLED=true`
+queues message processing and the instances stay `not_started` until a worker picks them up).
+
+The script exits nonzero if any process instance errors, if any send is delivered to a process instance other than the
+one whose scope holds its correlation values, or if any instance fails to complete. Starts are sent sequentially (the
+race under test is in concurrent delivery of correlated messages, not in message starts), and correctly-correlated
+sends that land on `message_not_accepted` are retried briefly to avoid failing on background-scheduler lock contention.
+
+Useful options:
+
+```sh
+uv run python bin/load_tests/concurrent_message_correlation_race.py --help
+```
+
 ## Message Start Double Delivery Race
 
 Use this for message-start races between API requests and background message processing. It covers the shape where a

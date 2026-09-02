@@ -19,6 +19,7 @@ import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRa
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
+import AutoSelectSingleOptionWidget from '../rjsf/custom_widgets/AutoSelectSingleOptionWidget';
 import {
   applyCalculatedFields,
   CalculatedField,
@@ -109,6 +110,7 @@ export default function CustomForm({
     markdown: MarkDownFieldWidget,
     typeahead: customTypeaheadWidget,
     formattedNumber: FormattedNumberWidget,
+    'auto-select-single-option': AutoSelectSingleOptionWidget,
   };
 
   // set in uiSchema using the "ui:field" key for a property

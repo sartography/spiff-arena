@@ -102,8 +102,36 @@ class TestAuthentication(BaseTest):
 
         assert response.location == (
             "https://auth.example.com/logout"
-            "?post_logout_redirect_uri=https://backend.example.com/api/v1.0/logout_return&"
+            "?post_logout_redirect_uri=https%3A%2F%2Fbackend.example.com%2Fapi%2Fv1.0%2Flogout_return&"
             "id_token_hint=test-id-token"
+        )
+
+    def test_logout_request_can_be_configured_per_authentication_provider(self, app: Flask) -> None:
+        authentication_options = [
+            app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0],
+            {
+                **app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0],
+                "identifier": "provider-with-custom-logout",
+                "client_id": "custom-client-id",
+                "logout_query_string_template": "client_id={client_id}&return_to={redirect_url}",
+            },
+        ]
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS", authentication_options):
+            with app.test_request_context():
+                with patch.object(
+                    AuthenticationService,
+                    "open_id_endpoint_for_name",
+                    return_value="https://auth.example.com/logout?existing=value",
+                ):
+                    response = AuthenticationService().logout(
+                        "test-id-token",
+                        "provider-with-custom-logout",
+                        "https://arena.example.com/signed-out?from=logout",
+                    )
+
+        assert response.location == (
+            "https://auth.example.com/logout?existing=value&client_id=custom-client-id&"
+            "return_to=https%3A%2F%2Farena.example.com%2Fsigned-out%3Ffrom%3Dlogout"
         )
 
     def test_get_login_state_without_pkce_enabled(self, app: Flask) -> None:
@@ -803,6 +831,98 @@ class TestAuthentication(BaseTest):
             assert params.get(PKCE.CODE_CHALLENGE_KEY, [])[0]
             assert params.get(PKCE.CODE_CHALLENGE_METHOD_KEY, [])[0] == "S256"
             assert isinstance(state_dict["pkce_id"], str)
+
+    def test_public_client_uses_pkce_without_basic_auth(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        public_auth_config = {
+            key: value for key, value in app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0].items() if key != "client_secret"
+        }
+        token_response = MagicMock(text="{}")
+        post = mocker.patch(
+            "spiffworkflow_backend.services.authentication_service.requests.post",
+            return_value=token_response,
+        )
+        mocker.patch.object(
+            AuthenticationService,
+            "open_id_endpoint_for_name",
+            return_value="https://auth.example.com/oauth2/token",
+        )
+        mocker.patch.object(
+            AuthenticationService,
+            "get_redirect_uri_for_login_to_server",
+            return_value="https://backend.example.com/v1.0/login_return",
+        )
+
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS", [public_auth_config]),
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", False),
+            app.test_request_context(),
+        ):
+            login_url = AuthenticationService().get_login_redirect_url("default")
+            query = urllib.parse.parse_qs(urllib.parse.urlparse(login_url).query)
+            state = ast.literal_eval(base64.b64decode(query["state"][0]).decode())
+
+            assert query[PKCE.CODE_CHALLENGE_METHOD_KEY] == ["S256"]
+            assert query[PKCE.CODE_CHALLENGE_KEY]
+            assert state["pkce_id"]
+
+            AuthenticationService().get_auth_token_object(
+                code="authorization-code",
+                authentication_identifier="default",
+                pkce_id=state["pkce_id"],
+            )
+
+        request = post.call_args
+        assert "Authorization" not in request.kwargs["headers"]
+        assert request.kwargs["data"]["client_id"] == public_auth_config["client_id"]
+        assert request.kwargs["data"][PKCE.CODE_VERIFIER_KEY]
+
+    def test_confidential_client_retains_basic_auth_without_pkce(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+    ) -> None:
+        auth_config = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]
+        token_response = MagicMock(text="{}")
+        post = mocker.patch(
+            "spiffworkflow_backend.services.authentication_service.requests.post",
+            return_value=token_response,
+        )
+        mocker.patch.object(
+            AuthenticationService,
+            "open_id_endpoint_for_name",
+            return_value="https://auth.example.com/oauth2/token",
+        )
+        mocker.patch.object(
+            AuthenticationService,
+            "get_redirect_uri_for_login_to_server",
+            return_value="https://backend.example.com/v1.0/login_return",
+        )
+
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", False),
+            app.test_request_context(),
+        ):
+            login_url = AuthenticationService().get_login_redirect_url("default")
+            query = urllib.parse.parse_qs(urllib.parse.urlparse(login_url).query)
+            assert PKCE.CODE_CHALLENGE_KEY not in query
+
+            AuthenticationService().get_auth_token_object(
+                code="authorization-code",
+                authentication_identifier="default",
+            )
+
+        expected_credentials = base64.b64encode(
+            f"{auth_config['client_id']}:{auth_config['client_secret']}".encode("ascii")
+        ).decode()
+        request = post.call_args
+        assert request.kwargs["headers"]["Authorization"] == f"Basic {expected_credentials}"
+        assert "client_id" not in request.kwargs["data"]
+        assert PKCE.CODE_VERIFIER_KEY not in request.kwargs["data"]
 
     def test_get_auth_token_throws_errors_for_misconfigured_pkce(self, app: Flask, mocker: MockerFixture) -> None:
         # Mock the redirect URI method since we're testing PKCE validation, not URL building.

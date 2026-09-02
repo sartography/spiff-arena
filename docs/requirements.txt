@@ -1,4 +1,4 @@
-alabaster==0.7.16
+alabaster==1.0.0
 appdirs==1.4.4
 astroid==3.2.4
 attrs>=24.3.0

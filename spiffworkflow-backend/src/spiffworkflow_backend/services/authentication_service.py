@@ -7,9 +7,13 @@ import time
 from hashlib import sha256
 from hmac import HMAC
 from hmac import compare_digest
+from string import Formatter
 from typing import Any
 from typing import cast
+from urllib.parse import parse_qsl
 from urllib.parse import urlencode
+from urllib.parse import urlsplit
+from urllib.parse import urlunsplit
 
 if sys.version_info < (3, 11):
     from typing_extensions import NotRequired
@@ -69,9 +73,27 @@ TOKEN_VALIDATION_FAILURES = Counter(
     ["reason"],
 )
 
+DEFAULT_LOGOUT_QUERY_TEMPLATE = "post_logout_redirect_uri={redirect_url}&id_token_hint={id_token}"
+
 
 def _record_token_validation_failure(reason: str) -> None:
     TOKEN_VALIDATION_FAILURES.labels(reason=reason).inc()
+
+
+def _render_logout_query_string_template(query_template: str, template_values: dict[str, str]) -> list[tuple[str, str]]:
+    rendered_parameters: list[tuple[str, str]] = []
+    for parameter_name, value_template in parse_qsl(query_template, keep_blank_values=True, strict_parsing=True):
+        if not parameter_name:
+            raise ValueError("Logout query template parameter names cannot be empty")
+        for _, field_name, format_spec, conversion in Formatter().parse(value_template):
+            if field_name is None:
+                continue
+            if field_name not in template_values:
+                raise ValueError(f"Unsupported logout query template value: '{field_name}'")
+            if format_spec or conversion:
+                raise ValueError("Logout query template values do not support format specifications or conversions")
+        rendered_parameters.append((parameter_name, value_template.format_map(template_values)))
+    return rendered_parameters
 
 
 class JWKSKeyConfig(TypedDict):
@@ -104,10 +126,11 @@ class AuthenticationOptionForApi(TypedDict):
 
 class AuthenticationOption(AuthenticationOptionForApi):
     client_id: str
-    client_secret: str
+    client_secret: NotRequired[str]
     additional_valid_issuers: NotRequired[list[str]]
     access_token_audiences: NotRequired[list[str] | str]
     authorization_resource: NotRequired[str]
+    logout_query_string_template: NotRequired[str]
 
 
 class AuthenticationOptionNotFoundError(Exception):
@@ -270,10 +293,19 @@ class AuthenticationService:
         return config
 
     @classmethod
-    def secret_key(cls, authentication_identifier: str) -> str:
-        """Returns the secret key from the config."""
-        config: str = cls.authentication_option_for_identifier(authentication_identifier)["client_secret"]
-        return config
+    def secret_key(cls, authentication_identifier: str) -> str | None:
+        """Returns the optional client secret from the config."""
+        return cls.authentication_option_for_identifier(authentication_identifier).get("client_secret")
+
+    @classmethod
+    def pkce_required(cls, authentication_identifier: str) -> bool:
+        return current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"] or not cls.secret_key(authentication_identifier)
+
+    @staticmethod
+    def _basic_auth_header(client_id: str, client_secret: str) -> str:
+        credentials = f"{client_id}:{client_secret}".encode("ascii")
+        encoded_credentials = base64.b64encode(credentials).decode("ascii")
+        return f"Basic {encoded_credentials}"
 
     @classmethod
     def open_id_endpoint_for_name(cls, name: str, authentication_identifier: str, internal: bool = False) -> str:
@@ -409,11 +441,22 @@ class AuthenticationService:
     def logout(self, id_token: str, authentication_identifier: str, redirect_url: str | None = None) -> Response:
         if redirect_url is None:
             redirect_url = build_public_api_v1_url(self.get_backend_url(), "logout_return")
-        request_url = (
-            self.__class__.open_id_endpoint_for_name("end_session_endpoint", authentication_identifier=authentication_identifier)
-            + f"?post_logout_redirect_uri={redirect_url}&"
-            + f"id_token_hint={id_token}"
+        end_session = self.__class__.open_id_endpoint_for_name(
+            "end_session_endpoint", authentication_identifier=authentication_identifier
         )
+        authentication_option = self.authentication_option_for_identifier(authentication_identifier)
+        query_parameters = _render_logout_query_string_template(
+            authentication_option.get("logout_query_string_template", DEFAULT_LOGOUT_QUERY_TEMPLATE),
+            {
+                "client_id": self.client_id(authentication_identifier),
+                "id_token": id_token,
+                "redirect_url": redirect_url,
+            },
+        )
+
+        parsed_end_session = urlsplit(end_session)
+        query_parameters = [*parse_qsl(parsed_end_session.query, keep_blank_values=True), *query_parameters]
+        request_url = urlunsplit(parsed_end_session._replace(query=urlencode(query_parameters)))
 
         return redirect(request_url)
 
@@ -422,8 +465,8 @@ class AuthenticationService:
         authentication_identifier: str
         pkce_id: NotRequired[str]
 
-    @staticmethod
-    def generate_state_payload(authentication_identifier: str, final_url: str | None = None) -> StatePayload:
+    @classmethod
+    def generate_state_payload(cls, authentication_identifier: str, final_url: str | None = None) -> StatePayload:
         # The final_url is where we want to return the user to, within the application - in case they
         # where headed to a specific page. This is different than the "redirect url" we specify to
         # the open id server - we want the open id server to always send us back to the login_return
@@ -436,7 +479,7 @@ class AuthenticationService:
             "final_url": my_final_url,
             "authentication_identifier": authentication_identifier,
         }
-        if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"]:
+        if cls.pkce_required(authentication_identifier):
             pkce_id = secrets.token_urlsafe(32)  # Associate a unique PKCE id with the request for cross-reference later
             state_payload["pkce_id"] = pkce_id
         return state_payload
@@ -472,7 +515,7 @@ class AuthenticationService:
         if authorization_resource:
             login_redirect_url += f"&{urlencode({'resource': authorization_resource})}"
 
-        if current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"]:
+        if self.pkce_required(authentication_identifier):
             code_verifier = PKCE.generate_code_verifier()
             # Store the verifier server-side for use when exchanging the authorization code.
             PKCE.store_pkce_code_verifier(pkce_id=state_payload["pkce_id"], code_verifier=code_verifier)
@@ -490,28 +533,25 @@ class AuthenticationService:
         authentication_identifier: str,
         pkce_id: str | None = None,
     ) -> dict:
-        backend_basic_auth_string = (
-            f"{self.client_id(authentication_identifier)}:{self.__class__.secret_key(authentication_identifier)}"
-        )
-        backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
-        backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
+        client_secret = self.__class__.secret_key(authentication_identifier)
         redirect_to_use = self.get_redirect_uri_for_login_to_server()
 
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
-            "Authorization": f"Basic {backend_basic_auth.decode('utf-8')}",
         }
-
-        data = {
+        data: dict[str, str] = {
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": redirect_to_use,
         }
 
-        # Attach PKCE verifier for the authorization_code exchange when enabled.
-        if current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE"):
+        if client_secret:
+            headers["Authorization"] = self._basic_auth_header(self.client_id(authentication_identifier), client_secret)
+        else:
+            data["client_id"] = self.client_id(authentication_identifier)
+
+        if self.pkce_required(authentication_identifier):
             if not pkce_id:
-                # We enforced PKCE when sending the user out; missing pkce_id means something broke.
                 raise ApiError(
                     error_code="missing_pkce_id",
                     message=(
@@ -711,20 +751,18 @@ class AuthenticationService:
     @classmethod
     def get_auth_token_from_refresh_token(cls, refresh_token: str, authentication_identifier: str) -> dict:
         """Converts a refresh token to an Auth Token by calling the openid's auth endpoint."""
-        backend_basic_auth_string = f"{cls.client_id(authentication_identifier)}:{cls.secret_key(authentication_identifier)}"
-        backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
-        backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
+        client_secret = cls.secret_key(authentication_identifier)
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
-            "Authorization": f"Basic {backend_basic_auth.decode('utf-8')}",
         }
-
-        data = {
+        data: dict[str, str] = {
             "grant_type": "refresh_token",
             "refresh_token": refresh_token,
             "client_id": cls.client_id(authentication_identifier),
-            "client_secret": cls.secret_key(authentication_identifier),
         }
+        if client_secret:
+            headers["Authorization"] = cls._basic_auth_header(cls.client_id(authentication_identifier), client_secret)
+            data["client_secret"] = client_secret
 
         request_url = cls.open_id_endpoint_for_name(
             "token_endpoint", authentication_identifier=authentication_identifier, internal=True

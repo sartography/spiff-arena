@@ -11,7 +11,16 @@ script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 docker stop keycloak || echo 'no keycloak container found'
 docker rm keycloak 2>/dev/null || echo 'no keycloak container found'
-docker run -p 8080:8080 -d  --name keycloak -e KEYCLOAK_LOGLEVEL=ALL -e ROOT_LOGLEVEL=ALL -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:18.0.2 start-dev -Dkeycloak.profile.feature.token_exchange=enabled -Dkeycloak.profile.feature.admin_fine_grained_authz=enabled
+docker run \
+  -p 8080:8080 \
+  -d \
+  --name keycloak \
+  -e KEYCLOAK_LOGLEVEL=ALL \
+  -e ROOT_LOGLEVEL=ALL \
+  -e KC_BOOTSTRAP_ADMIN_USERNAME=admin \
+  -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
+  -e KC_FEATURES=token-exchange,admin-fine-grained-authz:v1 \
+  quay.io/keycloak/keycloak:26.7.2 start-dev
 
 docker cp "${script_dir}/testing-realm.json" keycloak:/tmp
 
