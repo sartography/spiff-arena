@@ -435,9 +435,9 @@ Example for UI schema:
     },
 ```
 
-#### Extension Expression Field
+#### Interpreted Field
 
-Use `ui:field: "extension-expression-field"` when a user should type a compact expression that a deployment-owned extension resolver interprets into a structured value. The field owns one text input plus the resolver round-trip; the resolver owns every word of user-facing text, so the field never needs to understand what the expression means.
+Use `ui:field: "interpreted-field"` when a user should type a compact expression that a deployment-owned extension resolver interprets into a structured value. The field owns one text input plus the resolver round-trip; the resolver owns every word of user-facing text, so the field never needs to understand what the expression means.
 
 The field stores an object so its value remains portable through nested forms, arrays, autosave, and task submission. The example below uses a fictional `shout` resolver that uppercases text:
 
@@ -464,7 +464,7 @@ Configure an installed Arena extension by identifier. Arbitrary resolver URLs an
 ```json
 {
   "shout": {
-    "ui:field": "extension-expression-field",
+    "ui:field": "interpreted-field",
     "ui:options": {
       "resolver": "shout",
       "exclamation_marks": 3,

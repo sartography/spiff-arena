@@ -29,7 +29,7 @@ import HttpService from '../../../services/HttpService';
  * generically and sends the chosen value back through the resolver for
  * validation, so it never needs to understand what the value means.
  */
-export type ExtensionExpressionChoice = {
+export type InterpretedChoice = {
   label: string;
   detail?: string;
   value: Record<string, unknown>;
@@ -41,13 +41,13 @@ export type ExtensionExpressionChoice = {
  * The resolver owns every word of user-facing text: the frontend only
  * renders preview/detail/assumptions/choices without interpreting them.
  */
-export type ExtensionExpressionResult = {
+export type InterpretedResult = {
   status: 'valid' | 'invalid' | 'ambiguous';
   value?: Record<string, unknown>;
   preview?: string;
   detail?: string;
   assumptions?: string[];
-  choices?: ExtensionExpressionChoice[];
+  choices?: InterpretedChoice[];
   edit_defaults?: Record<string, unknown>;
   errors?: { code: string; message: string }[];
 };
@@ -82,7 +82,7 @@ const hasStructuredData = (value: Record<string, unknown>) =>
       entryValue !== '',
   );
 
-export default function ExtensionExpressionField({
+export default function InterpretedField({
   schema,
   uiSchema,
   fieldPathId,
@@ -124,7 +124,7 @@ export default function ExtensionExpressionField({
   const [assumptions, setAssumptions] = useState<string[]>([]);
   const [preview, setPreview] = useState<string | null>(null);
   const [detail, setDetail] = useState<string | null>(null);
-  const [choices, setChoices] = useState<ExtensionExpressionChoice[]>([]);
+  const [choices, setChoices] = useState<InterpretedChoice[]>([]);
   const [editDefaults, setEditDefaults] = useState<
     Record<string, unknown> | undefined
   >(undefined);
@@ -284,7 +284,7 @@ export default function ExtensionExpressionField({
       signal: controller.signal,
       postBody: { extension_input: extensionInput },
       successCallback: (response: {
-        task_data?: { result?: ExtensionExpressionResult };
+        task_data?: { result?: InterpretedResult };
       }) => {
         if (requestIdRef.current !== requestId) {
           return;

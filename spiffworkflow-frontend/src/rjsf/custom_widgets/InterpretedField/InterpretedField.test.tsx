@@ -30,7 +30,7 @@ const schema = {
 
 const uiSchema = {
   shout: {
-    'ui:field': 'extension-expression-field',
+    'ui:field': 'interpreted-field',
     'ui:options': {
       resolver: 'shout',
       exclamation_marks: 3,
@@ -59,7 +59,7 @@ const validShoutResult = {
   edit_defaults: { text: 'HELLO!!!' },
 };
 
-describe('ExtensionExpressionField', () => {
+describe('InterpretedField', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-30T18:00:00Z'));
@@ -145,7 +145,7 @@ describe('ExtensionExpressionField', () => {
         }}
         uiSchema={{
           shout: {
-            'ui:field': 'extension-expression-field',
+            'ui:field': 'interpreted-field',
             'ui:options': {
               resolver: 'shout',
               valueDefaults: {

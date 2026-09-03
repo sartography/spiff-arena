@@ -20,7 +20,7 @@ import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWid
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
 import AutoSelectSingleOptionWidget from '../rjsf/custom_widgets/AutoSelectSingleOptionWidget';
-import ExtensionExpressionField from '../rjsf/custom_widgets/ExtensionExpressionField/ExtensionExpressionField';
+import InterpretedField from '../rjsf/custom_widgets/InterpretedField/InterpretedField';
 import {
   applyCalculatedFields,
   CalculatedField,
@@ -117,7 +117,7 @@ export default function CustomForm({
   // set in uiSchema using the "ui:field" key for a property
   const rjsfFields: RegistryFieldsType = {
     'numeric-range': NumericRangeField,
-    'extension-expression-field': ExtensionExpressionField,
+    'interpreted-field': InterpretedField,
     calculated: CalculatedField,
   };
 
