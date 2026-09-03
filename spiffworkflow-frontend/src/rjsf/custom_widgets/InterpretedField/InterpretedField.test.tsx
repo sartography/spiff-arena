@@ -182,6 +182,45 @@ describe('InterpretedField', () => {
     );
   });
 
+  it('does not raise form-level errors while typing', () => {
+    render(
+      <CustomForm
+        id="shout-form"
+        key="shout-form"
+        formData={{}}
+        schema={schema}
+        uiSchema={uiSchema}
+        onChange={vi.fn()}
+      />,
+    );
+
+    const input = screen.getByRole('textbox', { name: 'Shout' });
+    fireEvent.change(input, { target: { value: 'hel' } });
+
+    // Typing must not flag the input or hoist an Errors panel above the
+    // form, which would shove the input being typed into down the page.
+    expect(input).toHaveAttribute('aria-invalid', 'false');
+    expect(screen.queryByText('Errors')).toBeNull();
+
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    act(() => {
+      makeCallToBackend.mock.calls[0][0].successCallback({
+        task_data: {
+          result: {
+            status: 'invalid',
+            errors: [{ code: 'unclear', message: 'Speak up.' }],
+          },
+        },
+      });
+    });
+
+    // A settled invalid interpretation still surfaces normally.
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getAllByText('Speak up.').length).toBeGreaterThan(0);
+  });
+
   it('parses a suggestion chip immediately on click', () => {
     render(
       <CustomForm

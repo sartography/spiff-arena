@@ -428,26 +428,21 @@ export default function InterpretedField({
     // detail still describe the last valid value, so they stay visible in
     // the neutral last-valid card until the new parse resolves.
     setAssumptions([]);
-    const nextValue = { ...formData, expression: value };
-    onChange(
-      nextValue,
-      fieldPathId.path,
-      errorSchema(t('interpreted_field_interpretation_pending')),
-      fieldPathId.$id,
-    );
+    const nextValue = { ...formDataRef.current, expression: value };
+    // A new keystroke is not an error: reporting one would hoist an
+    // "Errors" panel to the top of the form on every keystroke and shove
+    // the input being typed into down the page. Submit gating observes the
+    // parse refs directly, so it needs no error to do its job.
+    onChange(nextValue, fieldPathId.path, undefined, fieldPathId.$id);
     scheduleParse(value);
   };
 
   const parseImmediately = (value: string) => {
     setExpression(value);
     setAssumptions([]);
-    const nextValue = { ...formData, expression: value };
-    onChange(
-      nextValue,
-      fieldPathId.path,
-      errorSchema(t('interpreted_field_interpretation_pending')),
-      fieldPathId.$id,
-    );
+    const nextValue = { ...formDataRef.current, expression: value };
+    // See updateExpression: in-flight interpretation is not an error.
+    onChange(nextValue, fieldPathId.path, undefined, fieldPathId.$id);
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -594,7 +589,6 @@ export default function InterpretedField({
           variant="outlined"
           sx={{
             borderColor: 'success.main',
-            backgroundColor: 'success.light',
           }}
         >
           <CardContent sx={{ '&:last-child': { pb: 2 } }}>
@@ -626,7 +620,7 @@ export default function InterpretedField({
                       label={assumption}
                       size="small"
                       color="warning"
-                      variant="outlined"
+                      variant="filled"
                       title={t('interpreted_field_assumption_hint')}
                     />
                   ))}
