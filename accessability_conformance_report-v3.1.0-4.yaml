@@ -54,11 +54,12 @@ chapters:
   success_criteria_level_a:
     notes: >-
       Automated scanning (axe-core, via axe-playwright-python, WCAG 2.1 A/AA
-      rule set, impact level serious/critical) is wired into the Playwright
+      rule set) is wired into the Playwright
       browser test suite
       (spiffworkflow-frontend/test/browser/test_accessibility.py) and into CI
       (the playwright-run GitHub Actions job), gating merges on new
-      serious/critical findings on the page states it covers. As of this report,
+      findings at any impact level (minor through critical) on the page states
+      it covers. As of this report,
       that suite scans 21 page states -- effectively the whole application. 
       Additional defects reported outside that automated suite (via manual
       browser extension testing) were investigated and fixed individually during
@@ -1077,11 +1078,12 @@ chapters:
   success_criteria_level_aa:
     notes: >-
       Automated scanning (axe-core, via axe-playwright-python, WCAG 2.1 A/AA
-      rule set, impact level serious/critical) is wired into the Playwright
+      rule set) is wired into the Playwright
       browser test suite
       (spiffworkflow-frontend/test/browser/test_accessibility.py) and into CI
       (the playwright-run GitHub Actions job), gating merges on new
-      serious/critical findings on the page states it covers. As of this report,
+      findings at any impact level (minor through critical) on the page states
+      it covers. As of this report,
       that suite scans 21 page states -- effectively the whole application
       rather than a limited set: the login page (unauthenticated); the process
       groups list, both collapsed and with a tree node expanded to reveal model

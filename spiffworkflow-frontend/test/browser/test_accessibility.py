@@ -13,7 +13,7 @@ are written to test-results/axe/<name>.json regardless of pass/fail, and
 that directory is uploaded as a CI artifact.
 
 This suite is one input to, not a substitute for, the project's Accessibility
-Conformance Report (accessability_conformance_report-v3.1.0-3.yaml at the
+Conformance Report (accessability_conformance_report-v3.1.0-4.yaml at the
 repository root). That report is the authoritative, criterion-by-criterion
 statement of what is and is not supported -- including manual testing this
 suite cannot perform (screen readers, zoom/reflow, keyboard-only walkthroughs)

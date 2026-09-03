@@ -14,7 +14,7 @@ from playwright.sync_api import Page
 # This module only runs automated axe-core rules -- it cannot itself
 # establish or claim WCAG/508 conformance. For the authoritative,
 # criterion-by-criterion conformance statement (including manual testing this
-# module cannot perform), see accessability_conformance_report-v3.1.0-3.yaml
+# module cannot perform), see accessability_conformance_report-v3.1.0-4.yaml
 # at the repository root.
 WCAG_508_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]
 
@@ -34,7 +34,7 @@ def scan(page: Page, name: str, context: str | list | dict | None = None) -> Axe
     whether the caller asserts on it. That directory is uploaded as a CI
     artifact, so every scan is retained as supporting evidence for the
     Accessibility Conformance Report
-    (accessability_conformance_report-v3.1.0-3.yaml) even when a test doesn't
+    (accessability_conformance_report-v3.1.0-4.yaml) even when a test doesn't
     fail. This is evidence feeding that report, not the report itself.
     """
     # The app's layout wraps every route in a .fadeIn opacity transition
