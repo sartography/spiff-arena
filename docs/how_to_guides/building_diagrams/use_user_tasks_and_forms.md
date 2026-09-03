@@ -411,24 +411,6 @@ UI Schema example:
 }
 ```
 
-#### Auto-Select a Single Option
-
-Use the `auto-select-single-option` widget when a dropdown should automatically select its only valid option.
-This works with static enums and with enums narrowed to one option by a JSON Schema dependency.
-
-UI Schema example:
-
-```json
-{
-  "project": {
-    "ui:widget": "auto-select-single-option"
-  }
-}
-```
-
-The widget replaces an existing value only when that value is no longer one of the field's options.
-It leaves dropdowns with zero or multiple options unchanged.
-
 #### Date Range Selector
 
 The date range selector allows users to select a range of dates, such as a start and end date, within a form.
@@ -452,6 +434,86 @@ Example for UI schema:
         "ui:help": "Indicate the travel start and end dates"
     },
 ```
+
+#### Extension Expression Field
+
+Use `ui:field: "extension-expression-field"` when a user should type a compact expression that a deployment-owned extension resolver interprets into a structured value. The field owns one text input plus the resolver round-trip; the resolver owns every word of user-facing text, so the field never needs to understand what the expression means.
+
+The field stores an object so its value remains portable through nested forms, arrays, autosave, and task submission. The example below uses a fictional `shout` resolver that uppercases text:
+
+```json
+{
+  "type": "object",
+  "required": ["shout"],
+  "properties": {
+    "shout": {
+      "title": "Shout",
+      "type": "object",
+      "required": ["text"],
+      "properties": {
+        "expression": { "type": "string" },
+        "text": { "type": "string" }
+      }
+    }
+  }
+}
+```
+
+Configure an installed Arena extension by identifier. Arbitrary resolver URLs and output paths are not supported. Every `ui:options` key other than the field-configuration keys listed below is passed through verbatim to the extension as `extension_input`:
+
+```json
+{
+  "shout": {
+    "ui:field": "extension-expression-field",
+    "ui:options": {
+      "resolver": "shout",
+      "exclamation_marks": 3,
+      "placeholder": "Say something",
+      "examples": "Examples: hello, good morning",
+      "emptyMessage": "Say something first.",
+      "suggestions": ["hello", "good morning"],
+      "editSchema": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string", "title": "Shouted text" }
+        }
+      },
+      "valueDefaults": { "text": "" }
+    }
+  }
+}
+```
+
+Field-configuration keys (never sent to the resolver): `resolver`, `idleMilliseconds`, `examples`, `emptyMessage`, `placeholder`, `suggestions`, `editSchema`, `editUiSchema`, `editButtonLabel`, `valueDefaults`, `revalidateEdits`, `manualEditNote`.
+
+- `suggestions` renders one-tap example chips that parse immediately.
+- `editSchema` (plus optional `editUiSchema` and `editButtonLabel`) renders an "adjust values" editor bound to the structured value. Applying sends the edited value back through the resolver as `extension_input.value` for re-validation, unless `revalidateEdits` is false (then the edit is applied directly with the `manualEditNote` assumption). A resolver may return `edit_defaults` to seed the editor.
+- `valueDefaults` fills missing structured keys on first render. The `$browserTimeZone` token resolves to the browser IANA zone.
+
+The extension API must be enabled and the named resolver must be installed in the configured extensions process group. The resolver receives the expression, one reference instant, browser IANA time zone, locale, an edited `value` for re-validation (or an empty object for a fresh expression parse), and the passthrough options. It returns structured data; it does not return JavaScript or form patches. The result contract is:
+
+```json
+{
+  "status": "valid",
+  "value": { "expression": "hello", "text": "HELLO!!!" },
+  "preview": "HELLO!!!",
+  "detail": "8 characters",
+  "assumptions": ["assuming English"],
+  "choices": [{ "label": "Loud", "value": {} }],
+  "edit_defaults": { "text": "HELLO!!!" },
+  "errors": [{ "code": "unclear", "message": "Speak up." }]
+}
+```
+
+- `status` is `valid`, `invalid`, or `ambiguous`.
+- `preview` and `detail` render in the result card; `assumptions` render as chips so a guess is never invisible.
+- `choices` render as "Which did you mean?" picks. Selecting one re-validates its `value` through the resolver, which is how a resolver offers disambiguation without the field understanding the options.
+- `errors[0].message` renders in the normal RJSF error location.
+
+Parsing starts after a short idle period and on blur or Enter. A successful parse updates the structured field value. Invalid or unresolved input leaves the last valid value unchanged, keeps it visible as the last valid interpretation, and blocks submission. If the form is submitted while an interpretation is still resolving, submission waits for the interpretation and then continues automatically, so recorded values always match the submitted expression.
+
+The expression is optional: clearing it keeps the existing structured value, so editing a record stays equivalent to editing one that never had an expression. The user still submits the enclosing task explicitly. Parsing never submits, navigates, or starts a process.
+
 #### Date Validation
 
 Spiff Arena supports `minimumDate` and `maximumDate` schema extensions for comparing date fields to `today` or to another field in the same form.

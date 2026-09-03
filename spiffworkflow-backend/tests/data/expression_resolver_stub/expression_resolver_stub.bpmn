@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Definitions_expression_resolver_stub" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_expression_resolver_stub" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_to_resolver</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_to_resolver" sourceRef="StartEvent_1" targetRef="resolve_expression" />
+    <bpmn:scriptTask id="resolve_expression" name="Resolve expression">
+      <bpmn:incoming>Flow_to_resolver</bpmn:incoming>
+      <bpmn:outgoing>Flow_to_end</bpmn:outgoing>
+      <bpmn:script><![CDATA[# Stub resolver: the real interpretation lives in the deployment's extension
+# process model. This fixture only verifies the extension endpoint plumbing.
+result = {
+    "status": "valid",
+    "value": {
+        "expression": expression,
+        "text": expression.upper(),
+    },
+    "preview": expression.upper(),
+    "detail": f"{len(expression)} characters",
+    "assumptions": ["stub"],
+}
+]]></bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_to_end" sourceRef="resolve_expression" targetRef="EndEvent_1" />
+    <bpmn:endEvent id="EndEvent_1">
+      <bpmn:incoming>Flow_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+</bpmn:definitions>

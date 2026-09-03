@@ -8,6 +8,47 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestExtensionsController(BaseTest):
+    def test_extension_returns_structured_value_from_resolver(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED", True):
+            process_model = self.create_group_and_model_with_bpmn(
+                client=client,
+                user=with_super_admin_user,
+                process_group_id="extensions",
+                process_model_id="expression_resolver_stub",
+                bpmn_file_location="expression_resolver_stub",
+            )
+
+            response = client.post(
+                f"/v1.0/extensions/{self.modify_process_identifier_for_path_param(process_model.id)}",
+                headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+                json={
+                    "extension_input": {
+                        "expression": "hello",
+                        "reference_instant": "2026-08-30T18:00:00Z",
+                        "time_zone": "America/New_York",
+                        "exclamation_marks": 3,
+                    }
+                },
+            )
+
+            assert response.status_code == 200
+            assert response.json()["task_data"]["result"] == {
+                "status": "valid",
+                "value": {
+                    "expression": "hello",
+                    "text": "HELLO",
+                },
+                "preview": "HELLO",
+                "detail": "5 characters",
+                "assumptions": ["stub"],
+            }
+
     def test_basic_extension(
         self,
         app: Flask,

@@ -10,7 +10,9 @@ import uuid
 from collections.abc import Callable
 from datetime import datetime
 from datetime import timedelta
+from datetime import timezone
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import dateparser
 import pytz
@@ -206,6 +208,8 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "time": time,
             "timedelta": timedelta,
             "uuid": uuid,
+            "ZoneInfo": ZoneInfo,
+            "timezone": timezone,
             **JinjaHelpers.get_helper_mapping(),
         }
 

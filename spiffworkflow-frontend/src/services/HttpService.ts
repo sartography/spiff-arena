@@ -28,6 +28,7 @@ type backendCallProps = {
   httpMethod?: string;
   extraHeaders?: object;
   postBody?: any;
+  signal?: AbortSignal;
 };
 
 export class UnauthenticatedError extends Error {
@@ -93,6 +94,7 @@ const makeCallToBackend = ({
   httpMethod = 'GET',
   extraHeaders = {},
   postBody = {},
+  signal,
 }: backendCallProps) => {
   const headers = getBasicHeaders();
 
@@ -118,6 +120,7 @@ const makeCallToBackend = ({
     headers: new Headers(headers as any),
     method: httpMethod,
     credentials: 'include',
+    signal,
   });
 
   const updatedPath = path.replace(/^\/v1\.0/, '');
