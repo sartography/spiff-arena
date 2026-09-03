@@ -46,8 +46,15 @@ def scan(page: Page, name: str, context: str | list | dict | None = None) -> Axe
     # though the final, settled state is fine. Wait for in-flight
     # animations/transitions to finish before scanning, so results reflect
     # the real rendered page rather than an animation-timing artifact.
+    # Note: infinite-iteration animations (e.g. loading spinners) never settle
+    # their `finished` promise, and Playwright's evaluate awaits the returned
+    # promise -- waiting on them would hang until the test timeout. Filter
+    # them out; only finite animations/transitions (like the .fadeIn above)
+    # are relevant to scan timing.
     page.evaluate(
-        "() => Promise.all(document.getAnimations().map((a) => a.finished)).catch(() => {})"
+        "() => Promise.all(document.getAnimations()"
+        ".filter((a) => a.effect && Number.isFinite(a.effect.getComputedTiming().iterations))"
+        ".map((a) => a.finished)).catch(() => {})"
     )
     results = _AXE.run(
         page,
