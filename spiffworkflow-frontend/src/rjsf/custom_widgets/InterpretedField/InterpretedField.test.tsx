@@ -1,7 +1,17 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import enUS from '../../../locales/en_us/translation.json';
 import CustomForm from '../../../components/CustomForm';
+
+// Resolve translation keys through the English dictionary so assertions
+// read as user-facing text while still proving the keys exist.
+vi.mock('react-i18next', async (importOriginal) => ({
+  ...((await importOriginal()) as object),
+  useTranslation: () => ({
+    t: (key: string) => (enUS as Record<string, string>)[key] ?? key,
+  }),
+}));
 
 const { makeCallToBackend } = vi.hoisted(() => ({
   makeCallToBackend: vi.fn(),

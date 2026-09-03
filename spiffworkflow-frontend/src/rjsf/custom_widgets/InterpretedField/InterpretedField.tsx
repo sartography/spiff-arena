@@ -22,6 +22,7 @@ import {
   Typography,
 } from '@mui/material';
 import { KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import HttpService from '../../../services/HttpService';
 
 /**
@@ -94,6 +95,7 @@ export default function InterpretedField({
   readonly,
   label,
 }: FieldProps<Record<string, unknown>>) {
+  const { t } = useTranslation();
   const options = getUiOptions(uiSchema || {});
   const resolver = String(options.resolver || '');
   const idleMilliseconds = Number(options.idleMilliseconds || 500);
@@ -114,9 +116,13 @@ export default function InterpretedField({
       ? options.editUiSchema
       : undefined
   ) as Record<string, unknown> | undefined;
-  const editButtonLabel = String(options.editButtonLabel || 'Adjust values');
+  const editButtonLabel = String(
+    options.editButtonLabel || t('interpreted_field_adjust_values'),
+  );
   const revalidateEdits = options.revalidateEdits !== false;
-  const manualEditNote = String(options.manualEditNote || 'Edited manually');
+  const manualEditNote = String(
+    options.manualEditNote || t('interpreted_field_edited_manually'),
+  );
 
   const [expression, setExpression] = useState(
     typeof formData.expression === 'string' ? formData.expression : '',
@@ -153,8 +159,15 @@ export default function InterpretedField({
   const rootRef = useRef<HTMLDivElement>(null);
   const expressionRef = useRef(expression);
   expressionRef.current = expression;
+  // Mirror of the structured value for asynchronous callbacks: the parse
+  // scheduled by the debounce timer closes over its render's formData,
+  // which a freshly resolved result may already have replaced.
+  const formDataRef = useRef(formData);
+  formDataRef.current = formData;
 
-  const emptyMessage = String(options.emptyMessage || 'Enter an expression.');
+  const emptyMessage = String(
+    options.emptyMessage || t('interpreted_field_enter_expression'),
+  );
   const examples = String(options.examples || '');
   const placeholder = String(options.placeholder || '');
 
@@ -224,7 +237,7 @@ export default function InterpretedField({
     if (!value.trim() && !valueOverride) {
       pendingParseRef.current = false;
       loadingRef.current = false;
-      if (hasStructuredData(formData)) {
+      if (hasStructuredData(formDataRef.current)) {
         // The expression was cleared but structured data remains. That is the
         // same state an existing record opens in, so it must stay submittable.
         setAssumptions([]);
@@ -232,7 +245,7 @@ export default function InterpretedField({
         setMessage(null);
         lastResultRef.current = { expression: value, status: 'valid' };
         onChange(
-          { ...formData, expression: value },
+          { ...formDataRef.current, expression: value },
           fieldPathId.path,
           {},
           fieldPathId.$id,
@@ -240,15 +253,15 @@ export default function InterpretedField({
         maybeSubmitAfterParse();
         return;
       }
-      emitError({ ...formData, expression: value }, emptyMessage);
+      emitError({ ...formDataRef.current, expression: value }, emptyMessage);
       return;
     }
     if (!resolver.match(/^[a-zA-Z0-9][a-zA-Z0-9/_-]*$/)) {
       pendingParseRef.current = false;
       loadingRef.current = false;
       emitError(
-        { ...formData, expression: value },
-        'The configured expression resolver is invalid.',
+        { ...formDataRef.current, expression: value },
+        t('interpreted_field_invalid_resolver'),
       );
       return;
     }
@@ -318,7 +331,7 @@ export default function InterpretedField({
         );
         const resultMessage =
           result?.errors?.[0]?.message ||
-          'The expression could not be interpreted.';
+          t('interpreted_field_could_not_interpret');
         emitError({ ...formData, expression: value }, resultMessage);
       },
       failureCallback: (error: { name?: string }) => {
@@ -335,7 +348,7 @@ export default function InterpretedField({
         setLoading(false);
         emitError(
           { ...formData, expression: value },
-          'The expression could not be checked. Your last valid values are unchanged.',
+          t('interpreted_field_check_failed'),
         );
       },
     });
@@ -419,7 +432,7 @@ export default function InterpretedField({
     onChange(
       nextValue,
       fieldPathId.path,
-      errorSchema('Interpretation pending.'),
+      errorSchema(t('interpreted_field_interpretation_pending')),
       fieldPathId.$id,
     );
     scheduleParse(value);
@@ -432,7 +445,7 @@ export default function InterpretedField({
     onChange(
       nextValue,
       fieldPathId.path,
-      errorSchema('Interpretation pending.'),
+      errorSchema(t('interpreted_field_interpretation_pending')),
       fieldPathId.$id,
     );
     if (timerRef.current) {
@@ -505,7 +518,7 @@ export default function InterpretedField({
         // The expression is optional: existing records without one stay
         // submittable, and a DOM-required control here would silently block
         // native form submission while it is empty.
-        disabled={disabled || loading}
+        disabled={disabled}
         slotProps={{
           htmlInput: {
             readOnly: readonly,
@@ -523,7 +536,7 @@ export default function InterpretedField({
             endAdornment: expression ? (
               <InputAdornment position="end">
                 <IconButton
-                  aria-label="Clear expression"
+                  aria-label={t('interpreted_field_clear_expression')}
                   size="small"
                   edge="end"
                   disabled={disabled || readonly}
@@ -571,7 +584,9 @@ export default function InterpretedField({
           role="status"
         >
           <CircularProgress size={16} />
-          <Typography variant="body2">Interpreting expression...</Typography>
+          <Typography variant="body2">
+            {t('interpreted_field_interpreting_expression')}
+          </Typography>
         </Box>
       )}
       {showValidCard && (
@@ -612,7 +627,7 @@ export default function InterpretedField({
                       size="small"
                       color="warning"
                       variant="outlined"
-                      title="Assumption made by the resolver — verify before submitting."
+                      title={t('interpreted_field_assumption_hint')}
                     />
                   ))}
                 </Box>
@@ -641,7 +656,7 @@ export default function InterpretedField({
               display="block"
               gutterBottom
             >
-              Last valid interpretation
+              {t('interpreted_field_last_valid_interpretation')}
             </Typography>
             {preview && <Typography variant="body2">{preview}</Typography>}
             {detail && (
@@ -655,11 +670,11 @@ export default function InterpretedField({
       {choices.length > 0 && (
         <Stack spacing={1}>
           <Typography variant="body2" fontWeight="medium">
-            Which did you mean?
+            {t('interpreted_field_which_did_you_mean')}
           </Typography>
-          {choices.map((choice) => (
+          {choices.map((choice, index) => (
             <Button
-              key={choice.label}
+              key={`${choice.label}-${index}`}
               variant="outlined"
               onClick={() => parse(expressionRef.current, choice.value)}
               sx={{ justifyContent: 'flex-start', textAlign: 'left' }}
@@ -690,6 +705,7 @@ export default function InterpretedField({
                 }}
                 formData={editDraft}
                 validator={rjsfValidator}
+                liveValidate
                 showErrorList={false}
                 noHtml5Validate
                 onChange={(event: any) => {
@@ -712,7 +728,7 @@ export default function InterpretedField({
                   }}
                 >
                   <Button size="small" onClick={() => setEditing(false)}>
-                    Cancel
+                    {t('cancel')}
                   </Button>
                   <Button
                     size="small"
@@ -720,7 +736,7 @@ export default function InterpretedField({
                     disabled={editErrors}
                     onClick={applyEdits}
                   >
-                    Apply
+                    {t('apply')}
                   </Button>
                 </Box>
               </MuiForm>
