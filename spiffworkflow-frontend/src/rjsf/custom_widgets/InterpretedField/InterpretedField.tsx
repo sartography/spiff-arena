@@ -2,12 +2,7 @@ import { FieldProps, getUiOptions } from '@rjsf/utils';
 import { Form as MuiForm } from '@rjsf/mui';
 // eslint-disable-next-line import-x/no-rename-default
 import rjsfValidator from '@rjsf/validator-ajv8';
-import {
-  AutoAwesome,
-  CheckCircleOutline,
-  Close,
-  Tune,
-} from '@mui/icons-material';
+import { CheckCircleOutline, Close, Tune } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -523,11 +518,6 @@ export default function InterpretedField({
             placeholder,
           },
           input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <AutoAwesome fontSize="small" color="action" />
-              </InputAdornment>
-            ),
             endAdornment: expression ? (
               <InputAdornment position="end">
                 <IconButton
