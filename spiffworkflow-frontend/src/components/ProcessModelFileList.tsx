@@ -241,7 +241,7 @@ export default function ProcessModelFileList({
   }
 
   return (
-    <TableContainer>
+    <TableContainer tabIndex={0}>
       <Table size="medium" className="process-model-file-table">
         <TableHead>
           <TableRow>

@@ -154,7 +154,7 @@ export default function SecretShow() {
           </Can>
         </Stack>
         <div>
-          <TableContainer component={Paper}>
+          <TableContainer component={Paper} tabIndex={0}>
             <Table>
               <TableHead>
                 <TableRow>

@@ -33,6 +33,7 @@ export default tseslint.config(
         'plugin:import-x/errors',
         'plugin:import-x/typescript',
         'plugin:import-x/warnings',
+        'plugin:jsx-a11y/recommended',
         'plugin:prettier/recommended',
         'plugin:react-hooks/recommended',
         'plugin:react/recommended',
@@ -46,7 +47,13 @@ export default tseslint.config(
         ecmaVersion: 'latest',
         sourceType: 'module',
       },
-      plugins: ['@typescript-eslint', 'react', 'react-hooks', 'sonarjs'],
+      plugins: [
+        '@typescript-eslint',
+        'jsx-a11y',
+        'react',
+        'react-hooks',
+        'sonarjs',
+      ],
       rules: {
         // according to https://github.com/typescript-eslint/typescript-eslint/issues/2621, You should turn off the eslint core rule and turn on the typescript-eslint rule
         // but not sure which of the above "extends" statements is maybe bringing in eslint core
@@ -72,8 +79,15 @@ export default tseslint.config(
         'react-hooks/use-memo': 'off',
         // FIXME: turn this back on someday
         'react/jsx-key': 'off',
+        // autofocus is a best-practice rule rather than a WCAG 2.1 AA failure
+        // (axe-core classifies it the same way), and we rely on it in several
+        // modals and filter fields. Tracked in the accessibility backlog.
         'jsx-a11y/no-autofocus': 'off',
-        'jsx-a11y/label-has-associated-control': 'off',
+        // Baseline exception: one known violation in ProcessModelNewExperimental.tsx
+        // (an <h1> carrying click/keydown handlers). Turning this on requires a
+        // markup change, so it is tracked in the accessibility backlog rather than
+        // fixed here. Re-enable once that view is remediated.
+        'jsx-a11y/no-noninteractive-element-interactions': 'off',
         'no-console': 'off',
         'react/jsx-filename-extension': [
           'warn',

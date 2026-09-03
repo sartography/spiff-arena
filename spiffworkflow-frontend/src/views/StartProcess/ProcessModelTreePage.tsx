@@ -195,27 +195,46 @@ function CatalogAccordion({
   onToggle: () => void;
   title: ReactNode;
 }) {
+  const panelId = `${ariaControls.toLowerCase().replace(/\s+/g, '-')}-panel`;
   return (
-    <Accordion expanded={expanded} onChange={() => onToggle()}>
-      <AccordionSummary
-        expandIcon={<ExpandMoreIcon />}
-        aria-controls={ariaControls}
-      >
+    <Box sx={{ position: 'relative' }}>
+      <Accordion expanded={expanded} onChange={() => onToggle()}>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls={panelId}
+          id={`${panelId}-header`}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+              // leave room so the title doesn't render under the action button,
+              // which is rendered as a sibling overlay below (not nested inside
+              // this button) so we don't put an interactive control inside one
+              pr: action ? 6 : 2,
+            }}
+          >
+            <Typography>{title}</Typography>
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails>{children}</AccordionDetails>
+      </Accordion>
+      {action && (
         <Box
           sx={{
+            position: 'absolute',
+            top: 4,
+            right: 40,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            width: '100%',
-            pr: 2,
           }}
         >
-          <Typography>{title}</Typography>
           {action}
         </Box>
-      </AccordionSummary>
-      <AccordionDetails>{children}</AccordionDetails>
-    </Accordion>
+      )}
+    </Box>
   );
 }
 
@@ -285,6 +304,9 @@ function ProcessGroupHeader({
           <Can I="PUT" a={targetUris.processGroupShowPath} ability={ability}>
             <IconButton
               data-testid="edit-process-group-button"
+              aria-label={t('edit_process_group_with_id', {
+                id: currentProcessGroup.id,
+              })}
               href={`/process-groups/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/edit`}
             >
               <Edit />
@@ -1136,63 +1158,71 @@ export default function ProcessModelTreePage({
     return (
       <Box
         key={model.id}
-        role="button"
-        tabIndex={0}
         data-testid={`group-tree-model-${modifyProcessIdentifierForPathParam(model.id)}`}
-        onClick={() => navigateToViewModel(model)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            navigateToViewModel(model);
-          }
-        }}
         sx={{
           display: 'flex',
           alignItems: 'center',
           gap: 1,
-          cursor: 'pointer',
           py: 0.75,
           pl: ctx.depth * 2.5 + 3,
           pr: 2,
           borderBottom: '1px solid',
           borderColor: 'borders.primary',
           backgroundColor: 'background.paper',
-          '&:hover': { backgroundColor: 'action.hover' },
         }}
       >
-        <Box sx={{ flex: '1 1 auto', minWidth: 0, maxWidth: '100%' }}>
-          <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
-            {model.display_name}
-          </Typography>
-          {modelDescription ? (
+        <Box
+          role="button"
+          tabIndex={0}
+          onClick={() => navigateToViewModel(model)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              navigateToViewModel(model);
+            }
+          }}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            cursor: 'pointer',
+            flex: '1 1 auto',
+            minWidth: 0,
+            '&:hover': { backgroundColor: 'action.hover' },
+          }}
+        >
+          <Box sx={{ flex: '1 1 auto', minWidth: 0, maxWidth: '100%' }}>
+            <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
+              {model.display_name}
+            </Typography>
+            {modelDescription ? (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                title={model.description || undefined}
+                sx={processDescriptionSx}
+              >
+                {modelDescription}
+              </Typography>
+            ) : null}
+          </Box>
+          {stats && stats.instance_count > 0 ? (
             <Typography
               variant="caption"
               color="text.secondary"
-              title={model.description || undefined}
-              sx={processDescriptionSx}
+              noWrap
+              sx={{ flexShrink: 0 }}
             >
-              {modelDescription}
+              {t('n_runs', { count: stats.instance_count })}
             </Typography>
           ) : null}
         </Box>
-        {stats && stats.instance_count > 0 ? (
-          <Typography
-            variant="caption"
-            color="text.disabled"
-            noWrap
-            sx={{ flexShrink: 0 }}
-          >
-            {t('n_runs', { count: stats.instance_count })}
-          </Typography>
-        ) : null}
         <Tooltip title={t('start_process')}>
           <IconButton
             color="primary"
             size="small"
             aria-label={t('start_process')}
-            onClick={(e) => {
-              e.stopPropagation();
-              navigateToStartModel(model);
-            }}
+            onClick={() => navigateToStartModel(model)}
             sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
           >
             <PlayArrow fontSize="small" />
@@ -1201,10 +1231,7 @@ export default function ProcessModelTreePage({
         <Button
           variant="contained"
           size="small"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigateToStartModel(model);
-          }}
+          onClick={() => navigateToStartModel(model)}
           sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
         >
           {t('start_process')}
@@ -1451,6 +1478,7 @@ export default function ProcessModelTreePage({
                         >
                           <IconButton
                             size="small"
+                            aria-label={t('add_process_group')}
                             onClick={(e) => e.stopPropagation()}
                             href={`/process-groups/new${currentParentGroupIdSearchParam()}`}
                           >
@@ -1483,6 +1511,7 @@ export default function ProcessModelTreePage({
                         action={
                           <IconButton
                             size="small"
+                            aria-label={t('add_data_store')}
                             onClick={(e) => e.stopPropagation()}
                             data-testid="add-data-store-button"
                             href={`/data-stores/new${currentParentGroupIdSearchParam()}`}

@@ -558,6 +558,7 @@ export default function ProcessInstanceListTable({
           <IconButton
             href={piLink}
             target="_blank"
+            aria-label={t('open_process_instance')}
             style={{ width: '50px' }}
             size="small"
           >
@@ -612,7 +613,7 @@ export default function ProcessInstanceListTable({
     }
 
     return (
-      <TableContainer>
+      <TableContainer tabIndex={0}>
         <Table size="medium" {...tableProps} className="process-instance-list">
           <TableHead>
             <TableRow>

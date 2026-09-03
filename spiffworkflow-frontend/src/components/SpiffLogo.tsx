@@ -1,29 +1,33 @@
-import { Stack, Typography } from '@mui/material';
-import SpiffIcon from '../assets/icons/spiff-icon-cyan.svg';
+import { Box, useTheme } from '@mui/material';
+import SpiffLogoMark from '../assets/icons/spiffworks_arena.svg';
 
 /**
- * The Spiff "S" logo and approved text
+ * The SpiffWorks Arena logo, wordmark included in the SVG itself.
+ *
+ * The artwork is baked as near-black shapes on a transparent background, so
+ * it disappears against the dark-mode background. There's no separate
+ * light-on-dark asset, so we invert it in dark mode -- since the source is
+ * effectively pure black-on-transparent, this cleanly produces near-white
+ * on transparent rather than a color shift.
  */
 export default function SpiffLogo() {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   return (
-    <Stack
-      direction="row"
+    <Box
       sx={{
+        display: 'inline-flex',
         alignItems: 'center',
-        gap: 2,
-        width: '100%',
+        maxWidth: '100%',
+        '& svg': {
+          height: 42,
+          width: 'auto',
+          maxWidth: '100%',
+          filter: isDark ? 'invert(1)' : 'none',
+        },
       }}
     >
-      <SpiffIcon />
-      <Typography
-        sx={{
-          color: 'primary.main',
-          fontSize: 22,
-          display: { xs: 'none', md: 'block' },
-        }}
-      >
-        Spiffworkflow
-      </Typography>
-    </Stack>
+      <SpiffLogoMark />
+    </Box>
   );
 }

@@ -453,7 +453,7 @@ export default function MessageInstanceList({ processInstanceId }: OwnProps) {
       );
     });
     return (
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} tabIndex={0}>
         <Table>
           <TableHead>
             <TableRow>

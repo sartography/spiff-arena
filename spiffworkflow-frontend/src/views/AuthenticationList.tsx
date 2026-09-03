@@ -81,7 +81,7 @@ export default function AuthenticationList() {
         );
       });
       return (
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} tabIndex={0}>
           <Table>
             <TableHead>
               <TableRow>

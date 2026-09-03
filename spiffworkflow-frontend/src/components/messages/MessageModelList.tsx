@@ -500,7 +500,7 @@ export default function MessageModelList({
   }, [canUpdateProcessGroup, deleteMessageModel, paginatedMessageModels, t]);
 
   const table = (
-    <TableContainer component={Paper} variant="outlined">
+    <TableContainer component={Paper} variant="outlined" tabIndex={0}>
       <Table size="small">
         <TableHead>
           <TableRow>
