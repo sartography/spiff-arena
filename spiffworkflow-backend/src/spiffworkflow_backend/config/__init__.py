@@ -163,13 +163,71 @@ def _set_up_open_id_scopes(app: Flask) -> None:
     app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES"] = scopes
 
 
+def _handle_deprecated_frontend_url_config(app: Flask) -> None:
+    """Reconcile SPIFFWORKFLOW_BACKEND_FRONTEND_URL with its deprecated alias.
+
+    SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND is deprecated in favor of
+    SPIFFWORKFLOW_BACKEND_FRONTEND_URL. The new variable takes precedence.
+    Both app.config keys are kept in sync so code reading either key works.
+    """
+    new_key = "SPIFFWORKFLOW_BACKEND_FRONTEND_URL"
+    old_key = "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"
+    default_frontend_url = "http://localhost:7001"
+
+    new_env = os.environ.get(new_key)
+    old_env = os.environ.get(old_key)
+    if new_env == "":
+        new_env = None
+    if old_env == "":
+        old_env = None
+
+    new_val = app.config.get(new_key)
+    old_val = app.config.get(old_key)
+
+    if old_env is not None:
+        app.logger.warning(
+            "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND is deprecated. "
+            "Please use SPIFFWORKFLOW_BACKEND_FRONTEND_URL instead."
+        )
+
+    if new_env is not None:
+        # New variable explicitly set: it wins. Keep deprecated alias in sync.
+        if old_env is not None and old_env != new_env:
+            app.logger.warning(
+                "Both SPIFFWORKFLOW_BACKEND_FRONTEND_URL and deprecated "
+                "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND are set with different values. "
+                "Using SPIFFWORKFLOW_BACKEND_FRONTEND_URL."
+            )
+        app.config[old_key] = new_val
+        return
+
+    # New variable not set via environment.
+    if old_val not in (None, ""):
+        # Old alias customized via environment or config file.
+        if new_val in (None, "", default_frontend_url):
+            app.config[new_key] = old_val
+        else:
+            # Both customized via config files with different values: new wins.
+            if old_val != new_val:
+                app.logger.warning(
+                    "Both SPIFFWORKFLOW_BACKEND_FRONTEND_URL and deprecated "
+                    "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND are configured with different values. "
+                    "Using SPIFFWORKFLOW_BACKEND_FRONTEND_URL."
+                )
+            app.config[old_key] = new_val
+        return
+
+    # Neither customized: keep alias in sync with new value.
+    app.config[old_key] = new_val
+
+
 # see the message in the ConfigurationError below for why we are checking this.
 # we really do not want this to raise when there is not a problem, so there are lots of return statements littered throughout.
 def _check_for_incompatible_frontend_and_backend_urls(app: Flask) -> None:
     if not app.config.get("SPIFFWORKFLOW_BACKEND_CHECK_FRONTEND_AND_BACKEND_URL_COMPATIBILITY"):
         return
 
-    frontend_url = app.config.get("SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND")
+    frontend_url = app.config.get("SPIFFWORKFLOW_BACKEND_FRONTEND_URL")
     backend_url = app.config.get("SPIFFWORKFLOW_BACKEND_URL")
 
     if frontend_url is None or backend_url is None:
@@ -193,7 +251,7 @@ def _check_for_incompatible_frontend_and_backend_urls(app: Flask) -> None:
         return
 
     raise ConfigurationError(
-        "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND and SPIFFWORKFLOW_BACKEND_URL are incompatible. We need backend to set"
+        "SPIFFWORKFLOW_BACKEND_FRONTEND_URL and SPIFFWORKFLOW_BACKEND_URL are incompatible. We need backend to set"
         " cookies for frontend, so they need to be on the same domain. A common setup is to have frontend on"
         " example.com and backend on api.example.com. If you do not need this functionality, you can avoid this check"
         " by setting environment variable SPIFFWORKFLOW_BACKEND_CHECK_FRONTEND_AND_BACKEND_URL_COMPATIBILITY=false"
@@ -341,6 +399,7 @@ def setup_config(app: Flask) -> None:
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data
     _set_up_tenant_specific_fields_as_list_of_strings(app)
+    _handle_deprecated_frontend_url_config(app)
     _check_for_incompatible_frontend_and_backend_urls(app)
     _check_extension_api_configs(app)
     _check_configs_dependent_on_celery(app, "SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED")

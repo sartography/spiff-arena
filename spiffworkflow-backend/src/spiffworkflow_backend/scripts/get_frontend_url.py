@@ -16,4 +16,4 @@ class GetFrontendUrl(Script):
         return """Return the url to the frontend."""
 
     def run(self, script_attributes_context: ScriptAttributesContext, *args: Any, **kwargs: Any) -> Any:
-        return current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
+        return current_app.config["SPIFFWORKFLOW_BACKEND_FRONTEND_URL"]
