@@ -179,9 +179,7 @@ def _set_up_open_id_scopes(app: Flask) -> None:
 def _handle_deprecated_frontend_url_config(app: Flask) -> None:
     # SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND is deprecated in favor of
     # SPIFFWORKFLOW_BACKEND_FRONTEND_URL, which takes precedence.
-    if _use_deprecated_env_value(
-        app, "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", "SPIFFWORKFLOW_BACKEND_FRONTEND_URL"
-    ):
+    if _use_deprecated_env_value(app, "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", "SPIFFWORKFLOW_BACKEND_FRONTEND_URL"):
         app.config["SPIFFWORKFLOW_BACKEND_FRONTEND_URL"] = app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
 
 
