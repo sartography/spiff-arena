@@ -1348,7 +1348,10 @@ export default function ProcessModelTreePage({
                   groupId: requestedProcessGroupId,
                 })}
               </Typography>
-              <Button variant="contained" href={withBasePath('/process-groups')}>
+              <Button
+                variant="contained"
+                href={withBasePath('/process-groups')}
+              >
                 {t('back_to_process_groups')}
               </Button>
             </Stack>

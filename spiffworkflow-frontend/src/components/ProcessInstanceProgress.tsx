@@ -142,7 +142,10 @@ export default function ProcessInstanceProgress({
         <>
           <ErrorDisplayStateless errorObject={currentPageError} />
           <p>
-            Go to <a href={withBasePath(processInstanceShowPageUrl)}>Process Instance</a>
+            Go to{' '}
+            <a href={withBasePath(processInstanceShowPageUrl)}>
+              Process Instance
+            </a>
           </p>
         </>
       );

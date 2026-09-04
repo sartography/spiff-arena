@@ -100,9 +100,7 @@ export default function ProcessInstanceRun({
     const processInstanceId = processInstance.id;
     // Strip the base path since consumers pass this value to navigate(),
     // which re-applies the router basename.
-    setLastProcessInstanceRunLocation(
-      stripBasePath(window.location.pathname),
-    );
+    setLastProcessInstanceRunLocation(stripBasePath(window.location.pathname));
 
     if (processInstance.process_model_uses_queued_execution) {
       navigate(
