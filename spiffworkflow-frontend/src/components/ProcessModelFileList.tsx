@@ -24,6 +24,7 @@ import { ProcessFile } from '../interfaces';
 import SpiffTooltip from './SpiffTooltip';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
+import { withBasePath } from '../helpers/basePath';
 
 interface ProcessModelFileListProps {
   processModel: any;
@@ -116,7 +117,7 @@ export default function ProcessModelFileList({
             <IconButton
               aria-label={`${actionWord} ${t('file')}`}
               data-testid={`edit-file-${processModelFile.name.replace('.', '-')}`}
-              href={editUrl}
+              href={withBasePath(editUrl as string)}
             >
               {icon}
             </IconButton>

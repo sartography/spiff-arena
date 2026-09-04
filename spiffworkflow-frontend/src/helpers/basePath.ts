@@ -8,6 +8,10 @@ export const getRouterBasename = (baseUrl?: string): string | undefined => {
 };
 
 export const withBasePath = (path: string, baseUrl?: string): string => {
+  // Leave absolute URLs (https://..., mailto:..., etc.) untouched.
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(path)) {
+    return path;
+  }
   const basename = getRouterBasename(baseUrl);
   if (!basename) {
     return path;
