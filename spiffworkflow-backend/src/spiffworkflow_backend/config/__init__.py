@@ -150,17 +150,37 @@ def _check_configs_dependent_on_celery(app: Flask, config: str) -> None:
         )
 
 
+def _use_deprecated_env_value(app: Flask, old_key: str, new_key: str, extra_message: str = "") -> bool:
+    """Warn if deprecated old_key is set; return True if its value should be used over new_key.
+
+    The new variable takes precedence: returns True only when old_key is set in the
+    environment and new_key is not.
+    """
+    if os.environ.get(old_key) in (None, ""):
+        return False
+    app.logger.warning(f"{old_key} is deprecated. Please use {new_key} instead.{extra_message}")
+    return os.environ.get(new_key) in (None, "")
+
+
 def _set_up_open_id_scopes(app: Flask) -> None:
-    scopes = app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES"].split(",")
-    if os.environ.get("SPIFFWORKFLOW_BACKEND_OPENID_SCOPE") is not None:
-        app.logger.warning(
-            "SPIFFWORKFLOW_BACKEND_OPENID_SCOPE is deprecated. "
-            "Please use SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES instead which expects a comma separated list like: profile,email"
-        )
-        if os.environ.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES") is None:
-            scopes = app.config["SPIFFWORKFLOW_BACKEND_OPENID_SCOPE"].split(" ")
+    if _use_deprecated_env_value(
+        app,
+        "SPIFFWORKFLOW_BACKEND_OPENID_SCOPE",
+        "SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES",
+        " It expects a comma separated list like: profile,email",
+    ):
+        scopes = app.config["SPIFFWORKFLOW_BACKEND_OPENID_SCOPE"].split(" ")
+    else:
+        scopes = app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES"].split(",")
 
     app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES"] = scopes
+
+
+def _handle_deprecated_frontend_url_config(app: Flask) -> None:
+    # SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND is deprecated in favor of
+    # SPIFFWORKFLOW_BACKEND_FRONTEND_URL, which takes precedence.
+    if _use_deprecated_env_value(app, "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", "SPIFFWORKFLOW_BACKEND_FRONTEND_URL"):
+        app.config["SPIFFWORKFLOW_BACKEND_FRONTEND_URL"] = app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
 
 
 # see the message in the ConfigurationError below for why we are checking this.
@@ -169,7 +189,7 @@ def _check_for_incompatible_frontend_and_backend_urls(app: Flask) -> None:
     if not app.config.get("SPIFFWORKFLOW_BACKEND_CHECK_FRONTEND_AND_BACKEND_URL_COMPATIBILITY"):
         return
 
-    frontend_url = app.config.get("SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND")
+    frontend_url = app.config.get("SPIFFWORKFLOW_BACKEND_FRONTEND_URL")
     backend_url = app.config.get("SPIFFWORKFLOW_BACKEND_URL")
 
     if frontend_url is None or backend_url is None:
@@ -193,7 +213,7 @@ def _check_for_incompatible_frontend_and_backend_urls(app: Flask) -> None:
         return
 
     raise ConfigurationError(
-        "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND and SPIFFWORKFLOW_BACKEND_URL are incompatible. We need backend to set"
+        "SPIFFWORKFLOW_BACKEND_FRONTEND_URL and SPIFFWORKFLOW_BACKEND_URL are incompatible. We need backend to set"
         " cookies for frontend, so they need to be on the same domain. A common setup is to have frontend on"
         " example.com and backend on api.example.com. If you do not need this functionality, you can avoid this check"
         " by setting environment variable SPIFFWORKFLOW_BACKEND_CHECK_FRONTEND_AND_BACKEND_URL_COMPATIBILITY=false"
@@ -341,6 +361,7 @@ def setup_config(app: Flask) -> None:
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data
     _set_up_tenant_specific_fields_as_list_of_strings(app)
+    _handle_deprecated_frontend_url_config(app)
     _check_for_incompatible_frontend_and_backend_urls(app)
     _check_extension_api_configs(app)
     _check_configs_dependent_on_celery(app, "SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED")

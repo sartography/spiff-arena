@@ -314,7 +314,7 @@ By following these guidelines, you can create custom tasks or services tailored 
          ...
          SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL: "http://${HOSTNAME}:${SPIFF_BACKEND_PORT:-8000}/openid"
          ...
-         SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND: "http://${HOSTNAME}:${SPIFFWORKFLOW_FRONTEND_PORT:-8001}"
+         SPIFFWORKFLOW_BACKEND_FRONTEND_URL: "http://${HOSTNAME}:${SPIFFWORKFLOW_FRONTEND_PORT:-8001}"
        ...
        extra_hosts:
          - "${HOSTNAME}:10.89.0.1"
@@ -462,7 +462,7 @@ If you encounter errors, first verify the current settings of your environment v
 
 ```bash
 from flask import current_app
-print(current_app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND'])
+print(current_app.config['SPIFFWORKFLOW_BACKEND_FRONTEND_URL'])
 ```
 
 If issues persist, update to the current backend image or the source branch that matches your deployment, then review the backend logs for the specific failing environment variable.

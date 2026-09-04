@@ -78,4 +78,4 @@ def authentication_callback(
         response = request.args["response"]
         SecretService.update_secret(f"{service}/{auth_method}", response, g.user.id, create_if_not_exists=True)
     db.session.commit()
-    return redirect(f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/configuration")
+    return redirect(f"{current_app.config['SPIFFWORKFLOW_BACKEND_FRONTEND_URL']}/configuration")

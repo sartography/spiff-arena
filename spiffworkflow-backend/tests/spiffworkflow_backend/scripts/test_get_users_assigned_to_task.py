@@ -114,11 +114,11 @@ class TestGetUsersAssignedToTask(BaseTest):
             process_model_identifier=process_model.id,
         )
 
-        frontend_url = app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
+        frontend_url = app.config["SPIFFWORKFLOW_BACKEND_FRONTEND_URL"]
         expected_task_url = f"{frontend_url}/tasks/{process_instance.id}/{task_guid}"
 
         assert GetUrlForTask().run(script_attributes_context, task_guid=task_guid) == expected_task_url
-        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", f"{frontend_url}/"):
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_FRONTEND_URL", f"{frontend_url}/"):
             assert GetUrlForTask().run(script_attributes_context, task_guid=task_guid) == expected_task_url
         assert GetTaskPotentialOwners().run(script_attributes_context, task_guid=task_guid) == {
             "users": ["testuser1", "testuser2", "waiting@example.com"],
