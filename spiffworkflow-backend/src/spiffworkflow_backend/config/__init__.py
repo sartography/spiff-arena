@@ -183,8 +183,6 @@ def _handle_deprecated_frontend_url_config(app: Flask) -> None:
         app, "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", "SPIFFWORKFLOW_BACKEND_FRONTEND_URL"
     ):
         app.config["SPIFFWORKFLOW_BACKEND_FRONTEND_URL"] = app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
-    # Keep the deprecated alias in sync so code reading either key works.
-    app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"] = app.config["SPIFFWORKFLOW_BACKEND_FRONTEND_URL"]
 
 
 # see the message in the ConfigurationError below for why we are checking this.
