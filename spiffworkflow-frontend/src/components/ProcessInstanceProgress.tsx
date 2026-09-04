@@ -18,6 +18,7 @@ import {
   errorForDisplayFromProcessInstanceErrorDetail,
 } from './ErrorDisplay';
 import { getAndRemoveLastProcessInstanceRunLocation } from '../services/LocalStorageService';
+import { withBasePath } from '../helpers/basePath';
 
 type OwnProps = {
   processInstanceId: number;
@@ -141,7 +142,7 @@ export default function ProcessInstanceProgress({
         <>
           <ErrorDisplayStateless errorObject={currentPageError} />
           <p>
-            Go to <a href={processInstanceShowPageUrl}>Process Instance</a>
+            Go to <a href={withBasePath(processInstanceShowPageUrl)}>Process Instance</a>
           </p>
         </>
       );

@@ -69,6 +69,7 @@ import {
 import { useUriListForPermissions } from '../../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../../hooks/PermissionService';
 import ConfirmIconButton from '../../components/ConfirmIconButton';
+import { withBasePath } from '../../helpers/basePath';
 import HttpService from '../../services/HttpService';
 import DataStoreCard from '../../components/DataStoreCard';
 import CollapsibleGroupTree, {
@@ -287,7 +288,9 @@ function ProcessGroupHeader({
           ? crumbs.map((crumb) => (
               <Link
                 key={crumb.id}
-                href={`/process-groups/${modifyProcessIdentifierForPathParam(crumb.id)}`}
+                href={withBasePath(
+                  `/process-groups/${modifyProcessIdentifierForPathParam(crumb.id)}`,
+                )}
                 data-testid={`process-group-breadcrumb-${crumb.displayName}`}
                 onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
                   e.preventDefault();
@@ -307,7 +310,9 @@ function ProcessGroupHeader({
               aria-label={t('edit_process_group_with_id', {
                 id: currentProcessGroup.id,
               })}
-              href={`/process-groups/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/edit`}
+              href={withBasePath(
+                `/process-groups/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/edit`,
+              )}
             >
               <Edit />
             </IconButton>
@@ -464,7 +469,7 @@ function GroupRowActions({
         {canEditGroup ? (
           <MenuItem
             component="a"
-            href={`/process-groups/${modifiedGroupId}/edit`}
+            href={withBasePath(`/process-groups/${modifiedGroupId}/edit`)}
             data-testid={`edit-process-group-menu-item-${modifiedGroupId}`}
             onClick={closeMenu}
           >
@@ -554,7 +559,7 @@ function ModelRowActions({
         {canEditModel ? (
           <MenuItem
             component="a"
-            href={`/process-models/${modifiedModelId}/edit`}
+            href={withBasePath(`/process-models/${modifiedModelId}/edit`)}
             data-testid={`edit-process-model-menu-item-${modifiedModelId}`}
             onClick={closeMenu}
           >
@@ -1027,7 +1032,9 @@ export default function ProcessModelTreePage({
   };
 
   const goToParentAfterProcessGroupDelete = (groupId: string) => {
-    window.location.href = processGroupPath(parentProcessGroupId(groupId));
+    window.location.href = withBasePath(
+      processGroupPath(parentProcessGroupId(groupId)),
+    );
   };
 
   const deleteProcessGroup = () => {
@@ -1321,7 +1328,7 @@ export default function ProcessModelTreePage({
                 size="small"
                 startIcon={<Add />}
                 data-testid="add-process-group-button"
-                href={newProcessGroupPath()}
+                href={withBasePath(newProcessGroupPath())}
               >
                 {t('add_process_group')}
               </Button>
@@ -1341,7 +1348,7 @@ export default function ProcessModelTreePage({
                   groupId: requestedProcessGroupId,
                 })}
               </Typography>
-              <Button variant="contained" href="/process-groups">
+              <Button variant="contained" href={withBasePath('/process-groups')}>
                 {t('back_to_process_groups')}
               </Button>
             </Stack>
@@ -1434,7 +1441,9 @@ export default function ProcessModelTreePage({
                                 data-testid="add-process-model-button"
                                 aria-label={t('add_process_model')}
                                 onClick={(e) => e.stopPropagation()}
-                                href={`/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/new`}
+                                href={withBasePath(
+                                  `/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/new`,
+                                )}
                               >
                                 <Add />
                               </IconButton>
@@ -1480,7 +1489,9 @@ export default function ProcessModelTreePage({
                             size="small"
                             aria-label={t('add_process_group')}
                             onClick={(e) => e.stopPropagation()}
-                            href={`/process-groups/new${currentParentGroupIdSearchParam()}`}
+                            href={withBasePath(
+                              `/process-groups/new${currentParentGroupIdSearchParam()}`,
+                            )}
                           >
                             <Add />
                           </IconButton>
@@ -1514,7 +1525,9 @@ export default function ProcessModelTreePage({
                             aria-label={t('add_data_store')}
                             onClick={(e) => e.stopPropagation()}
                             data-testid="add-data-store-button"
-                            href={`/data-stores/new${currentParentGroupIdSearchParam()}`}
+                            href={withBasePath(
+                              `/data-stores/new${currentParentGroupIdSearchParam()}`,
+                            )}
                           >
                             <Add />
                           </IconButton>

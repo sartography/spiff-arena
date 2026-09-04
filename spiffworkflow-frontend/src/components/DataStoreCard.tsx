@@ -6,6 +6,7 @@ import {
   Stack,
 } from '@mui/material';
 import { DataStore } from '../interfaces';
+import { withBasePath } from '../helpers/basePath';
 
 const defaultStyle = {
   ':hover': {
@@ -25,7 +26,9 @@ export default function DataStoreCard({ dataStore }: { dataStore: DataStore }) {
   return (
     <Card elevation={0} sx={defaultStyle}>
       <CardActionArea
-        href={`/data-stores/${dataStore.id}/edit?type=${dataStore.type}&parentGroupId=${dataStore.location}`}
+        href={withBasePath(
+          `/data-stores/${dataStore.id}/edit?type=${dataStore.type}&parentGroupId=${dataStore.location}`,
+        )}
       >
         <CardContent>
           <Stack>

@@ -16,4 +16,13 @@ describe('frontend base path', () => {
     );
     expect(stripBasePath('/workflow/login', '/workflow/')).toEqual('/login');
   });
+
+  it('leaves absolute urls untouched', () => {
+    expect(withBasePath('https://example.com/foo', '/workflow/')).toEqual(
+      'https://example.com/foo',
+    );
+    expect(withBasePath('mailto:hello@example.com', '/workflow/')).toEqual(
+      'mailto:hello@example.com',
+    );
+  });
 });

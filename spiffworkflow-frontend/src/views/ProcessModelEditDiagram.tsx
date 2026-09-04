@@ -82,6 +82,7 @@ import ActiveUsers from '../components/ActiveUsers';
 import useScriptAssistEnabled from '../hooks/useScriptAssistEnabled';
 import useProcessScriptAssistMessage from '../hooks/useProcessScriptAssistQuery';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { withBasePath } from '../helpers/basePath';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import {
   getBpmnMessageSyncStatus,
@@ -237,9 +238,12 @@ export default function ProcessModelEditDiagram() {
         if (sourceLocation) {
           nextSearchParams.set('source_location', sourceLocation);
         }
-        window.open(`/messages?${nextSearchParams.toString()}`, '_blank');
+        window.open(
+          withBasePath(`/messages?${nextSearchParams.toString()}`),
+          '_blank',
+        );
       } else {
-        window.open('/messages?tab=models', '_blank');
+        window.open(withBasePath('/messages?tab=models'), '_blank');
       }
     },
     [modifiedProcessModelId],
