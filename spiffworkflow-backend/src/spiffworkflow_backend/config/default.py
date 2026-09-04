@@ -93,14 +93,9 @@ config_from_env("SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_FUTURE_TASK_EXECUTIO
 
 ### frontend
 config_from_env("SPIFFWORKFLOW_BACKEND_FRONTEND_URL", default="http://localhost:7001")
-# Deprecated alias for SPIFFWORKFLOW_BACKEND_FRONTEND_URL. Kept for backwards compatibility.
-# New code should use SPIFFWORKFLOW_BACKEND_FRONTEND_URL. Reconciliation (with deprecation
+# Deprecated alias for SPIFFWORKFLOW_BACKEND_FRONTEND_URL. Reconciliation (with deprecation
 # warning) happens in spiffworkflow_backend.config.setup_config.
 config_from_env("SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", default=None)
-if environ.get("SPIFFWORKFLOW_BACKEND_FRONTEND_URL") in (None, ""):
-    _deprecated_frontend_url = globals().get("SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND")
-    if _deprecated_frontend_url not in (None, ""):
-        globals()["SPIFFWORKFLOW_BACKEND_FRONTEND_URL"] = _deprecated_frontend_url
 config_from_env("SPIFFWORKFLOW_BACKEND_URL", default="http://localhost:7000")
 config_from_env("SPIFFWORKFLOW_BACKEND_CHECK_FRONTEND_AND_BACKEND_URL_COMPATIBILITY", default=True)
 config_from_env("SPIFFWORKFLOW_BACKEND_ALLOWED_REDIRECT_HOST_ALIASES", default="localhost,127.0.0.1,::1")

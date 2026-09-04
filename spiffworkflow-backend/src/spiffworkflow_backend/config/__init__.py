@@ -150,75 +150,41 @@ def _check_configs_dependent_on_celery(app: Flask, config: str) -> None:
         )
 
 
+def _use_deprecated_env_value(app: Flask, old_key: str, new_key: str, extra_message: str = "") -> bool:
+    """Warn if deprecated old_key is set; return True if its value should be used over new_key.
+
+    The new variable takes precedence: returns True only when old_key is set in the
+    environment and new_key is not.
+    """
+    if os.environ.get(old_key) in (None, ""):
+        return False
+    app.logger.warning(f"{old_key} is deprecated. Please use {new_key} instead.{extra_message}")
+    return os.environ.get(new_key) in (None, "")
+
+
 def _set_up_open_id_scopes(app: Flask) -> None:
-    scopes = app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES"].split(",")
-    if os.environ.get("SPIFFWORKFLOW_BACKEND_OPENID_SCOPE") is not None:
-        app.logger.warning(
-            "SPIFFWORKFLOW_BACKEND_OPENID_SCOPE is deprecated. "
-            "Please use SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES instead which expects a comma separated list like: profile,email"
-        )
-        if os.environ.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES") is None:
-            scopes = app.config["SPIFFWORKFLOW_BACKEND_OPENID_SCOPE"].split(" ")
+    if _use_deprecated_env_value(
+        app,
+        "SPIFFWORKFLOW_BACKEND_OPENID_SCOPE",
+        "SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES",
+        " It expects a comma separated list like: profile,email",
+    ):
+        scopes = app.config["SPIFFWORKFLOW_BACKEND_OPENID_SCOPE"].split(" ")
+    else:
+        scopes = app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES"].split(",")
 
     app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES"] = scopes
 
 
 def _handle_deprecated_frontend_url_config(app: Flask) -> None:
-    """Reconcile SPIFFWORKFLOW_BACKEND_FRONTEND_URL with its deprecated alias.
-
-    SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND is deprecated in favor of
-    SPIFFWORKFLOW_BACKEND_FRONTEND_URL. The new variable takes precedence.
-    Both app.config keys are kept in sync so code reading either key works.
-    """
-    new_key = "SPIFFWORKFLOW_BACKEND_FRONTEND_URL"
-    old_key = "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"
-    default_frontend_url = "http://localhost:7001"
-
-    new_env = os.environ.get(new_key)
-    old_env = os.environ.get(old_key)
-    if new_env == "":
-        new_env = None
-    if old_env == "":
-        old_env = None
-
-    new_val = app.config.get(new_key)
-    old_val = app.config.get(old_key)
-
-    if old_env is not None:
-        app.logger.warning(
-            "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND is deprecated. "
-            "Please use SPIFFWORKFLOW_BACKEND_FRONTEND_URL instead."
-        )
-
-    if new_env is not None:
-        # New variable explicitly set: it wins. Keep deprecated alias in sync.
-        if old_env is not None and old_env != new_env:
-            app.logger.warning(
-                "Both SPIFFWORKFLOW_BACKEND_FRONTEND_URL and deprecated "
-                "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND are set with different values. "
-                "Using SPIFFWORKFLOW_BACKEND_FRONTEND_URL."
-            )
-        app.config[old_key] = new_val
-        return
-
-    # New variable not set via environment.
-    if old_val not in (None, ""):
-        # Old alias customized via environment or config file.
-        if new_val in (None, "", default_frontend_url):
-            app.config[new_key] = old_val
-        else:
-            # Both customized via config files with different values: new wins.
-            if old_val != new_val:
-                app.logger.warning(
-                    "Both SPIFFWORKFLOW_BACKEND_FRONTEND_URL and deprecated "
-                    "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND are configured with different values. "
-                    "Using SPIFFWORKFLOW_BACKEND_FRONTEND_URL."
-                )
-            app.config[old_key] = new_val
-        return
-
-    # Neither customized: keep alias in sync with new value.
-    app.config[old_key] = new_val
+    # SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND is deprecated in favor of
+    # SPIFFWORKFLOW_BACKEND_FRONTEND_URL, which takes precedence.
+    if _use_deprecated_env_value(
+        app, "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", "SPIFFWORKFLOW_BACKEND_FRONTEND_URL"
+    ):
+        app.config["SPIFFWORKFLOW_BACKEND_FRONTEND_URL"] = app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
+    # Keep the deprecated alias in sync so code reading either key works.
+    app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"] = app.config["SPIFFWORKFLOW_BACKEND_FRONTEND_URL"]
 
 
 # see the message in the ConfigurationError below for why we are checking this.
