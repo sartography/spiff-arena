@@ -17,12 +17,27 @@ describe('frontend base path', () => {
     expect(stripBasePath('/workflow/login', '/workflow/')).toEqual('/login');
   });
 
-  it('leaves absolute urls untouched', () => {
+  it('leaves http(s) absolute urls untouched', () => {
     expect(withBasePath('https://example.com/foo', '/workflow/')).toEqual(
       'https://example.com/foo',
     );
-    expect(withBasePath('mailto:hello@example.com', '/workflow/')).toEqual(
-      'mailto:hello@example.com',
+    expect(withBasePath('http://example.com/foo', '/workflow/')).toEqual(
+      'http://example.com/foo',
+    );
+  });
+
+  it('neutralizes executable schemes by routing them same-origin', () => {
+    expect(withBasePath('javascript:alert(1)', '/workflow/')).toEqual(
+      '/workflow/javascript:alert(1)',
+    );
+    expect(withBasePath('data:text/html,<h1>hi</h1>', '/workflow/')).toEqual(
+      '/workflow/data:text/html,<h1>hi</h1>',
+    );
+    expect(withBasePath('vbscript:msgbox(1)', '/workflow/')).toEqual(
+      '/workflow/vbscript:msgbox(1)',
+    );
+    expect(withBasePath('JAVASCRIPT:alert(1)', '/workflow/')).toEqual(
+      '/workflow/JAVASCRIPT:alert(1)',
     );
   });
 });
