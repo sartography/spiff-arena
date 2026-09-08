@@ -43,7 +43,9 @@ const uiSchema = {
     'ui:field': 'interpreted-field',
     'ui:options': {
       resolver: 'shout',
-      exclamation_marks: 3,
+      extensionInput: {
+        exclamation_marks: 3,
+      },
       idleMilliseconds: 500,
       placeholder: 'Say something',
       examples: 'Examples: hello, good morning',
@@ -101,7 +103,8 @@ describe('InterpretedField', () => {
     expect(makeCallToBackend).toHaveBeenCalledTimes(1);
     const request = makeCallToBackend.mock.calls[0][0];
     expect(request.path).toBe('/v1.0/extensions/shout');
-    // Deployment options flow through; field configuration does not.
+    // Resolver parameters flow through from the nested extensionInput
+    // object; field configuration does not.
     expect(request.postBody.extension_input).toEqual(
       expect.objectContaining({
         expression: 'hello',
@@ -114,6 +117,9 @@ describe('InterpretedField', () => {
     expect(request.postBody.extension_input).not.toHaveProperty('resolver');
     expect(request.postBody.extension_input).not.toHaveProperty('suggestions');
     expect(request.postBody.extension_input).not.toHaveProperty('editSchema');
+    expect(request.postBody.extension_input).not.toHaveProperty(
+      'extensionInput',
+    );
     // A fresh expression parse carries an empty value for validation.
     expect(request.postBody.extension_input.value).toEqual({});
 
@@ -219,6 +225,40 @@ describe('InterpretedField', () => {
     // A settled invalid interpretation still surfaces normally.
     expect(input).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getAllByText('Speak up.').length).toBeGreaterThan(0);
+  });
+
+  it('ignores unknown top-level ui:options instead of forwarding them', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      render(
+        <CustomForm
+          id="shout-form"
+          key="shout-form"
+          formData={{}}
+          schema={schema}
+          uiSchema={{
+            shout: {
+              'ui:field': 'interpreted-field',
+              'ui:options': {
+                ...(uiSchema.shout['ui:options'] as object),
+                strayKey: true,
+              },
+            },
+          }}
+          onChange={vi.fn()}
+        />,
+      );
+
+      const input = screen.getByRole('textbox', { name: 'Shout' });
+      fireEvent.change(input, { target: { value: 'hello' } });
+      fireEvent.keyDown(input, { key: 'Enter' });
+
+      const request = makeCallToBackend.mock.calls[0][0];
+      expect(request.postBody.extension_input).not.toHaveProperty('strayKey');
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('strayKey'));
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   it('parses a suggestion chip immediately on click', () => {

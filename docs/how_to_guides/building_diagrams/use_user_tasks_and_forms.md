@@ -477,7 +477,7 @@ The field stores an object so its value remains portable through nested forms, a
 }
 ```
 
-Configure an installed Arena extension by identifier. Arbitrary resolver URLs and output paths are not supported. Every `ui:options` key other than the field-configuration keys listed below is passed through verbatim to the extension as `extension_input`:
+Configure an installed Arena extension by identifier. Arbitrary resolver URLs and output paths are not supported. Resolver parameters live under the nested `extensionInput` key so field configuration and resolver parameters can never collide:
 
 ```json
 {
@@ -485,7 +485,9 @@ Configure an installed Arena extension by identifier. Arbitrary resolver URLs an
     "ui:field": "interpreted-field",
     "ui:options": {
       "resolver": "shout",
-      "exclamation_marks": 3,
+      "extensionInput": {
+        "exclamation_marks": 3
+      },
       "placeholder": "Say something",
       "examples": "Examples: hello, good morning",
       "emptyMessage": "Say something first.",
@@ -502,7 +504,7 @@ Configure an installed Arena extension by identifier. Arbitrary resolver URLs an
 }
 ```
 
-Field-configuration keys (never sent to the resolver): `resolver`, `idleMilliseconds`, `examples`, `emptyMessage`, `placeholder`, `suggestions`, `editSchema`, `editUiSchema`, `editButtonLabel`, `valueDefaults`, `revalidateEdits`, `manualEditNote`.
+Field-configuration keys (never sent to the resolver): `resolver`, `idleMilliseconds`, `examples`, `emptyMessage`, `placeholder`, `suggestions`, `editSchema`, `editUiSchema`, `editButtonLabel`, `valueDefaults`, `revalidateEdits`, `manualEditNote`, `extensionInput`. Unknown top-level keys are ignored with a console warning instead of leaking into resolver input.
 
 - `suggestions` renders one-tap example chips that parse immediately.
 - `editSchema` (plus optional `editUiSchema` and `editButtonLabel`) renders an "adjust values" editor bound to the structured value. Applying sends the edited value back through the resolver as `extension_input.value` for re-validation, unless `revalidateEdits` is false (then the edit is applied directly with the `manualEditNote` assumption). A resolver may return `edit_defaults` to seed the editor; those seed values must use the same representation as `value` because the editor renders them through the schema's widgets (for example, `format: date-time` fields expect full UTC ISO instants and display them in the browser zone).

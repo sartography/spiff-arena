@@ -48,8 +48,9 @@ export type InterpretedResult = {
   errors?: { code: string; message: string }[];
 };
 
-// ui:options keys that configure the field itself instead of flowing through
-// to the extension resolver as extension_input.
+// ui:options keys that configure the field itself. Everything else the
+// resolver needs lives under the `extensionInput` key, so field
+// configuration and resolver parameters can never collide.
 const RESERVED_OPTION_KEYS = [
   'resolver',
   'idleMilliseconds',
@@ -63,6 +64,7 @@ const RESERVED_OPTION_KEYS = [
   'valueDefaults',
   'revalidateEdits',
   'manualEditNote',
+  'extensionInput',
 ];
 
 const BROWSER_TIME_ZONE_TOKEN = '$browserTimeZone';
@@ -273,10 +275,22 @@ export default function InterpretedField({
     setChoices([]);
 
     const resolvedOptions = Intl.DateTimeFormat().resolvedOptions();
-    const extensionInput: Record<string, unknown> = {};
-    for (const [key, optionValue] of Object.entries(options)) {
+    // Only the nested extensionInput object reaches the resolver, plus
+    // the request-scoped values below. Unknown top-level ui:options keys
+    // are ignored so future field configuration cannot leak into
+    // resolver input by accident.
+    const configuredInput = options.extensionInput;
+    const extensionInput: Record<string, unknown> =
+      typeof configuredInput === 'object' &&
+      configuredInput !== null &&
+      !Array.isArray(configuredInput)
+        ? { ...(configuredInput as Record<string, unknown>) }
+        : {};
+    for (const key of Object.keys(options)) {
       if (!RESERVED_OPTION_KEYS.includes(key)) {
-        extensionInput[key] = optionValue;
+        console.warn(
+          `Interpreted field option "${key}" is not a field option; nest it under extensionInput to send it to the resolver.`,
+        );
       }
     }
     extensionInput.expression = value;
