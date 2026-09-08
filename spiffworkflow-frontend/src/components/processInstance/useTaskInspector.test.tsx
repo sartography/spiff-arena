@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { APIErrorContext } from '../../contexts/APIErrorContext';
 import { BasicTask } from '../../interfaces';
 import useTaskInspector from './useTaskInspector';
 
@@ -123,6 +124,89 @@ describe('useTaskInspector', () => {
       makeCallToBackend.mock.calls[0][0].successCallback({});
     });
     expect(onCompleteTaskSuccess).toHaveBeenCalledTimes(1);
+  });
+
+  it('surfaces invalid event payloads instead of dispatching', () => {
+    const addError = vi.fn();
+    const wrapper = ({ children }: any) => (
+      <APIErrorContext.Provider
+        value={{ error: null, addError, removeError: vi.fn() }}
+      >
+        {children}
+      </APIErrorContext.Provider>
+    );
+    const eventTask = {
+      ...testTask,
+      task_definition_properties_json: {
+        spec: '{}',
+        event_definition: {
+          typename: 'MessageEventDefinition',
+          event_definitions: [{ typename: 'MessageEventDefinition' }],
+        },
+      },
+    } as unknown as BasicTask;
+    const { result } = renderHook(() => useTaskInspector({ ...baseOptions }), {
+      wrapper,
+    });
+
+    act(() => {
+      result.current.openTaskInspector(eventTask);
+    });
+    act(() => {
+      result.current.dialogProps.onEventChange(
+        'MessageEventDefinition',
+        result.current.dialogProps.candidateEvents,
+      );
+    });
+    act(() => {
+      result.current.dialogProps.onEventPayloadChange('not-json');
+    });
+    makeCallToBackend.mockReset();
+
+    act(() => {
+      result.current.dialogProps.onSendEvent();
+    });
+
+    expect(makeCallToBackend).not.toHaveBeenCalled();
+    expect(addError).toHaveBeenCalledTimes(1);
+    expect(String(addError.mock.calls[0][0].message)).toMatch(/invalid json/i);
+  });
+
+  it('dispatches the event for valid event payloads', () => {
+    const { result } = renderHook(() => useTaskInspector({ ...baseOptions }));
+    const eventTask = {
+      ...testTask,
+      task_definition_properties_json: {
+        spec: '{}',
+        event_definition: {
+          typename: 'MessageEventDefinition',
+          event_definitions: [{ typename: 'MessageEventDefinition' }],
+        },
+      },
+    } as unknown as BasicTask;
+
+    act(() => {
+      result.current.openTaskInspector(eventTask);
+    });
+    act(() => {
+      result.current.dialogProps.onEventChange(
+        'MessageEventDefinition',
+        result.current.dialogProps.candidateEvents,
+      );
+    });
+    act(() => {
+      result.current.dialogProps.onEventPayloadChange('{"a": 1}');
+    });
+    makeCallToBackend.mockReset();
+
+    act(() => {
+      result.current.dialogProps.onSendEvent();
+    });
+
+    expect(makeCallToBackend).toHaveBeenCalledTimes(1);
+    expect(makeCallToBackend.mock.calls[0][0].postBody.payload).toEqual({
+      a: 1,
+    });
   });
 
   it('requires a selected user before assigning potential owners', () => {

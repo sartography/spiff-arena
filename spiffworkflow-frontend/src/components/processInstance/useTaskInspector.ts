@@ -339,7 +339,14 @@ export default function useTaskInspector({
 
   const sendEvent = () => {
     if ('payload' in eventToSend) {
-      eventToSend.payload = JSON.parse(eventPayload);
+      try {
+        eventToSend.payload = JSON.parse(eventPayload);
+      } catch (err) {
+        addError({
+          message: `Invalid JSON payload: ${(err as Error).message}`,
+        });
+        return;
+      }
     }
     HttpService.makeCallToBackend({
       path: targetUris.processInstanceSendEventPath,
