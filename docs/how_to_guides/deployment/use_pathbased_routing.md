@@ -28,7 +28,7 @@ SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_APP_ROUTING_STRATEGY=path_based
 And in the backend, you may need to set:
 
 ```sh
-SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND=https://spiff.example.com
+SPIFFWORKFLOW_BACKEND_FRONTEND_URL=https://spiff.example.com
 SPIFFWORKFLOW_BACKEND_URL=https://spiff.example.com/api
 # if you happen to be using the internal openid server. do not do this in production.
 SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL=https://spiff.example.com/api/openid

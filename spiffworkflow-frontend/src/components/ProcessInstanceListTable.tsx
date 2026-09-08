@@ -45,6 +45,7 @@ import {
   errorForDisplayFromString,
 } from './ErrorDisplay';
 import SpiffTooltip from './SpiffTooltip';
+import { withBasePath } from '../helpers/basePath';
 
 type OwnProps = {
   additionalReportFilters?: ReportFilter[];
@@ -543,7 +544,7 @@ export default function ProcessInstanceListTable({
           goButtonElement = (
             <Button
               variant="contained"
-              href={taskShowUrl}
+              href={withBasePath(taskShowUrl)}
               style={{ width: '60px' }}
               size="small"
             >
@@ -556,8 +557,9 @@ export default function ProcessInstanceListTable({
         )}/${processInstance.id}`;
         const piShowButtonElement = (
           <IconButton
-            href={piLink}
+            href={withBasePath(piLink)}
             target="_blank"
+            aria-label={t('open_process_instance')}
             style={{ width: '50px' }}
             size="small"
           >
@@ -612,7 +614,7 @@ export default function ProcessInstanceListTable({
     }
 
     return (
-      <TableContainer>
+      <TableContainer tabIndex={0}>
         <Table size="medium" {...tableProps} className="process-instance-list">
           <TableHead>
             <TableRow>

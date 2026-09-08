@@ -476,7 +476,7 @@ class TestLongRunningService(BaseTest):
 
         with (
             self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL", "https://backend.example.com/api"),
-            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", "https://frontend.example.com"),
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_FRONTEND_URL", "https://frontend.example.com"),
             self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_API_PATH_PREFIX", "/api/v1.0"),
         ):
             with app.test_request_context():

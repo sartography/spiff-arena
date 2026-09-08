@@ -100,6 +100,7 @@ import ProcessInstanceCurrentTaskInfo from '../components/ProcessInstanceCurrent
 import useKeyboardShortcut from '../hooks/useKeyboardShortcut';
 import useProcessInstanceNavigate from '../hooks/useProcessInstanceNavigate';
 import SpiffTooltip from '../components/SpiffTooltip';
+import { withBasePath } from '../helpers/basePath';
 
 type OwnProps = {
   variant: string;
@@ -452,7 +453,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     // such as terminating a process instance with a task that the current user is assigned to which
     // will remove the task assigned to them and could potentially remove that users association to the process instance
     if (ability.can('GET', targetUris.processInstanceActionPath)) {
-      window.location.href = `${processInstanceShowPageBaseUrlAllVariant}${queryParams()}`;
+      window.location.href = withBasePath(
+        `${processInstanceShowPageBaseUrlAllVariant}${queryParams()}`,
+      );
     } else {
       window.location.reload();
     }
@@ -514,7 +517,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
   const returnToProcessInstance = () => {
-    window.location.href = `${processInstanceShowPageBaseUrl}${queryParams()}`;
+    window.location.href = withBasePath(
+      `${processInstanceShowPageBaseUrl}${queryParams()}`,
+    );
   };
   const resetProcessInstance = (taskGuid = currentToTaskGuid()) => {
     if (!taskGuid) {
@@ -682,7 +687,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const copyProcessInstanceShortLink = () => {
     if (processInstance) {
-      const piShortLink = `${window.location.origin}/i/${processInstance.id}`;
+      const piShortLink = `${window.location.origin}${withBasePath(
+        `/i/${processInstance.id}`,
+      )}`;
       navigator.clipboard.writeText(piShortLink);
       setCopiedShortLinkToClipboard(true);
     }

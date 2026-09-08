@@ -133,7 +133,7 @@ export default function ProcessInterstitial({
       if (smallSpinner) {
         style = { margin: '2x 5px 2px 2px' };
       }
-      return <CircularProgress style={style} />;
+      return <CircularProgress style={style} aria-label={t('loading')} />;
     }
     return null;
   };

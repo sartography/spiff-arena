@@ -22,6 +22,7 @@ import {
 import ErrorDisplay from '../components/ErrorDisplay';
 import FormattingService from '../services/FormattingService';
 import ProcessInstanceRun from '../components/ProcessInstanceRun';
+import { withBasePath } from '../helpers/basePath';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import LoginHandler from '../components/LoginHandler';
 import SpiffTabs from '../components/SpiffTabs';
@@ -103,7 +104,7 @@ export default function Extension({
           result.task_data,
         );
         if (optionString !== null) {
-          window.location.href = optionString;
+          window.location.href = withBasePath(optionString);
         }
       }
       if (result.rendered_results_markdown) {
@@ -235,7 +236,7 @@ export default function Extension({
         taskData,
       );
       if (optionString !== null) {
-        window.location.href = optionString;
+        window.location.href = withBasePath(optionString);
       }
     } else {
       setProcessedTaskData(taskData);
@@ -275,7 +276,7 @@ export default function Extension({
           dataToSubmit,
         );
         if (optionString !== null) {
-          window.location.href = optionString;
+          window.location.href = withBasePath(optionString);
           setFormButtonsDisabled(false);
         }
       }

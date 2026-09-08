@@ -45,6 +45,11 @@ body {
   font-style: italic;
 }
 
+[data-theme='light'] .system-user-log-entry,
+[data-theme='light'] .selected-task-instance {
+  color: #6e6e6e;
+}
+
 .app-root h1 {
   font-weight: 400;
   font-size: 28px;

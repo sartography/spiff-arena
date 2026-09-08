@@ -48,6 +48,6 @@ class GetUrlForTaskWithBpmnIdentifier(Script):
             public_segment = "/public"
 
         guid = str(desired_spiff_task.id)
-        fe_url = current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
+        fe_url = current_app.config["SPIFFWORKFLOW_BACKEND_FRONTEND_URL"]
         url = f"{fe_url}{public_segment}/tasks/{script_attributes_context.process_instance_id}/{guid}"
         return url

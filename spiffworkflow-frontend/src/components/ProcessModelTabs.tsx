@@ -1,14 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Box,
-  Tab,
-  Tabs,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-} from '@mui/material';
+import { Box, Tab, Tabs, MenuItem, Menu, Button } from '@mui/material';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import Grid from '@mui/material/Grid';
 import { Can, type AppAbility } from '../contexts/Can';
 import { useNavigate } from 'react-router-dom';
@@ -65,6 +58,8 @@ export default function ProcessModelTabs({
 }: ProcessModelTabsProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [addFileMenuAnchorEl, setAddFileMenuAnchorEl] =
+    useState<null | HTMLElement>(null);
 
   if (!processModel) {
     return null;
@@ -87,45 +82,59 @@ export default function ProcessModelTabs({
     'new_markdown_file',
   ];
 
+  const handleAddFileItemSelected = (selectedItem: string) => {
+    setAddFileMenuAnchorEl(null);
+    if (selectedItem === 'new_bpmn_file') {
+      navigate(
+        `/process-models/${modifiedProcessModelId}/files?file_type=bpmn`,
+      );
+    } else if (selectedItem === 'upload_file') {
+      updateSelectedTab(1); // Switch to Files tab
+      setShowFileUploadModal(true);
+    } else if (selectedItem === 'new_dmn_file') {
+      navigate(`/process-models/${modifiedProcessModelId}/files?file_type=dmn`);
+    } else if (selectedItem === 'new_json_file') {
+      navigate(`/process-models/${modifiedProcessModelId}/form?file_ext=json`);
+    } else if (selectedItem === 'new_markdown_file') {
+      navigate(`/process-models/${modifiedProcessModelId}/form?file_ext=md`);
+    }
+  };
+
   const addFileComponent = () => {
+    // This is an action menu (each item performs a navigation/action immediately),
+    // not a persisted value, so it is implemented as a button + menu rather than a
+    // <select>. A <select> whose onChange navigates the page violates WCAG 3.2.2
+    // (On Input): choosing an option activates it merely by changing focus/value,
+    // with no separate, explicit activation step.
     return (
-      <FormControl fullWidth>
-        <InputLabel id="add-file-select-label">{t('add_file')}</InputLabel>
-        <Select
-          labelId="add-file-select-label"
-          label={t('add_file')}
-          onChange={(event: any) => {
-            const selectedItem = event.target.value;
-            if (selectedItem === 'new_bpmn_file') {
-              navigate(
-                `/process-models/${modifiedProcessModelId}/files?file_type=bpmn`,
-              );
-            } else if (selectedItem === 'upload_file') {
-              updateSelectedTab(1); // Switch to Files tab
-              setShowFileUploadModal(true);
-            } else if (selectedItem === 'new_dmn_file') {
-              navigate(
-                `/process-models/${modifiedProcessModelId}/files?file_type=dmn`,
-              );
-            } else if (selectedItem === 'new_json_file') {
-              navigate(
-                `/process-models/${modifiedProcessModelId}/form?file_ext=json`,
-              );
-            } else if (selectedItem === 'new_markdown_file') {
-              navigate(
-                `/process-models/${modifiedProcessModelId}/form?file_ext=md`,
-              );
-            }
-          }}
-          value=""
+      <>
+        <Button
+          id="add-file-button"
+          aria-controls={addFileMenuAnchorEl ? 'add-file-menu' : undefined}
+          aria-haspopup="true"
+          aria-expanded={addFileMenuAnchorEl ? 'true' : undefined}
+          endIcon={<ArrowDropDownIcon />}
+          onClick={(event) => setAddFileMenuAnchorEl(event.currentTarget)}
+        >
+          {t('add_file')}
+        </Button>
+        <Menu
+          id="add-file-menu"
+          anchorEl={addFileMenuAnchorEl}
+          open={Boolean(addFileMenuAnchorEl)}
+          onClose={() => setAddFileMenuAnchorEl(null)}
+          MenuListProps={{ 'aria-labelledby': 'add-file-button' }}
         >
           {items.map((item) => (
-            <MenuItem key={item} value={item}>
+            <MenuItem
+              key={item}
+              onClick={() => handleAddFileItemSelected(item)}
+            >
               {t(item)}
             </MenuItem>
           ))}
-        </Select>
-      </FormControl>
+        </Menu>
+      </>
     );
   };
 

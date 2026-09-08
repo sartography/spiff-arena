@@ -40,6 +40,7 @@ function TaskControls({
           onChange={(e) => {
             onGroupBySelect(e.target.value);
           }}
+          SelectDisplayProps={{ 'aria-label': t('group_by') }}
           sx={{ mr: 2, bgcolor: 'background.paper' }}
         >
           {selectedGroupBy ? (

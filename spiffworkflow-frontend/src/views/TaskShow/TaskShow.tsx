@@ -420,7 +420,7 @@ export default function TaskShow() {
 
   const getLoadingIcon = () => {
     const style = { margin: '50px' };
-    return <CircularProgress style={style} />;
+    return <CircularProgress style={style} aria-label={t('loading')} />;
   };
 
   const pageElements: ElementForArray[] = [];

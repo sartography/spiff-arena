@@ -39,6 +39,7 @@ import { findNearestAncestorLocation } from './MessageHelper';
 import ConfirmButton from '../ConfirmButton';
 import useProcessGroups from '../../hooks/useProcessGroups';
 import { usePermissionFetcher } from '../../hooks/PermissionService';
+import { withBasePath } from '../../helpers/basePath';
 
 type OwnProps = {
   processGroupId?: string;
@@ -435,7 +436,9 @@ export default function MessageModelList({
         (pmId) => (
           <Link
             key={pmId}
-            href={`/process-models/${modifyProcessIdentifierForPathParam(pmId)}`}
+            href={withBasePath(
+              `/process-models/${modifyProcessIdentifierForPathParam(pmId)}`,
+            )}
             underline="hover"
             sx={{ display: 'block', whiteSpace: 'nowrap' }}
           >
@@ -451,9 +454,11 @@ export default function MessageModelList({
           <TableCell>{messageModel.identifier}</TableCell>
           <TableCell>
             <Link
-              href={`/process-groups/${modifyProcessIdentifierForPathParam(
-                messageModel.location,
-              )}`}
+              href={withBasePath(
+                `/process-groups/${modifyProcessIdentifierForPathParam(
+                  messageModel.location,
+                )}`,
+              )}
               underline="hover"
             >
               {messageModel.location}
@@ -500,7 +505,7 @@ export default function MessageModelList({
   }, [canUpdateProcessGroup, deleteMessageModel, paginatedMessageModels, t]);
 
   const table = (
-    <TableContainer component={Paper} variant="outlined">
+    <TableContainer component={Paper} variant="outlined" tabIndex={0}>
       <Table size="small">
         <TableHead>
           <TableRow>

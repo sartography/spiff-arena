@@ -494,7 +494,7 @@ class TestAuthentication(BaseTest):
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        redirect_uri = f"{app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/test-redirect-dne"
+        redirect_uri = f"{app.config['SPIFFWORKFLOW_BACKEND_FRONTEND_URL']}/test-redirect-dne"
         auth_uri = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
         login_return_uri = f"{app.config['SPIFFWORKFLOW_BACKEND_URL']}/v1.0/login_return"
 
@@ -532,7 +532,7 @@ class TestAuthentication(BaseTest):
             response = client.get(
                 "/v1.0/login",
                 params={
-                    "redirect_url": f"{app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/after-login",
+                    "redirect_url": f"{app.config['SPIFFWORKFLOW_BACKEND_FRONTEND_URL']}/after-login",
                     "authentication_identifier": "default",
                 },
             )
@@ -570,7 +570,7 @@ class TestAuthentication(BaseTest):
                 "refresh_token": "provider-refresh-token",
             },
         )
-        redirect_url = f"{app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/after-login"
+        redirect_url = f"{app.config['SPIFFWORKFLOW_BACKEND_FRONTEND_URL']}/after-login"
         state_payload = AuthenticationService.generate_state_payload(authentication_identifier="default", final_url=redirect_url)
         state = AuthenticationService.encode_state_payload(state_payload)
 
@@ -650,7 +650,7 @@ class TestAuthentication(BaseTest):
         )
 
         with (
-            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", "http://localhost:7001"),
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_FRONTEND_URL", "http://localhost:7001"),
             self.app_config_mock(
                 app,
                 "SPIFFWORKFLOW_BACKEND_ALLOWED_REDIRECT_HOST_ALIASES",
@@ -702,7 +702,7 @@ class TestAuthentication(BaseTest):
         client: TestClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        redirect_url = f"{app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}.bad_url.com/test-redirect-dne"
+        redirect_url = f"{app.config['SPIFFWORKFLOW_BACKEND_FRONTEND_URL']}.bad_url.com/test-redirect-dne"
         response = client.get(
             f"/v1.0/login?redirect_url={redirect_url}&authentication_identifier=DOES_NOT_MATTER",
         )
@@ -776,7 +776,7 @@ class TestAuthentication(BaseTest):
         )
         process_group_identifier, _ = process_model.modified_process_model_identifier().rsplit(":", 1)
 
-        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND", "http://spiff-dev-host:7001"):
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_FRONTEND_URL", "http://spiff-dev-host:7001"):
             response = client.get(f"/v1.0/public/messages/form/{process_group_identifier}:bounty_start")
 
         assert response.status_code == 200
@@ -812,7 +812,7 @@ class TestAuthentication(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_OPEN_ID_ENFORCE_PKCE", True):
-            redirect_uri = f"{app.config['SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND']}/test-redirect-dne"
+            redirect_uri = f"{app.config['SPIFFWORKFLOW_BACKEND_FRONTEND_URL']}/test-redirect-dne"
             auth_uri = app.config["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"][0]["uri"]
 
             mocker.patch(

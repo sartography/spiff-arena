@@ -126,7 +126,7 @@ export default function DataStoreListTable() {
     keys.forEach((key) => tableHeaders.push(<TableCell>{key}</TableCell>));
 
     return (
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} tabIndex={0}>
         <Table>
           <TableHead>
             <TableRow>{tableHeaders}</TableRow>

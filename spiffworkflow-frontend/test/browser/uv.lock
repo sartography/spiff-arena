@@ -3,6 +3,18 @@ revision = 3
 requires-python = ">=3.10"
 
 [[package]]
+name = "axe-playwright-python"
+version = "0.1.8"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "playwright" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4c/3a/0ac4e97b92a3f8dc98f7dfb3b68c3e8d3811eda630000ccf4f7654e3498a/axe_playwright_python-0.1.8.tar.gz", hash = "sha256:97de160210fd5ce51e552d21d3b0a1cabb850235942737643ee3b9398de81a47", size = 194644, upload-time = "2026-07-24T20:11:06.699Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4c/c6/5fdb6d5d96653927b6a4763a4b7aaa9e468d4a6eda5048b7c2e158d17bc9/axe_playwright_python-0.1.8-py3-none-any.whl", hash = "sha256:fdd263c998388f1a8e67cad02677e612d946248bd44d163be5e8650ea31f95f8", size = 160681, upload-time = "2026-07-24T20:11:05.228Z" },
+]
+
+[[package]]
 name = "certifi"
 version = "2026.4.22"
 source = { registry = "https://pypi.org/simple" }
@@ -121,11 +133,15 @@ name = "civitos-browser-tests"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "axe-playwright-python" },
     { name = "pytest-playwright" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pytest-playwright" }]
+requires-dist = [
+    { name = "axe-playwright-python", specifier = ">=0.1.8" },
+    { name = "pytest-playwright" },
+]
 
 [[package]]
 name = "colorama"

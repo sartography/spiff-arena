@@ -8,7 +8,6 @@ import {
   Button,
   Typography,
 } from '@mui/material';
-import SpiffTooltip from './SpiffTooltip';
 
 interface ProcessModelFileUploadModalProps {
   showFileUploadModal: boolean;
@@ -113,17 +112,16 @@ export default function ProcessModelFileUploadModal({
         <DialogTitle id="upload-dialog-title">{t('upload_file')}</DialogTitle>
         <DialogContent>
           <Typography>{t('upload_file_instructions')}</Typography>
-          <SpiffTooltip title={t('delete_file')}>
-            <input
-              type="file"
-              accept=".bpmn,.dmn,.json,.md"
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setFilesToUpload(
-                  event.target.files ? Array.from(event.target.files) : null,
-                )
-              }
-            />
-          </SpiffTooltip>
+          <input
+            type="file"
+            aria-label={t('choose_file_to_upload')}
+            accept=".bpmn,.dmn,.json,.md"
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              setFilesToUpload(
+                event.target.files ? Array.from(event.target.files) : null,
+              )
+            }
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleFileUploadCancel} color="primary">

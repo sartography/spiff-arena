@@ -8,6 +8,12 @@ export const getRouterBasename = (baseUrl?: string): string | undefined => {
 };
 
 export const withBasePath = (path: string, baseUrl?: string): string => {
+  // Only http(s) absolute URLs pass through untouched. Everything else is
+  // treated as an internal path, which also neutralizes executable schemes
+  // such as javascript:, data:, or vbscript: by routing them same-origin.
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
   const basename = getRouterBasename(baseUrl);
   if (!basename) {
     return path;

@@ -39,6 +39,7 @@ import ProcessModelFileUploadModal from '../components/ProcessModelFileUploadMod
 import ProcessModelCopyModal from '../components/ProcessModelCopyModal';
 import SpiffTooltip from '../components/SpiffTooltip';
 import { useConfirmationDialog } from '../hooks/useConfirmationDialog';
+import { withBasePath } from '../helpers/basePath';
 
 export default function ProcessModelShow() {
   const params = useParams();
@@ -341,7 +342,9 @@ export default function ProcessModelShow() {
             <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
               <MenuItem
                 component="a"
-                href={`/process-models/${modifiedProcessModelId}/edit`}
+                href={withBasePath(
+                  `/process-models/${modifiedProcessModelId}/edit`,
+                )}
                 data-testid="edit-process-model-menu-item"
                 onClick={handleActionsMenuClose}
               >

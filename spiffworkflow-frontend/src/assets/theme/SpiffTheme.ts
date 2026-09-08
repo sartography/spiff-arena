@@ -2,7 +2,6 @@ import { PaletteMode, ThemeOptions } from '@mui/material';
 import {
   blue,
   blueGrey,
-  cyan,
   green,
   grey,
   lightBlue,
@@ -10,6 +9,59 @@ import {
   red,
   yellow,
 } from '@mui/material/colors';
+
+// Kept for reference / an easy revert, not currently used -- see BRAND
+// below. Exported (rather than a plain unused local) so lint doesn't flag
+// it as dead code.
+export const BRAND_GREEN = {
+  light: {
+    main: '#15803D',
+    light: '#16A34A',
+    dark: '#166534',
+  },
+  dark: {
+    main: '#158740',
+    light: '#16A34A',
+    dark: '#166534',
+    // Brighter accent for content that needs to stand out against dark
+    // backgrounds more than `main` allows (e.g. the selected-tab indicator).
+    accent: '#86EFAC',
+  },
+};
+
+// WCAG 2.1 AA (4.5:1 for normal text):
+// - light.main #0F766E: 5.47:1 vs white, 5.02:1 vs #f5f5f5 (as text), and
+//   5.47:1 for white text on it as a filled background -- one shade clears
+//   both directions on a light background, so light mode keeps white
+//   contrastText.
+// - dark.main #14B8A6 has to work in three places: as text/border directly
+//   on the page background (e.g. outlined buttons -- 7.53:1 vs #121212),
+//   as the selected-nav-item text against SideNav's lighter
+//   selected-row highlight background (rgba(255,255,255,0.16) over
+//   #121212, ~#383838 -- 4.71:1), and as a filled-button background
+//   (8.44:1 for BLACK text on it -- it's too light for legible white text,
+//   so dark mode's contrastText, in baseTheme below, is black instead).
+//   One shade clearing all three, rather than trying to force a single
+//   shade+contrastText to do it (which cannot work on a dark background --
+//   see BRAND_GREEN's dark.main for the earlier, narrower version of this
+//   that only checked two of the three and got the tradeoff wrong).
+const BRAND_TEAL = {
+  light: {
+    main: '#0F766E',
+    light: '#0D9488',
+    dark: '#134E4A',
+  },
+  dark: {
+    main: '#14B8A6',
+    light: '#2DD4BF',
+    dark: '#0D9488',
+    // Brighter accent for content that needs to stand out against dark
+    // backgrounds more than `main` allows (e.g. the selected-tab indicator).
+    accent: '#5EEAD4',
+  },
+};
+
+const BRAND = BRAND_TEAL;
 
 /**
  * Global palette tokens.
@@ -120,7 +172,7 @@ const customPalette = (mode: PaletteMode) => {
     borders: {
       table: grey[800],
       primary: grey[800],
-      secondary: cyan[800],
+      secondary: BRAND.dark.dark,
     },
     spotColors: {
       goldStar: yellow[700],
@@ -134,6 +186,7 @@ const customPalette = (mode: PaletteMode) => {
 
 /** Global component-specific overrides */
 const customComponents = (mode: PaletteMode) => {
+  const brand = mode === 'light' ? BRAND.light : BRAND.dark;
   // We wanted rounded buttons everywhere
   return {
     MuiButton: {
@@ -149,9 +202,35 @@ const customComponents = (mode: PaletteMode) => {
     MuiTab: {
       styleOverrides: {
         root: {
+          // MUI dims inactive tabs via opacity on the inherited text color by
+          // default, which fails WCAG 2.1 AA color-contrast against our light
+          // backgrounds. Use the theme's own (already contrast-checked)
+          // secondary text color at full opacity instead.
+          opacity: 1,
+          color: mode === 'light' ? grey[800] : grey[200],
           '&.Mui-selected': {
-            color: mode === 'light' ? 'primary.main' : cyan[200],
+            color: mode === 'light' ? brand.main : BRAND.dark.accent,
           },
+        },
+      },
+    },
+    // Plain <a> tags (e.g. react-router's <Link>, which renders unstyled)
+    // otherwise fall back to the browser default blue instead of the brand
+    // color. This is a zero-specificity DEFAULT, not an override: :where()
+    // means it never competes with any component's own color (e.g.
+    // SideNav's selected/unselected logic) no matter how that color was
+    // set (sx, inherit, a plain style prop) -- it only fills in for
+    // elements that have no color opinion of their own.
+    MuiCssBaseline: {
+      styleOverrides: {
+        ':where(a)': {
+          color: brand.main,
+        },
+        ':where(a:visited)': {
+          color: brand.main,
+        },
+        ':where(a:hover)': {
+          color: brand.dark,
         },
       },
     },
@@ -204,9 +283,7 @@ const baseTheme = (mode: PaletteMode) => {
   const lightModeColors = {
     palette: {
       primary: {
-        main: cyan[600],
-        light: cyan[400],
-        dark: cyan[800],
+        ...BRAND.light,
         contrastText: '#ffffff',
       },
       secondary: {
@@ -220,10 +297,15 @@ const baseTheme = (mode: PaletteMode) => {
   const darkModeColors = {
     palette: {
       primary: {
-        main: cyan[800],
-        light: cyan[600],
-        dark: cyan[900],
-        contrastText: '#ffffff',
+        main: BRAND.dark.main,
+        light: BRAND.dark.light,
+        dark: BRAND.dark.dark,
+        // BRAND.dark.main is chosen to pass contrast as text/border against
+        // the dark background (and the selected-nav-item highlight), which
+        // makes it too light for legible WHITE text as a filled button
+        // background -- black text passes instead (8.44:1). See the
+        // comment on BRAND_TEAL.dark above.
+        contrastText: '#000000',
       },
       secondary: {
         main: grey[300],

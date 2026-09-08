@@ -112,7 +112,7 @@ def login(
     process_instance_id: int | None = None,
     task_guid: str | None = None,
 ) -> Response:
-    frontend_url = str(current_app.config.get("SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"))
+    frontend_url = str(current_app.config.get("SPIFFWORKFLOW_BACKEND_FRONTEND_URL"))
 
     # strip either :80 and :443 off the end of the frontend url string
     frontend_url = re.sub(r":(80|443)$", "", frontend_url)
@@ -305,7 +305,7 @@ def logout(id_token: str, authentication_identifier: str, redirect_url: str | No
 
 
 def logout_return() -> Response:
-    frontend_url = str(current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"])
+    frontend_url = str(current_app.config["SPIFFWORKFLOW_BACKEND_FRONTEND_URL"])
     return redirect(f"{frontend_url}/")
 
 
@@ -326,7 +326,7 @@ def _set_new_access_token_in_cookie(
     It will also delete the cookies if the user has logged out.
     """
     tld = current_app.config["THREAD_LOCAL_DATA"]
-    frontend_url = current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
+    frontend_url = current_app.config["SPIFFWORKFLOW_BACKEND_FRONTEND_URL"]
     domain_for_frontend_cookie = urlparse(frontend_url).hostname
     if _requires_host_only_cookie_domain(domain_for_frontend_cookie):
         domain_for_frontend_cookie = None

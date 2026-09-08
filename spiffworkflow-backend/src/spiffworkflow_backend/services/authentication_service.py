@@ -473,7 +473,7 @@ class AuthenticationService:
         # endpoint, and we'll redirect again from there.
         my_final_url = final_url
         if final_url is None:
-            my_final_url = str(current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"])
+            my_final_url = str(current_app.config["SPIFFWORKFLOW_BACKEND_FRONTEND_URL"])
 
         state_payload: AuthenticationService.StatePayload = {
             "final_url": my_final_url,
