@@ -33,7 +33,7 @@ echo "[2/5] Setting up MySQL server..."
 sudo systemctl enable mysql
 sudo systemctl start mysql
 # Set root password to empty as required by recreate_db script
-sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';"
+sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY '';"
 # Also create the spiffworkflow user with empty password
 sudo mysql -e "CREATE USER IF NOT EXISTS 'spiffworkflow'@'localhost' IDENTIFIED BY '';"
 sudo mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'spiffworkflow'@'localhost';"

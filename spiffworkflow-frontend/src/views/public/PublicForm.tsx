@@ -14,6 +14,7 @@ import {
   errorForDisplayFromString,
 } from '../../components/ErrorDisplay';
 import Page404 from '../Page404';
+import { withBasePath } from '../../helpers/basePath';
 
 export default function PublicForm() {
   const params = useParams();
@@ -116,7 +117,7 @@ export default function PublicForm() {
           <ErrorDisplayStateless errorObject={currentPageError} />
           <p>
             Go to{' '}
-            <a href="/" data-testid="public-home-link">
+            <a href={withBasePath('/')} data-testid="public-home-link">
               {t('home')}
             </a>
           </p>

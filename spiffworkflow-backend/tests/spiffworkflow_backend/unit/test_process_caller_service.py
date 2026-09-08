@@ -15,7 +15,10 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 @pytest.fixture()
-def with_clean_cache(app: Flask) -> Generator[None, None, None]:
+def with_clean_cache(app: Flask, with_db_and_bpmn_file_cleanup: None) -> Generator[None, None, None]:
+    # Cache-clearing tests leave uncommitted deletes. The
+    # with_db_and_bpmn_file_cleanup fixture rolls them back so a later test
+    # using another app context cannot hit a DB lock.
     ProcessCallerRelationshipModel.query.delete()
     db.session.commit()
     yield
