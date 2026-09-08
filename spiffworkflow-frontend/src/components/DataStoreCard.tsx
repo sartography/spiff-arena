@@ -5,8 +5,8 @@ import {
   CardContent,
   Stack,
 } from '@mui/material';
+import { Link } from 'react-router-dom';
 import { DataStore } from '../interfaces';
-import { withBasePath } from '../helpers/basePath';
 
 const defaultStyle = {
   ':hover': {
@@ -26,9 +26,8 @@ export default function DataStoreCard({ dataStore }: { dataStore: DataStore }) {
   return (
     <Card elevation={0} sx={defaultStyle}>
       <CardActionArea
-        href={withBasePath(
-          `/data-stores/${dataStore.id}/edit?type=${dataStore.type}&parentGroupId=${dataStore.location}`,
-        )}
+        component={Link}
+        to={`/data-stores/${dataStore.id}/edit?type=${dataStore.type}&parentGroupId=${dataStore.location}`}
       >
         <CardContent>
           <Stack>

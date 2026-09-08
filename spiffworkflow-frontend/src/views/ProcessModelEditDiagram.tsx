@@ -7,6 +7,7 @@ import {
 } from 'react';
 import {
   generatePath,
+  useHref,
   useNavigate,
   useParams,
   useSearchParams,
@@ -82,7 +83,6 @@ import ActiveUsers from '../components/ActiveUsers';
 import useScriptAssistEnabled from '../hooks/useScriptAssistEnabled';
 import useProcessScriptAssistMessage from '../hooks/useProcessScriptAssistQuery';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { withBasePath } from '../helpers/basePath';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import {
   getBpmnMessageSyncStatus,
@@ -218,6 +218,7 @@ export default function ProcessModelEditDiagram() {
 
   const params = useParams();
   const navigate = useNavigate();
+  const messagesHref = useHref('/messages');
   const [searchParams] = useSearchParams();
   // CRITICAL: params.process_model_id is ALREADY colon-separated from URL!
   const modifiedProcessModelId = params.process_model_id || '';
@@ -238,15 +239,12 @@ export default function ProcessModelEditDiagram() {
         if (sourceLocation) {
           nextSearchParams.set('source_location', sourceLocation);
         }
-        window.open(
-          withBasePath(`/messages?${nextSearchParams.toString()}`),
-          '_blank',
-        );
+        window.open(`${messagesHref}?${nextSearchParams.toString()}`, '_blank');
       } else {
-        window.open(withBasePath('/messages?tab=models'), '_blank');
+        window.open(`${messagesHref}?tab=models`, '_blank');
       }
     },
-    [modifiedProcessModelId],
+    [messagesHref, modifiedProcessModelId],
   );
 
   const { addError, removeError } = useAPIError();

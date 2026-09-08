@@ -26,7 +26,6 @@ import CustomForm from './CustomForm';
 import InstructionsForEndUser from './InstructionsForEndUser';
 import DateAndTimeService from '../services/DateAndTimeService';
 import FormattedDateTime from './FormattedDateTime';
-import { withBasePath } from '../helpers/basePath';
 
 type OwnProps = {
   apiPath: string;
@@ -306,8 +305,9 @@ export default function TaskListTable({
     ) {
       actions.push(
         <Button
+          component={Link}
           variant="contained"
-          href={withBasePath(taskUrl)}
+          to={taskUrl}
           disabled={!hasAccessToCompleteTask}
           size="small"
         >
