@@ -13,33 +13,21 @@ import {
 } from 'react-router-dom';
 import {
   Send,
-  Check as Checkmark,
   Edit,
-  Autorenew as InProgress,
-  PauseCircleOutline as PauseOutline,
   PersonAddAlt as UserFollow,
   RestartAlt as Reset,
   Rule as RuleDraft,
   SkipNext as SkipForward,
-  WarningAmber as Warning,
   Visibility as View,
   ExpandMore as ExpandMoreIcon,
-  DeleteOutlineOutlined,
-  LinkOutlined,
-  PauseOutlined,
   PlayArrow,
-  SyncAltOutlined,
-  StopCircleOutlined,
 } from '@mui/icons-material';
 import {
   Box,
   Typography,
   IconButton,
   Button,
-  Chip,
   CircularProgress,
-  Tabs,
-  Tab,
   MenuItem,
   Select,
   Dialog,
@@ -49,27 +37,20 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Alert,
   Link as MuiLink,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
-import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import {
-  getLastMilestoneFromProcessInstance,
   HUMAN_TASK_TYPES,
   modifyProcessIdentifierForPathParam,
-  truncateString,
   unModifyProcessIdentifierForPathParam,
   setPageTitle,
   MULTI_INSTANCE_TASK_TYPES,
   LOOP_TASK_TYPES,
   titleizeString,
-  isURL,
-  getProcessStatus,
 } from '../helpers';
-import ConfirmIconButton from '../components/ConfirmIconButton';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
   BasicTask,
@@ -84,23 +65,20 @@ import {
   User,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
-import ProcessInstanceClass from '../classes/ProcessInstanceClass';
 import TaskListTable from '../components/TaskListTable';
 import useAPIError from '../hooks/UseApiError';
 import UserSearch from '../components/UserSearch';
-import ProcessInstanceLogList from '../components/ProcessInstanceLogList';
-import MessageInstanceList from '../components/messages/MessageInstanceList';
-import {
-  childrenForErrorObject,
-  errorForDisplayFromString,
-} from '../components/ErrorDisplay';
-import { Notification } from '../components/Notification';
-import DateAndTimeService from '../services/DateAndTimeService';
 import FormattedDateTime from '../components/FormattedDateTime';
 import ProcessInstanceCurrentTaskInfo from '../components/ProcessInstanceCurrentTaskInfo';
 import useKeyboardShortcut from '../hooks/useKeyboardShortcut';
 import useProcessInstanceNavigate from '../hooks/useProcessInstanceNavigate';
 import SpiffTooltip from '../components/SpiffTooltip';
+import ProcessInstanceSummary from '../components/processInstance/ProcessInstanceSummary';
+import ProcessInstanceActionBar from '../components/processInstance/ProcessInstanceActionBar';
+import ProcessDataDialog from '../components/processInstance/ProcessDataDialog';
+import TaskRetryDetails from '../components/processInstance/TaskRetryDetails';
+import HistoricalStateBanner from '../components/processInstance/HistoricalStateBanner';
+import ProcessInstanceTabs from '../components/processInstance/ProcessInstanceTabs';
 
 type OwnProps = {
   variant: string;
@@ -537,160 +515,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       httpMethod: 'POST',
     });
   };
-  const formatMetadataValue = (key: string, value: string) => {
-    if (isURL(value)) {
-      return (
-        <a href={value} target="_blank" rel="noopener noreferrer">
-          {key} link
-        </a>
-      );
-    }
-    return value;
-  };
-
-  const getInfoTag = () => {
-    if (!processInstance) {
-      return null;
-    }
-    let lastUpdatedTimeLabel = t('process_updated');
-    let lastUpdatedTime = processInstance.task_updated_at_in_seconds;
-    if (processInstance.end_in_seconds) {
-      lastUpdatedTimeLabel = t('process_completed');
-      lastUpdatedTime = processInstance.end_in_seconds;
-    }
-    const lastUpdatedTimeTag = (
-      <dl>
-        <Typography component="dt" variant="subtitle2">
-          {lastUpdatedTimeLabel}:
-        </Typography>
-        <Typography component="dd" variant="body2">
-          <FormattedDateTime seconds={lastUpdatedTime || 0} placeholder="N/A" />
-        </Typography>
-      </dl>
-    );
-
-    let statusIcon = <InProgress />;
-    // let statusColor = 'default';
-    if (processInstance.status === 'suspended') {
-      statusIcon = <PauseOutline />;
-    } else if (processInstance.status === 'complete') {
-      statusIcon = <Checkmark />;
-      // statusColor = 'success';
-    } else if (processInstance.status === 'terminated') {
-      statusIcon = <StopCircleOutlined />;
-    } else if (processInstance.status === 'error') {
-      statusIcon = <Warning />;
-      // statusColor = 'error';
-    }
-
-    const [lastMilestoneFullValue, lastMilestoneTruncatedValue] =
-      getLastMilestoneFromProcessInstance(processInstance);
-
-    return (
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <dl>
-            <Typography component="dt" variant="subtitle2">
-              {t('status')}:
-            </Typography>
-            <Typography component="dd" variant="body2">
-              <Chip
-                label={getProcessStatus(processInstance)}
-                icon={statusIcon}
-                data-testid="process-instance-status-chip"
-                // color={statusColor}
-                size="small"
-              />
-            </Typography>
-          </dl>
-          <dl>
-            <Typography component="dt" variant="subtitle2">
-              {t('started_by')}:
-            </Typography>
-            <Typography component="dd" variant="body2">
-              {' '}
-              {processInstance.process_initiator_username}
-            </Typography>
-          </dl>
-          {processInstance.process_model_with_diagram_identifier ? (
-            <dl>
-              <Typography component="dt" variant="subtitle2">
-                {t('current_diagram')}:{' '}
-              </Typography>
-              <Typography component="dd" variant="body2">
-                <Link
-                  data-testid="go-to-current-diagram-process-model"
-                  to={`/process-models/${modifyProcessIdentifierForPathParam(
-                    processInstance.process_model_with_diagram_identifier || '',
-                  )}`}
-                >
-                  {processInstance.process_model_with_diagram_identifier}
-                </Link>
-              </Typography>
-            </dl>
-          ) : null}
-          <dl>
-            <Typography component="dt" variant="subtitle2">
-              {t('started')}:
-            </Typography>
-            <Typography component="dd" variant="body2">
-              <FormattedDateTime
-                seconds={processInstance.start_in_seconds || 0}
-              />
-            </Typography>
-          </dl>
-          {lastUpdatedTimeTag}
-          <dl>
-            <Typography component="dt" variant="subtitle2">
-              {t('last_milestone')}:
-            </Typography>
-            <Typography
-              component="dd"
-              variant="body2"
-              title={lastMilestoneFullValue}
-            >
-              {lastMilestoneTruncatedValue}
-            </Typography>
-          </dl>
-          <dl>
-            <Typography component="dt" variant="subtitle2">
-              {t('revision')}:
-            </Typography>
-            <Typography component="dd" variant="body2">
-              {processInstance.bpmn_version_control_identifier} (
-              {processInstance.bpmn_version_control_type})
-            </Typography>
-          </dl>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          {(processInstance.process_metadata || []).map(
-            (processInstanceMetadata) => (
-              <dl className="metadata-display">
-                <Typography
-                  component="dt"
-                  variant="subtitle2"
-                  title={processInstanceMetadata.key}
-                >
-                  {truncateString(processInstanceMetadata.key, 50)}:
-                </Typography>
-                <Typography
-                  component="dd"
-                  variant="body2"
-                  data-testid={`metadata-value-${processInstanceMetadata.key}`}
-                >
-                  {formatMetadataValue(
-                    processInstanceMetadata.key,
-                    processInstanceMetadata.value,
-                  )}
-                </Typography>
-              </dl>
-            ),
-          )}
-        </Grid>
-      </Grid>
-    );
-  };
-
   const copyProcessInstanceShortLink = () => {
     if (processInstance) {
       const piShortLink = `${window.location.origin}${processInstanceShortHref}`;
@@ -703,109 +527,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     navigate(
       `/process-instances/${params.process_model_id}/${params.process_instance_id}/migrate`,
     );
-  };
-
-  const terminateButton = () => {
-    if (
-      processInstance &&
-      !ProcessInstanceClass.terminalStatuses().includes(processInstance.status)
-    ) {
-      return (
-        <ConfirmIconButton
-          renderIcon={<StopCircleOutlined />}
-          iconDescription={t('terminate_button')}
-          description={t('terminate_process_instance', {
-            id: processInstance.id,
-          })}
-          onConfirmation={terminateProcessInstance}
-          confirmButtonLabel={t('terminate_button')}
-        />
-      );
-    }
-    return null;
-  };
-
-  // you cannot suspend an instance that is done. except if it has status error, since
-  // you might want to perform admin actions to recover from an errored instance.
-  const suspendButton = () => {
-    if (
-      processInstance &&
-      !ProcessInstanceClass.nonErrorTerminalStatuses()
-        .concat(['suspended'])
-        .includes(processInstance.status)
-    ) {
-      return (
-        <SpiffTooltip title={t('suspend_tooltip')} placement="top">
-          <IconButton
-            onClick={suspendProcessInstance}
-            aria-label={t('suspend_tooltip')}
-          >
-            <PauseOutlined />
-          </IconButton>
-        </SpiffTooltip>
-      );
-    }
-    return null;
-  };
-  const migrateButton = () => {
-    if (processInstance && processInstance.status === 'suspended') {
-      return (
-        <SpiffTooltip title={t('migrate')} placement="top">
-          <IconButton
-            onClick={navigateToProcessInstanceMigratePage}
-            aria-label={t('migrate')}
-          >
-            <SyncAltOutlined />
-          </IconButton>
-        </SpiffTooltip>
-      );
-    }
-    return null;
-  };
-
-  const copyProcessInstanceShortLinkButton = () => {
-    return (
-      <SpiffTooltip title={t('copy_shareable_link_tooltip')} placement="top">
-        <IconButton
-          onClick={copyProcessInstanceShortLink}
-          aria-label={t('copy_shareable_link_tooltip')}
-        >
-          <LinkOutlined />
-        </IconButton>
-      </SpiffTooltip>
-    );
-  };
-
-  const resumeButton = () => {
-    if (processInstance && processInstance.status === 'suspended') {
-      return (
-        <SpiffTooltip title={t('resume')} placement="top">
-          <IconButton onClick={resumeProcessInstance} aria-label={t('resume')}>
-            <PlayArrow />
-          </IconButton>
-        </SpiffTooltip>
-      );
-    }
-    return null;
-  };
-
-  const deleteButton = () => {
-    if (
-      processInstance &&
-      ProcessInstanceClass.terminalStatuses().includes(processInstance.status)
-    ) {
-      return (
-        <ConfirmIconButton
-          data-testid="process-instance-delete"
-          renderIcon={<DeleteOutlineOutlined />}
-          iconDescription={t('delete')}
-          description={t('delete_process_instance', { id: processInstance.id })}
-          onConfirmation={deleteProcessInstance}
-          confirmButtonLabel={t('delete')}
-        />
-      );
-    }
-    return null;
   };
 
   const initializeTaskInstancesToDisplay = useCallback(
@@ -862,44 +583,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const handleProcessDataDisplayClose = () => {
     setProcessDataToDisplay(null);
-  };
-
-  const processDataDisplayArea = () => {
-    if (processDataToDisplay) {
-      let bodyComponent = (
-        <>
-          <p>{t('value')}:</p>
-          <pre>{JSON.stringify(processDataToDisplay.process_data_value)}</pre>
-        </>
-      );
-      if (processDataToDisplay.authorized === false) {
-        bodyComponent = (
-          <>
-            {childrenForErrorObject(
-              errorForDisplayFromString(
-                processDataToDisplay.process_data_value,
-              ),
-              t,
-            )}
-          </>
-        );
-      }
-      return (
-        <Dialog
-          className="wide-dialog"
-          open={!!processDataToDisplay}
-          onClose={handleProcessDataDisplayClose}
-        >
-          <DialogTitle>
-            {t('process_data_object', {
-              identifier: processDataToDisplay.process_data_identifier,
-            })}
-          </DialogTitle>
-          <DialogContent>{bodyComponent}</DialogContent>
-        </Dialog>
-      );
-    }
-    return null;
   };
 
   const handleProcessDataShowResponse = (processData: ProcessData) => {
@@ -1526,81 +1209,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return dataArea;
   };
 
-  const taskRetryDetails = (task: BasicTask) => {
-    const retryAt = task.properties_json.internal_data?.spiff__retry_at;
-    const retriesAttempted =
-      task.properties_json.internal_data?.spiff__retries_attempted;
-    const configuredRetries = task.task_definition_properties_json.retries;
-
-    if (
-      typeof retriesAttempted === 'undefined' &&
-      typeof retryAt === 'undefined'
-    ) {
-      return null;
-    }
-
-    const retryAtInSeconds =
-      typeof retryAt === 'undefined' ? null : Number(retryAt);
-    const formattedRetryAt =
-      retryAtInSeconds === null || Number.isNaN(retryAtInSeconds)
-        ? null
-        : DateAndTimeService.convertSecondsToFormattedDateTime(
-            retryAtInSeconds,
-          );
-    const configuredRetriesNumber =
-      typeof configuredRetries === 'undefined'
-        ? null
-        : Number(configuredRetries);
-    const retriesAttemptedNumber =
-      typeof retriesAttempted === 'undefined' ? null : Number(retriesAttempted);
-    const normalizedRetriesAttempted =
-      retriesAttemptedNumber === null || Number.isNaN(retriesAttemptedNumber)
-        ? null
-        : Math.max(0, retriesAttemptedNumber);
-    const retriesRemaining =
-      normalizedRetriesAttempted === null ||
-      configuredRetriesNumber === null ||
-      Number.isNaN(configuredRetriesNumber)
-        ? null
-        : Math.max(configuredRetriesNumber - normalizedRetriesAttempted, 0);
-
-    return (
-      <Alert severity="info" className="with-tiny-bottom-margin">
-        <Typography variant="subtitle2" component="div">
-          {t('task_retry_details')}
-        </Typography>
-        {typeof configuredRetries !== 'undefined' ? (
-          <dl>
-            <Typography component="dt" variant="subtitle2">
-              {t('configured_retries')}:
-            </Typography>
-            <Typography component="dd" variant="body2">
-              {configuredRetries}
-            </Typography>
-          </dl>
-        ) : null}
-        <dl>
-          <Typography component="dt" variant="subtitle2">
-            {t('retries_remaining')}:
-          </Typography>
-          <Typography component="dd" variant="body2">
-            {retriesRemaining ?? 'N/A'}
-          </Typography>
-        </dl>
-        {formattedRetryAt ? (
-          <dl>
-            <Typography component="dt" variant="subtitle2">
-              {t('next_retry_attempt')}:
-            </Typography>
-            <Typography component="dd" variant="body2">
-              <FormattedDateTime seconds={retryAtInSeconds} />
-            </Typography>
-          </dl>
-        ) : null}
-      </Alert>
-    );
-  };
-
   const switchToTask = (
     taskGuid: string,
     taskListToUse: BasicTask[] | null,
@@ -1840,7 +1448,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               <br />
             </div>
           ) : null}
-          {taskRetryDetails(taskToDisplay)}
+          <TaskRetryDetails task={taskToDisplay} />
           <br />
           {taskActionDetails()}
           {taskInstanceSelector()}
@@ -1859,135 +1467,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const buttonIcons = () => {
-    if (!processInstance) {
-      return null;
-    }
-    const elements = [];
-    elements.push(copyProcessInstanceShortLinkButton());
-    if (ability.can('POST', targetUris.processInstanceTerminatePath)) {
-      elements.push(terminateButton());
-    }
-    if (ability.can('POST', targetUris.processInstanceSuspendPath)) {
-      elements.push(suspendButton());
-    }
-    if (ability.can('POST', targetUris.processInstanceMigratePath)) {
-      elements.push(migrateButton());
-    }
-    if (ability.can('POST', targetUris.processInstanceResumePath)) {
-      elements.push(resumeButton());
-    }
-    if (ability.can('DELETE', targetUris.processInstanceActionPath)) {
-      elements.push(deleteButton());
-    }
-    let toast = null;
-    if (copiedShortLinkToClipboard) {
-      toast = (
-        <Notification
-          onClose={() => setCopiedShortLinkToClipboard(false)}
-          type="success"
-          title={t('copied_link_to_clipboard')}
-          timeout={3000}
-          hideCloseButton
-          withBottomMargin={false}
-        />
-      );
-      elements.push(toast);
-    }
-    return elements;
-  };
-
-  const viewMostRecentStateComponent = () => {
-    if (!taskToTimeTravelTo) {
-      return null;
-    }
-    const title = `${taskToTimeTravelTo.id}: ${taskToTimeTravelTo.guid}: ${taskToTimeTravelTo.bpmn_identifier}`;
-    return (
-      <>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12 }}>
-            <p>
-              {t('viewing_process_instance_at_time_when')}{' '}
-              <span title={title}>
-                <strong>
-                  {taskToTimeTravelTo.bpmn_name ||
-                    taskToTimeTravelTo.bpmn_identifier}
-                </strong>
-              </span>{' '}
-              {t('was_active')}.{' '}
-              <Link
-                reloadDocument
-                data-testid="process-instance-view-active-task-link"
-                to={processInstanceShowPageBaseUrl}
-              >
-                {t('view_current_process_instance_state')}.
-              </Link>
-            </p>
-          </Grid>
-        </Grid>
-        <br />
-      </>
-    );
-  };
-
-  const diagramArea = () => {
-    if (!processInstance) {
-      return null;
-    }
-    if (!tasks && !tasksCallHadError) {
-      return <CircularProgress size={24} />;
-    }
-
-    const hasDiagramXml = !!processInstance.bpmn_xml_file_contents;
-    const canLoadFromModel =
-      !!diagramFileName && !!diagramProcessModelId && !hasDiagramXml;
-    const retrievalError =
-      processInstance.bpmn_xml_file_contents_retrieval_error || '';
-    const detailsComponent = (
-      <>
-        {childrenForErrorObject(
-          errorForDisplayFromString(diagramLoadError || retrievalError),
-          t,
-        )}
-      </>
-    );
-
-    if (
-      !hasDiagramXml &&
-      !canLoadFromModel &&
-      (diagramLoadError || retrievalError)
-    ) {
-      return (
-        <Notification
-          title={t('failed_to_load_diagram')}
-          type="error"
-          hideCloseButton
-          allowTogglingFullMessage
-        >
-          {detailsComponent}
-        </Notification>
-      );
-    }
-
-    return (
-      <>
-        <ReactDiagramEditor
-          diagramType="readonly"
-          diagramXML={processInstance.bpmn_xml_file_contents || ''}
-          fileName={canLoadFromModel ? diagramFileName || undefined : undefined}
-          onCallActivityOverlayClick={handleCallActivityNavigate}
-          onElementClick={handleClickedDiagramTask}
-          modifiedProcessModelId={
-            canLoadFromModel
-              ? diagramProcessModelId || ''
-              : modifiedProcessModelId || ''
-          }
-          tasks={tasks}
-        />
-      </>
-    );
-  };
-
   const updateSelectedTab = (newTabIndex: any) => {
     // this causes the process instance and task list to render again as well
     // it'd be nice if we could find a way to avoid that
@@ -1998,117 +1477,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     updateSearchParams(newTabIndex, 'taskSubTab');
   };
 
-  const taskTabSubTabs = () => {
-    if (!processInstance) {
-      return null;
-    }
-
-    return (
-      <>
-        <Tabs
-          value={selectedTaskTabSubTab}
-          onChange={(_, newValue) => updateSelectedTaskTabSubTab(newValue)}
-        >
-          <Tab label={t('completed_by_me_tab')} />
-          <Tab label={t('all_completed_tab')} />
-        </Tabs>
-        <Box>
-          {selectedTaskTabSubTab === 0 ? (
-            <TaskListTable
-              apiPath={`/tasks/completed-by-me/${processInstance.id}`}
-              paginationClassName="with-large-bottom-margin"
-              textToShowIfEmpty={t('no_completed_tasks_by_me')}
-              shouldPaginateTable={false}
-              showProcessModelIdentifier={false}
-              showProcessId={false}
-              showStartedBy={false}
-              showTableDescriptionAsTooltip
-              showDateStarted={false}
-              showWaitingOn={false}
-              canCompleteAllTasks={false}
-              showViewFormDataButton
-              defaultPerPage={20}
-            />
-          ) : null}
-          {selectedTaskTabSubTab === 1 ? (
-            <TaskListTable
-              apiPath={`/tasks/completed/${processInstance.id}`}
-              paginationClassName="with-large-bottom-margin"
-              textToShowIfEmpty={t('no_completed_tasks')}
-              shouldPaginateTable={false}
-              showProcessModelIdentifier={false}
-              showProcessId={false}
-              showStartedBy={false}
-              showTableDescriptionAsTooltip
-              showDateStarted={false}
-              showWaitingOn={false}
-              canCompleteAllTasks={false}
-              showCompletedBy
-              showActionsColumn={false}
-              defaultPerPage={20}
-            />
-          ) : null}
-        </Box>
-      </>
-    );
-  };
-
-  const getTabs = () => {
-    if (!processInstance) {
-      return null;
-    }
-
+  if (processInstance && permissionsLoaded) {
     const canViewLogs = ability.can(
       'GET',
       targetUris.processInstanceLogListPath,
     );
     const canViewMsgs = ability.can('GET', targetUris.messageInstanceListPath);
 
-    const getMessageDisplay = () => {
-      if (canViewMsgs) {
-        return <MessageInstanceList processInstanceId={processInstance.id} />;
-      }
-      return null;
-    };
-
-    return (
-      <>
-        <Tabs
-          value={selectedTabIndex}
-          onChange={(_, newValue) => updateSelectedTab(newValue)}
-        >
-          <Tab label={t('diagram_tab')} />
-          <Tab label={t('milestones_tab')} disabled={!canViewLogs} />
-          <Tab label={t('events_tab')} disabled={!canViewLogs} />
-          <Tab label={t('messages')} disabled={!canViewMsgs} />
-          <Tab label={t('tasks_tab')} />
-        </Tabs>
-        <Box>
-          {selectedTabIndex === 0 ? diagramArea() : null}
-          {selectedTabIndex === 1 ? (
-            <ProcessInstanceLogList
-              variant={variant}
-              isEventsView={false}
-              modifiedProcessModelId={modifiedProcessModelId || ''}
-              processInstanceId={processInstance.id}
-            />
-          ) : null}
-          {selectedTabIndex === 2 ? (
-            <ProcessInstanceLogList
-              variant={variant}
-              isEventsView
-              modifiedProcessModelId={modifiedProcessModelId || ''}
-              processInstanceId={processInstance.id}
-            />
-          ) : null}
-          {selectedTabIndex === 3 ? getMessageDisplay() : null}
-          {selectedTabIndex === 4 ? taskTabSubTabs() : null}
-        </Box>
-      </>
-    );
-  };
-
-  if (processInstance && permissionsLoaded) {
     return (
       <>
         <ProcessBreadcrumb
@@ -2124,8 +1499,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         />
         {keyboardShortcutArea}
         {taskUpdateDisplayArea()}
-        {processDataDisplayArea()}
-        {viewMostRecentStateComponent()}
+        <ProcessDataDialog
+          processData={processDataToDisplay}
+          onClose={handleProcessDataDisplayClose}
+        />
+        <HistoricalStateBanner
+          taskToTimeTravelTo={taskToTimeTravelTo}
+          processInstanceShowPageBaseUrl={processInstanceShowPageBaseUrl}
+        />
         <Box display="flex" alignItems="center" gap={1}>
           <Typography
             variant="h1"
@@ -2135,9 +1516,41 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           >
             {t('process_id_label', { id: processInstance.id })}
           </Typography>
-          {buttonIcons()}
+          <ProcessInstanceActionBar
+            processInstance={processInstance}
+            canDelete={ability.can(
+              'DELETE',
+              targetUris.processInstanceActionPath,
+            )}
+            canMigrate={ability.can(
+              'POST',
+              targetUris.processInstanceMigratePath,
+            )}
+            canResume={ability.can(
+              'POST',
+              targetUris.processInstanceResumePath,
+            )}
+            canSuspend={ability.can(
+              'POST',
+              targetUris.processInstanceSuspendPath,
+            )}
+            canTerminate={ability.can(
+              'POST',
+              targetUris.processInstanceTerminatePath,
+            )}
+            copiedShortLinkToClipboard={copiedShortLinkToClipboard}
+            onCopyShortLink={copyProcessInstanceShortLink}
+            onCopiedNotificationClose={() =>
+              setCopiedShortLinkToClipboard(false)
+            }
+            onDelete={deleteProcessInstance}
+            onMigrate={navigateToProcessInstanceMigratePage}
+            onResume={resumeProcessInstance}
+            onSuspend={suspendProcessInstance}
+            onTerminate={terminateProcessInstance}
+          />
         </Box>
-        {getInfoTag()}
+        <ProcessInstanceSummary processInstance={processInstance} />
         <br />
         <ProcessInstanceCurrentTaskInfo processInstance={processInstance} />
         <br />
@@ -2158,7 +1571,24 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           hideIfNoTasks
           canCompleteAllTasks
         />
-        {getTabs()}
+        <ProcessInstanceTabs
+          processInstance={processInstance}
+          variant={variant}
+          modifiedProcessModelId={modifiedProcessModelId || ''}
+          selectedTabIndex={selectedTabIndex}
+          selectedTaskTabSubTab={selectedTaskTabSubTab}
+          canViewLogs={canViewLogs}
+          canViewMsgs={canViewMsgs}
+          tasks={tasks}
+          tasksCallHadError={tasksCallHadError}
+          diagramFileName={diagramFileName}
+          diagramProcessModelId={diagramProcessModelId}
+          diagramLoadError={diagramLoadError}
+          onSelectTab={updateSelectedTab}
+          onSelectTaskSubTab={updateSelectedTaskTabSubTab}
+          onCallActivityNavigate={handleCallActivityNavigate}
+          onElementClick={handleClickedDiagramTask}
+        />
       </>
     );
   }
