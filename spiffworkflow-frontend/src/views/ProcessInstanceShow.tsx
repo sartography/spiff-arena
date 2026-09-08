@@ -1,84 +1,42 @@
-import { ReactElement, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { json } from '@codemirror/lang-json';
-import { EditorState, type Extension } from '@codemirror/state';
-import { EditorView } from 'codemirror';
-import ThemedCodeMirror from '../components/ThemedCodeMirror';
 import {
   useParams,
   useNavigate,
-  Link,
   useHref,
   useSearchParams,
 } from 'react-router-dom';
-import {
-  Send,
-  Edit,
-  PersonAddAlt as UserFollow,
-  RestartAlt as Reset,
-  Rule as RuleDraft,
-  SkipNext as SkipForward,
-  Visibility as View,
-  ExpandMore as ExpandMoreIcon,
-  PlayArrow,
-} from '@mui/icons-material';
-import {
-  Box,
-  Typography,
-  IconButton,
-  Button,
-  CircularProgress,
-  MenuItem,
-  Select,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Link as MuiLink,
-} from '@mui/material';
-import Grid from '@mui/material/Grid';
+import { Box, Typography, CircularProgress } from '@mui/material';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import {
-  HUMAN_TASK_TYPES,
   modifyProcessIdentifierForPathParam,
   unModifyProcessIdentifierForPathParam,
   setPageTitle,
-  MULTI_INSTANCE_TASK_TYPES,
-  LOOP_TASK_TYPES,
-  titleizeString,
 } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
   BasicTask,
   ErrorForDisplay,
-  EventDefinition,
   KeyboardShortcuts,
   PermissionsToCheck,
   ProcessData,
   ProcessInstance,
   ProcessModel,
-  Task,
-  User,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import TaskListTable from '../components/TaskListTable';
 import useAPIError from '../hooks/UseApiError';
-import UserSearch from '../components/UserSearch';
-import FormattedDateTime from '../components/FormattedDateTime';
 import ProcessInstanceCurrentTaskInfo from '../components/ProcessInstanceCurrentTaskInfo';
 import useKeyboardShortcut from '../hooks/useKeyboardShortcut';
 import useProcessInstanceNavigate from '../hooks/useProcessInstanceNavigate';
-import SpiffTooltip from '../components/SpiffTooltip';
 import ProcessInstanceSummary from '../components/processInstance/ProcessInstanceSummary';
 import ProcessInstanceActionBar from '../components/processInstance/ProcessInstanceActionBar';
 import ProcessDataDialog from '../components/processInstance/ProcessDataDialog';
-import TaskRetryDetails from '../components/processInstance/TaskRetryDetails';
 import HistoricalStateBanner from '../components/processInstance/HistoricalStateBanner';
 import ProcessInstanceTabs from '../components/processInstance/ProcessInstanceTabs';
+import TaskInspectorDialog from '../components/processInstance/TaskInspectorDialog';
+import useTaskInspector from '../components/processInstance/useTaskInspector';
 
 type OwnProps = {
   variant: string;
@@ -90,48 +48,27 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const { navigateToInstance } = useProcessInstanceNavigate();
 
-  const eventsThatNeedPayload = ['MessageEventDefinition'];
-
   const [processInstance, setProcessInstance] =
     useState<ProcessInstance | null>(null);
   const [tasks, setTasks] = useState<BasicTask[] | null>(null);
   const [tasksCallHadError, setTasksCallHadError] = useState<boolean>(false);
-  const [taskToDisplay, setTaskToDisplay] = useState<BasicTask | null>(null);
   const [taskToTimeTravelTo, setTaskToTimeTravelTo] =
     useState<BasicTask | null>(null);
-  const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
-  const [taskInstancesToDisplay, setTaskInstancesToDisplay] = useState<
-    BasicTask[]
-  >([]);
-  const [showTaskDataLoading, setShowTaskDataLoading] =
-    useState<boolean>(false);
 
   const [processDataToDisplay, setProcessDataToDisplay] =
     useState<ProcessData | null>(null);
-  const [editingTaskData, setEditingTaskData] = useState<boolean>(false);
-  const [selectingEvent, setSelectingEvent] = useState<boolean>(false);
-  const [eventToSend, setEventToSend] = useState<any>({});
-  const [eventPayload, setEventPayload] = useState<string>('{}');
-  const [eventTextEditorEnabled, setEventTextEditorEnabled] =
-    useState<boolean>(false);
   const [diagramFileName, setDiagramFileName] = useState<string | null>(null);
   const [diagramProcessModelId, setDiagramProcessModelId] = useState<
     string | null
   >(null);
   const [diagramLoadError, setDiagramLoadError] = useState<string | null>(null);
 
-  const [addingPotentialOwners, setAddingPotentialOwners] =
-    useState<boolean>(false);
-  const [additionalPotentialOwners, setAdditionalPotentialOwners] = useState<
-    User[] | null
-  >(null);
-
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
   const [selectedTaskTabSubTab, setSelectedTaskTabSubTab] = useState<number>(0);
   const [copiedShortLinkToClipboard, setCopiedShortLinkToClipboard] =
     useState<boolean>(false);
 
-  const { error, addError, removeError } = useAPIError();
+  const { addError } = useAPIError();
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
     `${params.process_model_id}`,
   );
@@ -484,24 +421,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const showingActiveTask = () => {
     return !taskToTimeTravelTo;
   };
-  const completionViewLink = (label: any, taskGuid: string) => {
-    return (
-      <MuiLink
-        component={Link}
-        reloadDocument
-        data-testid="process-instance-step-link"
-        to={`${processInstanceShowPageBaseUrl}/${taskGuid}${queryParams()}`}
-        sx={(theme) => ({
-          color:
-            theme.palette.mode === 'dark'
-              ? theme.palette.info.light
-              : theme.palette.primary.main,
-        })}
-      >
-        {label}
-      </MuiLink>
-    );
-  };
   const returnToProcessInstance = () => {
     window.location.href = processInstanceHref;
   };
@@ -528,58 +447,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       `/process-instances/${params.process_model_id}/${params.process_instance_id}/migrate`,
     );
   };
-
-  const initializeTaskInstancesToDisplay = useCallback(
-    (task: BasicTask | null) => {
-      if (!task) {
-        return;
-      }
-      HttpService.makeCallToBackend({
-        path: `/tasks/${params.process_instance_id}/${task.guid}/task-instances`,
-        httpMethod: 'GET',
-        // reverse operates on self as well as return the new ordered array so reverse it right away
-        successCallback: (results: BasicTask[]) =>
-          setTaskInstancesToDisplay(results.reverse()),
-        failureCallback: (err: any) => {
-          setTaskDataToDisplay(`ERROR: ${err.message}`);
-        },
-      });
-    },
-    [params.process_instance_id],
-  );
-
-  const processTaskResult = (result: Task) => {
-    if (result == null) {
-      setTaskDataToDisplay('');
-    } else {
-      setTaskDataToDisplay(JSON.stringify(result.data, null, 2));
-    }
-    setShowTaskDataLoading(false);
-  };
-
-  const initializeTaskDataToDisplay = useCallback(
-    (task: BasicTask | null) => {
-      if (
-        task &&
-        ['COMPLETED', 'ERROR', 'READY'].includes(task.state) &&
-        ability.can('GET', targetUris.processInstanceTaskDataPath)
-      ) {
-        setShowTaskDataLoading(true);
-        HttpService.makeCallToBackend({
-          path: `${targetUris.processInstanceTaskDataPath}/${task.guid}`,
-          httpMethod: 'GET',
-          successCallback: processTaskResult,
-          failureCallback: (err: any) => {
-            setTaskDataToDisplay(`ERROR: ${err.message}`);
-            setShowTaskDataLoading(false);
-          },
-        });
-      } else {
-        setTaskDataToDisplay('');
-      }
-    },
-    [ability, targetUris.processInstanceTaskDataPath],
-  );
 
   const handleProcessDataDisplayClose = () => {
     setProcessDataToDisplay(null);
@@ -694,6 +561,23 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     [navigate],
   );
 
+  const { openTaskInspector, dialogProps: taskInspectorDialogProps } =
+    useTaskInspector({
+      processInstanceId: params.process_instance_id,
+      modifiedProcessModelId,
+      tasks,
+      processInstance,
+      showingActiveTask: showingActiveTask(),
+      ability,
+      targetUris,
+      completionViewBaseUrl: processInstanceShowPageBaseUrl,
+      completionQueryParams: queryParams(),
+      onSendEventSuccess: refreshPage,
+      onCompleteTaskSuccess: returnToProcessInstance,
+      onResetProcess: resetProcessInstance,
+      onNavigateCallActivity: handleCallActivityNavigate,
+    });
+
   const handleClickedDiagramTask = useCallback(
     (shapeElement: any, bpmnProcessIdentifiers: any) => {
       if (shapeElement.type === 'bpmn:DataObjectReference') {
@@ -704,768 +588,17 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           bpmnProcessIdentifiers,
         );
         if (matchingTask) {
-          setTaskToDisplay(matchingTask);
-          initializeTaskDataToDisplay(matchingTask);
-          initializeTaskInstancesToDisplay(matchingTask);
+          openTaskInspector(matchingTask);
         }
       }
     },
     [
       findMatchingTaskFromShapeElement,
-      initializeTaskDataToDisplay,
-      initializeTaskInstancesToDisplay,
       makeProcessDataCallFromShapeElement,
+      openTaskInspector,
       tasks,
     ],
   );
-
-  const resetTaskActionDetails = () => {
-    setEditingTaskData(false);
-    setSelectingEvent(false);
-    setAddingPotentialOwners(false);
-    initializeTaskDataToDisplay(taskToDisplay);
-    initializeTaskInstancesToDisplay(taskToDisplay);
-    setEventPayload('{}');
-    setAdditionalPotentialOwners(null);
-    removeError();
-  };
-
-  const handleTaskDataDisplayClose = () => {
-    setTaskToDisplay(null);
-    initializeTaskDataToDisplay(null);
-    initializeTaskInstancesToDisplay(null);
-    if (editingTaskData || selectingEvent || addingPotentialOwners) {
-      resetTaskActionDetails();
-    }
-  };
-
-  const getTaskById = (taskId: string) => {
-    if (tasks !== null) {
-      return tasks.find((task: BasicTask) => task.guid === taskId) || null;
-    }
-    return null;
-  };
-
-  const processScriptUnitTestCreateResult = (result: any) => {
-    console.log('result', result);
-  };
-
-  const getParentTaskFromTask = (task: BasicTask) => {
-    return task.properties_json.parent;
-  };
-
-  const createScriptUnitTest = () => {
-    if (taskToDisplay) {
-      const previousTask: BasicTask | null = getTaskById(
-        getParentTaskFromTask(taskToDisplay),
-      );
-      const postBody = {
-        bpmn_task_identifier: taskToDisplay.bpmn_identifier,
-        previous_task_guid: previousTask?.guid,
-        task_guid: taskToDisplay.guid,
-      };
-      HttpService.makeCallToBackend({
-        path: `/process-models/${modifiedProcessModelId}/script-unit-tests`,
-        httpMethod: 'POST',
-        successCallback: processScriptUnitTestCreateResult,
-        postBody: postBody,
-      });
-    }
-  };
-
-  const isActiveTask = (task: BasicTask) => {
-    const subprocessTypes = [
-      'Subprocess',
-      'CallActivity',
-      'Transactional Subprocess',
-    ];
-    return (
-      (task.state === 'WAITING' &&
-        subprocessTypes.filter((type) => type === task.typename).length > 0) ||
-      task.state === 'READY' ||
-      (processInstance &&
-        processInstance.status === 'suspended' &&
-        task.state === 'ERROR')
-    );
-  };
-
-  const canEditTaskData = (task: BasicTask) => {
-    return (
-      processInstance &&
-      ability.can('PUT', targetUris.processInstanceTaskDataPath) &&
-      isActiveTask(task) &&
-      processInstance.status === 'suspended' &&
-      showingActiveTask()
-    );
-  };
-
-  const canSendEvent = (task: BasicTask) => {
-    // We actually could allow this for any waiting events
-    const taskTypes = ['EventBasedGateway'];
-    return (
-      !selectingEvent &&
-      processInstance &&
-      processInstance.status === 'waiting' &&
-      ability.can('POST', targetUris.processInstanceSendEventPath) &&
-      taskTypes.filter((type) => type === task.typename).length > 0 &&
-      task.state === 'WAITING' &&
-      showingActiveTask()
-    );
-  };
-
-  const canCompleteTask = (task: BasicTask) => {
-    return (
-      processInstance &&
-      processInstance.status === 'suspended' &&
-      ability.can('POST', targetUris.processInstanceCompleteTaskPath) &&
-      isActiveTask(task) &&
-      showingActiveTask()
-    );
-  };
-
-  const canAddPotentialOwners = (task: BasicTask) => {
-    return (
-      HUMAN_TASK_TYPES.includes(task.typename) &&
-      processInstance &&
-      processInstance.status === 'suspended' &&
-      ability.can('POST', targetUris.processInstanceTaskAssignPath) &&
-      isActiveTask(task) &&
-      showingActiveTask()
-    );
-  };
-  const canResetProcess = (task: BasicTask) => {
-    return (
-      ability.can('POST', targetUris.processInstanceResetPath) &&
-      processInstance &&
-      processInstance.status === 'suspended' &&
-      ((task.state === 'READY' && !showingActiveTask()) ||
-        (task.state === 'ERROR' && showingActiveTask()))
-    );
-  };
-
-  const getEvents = (task: BasicTask) => {
-    const handleMessage = (eventDefinition: EventDefinition) => {
-      if (eventsThatNeedPayload.includes(eventDefinition.typename)) {
-        const newEvent = eventDefinition;
-        delete newEvent.message_var;
-        newEvent.payload = {};
-        return newEvent;
-      }
-      return eventDefinition;
-    };
-    const eventDefinition =
-      task.task_definition_properties_json.event_definition;
-    if (eventDefinition && eventDefinition.event_definitions) {
-      return eventDefinition.event_definitions.map((e: EventDefinition) =>
-        handleMessage(e),
-      );
-    }
-    if (eventDefinition) {
-      return [handleMessage(eventDefinition)];
-    }
-    return [];
-  };
-
-  const saveTaskDataResult = (_: any) => {
-    setEditingTaskData(false);
-  };
-
-  const saveTaskData = () => {
-    if (!taskToDisplay) {
-      return;
-    }
-    removeError();
-
-    HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceTaskDataPath}/${taskToDisplay.guid}`,
-      httpMethod: 'PUT',
-      successCallback: saveTaskDataResult,
-      failureCallback: addError,
-      postBody: {
-        new_task_data: taskDataToDisplay,
-      },
-    });
-  };
-
-  const addPotentialOwners = () => {
-    if (!additionalPotentialOwners || additionalPotentialOwners.length === 0) {
-      addError({
-        message: 'Please select a user from the dropdown',
-      });
-      return;
-    }
-    if (!taskToDisplay) {
-      return;
-    }
-    removeError();
-
-    const userIds = additionalPotentialOwners.map((user: User) => user.id);
-
-    HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceTaskAssignPath}/${taskToDisplay.guid}`,
-      httpMethod: 'POST',
-      successCallback: resetTaskActionDetails,
-      failureCallback: addError,
-      postBody: {
-        user_ids: userIds,
-      },
-    });
-  };
-
-  const sendEvent = () => {
-    if ('payload' in eventToSend) {
-      eventToSend.payload = JSON.parse(eventPayload);
-    }
-    HttpService.makeCallToBackend({
-      path: targetUris.processInstanceSendEventPath,
-      httpMethod: 'POST',
-      successCallback: refreshPage,
-      failureCallback: addError,
-      postBody: eventToSend,
-    });
-  };
-
-  const completeTask = (execute: boolean) => {
-    if (taskToDisplay) {
-      HttpService.makeCallToBackend({
-        path: `/task-complete/${modifiedProcessModelId}/${params.process_instance_id}/${taskToDisplay.guid}`,
-        httpMethod: 'POST',
-        successCallback: returnToProcessInstance,
-        postBody: { execute },
-      });
-    }
-  };
-
-  const taskDisplayButtons = (task: BasicTask) => {
-    const buttons = [];
-    if (editingTaskData || addingPotentialOwners || selectingEvent) {
-      return null;
-    }
-
-    if (
-      task.typename === 'ScriptTask' &&
-      ability.can('PUT', targetUris.processModelShowPath)
-    ) {
-      buttons.push(
-        <Button
-          variant="outlined"
-          startIcon={<RuleDraft />}
-          data-testid="create-script-unit-test-button"
-          onClick={createScriptUnitTest}
-        >
-          {t('create_script_unit_test')}
-        </Button>,
-      );
-    }
-
-    if (
-      task.typename === 'CallActivity' &&
-      !['FUTURE', 'LIKELY', 'MAYBE'].includes(task.state)
-    ) {
-      buttons.push(
-        <Button
-          variant="outlined"
-          className="button-link indented-content"
-          onAuxClick={(event: any) => {
-            handleCallActivityNavigate(task, event);
-          }}
-          onClick={(event: any) => {
-            setTaskToDisplay(null);
-            handleCallActivityNavigate(task, event);
-          }}
-        >
-          {t('view_call_activity_diagram')}
-        </Button>,
-      );
-    }
-
-    if (canEditTaskData(task)) {
-      buttons.push(
-        <Button
-          variant="outlined"
-          startIcon={<Edit />}
-          data-testid="edit-task-data-button"
-          onClick={() => setEditingTaskData(true)}
-        >
-          {t('edit_task_data')}
-        </Button>,
-      );
-    }
-    if (canAddPotentialOwners(task)) {
-      buttons.push(
-        <Button
-          variant="outlined"
-          startIcon={<UserFollow />}
-          title="Allow an additional user to complete this task"
-          data-testid="add-potential-owners-button"
-          onClick={() => setAddingPotentialOwners(true)}
-        >
-          {t('assign_user')}
-        </Button>,
-      );
-    }
-    if (canCompleteTask(task)) {
-      buttons.push(
-        <Button
-          variant="outlined"
-          startIcon={<PlayArrow />}
-          data-testid="execute-task-complete-button"
-          onClick={() => completeTask(true)}
-        >
-          {t('execute_task')}
-        </Button>,
-      );
-      buttons.push(
-        <Button
-          variant="outlined"
-          startIcon={<SkipForward />}
-          data-testid="mark-task-complete-button"
-          onClick={() => completeTask(false)}
-        >
-          {t('skip_task')}
-        </Button>,
-      );
-    }
-    if (canSendEvent(task)) {
-      buttons.push(
-        <Button
-          variant="outlined"
-          startIcon={<Send />}
-          data-testid="select-event-button"
-          onClick={() => setSelectingEvent(true)}
-        >
-          {t('send_event')}
-        </Button>,
-      );
-    }
-    if (canResetProcess(task)) {
-      let titleText =
-        'This will reset (rewind) the process to put it into a state as if the execution of the process never went past this task. ';
-      titleText += 'Yes, we invented a time machine. ';
-      titleText +=
-        'And no, you cannot change your mind after using this feature.';
-      buttons.push(
-        <Button
-          variant="outlined"
-          startIcon={<Reset />}
-          title={titleText}
-          data-testid="reset-process-button"
-          onClick={() => resetProcessInstance(task.guid)}
-        >
-          {t('reset_process_here')}
-        </Button>,
-      );
-    }
-    return buttons;
-  };
-
-  const taskDataContainer = () => {
-    let taskDataClassName = '';
-    if (taskDataToDisplay.startsWith('ERROR:')) {
-      taskDataClassName = 'failure-string';
-    }
-    const numberOfLines = taskDataToDisplay.split('\n').length;
-    let heightInEm = numberOfLines + 5;
-    if (heightInEm > 30) {
-      heightInEm = 30;
-    }
-    let taskDataHeader = t('task_data');
-    let editorReadOnly = true;
-    let taskDataHeaderClassName = 'with-half-rem-bottom-margin';
-
-    if (editingTaskData) {
-      editorReadOnly = false;
-      taskDataHeader = t('edit_task_data_heading');
-      taskDataHeaderClassName = 'task-data-details-header';
-    }
-
-    if (!taskDataToDisplay) {
-      return null;
-    }
-
-    const extensions: Extension[] = [json()];
-    if (editorReadOnly) {
-      extensions.push(EditorState.readOnly.of(true));
-      extensions.push(EditorView.editable.of(false));
-      extensions.push(EditorView.contentAttributes.of({ tabindex: '0' }));
-    }
-
-    return (
-      <>
-        {showTaskDataLoading ? <CircularProgress size={24} /> : null}
-        {taskDataClassName !== '' ? (
-          <pre className={taskDataClassName}>{taskDataToDisplay}</pre>
-        ) : (
-          <>
-            <h3 className={taskDataHeaderClassName}>{taskDataHeader}</h3>
-            <ThemedCodeMirror
-              height={`${heightInEm}rem`}
-              value={taskDataToDisplay}
-              extensions={extensions}
-              onChange={(value) => {
-                setTaskDataToDisplay(value || '');
-              }}
-            />
-          </>
-        )}
-      </>
-    );
-  };
-
-  const potentialOwnerSelector = () => {
-    return (
-      <Box>
-        <h3 className="task-data-details-header">
-          {t('update_task_ownership')}
-        </h3>
-        <div className="indented-content">
-          <p className="explanatory-message with-tiny-bottom-margin">
-            {t('select_user_to_complete_task')}
-          </p>
-          {error && (
-            <div style={{ color: 'red', marginBottom: '10px' }}>
-              {error.message}
-            </div>
-          )}
-          <UserSearch
-            className="modal-dropdown"
-            onSelectedUser={(user: User) => {
-              setAdditionalPotentialOwners([user]);
-              removeError();
-            }}
-          />
-        </div>
-      </Box>
-    );
-  };
-
-  const eventSelector = (candidateEvents: any) => {
-    let editor = null;
-    let className = 'modal-dropdown';
-    if (eventTextEditorEnabled) {
-      className = '';
-      editor = (
-        <ThemedCodeMirror
-          height={'300px'}
-          value={eventPayload}
-          extensions={[json()]}
-          onChange={(value: any) => setEventPayload(value || '{}')}
-        />
-      );
-    }
-    return (
-      <Box>
-        <h3 className="task-data-details-header">
-          {t('choose_event_to_send')}
-        </h3>
-        <div className="indented-content">
-          <p className="explanatory-message with-tiny-bottom-margin">
-            {t('select_event_description')}
-          </p>
-          <Select
-            id="process-instance-select-event"
-            className={className}
-            value={eventToSend}
-            onChange={(event) => {
-              const selectedItem = candidateEvents.find(
-                (item: any) => item.typename === event.target.value,
-              );
-              setEventToSend(selectedItem);
-              setEventTextEditorEnabled(
-                eventsThatNeedPayload.includes(selectedItem.typename),
-              );
-            }}
-          >
-            {candidateEvents.map((item: any) => (
-              <MenuItem key={item.typename} value={item.typename}>
-                {item.name || item.label || item.typename}
-              </MenuItem>
-            ))}
-          </Select>
-          {editor}
-        </div>
-      </Box>
-    );
-  };
-
-  const taskIsInstanceOfMultiInstanceTask = (task: BasicTask) => {
-    // this is the same check made in the backend in the _process_instance_task_list method to determine
-    // if the given task is an instance of a multi-instance or loop task.
-    // we need to avoid resetting the task instance list since the list may not be the same as we need
-    return 'instance' in task.runtime_info || 'iteration' in task.runtime_info;
-  };
-
-  const taskActionDetails = () => {
-    if (!taskToDisplay) {
-      return null;
-    }
-    let dataArea = taskDataContainer();
-    if (selectingEvent) {
-      const candidateEvents: any = getEvents(taskToDisplay);
-      dataArea = eventSelector(candidateEvents);
-    } else if (addingPotentialOwners) {
-      dataArea = potentialOwnerSelector();
-    }
-    return dataArea;
-  };
-
-  const switchToTask = (
-    taskGuid: string,
-    taskListToUse: BasicTask[] | null,
-  ) => {
-    if (taskListToUse && taskToDisplay) {
-      const task = taskListToUse.find(
-        (task_: BasicTask) => task_.guid === taskGuid,
-      );
-      if (task) {
-        // set to null right away to hopefully avoid using the incorrect task later
-        setTaskToDisplay(null);
-        setTaskToDisplay(task);
-        initializeTaskDataToDisplay(task);
-      }
-    }
-  };
-  const createButtonSetForTaskInstances = () => {
-    if (taskInstancesToDisplay.length === 0 || !taskToDisplay) {
-      return null;
-    }
-    return (
-      <>
-        {taskInstancesToDisplay.map((task: BasicTask, index: number) => {
-          const isSelectedTaskInstance = task.guid === taskToDisplay.guid;
-          const buttonClass = isSelectedTaskInstance
-            ? 'selected-task-instance'
-            : null;
-          return (
-            <Grid container spacing={2} key={task.guid}>
-              <Grid size={{ xs: 1 }}>
-                {isSelectedTaskInstance ? null : (
-                  <SpiffTooltip title="View">
-                    <IconButton
-                      onClick={() =>
-                        switchToTask(task.guid, taskInstancesToDisplay)
-                      }
-                    >
-                      <View />
-                    </IconButton>
-                  </SpiffTooltip>
-                )}
-              </Grid>
-              <Grid size={{ xs: 11 }}>
-                <div className={`task-instance-modal-row-item ${buttonClass}`}>
-                  {index + 1} {': '}
-                  <FormattedDateTime
-                    seconds={task.properties_json.last_state_change}
-                  />{' '}
-                  {' - '} {task.state}
-                </div>
-              </Grid>
-            </Grid>
-          );
-        })}
-      </>
-    );
-  };
-
-  const createButtonsForMultiTasks = (
-    instances: number[],
-    infoType: string,
-  ) => {
-    if (!tasks || !taskToDisplay) {
-      return [];
-    }
-    return instances.map((v: any) => {
-      return (
-        <Button
-          variant="outlined"
-          key={`btn-switch-instance-${infoType}-${v}`}
-          onClick={() =>
-            switchToTask(taskToDisplay.runtime_info.instance_map[v], tasks)
-          }
-        >
-          {v + 1}
-        </Button>
-      );
-    });
-  };
-
-  const taskInstanceSelector = () => {
-    if (!taskToDisplay) {
-      return null;
-    }
-
-    const accordionItems = [];
-
-    if (
-      !taskIsInstanceOfMultiInstanceTask(taskToDisplay) &&
-      taskInstancesToDisplay.length > 0
-    ) {
-      accordionItems.push(
-        <Accordion
-          key="mi-task-instances"
-          defaultExpanded={taskInstancesToDisplay.length <= 3}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            {t('task_instances')} ({taskInstancesToDisplay.length})
-          </AccordionSummary>
-          <AccordionDetails>
-            {createButtonSetForTaskInstances()}
-          </AccordionDetails>
-        </Accordion>,
-      );
-    }
-
-    if (MULTI_INSTANCE_TASK_TYPES.includes(taskToDisplay.typename)) {
-      ['completed', 'running', 'future'].forEach((infoType: string) => {
-        let taskInstances: ReactElement[] = [];
-        const infoArray = taskToDisplay.runtime_info[infoType];
-        taskInstances = createButtonsForMultiTasks(infoArray, infoType);
-        accordionItems.push(
-          <Accordion key={`mi-instance-${titleizeString(infoType)}`}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              {t('mi_instances', { type: titleizeString(infoType) })} (
-              {taskInstances.length})
-            </AccordionSummary>
-            <AccordionDetails>{taskInstances}</AccordionDetails>
-          </Accordion>,
-        );
-      });
-    }
-    if (LOOP_TASK_TYPES.includes(taskToDisplay.typename)) {
-      const loopTaskInstanceIndexes = [
-        ...Array(taskToDisplay.runtime_info.iterations_completed).keys(),
-      ];
-      const buttons = createButtonsForMultiTasks(
-        loopTaskInstanceIndexes,
-        'mi-loop-iterations',
-      );
-      let text = '';
-      if (
-        typeof taskToDisplay.runtime_info.iterations_remaining !==
-          'undefined' &&
-        taskToDisplay.state !== 'COMPLETED'
-      ) {
-        text += t('remaining', {
-          count: taskToDisplay.runtime_info.iterations_remaining,
-        });
-      }
-      accordionItems.push(
-        <Accordion key="mi-loop-iterations">
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            {t('loop_iterations')} ({buttons.length})
-          </AccordionSummary>
-          <AccordionDetails>
-            <div>{text}</div>
-            <div>{buttons}</div>
-          </AccordionDetails>
-        </Accordion>,
-      );
-    }
-    if (accordionItems.length > 0) {
-      return <Box>{accordionItems}</Box>;
-    }
-    return null;
-  };
-
-  const taskUpdateDisplayArea = () => {
-    if (!taskToDisplay) {
-      return null;
-    }
-
-    let primaryButtonText = t('close');
-    let secondaryButtonText = null;
-    let onRequestSubmit = handleTaskDataDisplayClose;
-    let onSecondarySubmit = handleTaskDataDisplayClose;
-    if (editingTaskData) {
-      primaryButtonText = t('save');
-      secondaryButtonText = t('cancel');
-      onSecondarySubmit = resetTaskActionDetails;
-      onRequestSubmit = saveTaskData;
-    } else if (selectingEvent) {
-      primaryButtonText = t('send_button');
-      secondaryButtonText = t('cancel');
-      onSecondarySubmit = resetTaskActionDetails;
-      onRequestSubmit = sendEvent;
-    } else if (addingPotentialOwners) {
-      primaryButtonText = t('add_button');
-      secondaryButtonText = t('cancel');
-      onSecondarySubmit = resetTaskActionDetails;
-      onRequestSubmit = addPotentialOwners;
-    }
-    if (taskToDisplay.runtime_info) {
-      if (typeof taskToDisplay.runtime_info.instance !== 'undefined') {
-        secondaryButtonText = t('return_to_mi_task');
-        onSecondarySubmit = () => {
-          switchToTask(taskToDisplay.properties_json.parent, [
-            ...(tasks || []),
-            ...taskInstancesToDisplay,
-          ]);
-        };
-      } else if (typeof taskToDisplay.runtime_info.iteration !== 'undefined') {
-        secondaryButtonText = t('return_to_loop_task');
-        onSecondarySubmit = () => {
-          switchToTask(taskToDisplay.properties_json.parent, [
-            ...(tasks || []),
-            ...taskInstancesToDisplay,
-          ]);
-        };
-      }
-    }
-
-    return (
-      <Dialog
-        open={!!taskToDisplay}
-        onClose={handleTaskDataDisplayClose}
-        className="wide-dialog"
-      >
-        <DialogTitle>{`${taskToDisplay.bpmn_identifier} (${taskToDisplay.typename}): ${taskToDisplay.state}`}</DialogTitle>
-        <DialogContent>
-          <div className="indented-content explanatory-message">
-            {taskToDisplay.bpmn_name ? (
-              <div>
-                <Box display="flex" gap={2}>
-                  Name: {taskToDisplay.bpmn_name}
-                </Box>
-              </div>
-            ) : null}
-
-            <div>
-              <Box display="flex" gap={2}>
-                Guid: {taskToDisplay.guid}
-              </Box>
-            </div>
-          </div>
-          {taskDisplayButtons(taskToDisplay)}
-          {taskToDisplay.state === 'COMPLETED' ||
-          taskToDisplay.state === 'ERROR' ? (
-            <div className="indented-content">
-              <Box display="flex" gap={2}>
-                {completionViewLink(
-                  'View process instance at the time when this task was active.',
-                  taskToDisplay.guid,
-                )}
-              </Box>
-              <br />
-            </div>
-          ) : null}
-          <TaskRetryDetails task={taskToDisplay} />
-          <br />
-          {taskActionDetails()}
-          {taskInstanceSelector()}
-        </DialogContent>
-        <DialogActions>
-          {secondaryButtonText && (
-            <Button onClick={onSecondarySubmit} color="primary">
-              {secondaryButtonText}
-            </Button>
-          )}
-          <Button onClick={onRequestSubmit} color="primary" autoFocus>
-            {primaryButtonText}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    );
-  };
 
   const updateSelectedTab = (newTabIndex: any) => {
     // this causes the process instance and task list to render again as well
@@ -1498,7 +631,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           ]}
         />
         {keyboardShortcutArea}
-        {taskUpdateDisplayArea()}
+        <TaskInspectorDialog {...taskInspectorDialogProps} />
         <ProcessDataDialog
           processData={processDataToDisplay}
           onClose={handleProcessDataDisplayClose}
