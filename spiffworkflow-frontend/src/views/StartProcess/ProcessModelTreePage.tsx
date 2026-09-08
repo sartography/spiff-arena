@@ -47,7 +47,12 @@ import {
   ViewModule,
 } from '@mui/icons-material';
 import { useDebouncedCallback } from 'use-debounce';
-import { useParams, useNavigate } from 'react-router';
+import {
+  Link as RouterLink,
+  useHref,
+  useNavigate,
+  useParams,
+} from 'react-router-dom';
 import useProcessGroups from '../../hooks/useProcessGroups';
 import TreePanel, { TreeRef } from './TreePanel';
 import SearchBar from './SearchBar';
@@ -69,7 +74,6 @@ import {
 import { useUriListForPermissions } from '../../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../../hooks/PermissionService';
 import ConfirmIconButton from '../../components/ConfirmIconButton';
-import { withBasePath } from '../../helpers/basePath';
 import HttpService from '../../services/HttpService';
 import DataStoreCard from '../../components/DataStoreCard';
 import CollapsibleGroupTree, {
@@ -88,6 +92,21 @@ import {
 
 const SPIFF_ID = 'spifftop';
 type Crumb = { id: string; displayName: string };
+
+const parentProcessGroupId = (groupId: string): string | null => {
+  const modifiedGroupId = modifyProcessIdentifierForPathParam(groupId);
+  const modifiedParentGroupId = modifiedGroupId.replace(/:[^:]+$/, '');
+  if (modifiedParentGroupId === modifiedGroupId) {
+    return null;
+  }
+  return modifiedParentGroupId.replaceAll(':', '/');
+};
+
+const processGroupPath = (groupId: string | null) => {
+  return groupId
+    ? `/process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
+    : '/process-groups';
+};
 type ViewMode = 'list' | 'cards';
 
 type OwnProps = {
@@ -287,10 +306,9 @@ function ProcessGroupHeader({
         {currentProcessGroup
           ? crumbs.map((crumb) => (
               <Link
+                component={RouterLink}
                 key={crumb.id}
-                href={withBasePath(
-                  `/process-groups/${modifyProcessIdentifierForPathParam(crumb.id)}`,
-                )}
+                to={`/process-groups/${modifyProcessIdentifierForPathParam(crumb.id)}`}
                 data-testid={`process-group-breadcrumb-${crumb.displayName}`}
                 onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
                   e.preventDefault();
@@ -306,13 +324,12 @@ function ProcessGroupHeader({
         <Box>
           <Can I="PUT" a={targetUris.processGroupShowPath} ability={ability}>
             <IconButton
+              component={RouterLink}
               data-testid="edit-process-group-button"
               aria-label={t('edit_process_group_with_id', {
                 id: currentProcessGroup.id,
               })}
-              href={withBasePath(
-                `/process-groups/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/edit`,
-              )}
+              to={`/process-groups/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/edit`}
             >
               <Edit />
             </IconButton>
@@ -468,8 +485,8 @@ function GroupRowActions({
         ) : null}
         {canEditGroup ? (
           <MenuItem
-            component="a"
-            href={withBasePath(`/process-groups/${modifiedGroupId}/edit`)}
+            component={RouterLink}
+            to={`/process-groups/${modifiedGroupId}/edit`}
             data-testid={`edit-process-group-menu-item-${modifiedGroupId}`}
             onClick={closeMenu}
           >
@@ -558,8 +575,8 @@ function ModelRowActions({
       >
         {canEditModel ? (
           <MenuItem
-            component="a"
-            href={withBasePath(`/process-models/${modifiedModelId}/edit`)}
+            component={RouterLink}
+            to={`/process-models/${modifiedModelId}/edit`}
             data-testid={`edit-process-model-menu-item-${modifiedModelId}`}
             onClick={closeMenu}
           >
@@ -615,6 +632,11 @@ export default function ProcessModelTreePage({
     string,
     any
   > | null>(null);
+  const parentProcessGroupHref = useHref(
+    processGroupPath(
+      currentProcessGroup ? parentProcessGroupId(currentProcessGroup.id) : null,
+    ),
+  );
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
   const [sortBy, setSortBy] = useState<ProcessModelSortOption>('alphabetical');
   const [showOnlyRun, setShowOnlyRun] = useState(false);
@@ -1016,25 +1038,8 @@ export default function ProcessModelTreePage({
     },
   );
 
-  const parentProcessGroupId = (groupId: string): string | null => {
-    const modifiedGroupId = modifyProcessIdentifierForPathParam(groupId);
-    const modifiedParentGroupId = modifiedGroupId.replace(/:[^:]+$/, '');
-    if (modifiedParentGroupId === modifiedGroupId) {
-      return null;
-    }
-    return modifiedParentGroupId.replaceAll(':', '/');
-  };
-
-  const processGroupPath = (groupId: string | null) => {
-    return groupId
-      ? `/process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
-      : '/process-groups';
-  };
-
-  const goToParentAfterProcessGroupDelete = (groupId: string) => {
-    window.location.href = withBasePath(
-      processGroupPath(parentProcessGroupId(groupId)),
-    );
+  const goToParentAfterProcessGroupDelete = () => {
+    window.location.href = parentProcessGroupHref;
   };
 
   const deleteProcessGroup = () => {
@@ -1044,8 +1049,7 @@ export default function ProcessModelTreePage({
       );
       HttpService.makeCallToBackend({
         path: `/process-groups/${modifiedGroupId}`,
-        successCallback: () =>
-          goToParentAfterProcessGroupDelete(currentProcessGroup.id),
+        successCallback: goToParentAfterProcessGroupDelete,
         httpMethod: 'DELETE',
       });
     }
@@ -1056,7 +1060,7 @@ export default function ProcessModelTreePage({
       path: `/process-groups/${modifyProcessIdentifierForPathParam(group.id)}`,
       successCallback: () => {
         if (group.id === currentProcessGroup?.id) {
-          goToParentAfterProcessGroupDelete(group.id);
+          goToParentAfterProcessGroupDelete();
         } else {
           window.location.reload();
         }
@@ -1324,11 +1328,12 @@ export default function ProcessModelTreePage({
           <Stack direction="row" gap={1} justifyContent="flex-end">
             <Can I="POST" a={targetUris.processGroupListPath} ability={ability}>
               <Button
+                component={RouterLink}
                 variant="outlined"
                 size="small"
                 startIcon={<Add />}
                 data-testid="add-process-group-button"
-                href={withBasePath(newProcessGroupPath())}
+                to={newProcessGroupPath()}
               >
                 {t('add_process_group')}
               </Button>
@@ -1349,8 +1354,9 @@ export default function ProcessModelTreePage({
                 })}
               </Typography>
               <Button
+                component={RouterLink}
                 variant="contained"
-                href={withBasePath('/process-groups')}
+                to="/process-groups"
               >
                 {t('back_to_process_groups')}
               </Button>
@@ -1440,13 +1446,12 @@ export default function ProcessModelTreePage({
                               ability={ability}
                             >
                               <IconButton
+                                component={RouterLink}
                                 size="small"
                                 data-testid="add-process-model-button"
                                 aria-label={t('add_process_model')}
                                 onClick={(e) => e.stopPropagation()}
-                                href={withBasePath(
-                                  `/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/new`,
-                                )}
+                                to={`/process-models/${modifyProcessIdentifierForPathParam(currentProcessGroup.id)}/new`}
                               >
                                 <Add />
                               </IconButton>
@@ -1489,12 +1494,11 @@ export default function ProcessModelTreePage({
                           ability={ability}
                         >
                           <IconButton
+                            component={RouterLink}
                             size="small"
                             aria-label={t('add_process_group')}
                             onClick={(e) => e.stopPropagation()}
-                            href={withBasePath(
-                              `/process-groups/new${currentParentGroupIdSearchParam()}`,
-                            )}
+                            to={`/process-groups/new${currentParentGroupIdSearchParam()}`}
                           >
                             <Add />
                           </IconButton>
@@ -1524,13 +1528,12 @@ export default function ProcessModelTreePage({
                         title={`${t('data_stores')} (${dataStoresForProcessGroup?.length})`}
                         action={
                           <IconButton
+                            component={RouterLink}
                             size="small"
                             aria-label={t('add_data_store')}
                             onClick={(e) => e.stopPropagation()}
                             data-testid="add-data-store-button"
-                            href={withBasePath(
-                              `/data-stores/new${currentParentGroupIdSearchParam()}`,
-                            )}
+                            to={`/data-stores/new${currentParentGroupIdSearchParam()}`}
                           >
                             <Add />
                           </IconButton>

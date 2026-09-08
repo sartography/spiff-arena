@@ -25,7 +25,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import HttpService from '../../services/HttpService';
 import { Notification } from '../Notification';
 import {
@@ -39,7 +39,6 @@ import { findNearestAncestorLocation } from './MessageHelper';
 import ConfirmButton from '../ConfirmButton';
 import useProcessGroups from '../../hooks/useProcessGroups';
 import { usePermissionFetcher } from '../../hooks/PermissionService';
-import { withBasePath } from '../../helpers/basePath';
 
 type OwnProps = {
   processGroupId?: string;
@@ -435,10 +434,9 @@ export default function MessageModelList({
       const usedIn = (messageModel.process_model_identifiers || []).map(
         (pmId) => (
           <Link
+            component={RouterLink}
             key={pmId}
-            href={withBasePath(
-              `/process-models/${modifyProcessIdentifierForPathParam(pmId)}`,
-            )}
+            to={`/process-models/${modifyProcessIdentifierForPathParam(pmId)}`}
             underline="hover"
             sx={{ display: 'block', whiteSpace: 'nowrap' }}
           >
@@ -454,11 +452,10 @@ export default function MessageModelList({
           <TableCell>{messageModel.identifier}</TableCell>
           <TableCell>
             <Link
-              href={withBasePath(
-                `/process-groups/${modifyProcessIdentifierForPathParam(
-                  messageModel.location,
-                )}`,
-              )}
+              component={RouterLink}
+              to={`/process-groups/${modifyProcessIdentifierForPathParam(
+                messageModel.location,
+              )}`}
               underline="hover"
             >
               {messageModel.location}

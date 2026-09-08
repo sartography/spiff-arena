@@ -15,7 +15,7 @@ import {
 import Grid from '@mui/material/Grid';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   getLastMilestoneFromProcessInstance,
@@ -45,7 +45,6 @@ import {
   errorForDisplayFromString,
 } from './ErrorDisplay';
 import SpiffTooltip from './SpiffTooltip';
-import { withBasePath } from '../helpers/basePath';
 
 type OwnProps = {
   additionalReportFilters?: ReportFilter[];
@@ -543,8 +542,9 @@ export default function ProcessInstanceListTable({
         if (hasAccessToCompleteTask && processInstance.task_id) {
           goButtonElement = (
             <Button
+              component={Link}
               variant="contained"
-              href={withBasePath(taskShowUrl)}
+              to={taskShowUrl}
               style={{ width: '60px' }}
               size="small"
             >
@@ -557,7 +557,8 @@ export default function ProcessInstanceListTable({
         )}/${processInstance.id}`;
         const piShowButtonElement = (
           <IconButton
-            href={withBasePath(piLink)}
+            component={Link}
+            to={piLink}
             target="_blank"
             aria-label={t('open_process_instance')}
             style={{ width: '50px' }}

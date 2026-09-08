@@ -127,7 +127,10 @@ describe('MessageModelList', () => {
 
   it('renders message models from the current api response shape', async () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter
+        basename="/workflow"
+        initialEntries={['/workflow/messages']}
+      >
         <MessageModelList />
       </MemoryRouter>,
     );
@@ -160,7 +163,10 @@ describe('MessageModelList', () => {
     expect(
       screen.getByText(REQUEST_FOR_INFORMATION_MESSAGE_ID),
     ).toBeInTheDocument();
-    expect(screen.getByText('order')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'order' })).toHaveAttribute(
+      'href',
+      '/workflow/process-groups/order',
+    );
     expect(screen.getByRole('button', { name: 'edit' })).toBeInTheDocument();
   });
 

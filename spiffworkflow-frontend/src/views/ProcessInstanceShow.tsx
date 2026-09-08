@@ -8,6 +8,7 @@ import {
   useParams,
   useNavigate,
   Link,
+  useHref,
   useSearchParams,
 } from 'react-router-dom';
 import {
@@ -100,7 +101,6 @@ import ProcessInstanceCurrentTaskInfo from '../components/ProcessInstanceCurrent
 import useKeyboardShortcut from '../hooks/useKeyboardShortcut';
 import useProcessInstanceNavigate from '../hooks/useProcessInstanceNavigate';
 import SpiffTooltip from '../components/SpiffTooltip';
-import { withBasePath } from '../helpers/basePath';
 
 type OwnProps = {
   variant: string;
@@ -447,15 +447,23 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return queryParamString;
   };
 
+  const processInstanceAllVariantHref = useHref(
+    `${processInstanceShowPageBaseUrlAllVariant}${queryParams()}`,
+  );
+  const processInstanceHref = useHref(
+    `${processInstanceShowPageBaseUrl}${queryParams()}`,
+  );
+  const processInstanceShortHref = useHref(
+    processInstance ? `/i/${processInstance.id}` : '/',
+  );
+
   // to force update the diagram since it could have changed
   const refreshPage = () => {
     // redirect to the all variant page if possible to avoid potential user/task association issues.
     // such as terminating a process instance with a task that the current user is assigned to which
     // will remove the task assigned to them and could potentially remove that users association to the process instance
     if (ability.can('GET', targetUris.processInstanceActionPath)) {
-      window.location.href = withBasePath(
-        `${processInstanceShowPageBaseUrlAllVariant}${queryParams()}`,
-      );
+      window.location.href = processInstanceAllVariantHref;
     } else {
       window.location.reload();
     }
@@ -517,9 +525,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
   const returnToProcessInstance = () => {
-    window.location.href = withBasePath(
-      `${processInstanceShowPageBaseUrl}${queryParams()}`,
-    );
+    window.location.href = processInstanceHref;
   };
   const resetProcessInstance = (taskGuid = currentToTaskGuid()) => {
     if (!taskGuid) {
@@ -687,9 +693,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const copyProcessInstanceShortLink = () => {
     if (processInstance) {
-      const piShortLink = `${window.location.origin}${withBasePath(
-        `/i/${processInstance.id}`,
-      )}`;
+      const piShortLink = `${window.location.origin}${processInstanceShortHref}`;
       navigator.clipboard.writeText(piShortLink);
       setCopiedShortLinkToClipboard(true);
     }

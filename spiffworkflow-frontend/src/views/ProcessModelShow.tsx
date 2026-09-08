@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Upload,
@@ -39,7 +39,6 @@ import ProcessModelFileUploadModal from '../components/ProcessModelFileUploadMod
 import ProcessModelCopyModal from '../components/ProcessModelCopyModal';
 import SpiffTooltip from '../components/SpiffTooltip';
 import { useConfirmationDialog } from '../hooks/useConfirmationDialog';
-import { withBasePath } from '../helpers/basePath';
 
 export default function ProcessModelShow() {
   const params = useParams();
@@ -341,10 +340,8 @@ export default function ProcessModelShow() {
           >
             <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
               <MenuItem
-                component="a"
-                href={withBasePath(
-                  `/process-models/${modifiedProcessModelId}/edit`,
-                )}
+                component={Link}
+                to={`/process-models/${modifiedProcessModelId}/edit`}
                 data-testid="edit-process-model-menu-item"
                 onClick={handleActionsMenuClose}
               >
