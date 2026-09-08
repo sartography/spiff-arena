@@ -496,7 +496,7 @@ wheels = [
 
 [[package]]
 name = "spiff-arena-common"
-version = "0.1.47"
+version = "0.1.48"
 source = { editable = "spiff-arena-common" }
 dependencies = [
     { name = "jinja2" },
@@ -514,20 +514,20 @@ requires-dist = [
     { name = "jinja2", specifier = "==3.1.6" },
     { name = "jsonschema", specifier = "==4.26.0" },
     { name = "pytest", marker = "extra == 'test'" },
-    { name = "spiffworkflow", specifier = "==3.1.3a1783872398" },
+    { name = "spiffworkflow", specifier = "==3.2.1a1788363675" },
 ]
 provides-extras = ["test"]
 
 [[package]]
 name = "spiffworkflow"
-version = "3.1.3a1783872398"
+version = "3.2.1a1788363675"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "lxml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4f/14/914238063b5eea3baab25c5d1ac84d6e00cd40ee852d1a872ae2a8090791/spiffworkflow-3.1.3a1783872398.tar.gz", hash = "sha256:2e0f05829f4532a3cc6816988ab7f254edbc62ecbb36b43511a54e89c386461e", size = 153454, upload-time = "2026-07-12T16:06:55.176Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/78/c7/a046030d77b722b3c88f95d9cafefb72c4db1785c78b500958f92b34e06a/spiffworkflow-3.2.1a1788363675.tar.gz", hash = "sha256:5114949ed4e296c52cf3d86f04b46a304ed1b38f15bca52d7909b6e50f16cf3e", size = 154238, upload-time = "2026-09-02T15:41:30.493Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/eb/64/8b46e437f742bf6bf43837dbe7bd745a368744a0b5f7f8da6da80e70bc5c/spiffworkflow-3.1.3a1783872398-py3-none-any.whl", hash = "sha256:0b47b65b78df6ed3e3ff3176f5a93b48c7a2be34e394b30be474ea8c9643fade", size = 275237, upload-time = "2026-07-12T16:06:53.872Z" },
+    { url = "https://files.pythonhosted.org/packages/f2/05/242d38c8eb5b4c53fb11dc1b1ef6c3afa77f97c9e0bf4fa3589cd2a2555a/spiffworkflow-3.2.1a1788363675-py3-none-any.whl", hash = "sha256:ecceb7666ef75b4fc4d1a4e0fb1912e0614f16502503b4a7c30455183a98a7ad", size = 275835, upload-time = "2026-09-02T15:41:29.251Z" },
 ]
 
 [[package]]
