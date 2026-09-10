@@ -53,6 +53,37 @@ Click on the user task in the BPMN editor to display the **Properties Panel** on
 **Input/Output Management**
 - Use the "Inputs" and "Outputs" sections to define specific variables accessible to or from the task. If not defined, all process variables are accessible.
 
+## Popups and Collapsible Instructions
+
+Markdown instructions support popup dialogs and collapsible sections in Spiff Arena.
+Use a popup for optional explanations and a collapsible section for supporting detail:
+
+```markdown
+Please tell us about your job.
+
+:::popup[Why we're asking]
+This information helps us **understand your situation**.
+:::
+
+:::details[What to include]
+- Your job title
+- Your usual responsibilities
+:::
+```
+
+The text in brackets labels the popup button or expandable summary.
+Put the opening directive and closing `:::` on separate lines.
+The body supports ordinary Markdown, including lists, links, and tables.
+Popups close using the Close button, Escape, or a click outside the dialog.
+Details start collapsed and expand when their summary is activated.
+Keep essential instructions outside these optional sections.
+
+These directives work in task instructions, Markdown file displays, and Arena's
+Markdown editor previews, including the Markdown form widget.
+They are enabled automatically; Arena does not require Ed's `aux.markdown` configuration.
+Use fenced code blocks when displaying directive syntax as an example.
+Other directive names are displayed literally.
+
 ## Forms
 
 Forms in SpiffWorkflow enable you to create intuitive user interfaces for collecting data during User Tasks. They are configured using JSON Schema and can be customized with dynamic elements, validations, and UI enhancements.

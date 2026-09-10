@@ -1,6 +1,7 @@
 import MDEditor from '@uiw/react-md-editor';
 import { useTheme } from '@mui/material';
 import FormattingService from '../services/FormattingService';
+import { markdownDirectiveOptions } from './MarkdownDirectives';
 
 export default function MarkdownRenderer(props: any) {
   const isDark = useTheme().palette.mode === 'dark';
@@ -17,7 +18,18 @@ export default function MarkdownRenderer(props: any) {
       data-color-mode={isDark ? 'dark' : 'light'}
       className={wrapperClassName}
     >
-      <MDEditor.Markdown {...{ ...propsToUse, ...{ source: newMarkdown } }} />
+      <MDEditor.Markdown
+        {...propsToUse}
+        source={newMarkdown}
+        remarkPlugins={[
+          ...(markdownDirectiveOptions.remarkPlugins ?? []),
+          ...(propsToUse.remarkPlugins ?? []),
+        ]}
+        components={{
+          ...markdownDirectiveOptions.components,
+          ...propsToUse.components,
+        }}
+      />
     </div>
   );
 }
