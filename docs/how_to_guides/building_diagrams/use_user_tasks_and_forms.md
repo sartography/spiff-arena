@@ -80,9 +80,8 @@ Keep essential instructions outside these optional sections.
 
 These directives work in task instructions, Markdown file displays, and Arena's
 Markdown editor previews, including the Markdown form widget.
-They are enabled automatically; Arena does not require Ed's `aux.markdown` configuration.
 Use fenced code blocks when displaying directive syntax as an example.
-Other directive names are displayed literally.
+Directive names other than `popup` and `details` are displayed literally.
 
 ## Forms
 
