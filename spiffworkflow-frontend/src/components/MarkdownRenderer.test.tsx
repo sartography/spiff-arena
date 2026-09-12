@@ -93,6 +93,22 @@ it('preserves normal Markdown, tables, and Spiff formatting', () => {
   expect(screen.queryByText(/SPIFF_FORMAT/)).not.toBeInTheDocument();
 });
 
+it('renders directives whose content spans multiple Markdown blocks', () => {
+  render(
+    <MarkdownRenderer
+      source={
+        ':::details[Steps]\nFirst paragraph.\n\n- item one\n- item two\n\nLast paragraph.\n:::'
+      }
+    />,
+  );
+  const details = screen.getByText('Steps').closest('details');
+  expect(details).not.toBeNull();
+  const scope = within(details as HTMLElement);
+  expect(scope.getByText('First paragraph.')).toBeInTheDocument();
+  expect(details?.querySelectorAll('li')).toHaveLength(2);
+  expect(scope.getByText('Last paragraph.')).toBeInTheDocument();
+});
+
 it('uses the same directives in editor previews and preserves dark mode in the dialog', () => {
   render(
     <ThemeProvider theme={createTheme({ palette: { mode: 'dark' } })}>
