@@ -6,6 +6,8 @@ from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
+from spiffworkflow_backend.services.model_source_service import ModelSourceService
+from spiffworkflow_backend.services.model_source_service import ModelSourceUnavailableError
 from spiffworkflow_backend.services.task_service import TaskModelError
 
 
@@ -19,11 +21,21 @@ class FormSchemaService:
         revision: str | None = None,
     ) -> dict:
         try:
-            form_contents = GitService.get_file_contents_for_revision_if_git_revision(
-                process_model=process_model,
-                revision=revision,
-                file_name=form_file,
-            )
+            if task_model is not None and task_model.process_instance.source_manifest_id:
+                form_contents = ModelSourceService.read(
+                    task_model.process_instance.source_manifest_id, ModelSourceService.task_file_path(task_model, form_file)
+                ).decode("utf-8")
+            elif task_model is not None:
+                if not revision:
+                    raise ModelSourceUnavailableError(
+                        "The historical form is unavailable: no source snapshot or recorded revision."
+                    )
+                form_contents = GitService.get_instance_file_contents_for_revision(process_model, revision, form_file)
+            else:
+                # Authoring previews do not belong to a historical instance.
+                form_contents = GitService.get_file_contents_for_revision_if_git_revision(
+                    process_model=process_model, revision=revision, file_name=form_file
+                )
         except GitCommandError as exception:
             raise ApiError(
                 error_code="git_error_loading_form",

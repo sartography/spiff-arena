@@ -12,13 +12,13 @@ from spiffworkflow_backend.services.task_service import TaskModelError
 
 
 def test_prepare_form_data_adds_form_file_note_to_task_model_error(monkeypatch: pytest.MonkeyPatch) -> None:
-    task_model = SimpleNamespace(data={"customer": "Ada"})
+    task_model = SimpleNamespace(data={"customer": "Ada"}, process_instance=SimpleNamespace(source_manifest_id=None))
 
     monkeypatch.setattr(TaskModelError, "get_task_trace", classmethod(lambda cls, task_model: []))
     monkeypatch.setattr(
         GitService,
-        "get_file_contents_for_revision_if_git_revision",
-        lambda **kwargs: "{{ broken_form_template }}",
+        "get_instance_file_contents_for_revision",
+        lambda *args, **kwargs: "{{ broken_form_template }}",
     )
 
     def raise_task_model_error(*args: Any, **kwargs: Any) -> str:
@@ -35,6 +35,7 @@ def test_prepare_form_data_adds_form_file_note_to_task_model_error(monkeypatch: 
             "form.json",
             ProcessModelInfo(id="test/form-model", display_name="Test Form Model", description=""),
             task_model=task_model,  # type: ignore[arg-type]
+            revision="historical-revision",
         )
 
     assert exception.value.file_name == "form.json"

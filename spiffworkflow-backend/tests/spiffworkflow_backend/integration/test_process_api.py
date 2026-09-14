@@ -9,6 +9,7 @@ from unittest.mock import patch
 import flask
 import pytest
 from flask.app import Flask
+from lxml import etree  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from starlette.testclient import TestClient
 
@@ -1091,7 +1092,9 @@ class TestProcessApi(BaseTest):
         file_path = f"{file_system_root}/{process_model.id}/{process_model_id}.bpmn"
         with open(file_path) as f_open:
             xml_file_contents = f_open.read()
-            assert show_response.json()["bpmn_xml_file_contents"] == xml_file_contents
+            assert etree.tostring(
+                ProcessModelService.get_etree_from_xml_bytes(show_response.json()["bpmn_xml_file_contents"].encode())
+            ) == etree.tostring(ProcessModelService.get_etree_from_xml_bytes(xml_file_contents.encode()))
 
     def test_process_instance_show_with_specified_process_identifier(
         self,
@@ -1137,7 +1140,9 @@ class TestProcessApi(BaseTest):
         spec_reference_file_path = os.path.join(file_system_root, spec_reference.relative_path())
         with open(spec_reference_file_path) as f_open:
             xml_file_contents = f_open.read()
-            assert show_response.json()["bpmn_xml_file_contents"] == xml_file_contents
+            assert etree.tostring(
+                ProcessModelService.get_etree_from_xml_bytes(show_response.json()["bpmn_xml_file_contents"].encode())
+            ) == etree.tostring(ProcessModelService.get_etree_from_xml_bytes(xml_file_contents.encode()))
 
     def test_message_send_when_starting_process_instance(
         self,

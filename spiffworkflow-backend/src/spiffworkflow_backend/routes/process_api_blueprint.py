@@ -44,6 +44,7 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.form_schema_service import FormSchemaService
 from spiffworkflow_backend.services.jinja_service import JinjaService
+from spiffworkflow_backend.services.model_source_service import ModelSourceService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -583,9 +584,7 @@ def _get_task_model_for_request(
             status_code=400,
         )
 
-    process_model = _get_process_model(
-        process_instance.process_model_identifier,
-    )
+    process_model = ModelSourceService.model_for_instance(process_instance)
 
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
     task_definition = task_model.task_definition
@@ -612,16 +611,19 @@ def _get_task_model_for_request(
         task_process_identifier = task_model.bpmn_process.bpmn_process_definition.bpmn_identifier
         process_model_with_form = process_model
 
-        refs = SpecFileService.get_references_for_process(process_model_with_form)
-        all_processes = [i.identifier for i in refs]
-        if task_process_identifier not in all_processes:
-            top_bpmn_process = TaskService.bpmn_process_for_called_activity_or_top_level_process(task_model)
-            bpmn_file_full_path = WorkflowSpecService.bpmn_file_full_path_from_bpmn_process_identifier(
-                top_bpmn_process.bpmn_process_definition.bpmn_identifier
-            )
-            relative_path = os.path.relpath(bpmn_file_full_path, start=FileSystemService.root_path())
-            process_model_relative_path = os.path.dirname(relative_path)
-            process_model_with_form = ProcessModelService.get_process_model_from_relative_path(process_model_relative_path)
+        if process_instance.source_manifest_id:
+            process_model_with_form = ModelSourceService.model_for_instance(process_instance, task_process_identifier)
+        else:
+            refs = SpecFileService.get_references_for_process(process_model_with_form)
+            all_processes = [i.identifier for i in refs]
+            if task_process_identifier not in all_processes:
+                top_bpmn_process = TaskService.bpmn_process_for_called_activity_or_top_level_process(task_model)
+                bpmn_file_full_path = WorkflowSpecService.bpmn_file_full_path_from_bpmn_process_identifier(
+                    top_bpmn_process.bpmn_process_definition.bpmn_identifier
+                )
+                relative_path = os.path.relpath(bpmn_file_full_path, start=FileSystemService.root_path())
+                process_model_relative_path = os.path.dirname(relative_path)
+                process_model_with_form = ProcessModelService.get_process_model_from_relative_path(process_model_relative_path)
 
         form_schema_file_name = ""
         form_ui_schema_file_name = ""

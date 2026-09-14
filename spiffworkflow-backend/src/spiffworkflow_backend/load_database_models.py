@@ -14,6 +14,9 @@ avoid circular imports
 # ruff: noqa: I001
 
 from spiffworkflow_backend.models.db import add_listeners
+from spiffworkflow_backend.models.model_source import ModelSourceBlobModel
+from spiffworkflow_backend.models.model_source import ModelSourceManifestModel
+from spiffworkflow_backend.models.model_source import ModelSourceVersionModel
 
 # must load these before UserModel and GroupModel for relationships
 from spiffworkflow_backend.models.user_group_assignment import (

@@ -29,6 +29,7 @@ function DangerousMigrationButton({
   successCallback,
   failureCallback,
   targetBpmnProcessHash,
+  targetSourceManifestId,
   title,
   buttonText = 'Migrate to Newest',
 }: {
@@ -36,6 +37,7 @@ function DangerousMigrationButton({
   failureCallback: (error: any) => void;
   title?: string;
   targetBpmnProcessHash?: string;
+  targetSourceManifestId?: string;
   buttonText?: string;
 }) {
   const params = useParams();
@@ -50,6 +52,9 @@ function DangerousMigrationButton({
     let queryParams = '';
     if (targetBpmnProcessHash) {
       queryParams = `?target_bpmn_process_hash=${targetBpmnProcessHash}`;
+      if (targetSourceManifestId) {
+        queryParams += `&target_source_manifest_id=${targetSourceManifestId}`;
+      }
     }
     HttpService.makeCallToBackend({
       path: `/process-instances/${params.process_model_id}/${params.process_instance_id}/check-can-migrate${queryParams}`,
@@ -57,6 +62,7 @@ function DangerousMigrationButton({
     });
   }, [
     targetBpmnProcessHash,
+    targetSourceManifestId,
     params.process_model_id,
     params.process_instance_id,
   ]);
@@ -66,6 +72,9 @@ function DangerousMigrationButton({
     let queryParams = '';
     if (targetBpmnProcessHash) {
       queryParams = `?target_bpmn_process_hash=${targetBpmnProcessHash}`;
+      if (targetSourceManifestId) {
+        queryParams += `&target_source_manifest_id=${targetSourceManifestId}`;
+      }
     }
     HttpService.makeCallToBackend({
       httpMethod: 'POST',
@@ -307,7 +316,10 @@ export default function ProcessInstanceMigratePage() {
           if (
             migrationCheckResult &&
             data.row.initial_bpmn_process_hash ===
-              migrationCheckResult.current_bpmn_process_hash
+              migrationCheckResult.current_bpmn_process_hash &&
+            (!data.row.initial_source_manifest_id ||
+              data.row.initial_source_manifest_id ===
+                migrationCheckResult.current_source_manifest_id)
           ) {
             return null;
           }
@@ -319,6 +331,7 @@ export default function ProcessInstanceMigratePage() {
                 git_revision: data.row.initial_git_revision,
               })}
               targetBpmnProcessHash={data.row.initial_bpmn_process_hash}
+              targetSourceManifestId={data.row.initial_source_manifest_id}
               buttonText={t('revert')}
             />
           );

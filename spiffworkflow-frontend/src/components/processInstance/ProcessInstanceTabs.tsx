@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Box, Tab, Tabs } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { BasicTask, ProcessInstance } from '../../interfaces';
@@ -5,6 +6,7 @@ import TaskListTable from '../TaskListTable';
 import ProcessInstanceLogList from '../ProcessInstanceLogList';
 import MessageInstanceList from '../messages/MessageInstanceList';
 import ProcessInstanceDiagramPanel from './ProcessInstanceDiagramPanel';
+import ProcessInstanceSourceFiles from './ProcessInstanceSourceFiles';
 
 type ProcessInstanceTabsProps = {
   processInstance: ProcessInstance;
@@ -16,9 +18,6 @@ type ProcessInstanceTabsProps = {
   canViewMsgs: boolean;
   tasks: BasicTask[] | null;
   tasksCallHadError: boolean;
-  diagramFileName: string | null;
-  diagramProcessModelId: string | null;
-  diagramLoadError: string | null;
   onSelectTab: (newTabIndex: number) => void;
   onSelectTaskSubTab: (newTabIndex: number) => void;
   onCallActivityNavigate: (task: BasicTask, event: any) => void;
@@ -95,15 +94,13 @@ export default function ProcessInstanceTabs({
   canViewMsgs,
   tasks,
   tasksCallHadError,
-  diagramFileName,
-  diagramProcessModelId,
-  diagramLoadError,
   onSelectTab,
   onSelectTaskSubTab,
   onCallActivityNavigate,
   onElementClick,
 }: ProcessInstanceTabsProps) {
   const { t } = useTranslation();
+  const [selectedSourcePath, setSelectedSourcePath] = useState('');
   return (
     <>
       <Tabs
@@ -115,6 +112,7 @@ export default function ProcessInstanceTabs({
         <Tab label={t('events_tab')} disabled={!canViewLogs} />
         <Tab label={t('messages')} disabled={!canViewMsgs} />
         <Tab label={t('tasks_tab')} />
+        <Tab label={t('model_files_tab')} />
       </Tabs>
       <Box>
         {selectedTabIndex === 0 ? (
@@ -122,12 +120,18 @@ export default function ProcessInstanceTabs({
             processInstance={processInstance}
             tasks={tasks}
             tasksCallHadError={tasksCallHadError}
-            diagramFileName={diagramFileName}
-            diagramProcessModelId={diagramProcessModelId}
-            diagramLoadError={diagramLoadError}
             modifiedProcessModelId={modifiedProcessModelId}
             onCallActivityNavigate={onCallActivityNavigate}
             onElementClick={onElementClick}
+            onDecisionNavigate={(decisionId) => {
+              const path = processInstance.decision_source_paths?.[decisionId];
+              if (!path) {
+                return false;
+              }
+              setSelectedSourcePath(path);
+              onSelectTab(5);
+              return true;
+            }}
           />
         ) : null}
         {selectedTabIndex === 1 ? (
@@ -154,6 +158,15 @@ export default function ProcessInstanceTabs({
             processInstanceId={processInstance.id}
             selectedTaskTabSubTab={selectedTaskTabSubTab}
             onSelectTaskSubTab={onSelectTaskSubTab}
+          />
+        ) : null}
+        {selectedTabIndex === 5 ? (
+          <ProcessInstanceSourceFiles
+            key={`${processInstance.id}:${processInstance.source_manifest_id}`}
+            files={processInstance.source_files || []}
+            apiPath={`/process-instances${variant === 'all' ? '' : '/for-me'}/${modifiedProcessModelId}/${processInstance.id}`}
+            selectedPath={selectedSourcePath}
+            onSelectPath={setSelectedSourcePath}
           />
         ) : null}
       </Box>

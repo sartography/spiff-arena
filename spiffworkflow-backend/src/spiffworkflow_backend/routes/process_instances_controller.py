@@ -1,3 +1,4 @@
+import base64
 from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationUnnecessaryError
 from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationError, ProcessInstanceMigrationNotSafeError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
@@ -37,26 +38,23 @@ from spiffworkflow_backend.models.process_instance_report import FilterValue
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import Report
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
-from spiffworkflow_backend.models.reference_cache import ReferenceNotFoundError
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_for_me_or_raise
-from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model_for_instantiation
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
-from spiffworkflow_backend.services.git_service import GitCommandError
-from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
+from spiffworkflow_backend.services.model_source_service import ModelSourceService
+from spiffworkflow_backend.services.process_instance_diagram_service import ProcessInstanceDiagramService
+from spiffworkflow_backend.services.process_instance_diagram_service import ProcessInstanceDiagramUnavailableError
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.utils.api_logging import log_api_interaction
 
@@ -566,17 +564,21 @@ def process_instance_check_can_migrate(
     process_instance_id: int,
     modified_process_model_identifier: str,
     target_bpmn_process_hash: str | None = None,
+    target_source_manifest_id: str | None = None,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     return_dict: dict = {
         "can_migrate": True,
         "process_instance_id": process_instance.id,
+        "current_source_manifest_id": process_instance.source_manifest_id,
         "current_git_revision": process_instance.bpmn_version_control_identifier,
         "current_bpmn_process_hash": process_instance.bpmn_process.bpmn_process_definition.full_process_model_hash,
     }
     try:
         ProcessInstanceService.check_process_instance_can_be_migrated(
-            process_instance, target_bpmn_process_hash=target_bpmn_process_hash
+            process_instance,
+            target_bpmn_process_hash=target_bpmn_process_hash,
+            target_source_manifest_id=target_source_manifest_id,
         )
     except (ProcessInstanceMigrationNotSafeError, ProcessInstanceMigrationUnnecessaryError) as exception:
         return_dict["can_migrate"] = False
@@ -588,6 +590,7 @@ def process_instance_migrate(
     process_instance_id: int,
     modified_process_model_identifier: str,
     target_bpmn_process_hash: str | None = None,
+    target_source_manifest_id: str | None = None,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     if process_instance.status != "suspended":
@@ -595,7 +598,10 @@ def process_instance_migrate(
             f"The process instance needs to be suspended to migrate it. It is currently: {process_instance.status}"
         )
     ProcessInstanceService.migrate_process_instance(
-        process_instance, user=g.user, target_bpmn_process_hash=target_bpmn_process_hash
+        process_instance,
+        user=g.user,
+        target_bpmn_process_hash=target_bpmn_process_hash,
+        target_source_manifest_id=target_source_manifest_id,
     )
     return make_response(jsonify({"ok": True}), 200)
 
@@ -708,41 +714,22 @@ def _get_process_instance(
     process_instance: ProcessInstanceModel,
     process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-
-    process_model_with_diagram = None
-    name_of_file_with_diagram = None
-    if process_identifier:
-        spec_reference = ReferenceCacheModel.basic_query().filter_by(identifier=process_identifier, type="process").first()
-        if spec_reference is None:
-            raise ReferenceNotFoundError(f"Could not find given process identifier in the cache: {process_identifier}")
-
-        process_model_with_diagram = ProcessModelService.get_process_model(spec_reference.relative_location)
-        name_of_file_with_diagram = spec_reference.file_name
-        process_instance.process_model_with_diagram_identifier = process_model_with_diagram.id
-    else:
-        try:
-            process_model_with_diagram = _get_process_model(process_model_identifier)
-            if process_model_with_diagram.primary_file_name:
-                name_of_file_with_diagram = process_model_with_diagram.primary_file_name
-        except Exception as ex:
-            current_app.logger.warning(f"Failed to retrieve process model for diagram: {ex}")
-            process_instance.bpmn_xml_file_contents_retrieval_error = "Failed to retrieve process model for diagram."
-
-    if process_model_with_diagram and name_of_file_with_diagram:
-        bpmn_xml_file_contents = None
-        try:
-            bpmn_xml_file_contents = GitService.get_file_contents_for_revision_if_git_revision(
-                process_model=process_model_with_diagram,
-                revision=process_instance.bpmn_version_control_identifier,
-                file_name=name_of_file_with_diagram,
-            )
-        except GitCommandError as ex:
-            current_app.logger.warning(f"Failed to retrieve BPMN XML from git: {ex}")
-            process_instance.bpmn_xml_file_contents_retrieval_error = "Failed to retrieve BPMN XML from version control."
-        process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
+    process_instance.bpmn_xml_file_contents = None
+    process_instance.bpmn_xml_file_contents_retrieval_error = None
+    process_instance.process_model_with_diagram_identifier = None
+    try:
+        process_instance.bpmn_xml_file_contents = ProcessInstanceDiagramService.get_xml(process_instance, process_identifier)
+    except ProcessInstanceDiagramUnavailableError as exception:
+        process_instance.bpmn_xml_file_contents_retrieval_error = str(exception)
 
     process_instance_as_dict = process_instance.serialized_with_metadata()
+    process_instance_as_dict["source_files"] = ModelSourceService.files_for_instance(process_instance)
+    if process_instance.source_manifest_id:
+        process_instance_as_dict["decision_source_paths"] = ModelSourceService.manifest(process_instance.source_manifest_id).get(
+            "decisions", {}
+        )
+    if process_instance.source_manifest_id and process_instance.bpmn_xml_file_contents:
+        process_instance_as_dict["diagram_source_path"] = ModelSourceService.process_path(process_instance, process_identifier)
     return make_response(jsonify(process_instance_as_dict), 200)
 
 
@@ -811,3 +798,35 @@ def _process_instance_create(
         process_model_identifier, g.user
     )
     return process_instance
+
+
+def process_instance_source_file_show(
+    modified_process_model_identifier: str, process_instance_id: int, path: str
+) -> flask.wrappers.Response:
+    instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    return _source_file_response(instance, modified_process_model_identifier, path)
+
+
+def process_instance_source_file_show_for_me(
+    modified_process_model_identifier: str, process_instance_id: int, path: str
+) -> flask.wrappers.Response:
+    instance = _find_process_instance_for_me_or_raise(process_instance_id)
+    return _source_file_response(instance, modified_process_model_identifier, path)
+
+
+def _source_file_response(instance: ProcessInstanceModel, model_identifier: str, path: str) -> flask.wrappers.Response:
+    if instance.process_model_identifier != model_identifier.replace(":", "/"):
+        raise ApiError(
+            "process_instance_cannot_be_found", "The instance does not belong to the requested model.", status_code=404
+        )
+    contents = ModelSourceService.read(instance.source_manifest_id, path)
+    content_type = ModelSourceService.content_type(path)
+    try:
+        text_contents = contents.decode("utf-8")
+        encoding = "utf-8"
+    except UnicodeDecodeError:
+        text_contents = base64.b64encode(contents).decode("ascii")
+        encoding = "base64"
+    return make_response(
+        jsonify({"path": path, "file_contents": text_contents, "encoding": encoding, "content_type": content_type}), 200
+    )

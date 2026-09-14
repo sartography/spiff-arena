@@ -805,9 +805,10 @@ class MessageService:
         cls,
         receiving_process_instance: ProcessInstanceModel,
     ) -> None:
-        BpmnProcessService.persist_bpmn_process_definition(
-            receiving_process_instance.process_model_identifier,
-        )
+        # Reserved instances already pin their source files. Runtime initialization
+        # compiles those sources; it must not reparse the current deployment here.
+        if not receiving_process_instance.source_manifest_id:
+            BpmnProcessService.persist_bpmn_process_definition(receiving_process_instance.process_model_identifier)
         cycle_count, _, duration_in_seconds = ProcessInstanceService.next_start_event_configuration(receiving_process_instance)
         ProcessInstanceService.register_process_model_cycles(
             receiving_process_instance.process_model_identifier,

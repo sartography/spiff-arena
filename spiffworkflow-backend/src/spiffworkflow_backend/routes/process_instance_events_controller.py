@@ -182,9 +182,11 @@ def process_instance_migration_event_list(
             ProcessInstanceEventModel.timestamp,
             UserModel.username,
             ProcessInstanceMigrationDetailModel.initial_bpmn_process_hash,
+            ProcessInstanceMigrationDetailModel.initial_source_manifest_id,
+            ProcessInstanceMigrationDetailModel.target_source_manifest_id,
             ProcessInstanceMigrationDetailModel.target_bpmn_process_hash,
             ProcessInstanceMigrationDetailModel.initial_git_revision,
-            ProcessInstanceMigrationDetailModel.initial_git_revision,
+            ProcessInstanceMigrationDetailModel.target_git_revision,
         )
         .all()
     )

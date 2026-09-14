@@ -28,6 +28,7 @@ class ProcessInstancePersistenceService:
         process_instance_model: ProcessInstanceModel,
         store_process_instance_events: bool = True,
         bpmn_process_instance: BpmnWorkflow | None = None,
+        commit: bool = True,
     ) -> None:
         # NOTE: the first add_bpmn_process_definitions is to save the objects to the database and the second
         # is to load them so we can get the db id's.
@@ -39,6 +40,7 @@ class ProcessInstancePersistenceService:
         BpmnProcessService.save_to_database(
             bpmn_definition_to_task_definitions_mappings,
             bpmn_process_definition_parent=process_instance_model.bpmn_process_definition,
+            commit=commit,
         )
         bpmn_definition_to_task_definitions_mappings = {}
         process_instance_model.bpmn_process_definition = BpmnProcessService.add_bpmn_process_definitions(
@@ -71,7 +73,10 @@ class ProcessInstancePersistenceService:
                 spiff_task, store_process_instance_events=store_process_instance_events, start_and_end_times=start_and_end_times
             )
         task_service.save_objects_to_database()
-        db.session.commit()
+        if commit:
+            db.session.commit()
+        else:
+            db.session.flush()
 
     @classmethod
     def initialize_bpmn_process_instance(cls, bpmn_process_dict: dict) -> BpmnWorkflow:

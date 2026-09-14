@@ -208,7 +208,18 @@ export interface ProcessInstanceMetadata {
   value: string;
 }
 
+export interface ModelSourceFile {
+  path: string;
+  digest: string;
+  content_type: string;
+  size: number;
+}
+
 export interface ProcessInstance {
+  source_manifest_id?: string | null;
+  source_files?: ModelSourceFile[];
+  diagram_source_path?: string;
+  decision_source_paths?: Record<string, string>;
   id: number;
   actions?: ApiActions;
   bpmn_version_control_identifier: string;
@@ -598,6 +609,8 @@ export interface RJSFFormObject {
 }
 
 export interface MigrationEvent {
+  initial_source_manifest_id?: string | null;
+  target_source_manifest_id?: string | null;
   id: number;
   initial_bpmn_process_hash: string;
   initial_git_revision: string;
@@ -607,6 +620,7 @@ export interface MigrationEvent {
   username: string;
 }
 export interface MigrationCheckResult {
+  current_source_manifest_id?: string | null;
   can_migrate: boolean;
   process_instance_id: number;
   current_git_revision: string;

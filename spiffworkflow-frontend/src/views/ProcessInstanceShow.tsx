@@ -10,7 +10,6 @@ import { Box, Typography, CircularProgress } from '@mui/material';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import {
-  modifyProcessIdentifierForPathParam,
   unModifyProcessIdentifierForPathParam,
   setPageTitle,
 } from '../helpers';
@@ -57,11 +56,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const [processDataToDisplay, setProcessDataToDisplay] =
     useState<ProcessData | null>(null);
-  const [diagramFileName, setDiagramFileName] = useState<string | null>(null);
-  const [diagramProcessModelId, setDiagramProcessModelId] = useState<
-    string | null
-  >(null);
-  const [diagramLoadError, setDiagramLoadError] = useState<string | null>(null);
 
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
   const [selectedTaskTabSubTab, setSelectedTaskTabSubTab] = useState<number>(0);
@@ -284,51 +278,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     tab,
     taskSubTab,
   ]);
-
-  useEffect(() => {
-    if (!processInstance) {
-      return;
-    }
-
-    if (processInstance.bpmn_xml_file_contents) {
-      setDiagramFileName(null);
-      setDiagramProcessModelId(null);
-      setDiagramLoadError(null);
-      return;
-    }
-
-    const diagramIdentifier =
-      processInstance.process_model_with_diagram_identifier ||
-      processInstance.process_model_identifier;
-    if (!diagramIdentifier) {
-      return;
-    }
-
-    const modifiedDiagramId =
-      modifyProcessIdentifierForPathParam(diagramIdentifier);
-    setDiagramProcessModelId(modifiedDiagramId);
-
-    HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedDiagramId}`,
-      successCallback: (result: ProcessModel) => {
-        if (result.primary_file_name) {
-          setDiagramFileName(result.primary_file_name);
-          setDiagramLoadError(null);
-        } else {
-          setDiagramLoadError(t('diagram_file_name_editor_error_required'));
-        }
-      },
-      failureCallback: (err: { message?: string } | string) => {
-        if (typeof err === 'string') {
-          setDiagramLoadError(err);
-        } else if (err?.message) {
-          setDiagramLoadError(err.message);
-        } else {
-          setDiagramLoadError(t('failed_to_load_diagram'));
-        }
-      },
-    });
-  }, [processInstance, t]);
 
   const updateSearchParams = (value: string, key: string) => {
     if (value !== undefined) {
@@ -714,9 +663,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           canViewMsgs={canViewMsgs}
           tasks={tasks}
           tasksCallHadError={tasksCallHadError}
-          diagramFileName={diagramFileName}
-          diagramProcessModelId={diagramProcessModelId}
-          diagramLoadError={diagramLoadError}
           onSelectTab={updateSelectedTab}
           onSelectTaskSubTab={updateSelectedTaskTabSubTab}
           onCallActivityNavigate={handleCallActivityNavigate}

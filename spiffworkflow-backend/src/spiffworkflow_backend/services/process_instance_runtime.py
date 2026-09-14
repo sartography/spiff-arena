@@ -55,16 +55,17 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.logging_service import LoggingService
+from spiffworkflow_backend.services.model_source_service import ModelSourceService
 from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
 from spiffworkflow_backend.services.process_instance_persistence_service import ProcessInstancePersistenceService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_script_engine import CustomBpmnScriptEngine
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
 from spiffworkflow_backend.services.workflow_execution_service import ExecutionStrategy
@@ -163,12 +164,26 @@ class ProcessInstanceRuntime:
 
         subprocesses: IdToBpmnProcessSpecMapping | None = None
         if not process_instance_model.spiffworkflow_fully_initialized():
-            (
-                bpmn_process_spec,
-                subprocesses,
-            ) = BpmnProcessService.get_process_model_and_subprocesses(
-                process_instance_model.process_model_identifier, process_id_to_run=process_id_to_run
-            )
+            if (
+                process_instance_model.source_manifest_id
+                and process_instance_model.bpmn_process_definition
+                and not process_id_to_run
+            ):
+                bpmn_process_spec, subprocesses = BpmnProcessService.specs_for_definition(
+                    process_instance_model.bpmn_process_definition
+                )
+            else:
+                if process_instance_model.source_manifest_id:
+                    sources = ModelSourceService.load(process_instance_model.source_manifest_id)
+                else:
+                    sources = ModelSourceService.capture(process_instance_model.process_model_identifier)
+                if process_instance_model.persistence_level != "none":
+                    definition = BpmnProcessService.persist_bpmn_process_definition(
+                        process_instance_model.process_model_identifier, sources=sources
+                    )
+                    process_instance_model.bpmn_process_definition = definition
+                    process_instance_model.source_manifest_id = ModelSourceService.store(sources, definition.id)
+                bpmn_process_spec, subprocesses = ModelSourceService.parse(sources, process_id_to_run)
 
         self.process_model_identifier = process_instance_model.process_model_identifier
         self.process_model_display_name = process_instance_model.process_model_display_name
@@ -364,10 +379,8 @@ class ProcessInstanceRuntime:
         }
 
     def extract_metadata(self) -> dict:
-        return ProcessModelService.extract_metadata(
-            self.process_instance_model.process_model_identifier,
-            self.get_current_data(),
-        )
+        model = ModelSourceService.model_for_instance(self.process_instance_model)
+        return ProcessModelInfo.extract_metadata(self.get_current_data(), model.metadata_extraction_paths or [])
 
     def store_metadata(self, metadata: dict) -> None:
         for key, data_for_key in metadata.items():
@@ -407,6 +420,11 @@ class ProcessInstanceRuntime:
 
         db.session.add(self.process_instance_model)
         self._process_human_tasks(metadata)
+        db.session.flush()
+        if self.process_instance_model.source_manifest_id and self.process_instance_model.bpmn_process_definition_id:
+            ModelSourceService.associate(
+                self.process_instance_model.source_manifest_id, self.process_instance_model.bpmn_process_definition_id
+            )
         db.session.commit()
         self._dispatch_pending_task_available_process_model_triggers()
 

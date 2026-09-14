@@ -18,6 +18,7 @@ from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 
 if TYPE_CHECKING:
     from spiffworkflow_backend.models.human_task_user import HumanTaskModel  # noqa: F401
+    from spiffworkflow_backend.models.process_instance import ProcessInstanceModel  # noqa: F401
 
 
 class TaskNotFoundError(Exception):
@@ -52,6 +53,7 @@ class TaskModel(SpiffworkflowBaseDBModel):
     bpmn_process = relationship(BpmnProcessModel, back_populates="tasks")
     human_tasks = relationship("HumanTaskModel", back_populates="task_model", cascade="delete")
     process_instance_id: int = db.Column(ForeignKey("process_instance.id"), nullable=False, index=True)
+    process_instance = relationship("ProcessInstanceModel", back_populates="tasks")
 
     # find this by looking up the "workflow_name" and "task_spec" from the properties_json
     task_definition_id: int = db.Column(ForeignKey(TaskDefinitionModel.id), nullable=False, index=True)  # type: ignore

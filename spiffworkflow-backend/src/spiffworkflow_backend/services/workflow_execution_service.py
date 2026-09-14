@@ -53,6 +53,7 @@ from spiffworkflow_backend.models.message_instance import MessageStatuses
 from spiffworkflow_backend.models.message_instance_correlation import MessageInstanceCorrelationRuleModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.assertion_service import safe_assertion
@@ -60,9 +61,9 @@ from spiffworkflow_backend.services.custom_service_task import CustomServiceTask
 from spiffworkflow_backend.services.custom_service_task import RetryScheduledError
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.logging_service import LoggingService
+from spiffworkflow_backend.services.model_source_service import ModelSourceService
 from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
 
@@ -404,6 +405,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
     ) -> None:
         self.secondary_engine_step_delegate = secondary_engine_step_delegate
         self.process_instance = process_instance
+        self.metadata_extraction_paths: list[dict[str, str]] | None = None
         self.bpmn_definition_to_task_definitions_mappings = bpmn_definition_to_task_definitions_mappings
         self.serializer = serializer
 
@@ -447,10 +449,11 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 },
             )
 
-        metadata = ProcessModelService.extract_metadata(
-            self.process_instance.process_model_identifier,
-            spiff_task.data,
-        )
+        if self.metadata_extraction_paths is None:
+            self.metadata_extraction_paths = (
+                ModelSourceService.model_for_instance(self.process_instance).metadata_extraction_paths or []
+            )
+        metadata = ProcessModelInfo.extract_metadata(spiff_task.data, self.metadata_extraction_paths)
         log_extras = {
             "task_id": str(spiff_task.id),
             "task_spec": spiff_task.task_spec.name,

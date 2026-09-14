@@ -104,6 +104,8 @@ class ProcessInstanceEventService:
     ) -> ProcessInstanceMigrationDetailModel:
         return ProcessInstanceMigrationDetailModel(
             process_instance_event=process_instance_event,
+            initial_source_manifest_id=migration_details.get("initial_source_manifest_id"),
+            target_source_manifest_id=migration_details.get("target_source_manifest_id"),
             initial_git_revision=migration_details["initial_git_revision"],
             target_git_revision=migration_details["target_git_revision"],
             initial_bpmn_process_hash=migration_details["initial_bpmn_process_hash"],

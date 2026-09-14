@@ -747,7 +747,7 @@ class TestLongRunningService(BaseTest):
         assert not callback_thread.is_alive()
 
         response = callback_result["response"]
-        assert response.status_code == 200
+        assert response.status_code == 200, response.text
         response_dict = response.json()
         assert response_dict["ok"] is True
         assert response_dict["status"] == "completed"

@@ -21,6 +21,7 @@ from spiffworkflow_backend.routes.process_api_blueprint import _prepare_form_dat
 from spiffworkflow_backend.routes.process_api_blueprint import _task_submit_shared
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.message_service import MessageService
+from spiffworkflow_backend.services.model_source_service import ModelSourceService
 from spiffworkflow_backend.services.monitoring_service import get_public_version_info_data
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -84,7 +85,7 @@ def message_form_submit(
     confirmation_message_markdown = None
     if next_human_task_assigned_to_me:
         task_guid = next_human_task_assigned_to_me.task_guid
-        process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
+        process_model = ModelSourceService.model_for_instance(process_instance)
         next_form_contents = _get_form_and_prepare_data(
             process_model=process_model, task_guid=next_human_task_assigned_to_me.task_guid, process_instance=process_instance
         )
@@ -132,7 +133,7 @@ def form_submit(
     if next_task_assigned_to_me is not None:
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         next_task_guid = str(next_task_assigned_to_me.id)
-        process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
+        process_model = ModelSourceService.model_for_instance(process_instance)
         next_form_contents = _get_form_and_prepare_data(
             process_model=process_model, task_guid=next_task_guid, process_instance=process_instance
         )

@@ -16,6 +16,7 @@ from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefi
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
+from spiffworkflow_backend.models.model_source import ModelSourceManifestModel
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 
@@ -61,6 +62,11 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         index=True,
     )
     bpmn_process_id: int | None = db.Column(ForeignKey(BpmnProcessModel.id), nullable=True, index=True)  # type: ignore
+    source_manifest_id: str | None = db.Column(
+        ForeignKey(ModelSourceManifestModel.digest),
+        nullable=True,
+        index=True,
+    )
 
     spiff_serializer_version = db.Column(db.String(50), nullable=True)
 
@@ -73,7 +79,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     )  # type: ignore
 
     bpmn_process = relationship(BpmnProcessModel, cascade="delete")
-    tasks = relationship("TaskModel", cascade="delete")
+    tasks = relationship("TaskModel", cascade="delete", back_populates="process_instance")
     task_draft_data = relationship("TaskDraftDataModel", cascade="delete")  # type: ignore
     process_instance_events = relationship("ProcessInstanceEventModel", cascade="delete")  # type: ignore
     process_instance_file_data = relationship("ProcessInstanceFileDataModel", cascade="delete")  # type: ignore
@@ -144,6 +150,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             "actions": self.actions,
             "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
             "bpmn_version_control_type": self.bpmn_version_control_type,
+            "source_manifest_id": self.source_manifest_id,
             "bpmn_xml_file_contents_retrieval_error": self.bpmn_xml_file_contents_retrieval_error,
             "bpmn_xml_file_contents": self.bpmn_xml_file_contents,
             "created_at_in_seconds": self.created_at_in_seconds,

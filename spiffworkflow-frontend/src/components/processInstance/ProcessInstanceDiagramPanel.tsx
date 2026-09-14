@@ -12,11 +12,9 @@ type ProcessInstanceDiagramPanelProps = {
   processInstance: ProcessInstance | null;
   tasks: BasicTask[] | null;
   tasksCallHadError: boolean;
-  diagramFileName: string | null;
-  diagramProcessModelId: string | null;
-  diagramLoadError: string | null;
   modifiedProcessModelId?: string;
   onCallActivityNavigate: (task: BasicTask, event: any) => void;
+  onDecisionNavigate?: (decisionId: string) => boolean;
   onElementClick: (shapeElement: any, bpmnProcessIdentifiers: any) => void;
 };
 
@@ -24,12 +22,10 @@ export default function ProcessInstanceDiagramPanel({
   processInstance,
   tasks,
   tasksCallHadError,
-  diagramFileName,
-  diagramProcessModelId,
-  diagramLoadError,
   modifiedProcessModelId,
   onCallActivityNavigate,
   onElementClick,
+  onDecisionNavigate,
 }: ProcessInstanceDiagramPanelProps) {
   const { t } = useTranslation();
   if (!processInstance) {
@@ -40,16 +36,11 @@ export default function ProcessInstanceDiagramPanel({
   }
 
   const hasDiagramXml = !!processInstance.bpmn_xml_file_contents;
-  const canLoadFromModel =
-    !!diagramFileName && !!diagramProcessModelId && !hasDiagramXml;
   const retrievalError =
-    processInstance.bpmn_xml_file_contents_retrieval_error || '';
+    processInstance.bpmn_xml_file_contents_retrieval_error ||
+    t('failed_to_load_diagram');
 
-  if (
-    !hasDiagramXml &&
-    !canLoadFromModel &&
-    (diagramLoadError || retrievalError)
-  ) {
+  if (!hasDiagramXml) {
     return (
       <Notification
         title={t('failed_to_load_diagram')}
@@ -58,10 +49,7 @@ export default function ProcessInstanceDiagramPanel({
         allowTogglingFullMessage
       >
         <>
-          {childrenForErrorObject(
-            errorForDisplayFromString(diagramLoadError || retrievalError),
-            t,
-          )}
+          {childrenForErrorObject(errorForDisplayFromString(retrievalError), t)}
         </>
       </Notification>
     );
@@ -71,14 +59,28 @@ export default function ProcessInstanceDiagramPanel({
     <ReactDiagramEditor
       diagramType="readonly"
       diagramXML={processInstance.bpmn_xml_file_contents || ''}
-      fileName={canLoadFromModel ? diagramFileName || undefined : undefined}
       onCallActivityOverlayClick={onCallActivityNavigate}
-      onElementClick={onElementClick}
-      modifiedProcessModelId={
-        canLoadFromModel
-          ? diagramProcessModelId || ''
-          : modifiedProcessModelId || ''
-      }
+      onLaunchDmnEditor={onDecisionNavigate}
+      onElementClick={(shapeElement, processIdentifiers) => {
+        const document = new DOMParser().parseFromString(
+          processInstance.bpmn_xml_file_contents || '',
+          'application/xml',
+        );
+        const task = Array.from(
+          document.getElementsByTagNameNS('*', 'businessRuleTask'),
+        ).find((element) => element.id === shapeElement.id);
+        const decisionId =
+          task?.getElementsByTagNameNS('*', 'calledDecisionId')[0]
+            ?.textContent ||
+          Array.from(task?.attributes || []).find(
+            (attribute) => attribute.localName === 'decisionRef',
+          )?.value;
+        if (decisionId && onDecisionNavigate?.(decisionId)) {
+          return;
+        }
+        onElementClick(shapeElement, processIdentifiers);
+      }}
+      modifiedProcessModelId={modifiedProcessModelId || ''}
       tasks={tasks}
     />
   );

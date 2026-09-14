@@ -71,6 +71,8 @@ from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.logging_service import LoggingService
 from spiffworkflow_backend.services.message_instrumentation_service import MessageSendInstrumentation
+from spiffworkflow_backend.services.model_source_service import CapturedModelSources
+from spiffworkflow_backend.services.model_source_service import ModelSourceService
 from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
 from spiffworkflow_backend.services.process_instance_persistence_service import ProcessInstancePersistenceService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
@@ -147,13 +149,15 @@ class ProcessInstanceService:
                 git_revision_error = ex
                 current_git_revision = None
 
+        sources = ModelSourceService.capture(process_model.id)
+        definition = None
         if load_bpmn_process_model:
             with (
                 instrumentation.phase("create_process_instance.persist_bpmn_process_definition")
                 if instrumentation is not None
                 else nullcontext()
             ):
-                BpmnProcessService.persist_bpmn_process_definition(process_model.id)
+                definition = BpmnProcessService.persist_bpmn_process_definition(process_model.id, sources=sources)
 
         with (
             instrumentation.phase("create_process_instance.add_process_instance")
@@ -168,6 +172,8 @@ class ProcessInstanceService:
                 start_in_seconds=round(time.time()),
                 bpmn_version_control_type="git",
                 bpmn_version_control_identifier=current_git_revision,
+                source_manifest_id=ModelSourceService.store(sources, definition.id if definition else None),
+                bpmn_process_definition=definition,
             )
             db.session.add(process_instance_model)
 
@@ -200,13 +206,14 @@ class ProcessInstanceService:
         cls,
         process_instance: ProcessInstanceModel,
         target_bpmn_process_hash: str | None = None,
+        target_sources: CapturedModelSources | None = None,
+        target_source_manifest_id: str | None = None,
     ) -> tuple[
         ProcessInstanceRuntime, BpmnProcessSpec, IdToBpmnProcessSpecMapping, WorkflowDiff, SubprocessUuidToWorkflowDiffMapping
     ]:
         if target_bpmn_process_hash is None:
-            (target_bpmn_process_spec, target_subprocess_specs) = BpmnProcessService.get_process_model_and_subprocesses(
-                process_instance.process_model_identifier,
-            )
+            target_sources = target_sources or ModelSourceService.capture(process_instance.process_model_identifier)
+            target_bpmn_process_spec, target_subprocess_specs = ModelSourceService.parse(target_sources)
             full_bpmn_spec_dict = {
                 "spec": BpmnProcessService.serializer.to_dict(target_bpmn_process_spec),
                 "subprocess_specs": BpmnProcessService.serializer.to_dict(target_subprocess_specs),
@@ -216,6 +223,11 @@ class ProcessInstanceService:
             bpmn_process_definition = BpmnProcessDefinitionModel.query.filter_by(
                 full_process_model_hash=target_bpmn_process_hash
             ).first()
+            if bpmn_process_definition is None:
+                raise ApiError("migration_target_not_found", "The target process definition does not exist.", status_code=404)
+            target_sources = target_sources or ModelSourceService.sources_for_definition(
+                bpmn_process_definition.id, process_instance.process_model_identifier, target_source_manifest_id
+            )
             full_bpmn_process_dict = ProcessInstancePersistenceService.get_full_bpmn_process_dict(
                 bpmn_definition_to_task_definitions_mappings={},
                 spiff_serializer_version=process_instance.spiff_serializer_version,
@@ -229,7 +241,9 @@ class ProcessInstanceService:
             target_subprocess_specs = BpmnProcessService.serializer.from_dict(process_copy["subprocess_specs"])
 
         initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
-        if target_bpmn_process_hash == initial_bpmn_process_hash:
+        if target_bpmn_process_hash == initial_bpmn_process_hash and (
+            target_sources is None or target_sources.digest == process_instance.source_manifest_id
+        ):
             raise ProcessInstanceMigrationUnnecessaryError(
                 "Both target and current process model versions are the same. There is no need to migrate."
             )
@@ -266,7 +280,17 @@ class ProcessInstanceService:
         user: UserModel,
         preserve_old_process_instance: bool = False,
         target_bpmn_process_hash: str | None = None,
+        target_source_manifest_id: str | None = None,
     ) -> None:
+        target_sources: CapturedModelSources | None
+        if target_bpmn_process_hash is None:
+            target_sources = ModelSourceService.capture(process_instance.process_model_identifier)
+        else:
+            target_definition = BpmnProcessDefinitionModel.query.filter_by(full_process_model_hash=target_bpmn_process_hash).one()
+            target_sources = ModelSourceService.sources_for_definition(
+                target_definition.id, process_instance.process_model_identifier, target_source_manifest_id
+            )
+        initial_source_manifest_id = process_instance.source_manifest_id
         initial_git_revision = process_instance.bpmn_version_control_identifier
         initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
         (
@@ -275,7 +299,9 @@ class ProcessInstanceService:
             target_subprocess_specs,
             top_level_bpmn_process_diff,
             subprocesses_diffs,
-        ) = cls.check_process_instance_can_be_migrated(process_instance, target_bpmn_process_hash=target_bpmn_process_hash)
+        ) = cls.check_process_instance_can_be_migrated(
+            process_instance, target_bpmn_process_hash=target_bpmn_process_hash, target_sources=target_sources
+        )
 
         migration_task_mask = TaskState.READY | TaskState.WAITING | TaskState.STARTED
 
@@ -305,9 +331,17 @@ class ProcessInstanceService:
             new_process_instance, _ = cls.create_process_instance_from_process_model_identifier(
                 process_instance.process_model_identifier, user
             )
+            new_process_instance.source_manifest_id = ModelSourceService.store(target_sources) if target_sources else None
             ProcessInstancePersistenceService.persist_bpmn_process_dict(
-                bpmn_process_dict, bpmn_definition_to_task_definitions_mappings={}, process_instance_model=new_process_instance
+                bpmn_process_dict,
+                bpmn_definition_to_task_definitions_mappings={},
+                process_instance_model=new_process_instance,
+                commit=False,
             )
+            if new_process_instance.source_manifest_id and new_process_instance.bpmn_process_definition_id:
+                ModelSourceService.associate(
+                    new_process_instance.source_manifest_id, new_process_instance.bpmn_process_definition_id
+                )
         else:
             future_tasks = TaskModel.query.filter(
                 TaskModel.process_instance_id == process_instance.id,
@@ -317,15 +351,19 @@ class ProcessInstanceService:
                 db.session.delete(ft)
 
             bpmn_process_dict = runtime.serialize()
+            process_instance.source_manifest_id = ModelSourceService.store(target_sources) if target_sources else None
             ProcessInstancePersistenceService.persist_bpmn_process_dict(
                 bpmn_process_dict,
                 bpmn_definition_to_task_definitions_mappings={},
                 process_instance_model=process_instance,
                 bpmn_process_instance=runtime.bpmn_process_instance,
                 store_process_instance_events=False,
+                commit=False,
             )
             git_revision_to_use = cls.get_appropriate_git_revision(process_instance, target_bpmn_process_hash)
             process_instance.bpmn_version_control_identifier = git_revision_to_use
+            if process_instance.source_manifest_id and process_instance.bpmn_process_definition_id:
+                ModelSourceService.associate(process_instance.source_manifest_id, process_instance.bpmn_process_definition_id)
             db.session.add(process_instance)
 
         target_git_revision = process_instance.bpmn_version_control_identifier
@@ -335,6 +373,8 @@ class ProcessInstanceService:
             process_instance,
             ProcessInstanceEventType.process_instance_migrated.value,
             migration_details={
+                "initial_source_manifest_id": initial_source_manifest_id,
+                "target_source_manifest_id": process_instance.source_manifest_id,
                 "initial_git_revision": initial_git_revision,
                 "initial_bpmn_process_hash": initial_bpmn_process_hash or "",
                 "target_git_revision": target_git_revision,
@@ -454,7 +494,7 @@ class ProcessInstanceService:
         user: UserModel,
         commit_db: bool = True,
     ) -> ProcessInstanceModel:
-        """Persist a process identity without parsing or initializing its BPMN runtime."""
+        """Reserve an identity and immutable sources without initializing its BPMN runtime."""
         process_model = ProcessModelService.get_process_model(process_model_identifier)
         process_instance_model, _ = cls.create_process_instance(
             process_model,
@@ -808,7 +848,7 @@ class ProcessInstanceService:
             if task_model is not None:
                 form_schema_file_name = spiff_task.task_spec.extensions["properties"]["formJsonSchemaFilename"]
 
-                process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
+                process_model = ModelSourceService.model_for_instance(process_instance)
                 form_schema = FormSchemaService.prepare_form_data(
                     form_file=form_schema_file_name,
                     process_model=process_model,
