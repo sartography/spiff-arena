@@ -83,6 +83,80 @@ it('leaves inline code, fenced examples, unknown directives, and unlabeled direc
   ).not.toBeInTheDocument();
 });
 
+describe.each(['popup', 'details'])('%s directive boundaries', (type) => {
+  it.each([
+    ':::TYPE[Label]suffix\nBody\n:::',
+    ':::TYPE[Label] **suffix**\nBody\n:::',
+    ':::TYPE[Label]**suffix**\nBody\n:::',
+    ':::TYPE[Label]`suffix`\nBody\n:::',
+    ':::TYPE[Label][suffix](https://example.com)\nBody\n:::',
+    ':::TYPE[Label]\nBody:::',
+    ':::TYPE[Label]\nBody :::',
+    ':::TYPE[Label]\n**Body**:::',
+    ':::TYPE[Label]\n**:::**',
+    ':::TYPE[Label]\n[:::](https://example.com)',
+    ':::TYPE[Label]\n`:::`',
+    ':::TYPE[Label]\n*Body\n:::*',
+  ])('leaves non-standalone markers literal: %s', (source) => {
+    const { container } = render(
+      <MarkdownRenderer source={source.replace('TYPE', type)} />,
+    );
+    expect(container.querySelector('details, button')).toBeNull();
+    expect(container).toHaveTextContent(`:::${type}[Label]`);
+    expect(container).toHaveTextContent(':::');
+  });
+
+  it.each(['\n', '\n\n'])(
+    'accepts line-delimited markers (%j)',
+    (separator) => {
+      const { container } = render(
+        <MarkdownRenderer
+          source={`:::${type}[Label]${separator}A **formatted** body.${separator}:::`}
+        />,
+      );
+      if (type === 'popup') {
+        fireEvent.click(screen.getByRole('button', { name: 'Label' }));
+        expect(screen.getByRole('dialog', { name: 'Label' })).toHaveTextContent(
+          'A formatted body.',
+        );
+      } else {
+        expect(container.querySelector('details')).toHaveTextContent(
+          'A formatted body.',
+        );
+      }
+    },
+  );
+
+  it.each(['blockquote', 'list item'])('renders inside a %s', (context) => {
+    const directive = `:::${type}[Nested]\nFirst **paragraph**.\n\nSecond paragraph.\n:::`;
+    const source = directive
+      .split('\n')
+      .map((line, index) => {
+        if (context === 'blockquote') {
+          return `> ${line}`;
+        }
+        return `${index === 0 ? '- ' : '  '}${line}`;
+      })
+      .join('\n');
+    const { container } = render(<MarkdownRenderer source={source} />);
+    const parent = container.querySelector(
+      context === 'blockquote' ? 'blockquote' : 'li',
+    ) as HTMLElement;
+    let content: HTMLElement;
+    if (type === 'popup') {
+      fireEvent.click(within(parent).getByRole('button', { name: 'Nested' }));
+      content = screen.getByRole('dialog', { name: 'Nested' });
+    } else {
+      content = parent.querySelector('details') as HTMLElement;
+      expect(content.querySelector('summary')).toHaveTextContent('Nested');
+    }
+    expect(content).toHaveTextContent('First paragraph.');
+    expect(content.querySelector('strong')).toHaveTextContent('paragraph');
+    expect(content).toHaveTextContent('Second paragraph.');
+    expect(content).not.toHaveTextContent(':::');
+  });
+});
+
 it('preserves normal Markdown, tables, and Spiff formatting', () => {
   const source =
     '# Heading\n\n**Label**: value\n\n| Name | Value |\n| --- | --- |\n| Example | 1 |\n\nSPIFF_FORMAT:::convert_seconds_to_duration_for_display(60)';
@@ -91,6 +165,22 @@ it('preserves normal Markdown, tables, and Spiff formatting', () => {
   expect(screen.getByText('Label').tagName).toBe('STRONG');
   expect(screen.getByRole('table')).toHaveTextContent('Example');
   expect(screen.queryByText(/SPIFF_FORMAT/)).not.toBeInTheDocument();
+});
+
+it('renders directives whose content spans multiple Markdown blocks', () => {
+  render(
+    <MarkdownRenderer
+      source={
+        ':::details[Steps]\nFirst paragraph.\n\n- item one\n- item two\n\nLast paragraph.\n:::'
+      }
+    />,
+  );
+  const details = screen.getByText('Steps').closest('details');
+  expect(details).not.toBeNull();
+  const scope = within(details as HTMLElement);
+  expect(scope.getByText('First paragraph.')).toBeInTheDocument();
+  expect(details?.querySelectorAll('li')).toHaveLength(2);
+  expect(scope.getByText('Last paragraph.')).toBeInTheDocument();
 });
 
 it('uses the same directives in editor previews and preserves dark mode in the dialog', () => {

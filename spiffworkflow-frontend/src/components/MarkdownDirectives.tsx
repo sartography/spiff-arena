@@ -9,13 +9,203 @@ import {
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import MDEditor from '@uiw/react-md-editor';
-import remarkDirective from 'remark-directive';
-import { toString } from 'mdast-util-to-string';
-import { SKIP, visit } from 'unist-util-visit';
-import type { Root } from 'mdast';
+import type { Paragraph, Parents, Root, RootContent, Text } from 'mdast';
 import type { VFile } from 'vfile';
 
 type MarkdownOptions = ComponentProps<typeof MDEditor.Markdown>;
+
+// The helpers below are local replacements for `unist-util-visit`,
+// `mdast-util-to-string`, and `remark-directive`. Inspired by those
+// MIT-licensed packages, copyright (c) Titus Wormer <tituswormer@gmail.com>.
+const SKIP = Symbol('skip');
+
+function visit(
+  node: Root | RootContent,
+  callback: (
+    child: RootContent,
+    index: number,
+    parent: Parents,
+  ) => typeof SKIP | void,
+): void {
+  const children: RootContent[] =
+    'children' in node ? (node.children as RootContent[]) : [];
+  children.forEach((child, index) => {
+    if (callback(child, index, node as Parents) !== SKIP) {
+      visit(child, callback);
+    }
+  });
+}
+
+function mdastToPlainText(node: RootContent | undefined): string {
+  if (!node) {
+    return '';
+  }
+  if (
+    node.type === 'text' ||
+    node.type === 'inlineCode' ||
+    node.type === 'code'
+  ) {
+    return node.value;
+  }
+  if (node.type === 'break') {
+    return '\n';
+  }
+  if (node.type === 'image' || node.type === 'imageReference') {
+    return node.alt ?? '';
+  }
+  const children = 'children' in node ? (node.children as RootContent[]) : [];
+  return children.map(mdastToPlainText).join('');
+}
+
+const DIRECTIVE_NAMES = ['popup', 'details'];
+const OPENER_PATTERN = /^:::(\w+)\[([^\]\n]*)\](?:\n|$)/;
+const CLOSING_PATTERN = /(?:^|\n):::$/;
+
+function getDirectiveOpener(
+  node: RootContent,
+): { name: string; label: string } | null {
+  if (node.type !== 'paragraph' || node.children.length === 0) {
+    return null;
+  }
+  const first = node.children[0];
+  if (first.type !== 'text') {
+    return null;
+  }
+  const match = OPENER_PATTERN.exec(first.value);
+  if (
+    !match ||
+    !DIRECTIVE_NAMES.includes(match[1]) ||
+    (!match[0].endsWith('\n') && node.children.length > 1)
+  ) {
+    return null;
+  }
+  return { name: match[1], label: match[2] };
+}
+
+function stripOpener(paragraph: Paragraph): void {
+  const first = paragraph.children[0];
+  if (first.type !== 'text') {
+    return;
+  }
+  const match = OPENER_PATTERN.exec(first.value);
+  if (match) {
+    first.value = first.value.slice(match[0].length);
+  }
+}
+
+function getClosingMarkerText(node: RootContent): Text | null {
+  if (node.type === 'paragraph') {
+    const last = node.children[node.children.length - 1];
+    if (last?.type !== 'text') {
+      return null;
+    }
+    const match = CLOSING_PATTERN.exec(last.value);
+    // A text node after an inline sibling must contain its own line break.
+    return match &&
+      (last.value[match.index] === '\n' || node.children.length === 1)
+      ? last
+      : null;
+  }
+  // Markdown can attach a standalone closing line to the last list item.
+  // Follow block children only; markers inside inline nodes stay literal.
+  if (
+    node.type === 'list' ||
+    node.type === 'listItem' ||
+    node.type === 'blockquote'
+  ) {
+    const last = node.children[node.children.length - 1];
+    return last ? getClosingMarkerText(last) : null;
+  }
+  return null;
+}
+
+function endsWithClosingMarker(node: RootContent): boolean {
+  return getClosingMarkerText(node) !== null;
+}
+
+function stripClosingMarker(node: RootContent): void {
+  const text = getClosingMarkerText(node);
+  if (text) {
+    text.value = text.value.replace(CLOSING_PATTERN, '');
+  }
+}
+
+function paragraphHasContent(paragraph: Paragraph): boolean {
+  return paragraph.children.some(
+    (child) => child.type !== 'text' || child.value.trim() !== '',
+  );
+}
+
+/**
+ * Parses `:::popup[Label]` and `:::details[Label]` blocks into directive nodes
+ * so that the Markdown pipeline can render them without `remark-directive`.
+ *
+ * Inspired by remark-directive (MIT, Titus Wormer).
+ */
+function remarkMarkdownDirectiveSyntax() {
+  function transform(tree: Root | RootContent): void {
+    if (!('children' in tree)) {
+      return;
+    }
+    tree.children.forEach(transform);
+    for (let index = 0; index < tree.children.length; index += 1) {
+      const opener = getDirectiveOpener(tree.children[index]);
+      if (!opener) {
+        continue;
+      }
+      const openingParagraph = tree.children[index] as Paragraph;
+      let closingIndex = -1;
+      if (endsWithClosingMarker(openingParagraph)) {
+        closingIndex = index;
+      } else {
+        for (let next = index + 1; next < tree.children.length; next += 1) {
+          if (endsWithClosingMarker(tree.children[next])) {
+            closingIndex = next;
+            break;
+          }
+        }
+      }
+      if (closingIndex === -1) {
+        continue;
+      }
+      stripOpener(openingParagraph);
+      if (closingIndex === index) {
+        stripClosingMarker(openingParagraph);
+      }
+      const content: RootContent[] = tree.children.slice(
+        index + 1,
+        closingIndex + 1,
+      );
+      if (closingIndex > index) {
+        stripClosingMarker(tree.children[closingIndex]);
+        const closingNode = tree.children[closingIndex];
+        if (
+          closingNode.type === 'paragraph' &&
+          !paragraphHasContent(closingNode)
+        ) {
+          content.pop();
+        }
+      }
+      const children: RootContent[] = [
+        {
+          type: 'paragraph',
+          data: { directiveLabel: true },
+          children: [{ type: 'text', value: opener.label }],
+        },
+      ];
+      if (paragraphHasContent(openingParagraph)) {
+        children.push(openingParagraph);
+      }
+      children.push(...content);
+      (tree.children as RootContent[]).splice(index, closingIndex - index + 1, {
+        type: 'containerDirective',
+        name: opener.name,
+        children,
+      } as unknown as RootContent);
+    }
+  }
+  return transform;
+}
 
 function remarkMarkdownDirectives() {
   return (tree: Root, file: VFile) => {
@@ -44,7 +234,7 @@ function remarkMarkdownDirectives() {
         }
         return SKIP;
       }
-      const label = toString(node.children.shift());
+      const label = mdastToPlainText(node.children.shift());
       node.data = {
         hName: 'div',
         hProperties: {
@@ -112,7 +302,7 @@ function MarkdownDirective({
 }
 
 export const markdownDirectiveOptions: MarkdownOptions = {
-  remarkPlugins: [remarkDirective, remarkMarkdownDirectives],
+  remarkPlugins: [remarkMarkdownDirectiveSyntax, remarkMarkdownDirectives],
   components: {
     div: ({ node, children, ...props }) => {
       const type = node?.properties.dataMarkdownDirective;
