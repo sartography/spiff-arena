@@ -72,8 +72,12 @@ This information helps us **understand your situation**.
 ```
 
 The text in brackets labels the popup button or expandable summary.
-Put the opening directive and closing `:::` on separate lines.
+Put the opening directive and closing `:::` on lines of their own, without
+additional text or inline formatting. Markers embedded in prose or inline code
+are not directive boundaries.
 The body supports ordinary Markdown, including lists, links, and tables.
+Directives also work inside blockquotes and list items: prefix every line with
+`> ` for a blockquote, or indent continuation lines to stay within the list item.
 Popups close using the Close button, Escape, or a click outside the dialog.
 Details start collapsed and expand when their summary is activated.
 Keep essential instructions outside these optional sections.

@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import MDEditor from '@uiw/react-md-editor';
-import type { Paragraph, Parents, Root, RootContent } from 'mdast';
+import type { Paragraph, Parents, Root, RootContent, Text } from 'mdast';
 import type { VFile } from 'vfile';
 
 type MarkdownOptions = ComponentProps<typeof MDEditor.Markdown>;
@@ -58,8 +58,8 @@ function mdastToPlainText(node: RootContent | undefined): string {
 }
 
 const DIRECTIVE_NAMES = ['popup', 'details'];
-const OPENER_PATTERN = /^:::(\w+)\[([^\]]*)\]\n?/;
-const CLOSING_PATTERN = /\n?:::$/;
+const OPENER_PATTERN = /^:::(\w+)\[([^\]\n]*)\](?:\n|$)/;
+const CLOSING_PATTERN = /(?:^|\n):::$/;
 
 function getDirectiveOpener(
   node: RootContent,
@@ -72,7 +72,11 @@ function getDirectiveOpener(
     return null;
   }
   const match = OPENER_PATTERN.exec(first.value);
-  if (!match || !DIRECTIVE_NAMES.includes(match[1])) {
+  if (
+    !match ||
+    !DIRECTIVE_NAMES.includes(match[1]) ||
+    (!match[0].endsWith('\n') && node.children.length > 1)
+  ) {
     return null;
   }
   return { name: match[1], label: match[2] };
@@ -89,26 +93,41 @@ function stripOpener(paragraph: Paragraph): void {
   }
 }
 
-function endsWithClosingMarker(node: RootContent): boolean {
-  const children = 'children' in node ? node.children : undefined;
-  if (!children || children.length === 0) {
-    return node.type === 'text' && CLOSING_PATTERN.test(node.value);
+function getClosingMarkerText(node: RootContent): Text | null {
+  if (node.type === 'paragraph') {
+    const last = node.children[node.children.length - 1];
+    if (last?.type !== 'text') {
+      return null;
+    }
+    const match = CLOSING_PATTERN.exec(last.value);
+    // A text node after an inline sibling must contain its own line break.
+    return match &&
+      (last.value[match.index] === '\n' || node.children.length === 1)
+      ? last
+      : null;
   }
-  return endsWithClosingMarker(children[children.length - 1] as RootContent);
+  // Markdown can attach a standalone closing line to the last list item.
+  // Follow block children only; markers inside inline nodes stay literal.
+  if (
+    node.type === 'list' ||
+    node.type === 'listItem' ||
+    node.type === 'blockquote'
+  ) {
+    const last = node.children[node.children.length - 1];
+    return last ? getClosingMarkerText(last) : null;
+  }
+  return null;
+}
+
+function endsWithClosingMarker(node: RootContent): boolean {
+  return getClosingMarkerText(node) !== null;
 }
 
 function stripClosingMarker(node: RootContent): void {
-  const children = 'children' in node ? node.children : undefined;
-  if (!children || children.length === 0) {
-    if (node.type === 'text') {
-      const match = CLOSING_PATTERN.exec(node.value);
-      if (match) {
-        node.value = node.value.slice(0, match.index);
-      }
-    }
-    return;
+  const text = getClosingMarkerText(node);
+  if (text) {
+    text.value = text.value.replace(CLOSING_PATTERN, '');
   }
-  stripClosingMarker(children[children.length - 1] as RootContent);
 }
 
 function paragraphHasContent(paragraph: Paragraph): boolean {
@@ -124,7 +143,11 @@ function paragraphHasContent(paragraph: Paragraph): boolean {
  * Inspired by remark-directive (MIT, Titus Wormer).
  */
 function remarkMarkdownDirectiveSyntax() {
-  return (tree: Root) => {
+  function transform(tree: Root | RootContent): void {
+    if (!('children' in tree)) {
+      return;
+    }
+    tree.children.forEach(transform);
     for (let index = 0; index < tree.children.length; index += 1) {
       const opener = getDirectiveOpener(tree.children[index]);
       if (!opener) {
@@ -174,13 +197,14 @@ function remarkMarkdownDirectiveSyntax() {
         children.push(openingParagraph);
       }
       children.push(...content);
-      tree.children.splice(index, closingIndex - index + 1, {
+      (tree.children as RootContent[]).splice(index, closingIndex - index + 1, {
         type: 'containerDirective',
         name: opener.name,
         children,
       } as unknown as RootContent);
     }
-  };
+  }
+  return transform;
 }
 
 function remarkMarkdownDirectives() {
