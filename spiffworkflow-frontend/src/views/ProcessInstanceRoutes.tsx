@@ -7,11 +7,42 @@ import ProcessInstanceFindById from './ProcessInstanceFindById';
 import ProcessInterstitialPage from './TaskShow/ProcessInterstitialPage';
 import ProcessInstanceProgressPage from './TaskShow/ProcessInstanceProgressPage';
 import ProcessInstanceMigratePage from './ProcessInstanceMigratePage';
+import { Can } from '../contexts/Can';
+import { usePermissionFetcher } from '../hooks/PermissionService';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { PermissionsToCheck } from '../interfaces';
+
+function DefaultProcessInstanceList() {
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.processInstanceListPath]: ['GET'],
+  };
+  const { ability, permissionsLoaded } = usePermissionFetcher(
+    permissionRequestData,
+  );
+
+  if (!permissionsLoaded) {
+    return null;
+  }
+
+  return (
+    <Can
+      I="GET"
+      a={targetUris.processInstanceListPath}
+      ability={ability}
+      passThrough
+    >
+      {(canViewAll) => (
+        <ProcessInstanceList variant={canViewAll ? 'all' : 'for-me'} />
+      )}
+    </Can>
+  );
+}
 
 export default function ProcessInstanceRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<ProcessInstanceList variant="for-me" />} />
+      <Route path="/" element={<DefaultProcessInstanceList />} />
       <Route path="for-me" element={<ProcessInstanceList variant="for-me" />} />
       <Route path="all" element={<ProcessInstanceList variant="all" />} />
       <Route
