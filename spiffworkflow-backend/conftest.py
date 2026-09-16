@@ -55,8 +55,11 @@ def app(connexion_app: FlaskApp) -> Generator[Flask, Any, Any]:  # noqa
 
 
 @pytest.fixture(scope="session")
-def client(connexion_app: FlaskApp) -> starlette.testclient.TestClient:  # noqa
-    return connexion_app.test_client(follow_redirects=False, base_url="http://localhost")
+def client(connexion_app: FlaskApp) -> Generator[starlette.testclient.TestClient, Any, Any]:  # noqa
+    # Entering the client once keeps its AnyIO portal alive instead of creating
+    # and joining a thread for every request.
+    with connexion_app.test_client(follow_redirects=False, base_url="http://localhost") as client:
+        yield client
 
 
 def _clear_database() -> None:
