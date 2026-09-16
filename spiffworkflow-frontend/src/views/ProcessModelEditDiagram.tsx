@@ -40,6 +40,7 @@ import { EditorView, Decoration, type DecorationSet } from '@codemirror/view';
 import { EditorState, StateField, StateEffect } from '@codemirror/state';
 
 import MDEditor from '@uiw/react-md-editor';
+import { markdownDirectiveOptions } from '../components/MarkdownDirectives';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import ReactFormBuilder from '../components/ReactFormBuilder/ReactFormBuilder';
@@ -1057,6 +1058,7 @@ export default function ProcessModelEditDiagram() {
         closeLabel={t('close')}
         renderEditor={() => (
           <MDEditor
+            previewOptions={markdownDirectiveOptions}
             height={500}
             highlightEnable={false}
             value={markdownText}

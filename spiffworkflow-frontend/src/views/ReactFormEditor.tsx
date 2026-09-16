@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { Can } from '../contexts/Can';
 import MDEditor from '@uiw/react-md-editor';
+import { markdownDirectiveOptions } from '../components/MarkdownDirectives';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ConfirmButton from '../components/ConfirmButton';
@@ -252,6 +253,7 @@ export default function ReactFormEditor() {
       return (
         <div data-color-mode={isDark ? 'dark' : 'light'}>
           <MDEditor
+            previewOptions={markdownDirectiveOptions}
             height={600}
             highlightEnable={false}
             value={processModelFileContents || ''}

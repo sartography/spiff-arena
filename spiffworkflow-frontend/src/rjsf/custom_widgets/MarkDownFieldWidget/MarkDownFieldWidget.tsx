@@ -1,6 +1,7 @@
 import MDEditor from '@uiw/react-md-editor';
 import { Box, FormHelperText, useTheme } from '@mui/material';
 import React, { useCallback } from 'react';
+import { markdownDirectiveOptions } from '../../../components/MarkdownDirectives';
 
 interface WidgetArgs {
   id: string;
@@ -69,6 +70,7 @@ export default function MarkDownFieldWidget({
       <Box data-invalid={invalid} sx={{ display: 'inline' }}>
         <div data-color-mode={isDark ? 'dark' : 'light'} id={id}>
           <MDEditor
+            previewOptions={markdownDirectiveOptions}
             height={500}
             highlightEnable={false}
             value={value}
