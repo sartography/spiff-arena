@@ -154,11 +154,11 @@ jobs:
           ignore-unfixed: true
       - name: Convert Trivy results
         run: |
-          trivy convert --format table --output trivy-results.txt trivy-results.json
+          trivy convert --scanners vuln --format table --output trivy-results.txt trivy-results.json
           trivy convert --format sarif --output trivy-results.sarif trivy-results.json
       - name: Show Trivy findings
         run: |
-          if grep -q '[^[:space:]]' trivy-results.txt; then
+          if jq -e '[.Results[]? | (.Vulnerabilities[]?, .Misconfigurations[]?, .Secrets[]?, .Licenses[]?)] | length > 0' trivy-results.json > /dev/null; then
             cat trivy-results.txt
             {
               echo "## Trivy scan results"
