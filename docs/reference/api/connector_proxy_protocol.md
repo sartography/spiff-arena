@@ -10,7 +10,8 @@ requirements.
 
 ## Protocol surface
 
-A conforming connector proxy implements two operations:
+A conforming connector proxy implements two required operations and may
+implement authentication discovery:
 
 | Operation | Purpose | Requirement |
 | --- | --- | --- |
