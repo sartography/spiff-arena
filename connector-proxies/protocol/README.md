@@ -1,8 +1,8 @@
 # Connector proxy protocol
 
 [`openapi.json`](openapi.json) is the machine-readable definition of the HTTP
-contract between Spiff Arena and a connector proxy. The corresponding
-normative prose is in the
+contract between Spiff Arena and a connector proxy. The corresponding prose is
+in the
 [connector proxy protocol reference](../../docs/reference/api/connector_proxy_protocol.md).
 
 The backend contract test validates the schemas and checks them against the

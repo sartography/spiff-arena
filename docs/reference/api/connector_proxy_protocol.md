@@ -1,7 +1,7 @@
 # Connector proxy protocol
 
 This page defines the HTTP contract between Spiff Arena and a connector proxy.
-It is the normative reference for new proxy implementations. The
+New proxy implementations should follow it. The
 [OpenAPI 3.1 document](https://github.com/sartography/spiff-arena/blob/main/connector-proxies/protocol/openapi.json)
 contains the same request and response schemas in machine-readable form.
 
@@ -194,50 +194,17 @@ Outer HTTP `202 Accepted` is the only signal that tells Arena to leave the
 service task waiting. `command_response.http_status: 202` does not have that
 effect.
 
-An accepted response still uses the version 2 envelope:
-
-```text
-HTTP/1.1 202 Accepted
-Content-Type: application/json
-
-{
-  "command_response": {
-    "body": {
-      "job_id": "job-123"
-    },
-    "mimetype": "application/json",
-    "http_status": 200,
-    "headers": {}
-  },
-  "command_response_version": 2,
-  "error": null,
-  "spiff__logs": []
-}
-```
+An accepted response still uses the version 2 envelope. Its body may contain
+job metadata, but Arena does not use that body to decide whether to wait.
 
 Arena checks the envelope for errors before it acts on the outer 202. A proxy
 MUST NOT return 202 with a non-null error when it intends the task to wait.
 
 After the work finishes, the worker sends a `PUT` request to the exact
 `spiff__callback_url` supplied in the execution request. The callback body uses
-the same version 2 envelope. `command_response.body` is required:
-
-```json
-{
-  "command_response": {
-    "body": {
-      "job_id": "job-123",
-      "status": "complete"
-    },
-    "mimetype": "application/json",
-    "http_status": 200,
-    "headers": {}
-  },
-  "command_response_version": 2,
-  "error": null,
-  "spiff__logs": []
-}
-```
+the same version 2 envelope. `command_response.body` is required. See the
+[callback examples](../../explanation/dev/connector_proxy_examples.md#using-callback-urls-long-running-tasks)
+for complete request and response bodies.
 
 The callback URL is an Arena API endpoint. Possession of the URL does not grant
 access. The callback caller MUST authenticate and MUST be authorized to update
@@ -305,22 +272,3 @@ and `/v1/liveness`.
 Consumers must tolerate additional fields in discovery descriptions,
 invocations, response envelopes, command responses, and errors. Producers must
 not change the meaning of a defined field without a new protocol version.
-
-## Implementation checklist
-
-A new proxy is ready for Arena when:
-
-- `GET /v1/commands` returns a catalog that matches the OpenAPI schema;
-- every advertised id has a matching POST route;
-- required command parameters are enforced;
-- reserved `spiff__` fields are accepted without reaching constructors that
-  do not declare them;
-- every dispatched command returns a version 2 JSON envelope;
-- structured errors have stable `error_code` values;
-- only an outer 202 starts asynchronous waiting;
-- callback workers can authenticate to Arena and always include
-  `command_response.body`;
-- API keys and sensitive command data are not logged;
-- outbound calls have explicit timeouts; and
-- contract tests cover discovery, success, command failure, dispatch failure,
-  asynchronous acceptance, and callback completion.

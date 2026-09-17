@@ -1,8 +1,6 @@
 # Connector Proxy API Examples
 
 This page provides sample requests and responses for connector proxy implementations.
-For requirements and field semantics, see the
-[connector proxy protocol](../../reference/api/connector_proxy_protocol).
 
 ```{contents}
 :local:

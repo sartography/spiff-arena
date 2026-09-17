@@ -31,9 +31,8 @@ Our connector-proxy-demo includes a few connectors, including [connector-aws](ht
 Connector-http can be used for many API interactions, but you can also [write your own connectors](/how_to_guides/extend_the_system/how_to_build_a_connector).
 
 The [connector proxy protocol](../../reference/api/connector_proxy_protocol)
-is the normative reference for discovery, execution, response envelopes,
-errors, and asynchronous callbacks. This page describes the architecture and
-the async HTTP example.
+defines discovery, execution, response envelopes, errors, and asynchronous
+callbacks. This page describes the architecture and the async HTTP example.
 
 ## async-http Example
 
@@ -88,8 +87,6 @@ By default, the port published is:
 ### `GET /v1/commands`
 
 Returns a list of supported commands and their parameter schemas. This makes the connector proxy **self-describing**.
-The catalog format is defined in the
-[protocol reference](../../reference/api/connector_proxy_protocol.md#command-discovery).
 
 The async-http example exposes these commands:
 
@@ -123,11 +120,6 @@ All execution routes:
 - accept a JSON request body
 - make an outbound HTTP request using `httpx.AsyncClient.request(...)`
 - return a standard response envelope
-
-See [Command execution](../../reference/api/connector_proxy_protocol.md#command-execution)
-for Arena's reserved request fields and
-[Version 2 response envelope](../../reference/api/connector_proxy_protocol.md#version-2-response-envelope)
-for the required result format.
 
 ---
 

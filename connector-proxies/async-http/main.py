@@ -196,7 +196,6 @@ class liveness:
 
 
 app.add_route("/liveness", liveness())
-app.add_route("/v1/liveness", liveness())
 app.add_route("/v1/commands", v1_commands())
 
 app.add_route("/v1/do/http/DeleteRequest", v1_do_http_connector("DELETE", True))

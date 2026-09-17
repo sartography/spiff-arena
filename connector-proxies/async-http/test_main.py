@@ -104,12 +104,5 @@ class ProtocolTest(unittest.TestCase):
             "spiff__logs": [],
         }
 
-    def test_versioned_liveness_route(self):
-        response = testing.TestClient(app).simulate_get("/v1/liveness")
-
-        assert response.status_code == 200
-        assert response.json == {"status": "ok"}
-
-
 if __name__ == "__main__":
     unittest.main()
