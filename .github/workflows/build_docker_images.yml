@@ -158,14 +158,18 @@ jobs:
           trivy convert --format sarif --output trivy-results.sarif trivy-results.json
       - name: Show Trivy findings
         run: |
-          cat trivy-results.txt
-          {
-            echo "## Trivy scan results"
-            echo
-            echo '```text'
+          if grep -q '[^[:space:]]' trivy-results.txt; then
             cat trivy-results.txt
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+            {
+              echo "## Trivy scan results"
+              echo
+              echo '```text'
+              cat trivy-results.txt
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No Trivy findings."
+          fi
       - name: Check if Trivy SARIF results exist
         if: always()
         run: |
