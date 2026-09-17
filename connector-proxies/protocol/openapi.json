@@ -102,7 +102,7 @@
             }
           },
           "202": {
-            "description": "The command was accepted for asynchronous completion. If the envelope contains an error, Arena treats the command as failed and does not wait for a callback.",
+            "description": "The command was accepted for asynchronous completion. Arena waits only when the envelope has no structured error and command_response.http_status is absent or below 300.",
             "content": {
               "application/json": {
                 "schema": {
@@ -110,9 +110,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/ProtocolError"
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -136,7 +133,7 @@
                   "content": {
                     "application/json": {
                       "schema": {
-                        "$ref": "#/components/schemas/ConnectorProxyResponseV2"
+                        "$ref": "#/components/schemas/CallbackRequest"
                       },
                       "example": {
                         "command_response": {
@@ -421,6 +418,41 @@
           }
         },
         "additionalProperties": true
+      },
+      "CallbackRequest": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "command_response"
+            ],
+            "properties": {
+              "command_response": {
+                "type": "object",
+                "required": [
+                  "body"
+                ],
+                "properties": {
+                  "body": true
+                },
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": true
+          },
+          {
+            "type": "object",
+            "required": [
+              "error"
+            ],
+            "properties": {
+              "error": {
+                "$ref": "#/components/schemas/ConnectorError"
+              }
+            },
+            "additionalProperties": true
+          }
+        ]
       },
       "ConnectorProxyProtocolError": {
         "type": "object",

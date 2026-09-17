@@ -5,14 +5,7 @@ contract between Spiff Arena and a connector proxy. The corresponding prose is
 in the
 [connector proxy protocol reference](../../docs/reference/api/connector_proxy_protocol.md).
 
-The backend contract test validates the schemas and checks them against the
-embedded HTTP connector, the async HTTP proxy, and the aggregate proxy command
-catalog:
+From the repository root, validate the schema with `uvx openapi-spec-validator connector-proxies/protocol/openapi.json`.
 
-```sh
-cd spiffworkflow-backend
-uv run pytest tests/spiffworkflow_backend/unit/test_connector_proxy_protocol.py
-```
-
-When the protocol changes, update the OpenAPI document, the reference page,
-and the contract test in the same change.
+When the protocol changes, update the OpenAPI document and reference page
+together, then run this command.

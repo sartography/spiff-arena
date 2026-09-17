@@ -5,9 +5,6 @@ New proxy implementations should follow it. The
 [OpenAPI 3.1 document](https://github.com/sartography/spiff-arena/blob/main/connector-proxies/protocol/openapi.json)
 contains the same request and response schemas in machine-readable form.
 
-The words **MUST**, **MUST NOT**, **SHOULD**, and **MAY** state conformance
-requirements.
-
 ## Protocol surface
 
 A conforming connector proxy implements two required operations and may
@@ -29,7 +26,7 @@ purposes. `/v1` versions the proxy HTTP interface.
 
 ## Command discovery
 
-`GET /v1/commands` MUST return `200 OK` and a JSON array. Each item has this
+`GET /v1/commands` must return `200 OK` and a JSON array. Each item has this
 form:
 
 ```json
@@ -47,7 +44,7 @@ form:
 
 `id` consists of a connector name and a command name separated by one slash.
 Arena sends that value as the final two segments of the execution URL.
-Connector and command names therefore MUST NOT contain `/`.
+Connector and command names therefore must not contain `/`.
 
 Each parameter description contains:
 
@@ -56,10 +53,10 @@ Each parameter description contains:
 - `required`, a boolean.
 
 The catalog describes the fields presented for configuration in Arena. It is
-not a complete JSON Schema for a command. A proxy MAY add fields to command and
+not a complete JSON Schema for a command. A proxy may add fields to command and
 parameter descriptions. Arena ignores fields it does not understand.
 
-Command ids SHOULD be unique. If an external proxy advertises an id also
+Command ids should be unique. If an external proxy advertises an id also
 provided by Arena's embedded connectors, Arena retains the embedded command.
 
 ## Command execution
@@ -84,16 +81,16 @@ Arena also adds these reserved fields:
 | `spiff__callback_url` | URI | Arena endpoint for asynchronous completion |
 
 The `spiff__` prefix is reserved for Arena. A connector-specific parameter
-MUST NOT use it.
+must not use it.
 
-A proxy SHOULD reject a missing required command parameter with a clear error.
-It MAY ignore reserved metadata it does not use. The
+A proxy should reject a missing required command parameter with a clear error.
+It may ignore reserved metadata it does not use. The
 `spiffworkflow-proxy` library removes unused `spiff__` fields before it
 constructs a synchronous command object.
 
 ## Version 2 response envelope
 
-New proxies MUST return JSON in this form for a dispatched command:
+New proxies must return JSON in this form for a dispatched command:
 
 ```json
 {
@@ -132,9 +129,10 @@ The top-level fields are:
 `body` may hold any JSON value. For a normal synchronous completion, Arena
 serializes the whole `command_response` object as the service task result. For
 an asynchronous callback, Arena assigns `command_response.body` to the
-configured result variable.
+configured result variable. Arena adds `operator_identifier` to synchronous
+version 2 command responses before returning them to the workflow.
 
-`spiff__logs` is not a private channel. A proxy MUST NOT put credentials,
+`spiff__logs` is not a private channel. A proxy must not put credentials,
 tokens, request authorization headers, or sensitive response data in it.
 
 ## Status and error handling
@@ -145,12 +143,12 @@ There are two status values:
 2. `command_response.http_status` describes the command result, often the
    status returned by an upstream HTTP service.
 
-For synchronous command completion, a proxy SHOULD return outer `200` and put
+For synchronous command completion, a proxy should return outer `200` and put
 an upstream status in `command_response.http_status`. Arena treats an inner
 status of 300 or greater as a service task error even when the outer status is
 200.
 
-`error`, when non-null, MUST contain string `error_code` and `message` fields:
+`error`, when non-null, must contain string `error_code` and `message` fields:
 
 ```json
 {
@@ -161,18 +159,19 @@ status of 300 or greater as a service task error even when the outer status is
 }
 ```
 
-Arena handles failures in this order:
+Arena parses the response as JSON before it evaluates status fields. It handles
+failures in this order:
 
-1. A structured `error` with `error_code` is a command failure.
-2. Otherwise, `command_response.http_status >= 300` is a command failure.
-3. Otherwise, an outer status of 300 or greater is a proxy failure.
-4. A response that is not valid JSON is a proxy failure.
+1. A response that is not valid JSON is a proxy failure.
+2. A structured `error` with `error_code` is a command failure.
+3. Otherwise, `command_response.http_status >= 300` is a command failure.
+4. Otherwise, an outer status of 300 or greater is a proxy failure.
 
 An error boundary event on the service task may catch the resulting error
 code. If no boundary event catches it, the process instance enters an error
 state.
 
-A proxy that cannot dispatch a command MAY return a non-2xx status with the
+A proxy that cannot dispatch a command may return a non-2xx status with the
 minimal error envelope retained by older implementations:
 
 ```json
@@ -190,30 +189,29 @@ preferred for both success and failure.
 
 ## Asynchronous completion
 
-Outer HTTP `202 Accepted` is the only signal that tells Arena to leave the
-service task waiting. `command_response.http_status: 202` does not have that
-effect.
+Arena leaves the service task waiting only when the outer response is
+`202 Accepted`, the body is valid JSON, the envelope has no structured error,
+and `command_response.http_status` is absent or below 300.
+`command_response.http_status: 202` alone does not make the task wait.
 
 An accepted response still uses the version 2 envelope. Its body may contain
 job metadata, but Arena does not use that body to decide whether to wait.
 
-Arena checks the envelope for errors before it acts on the outer 202. A proxy
-MUST NOT return 202 with a non-null error when it intends the task to wait.
-
 After the work finishes, the worker sends a `PUT` request to the exact
-`spiff__callback_url` supplied in the execution request. The callback body uses
-the same version 2 envelope. `command_response.body` is required. See the
+`spiff__callback_url` supplied in the execution request. A successful callback
+must contain `command_response.body`. An error callback must contain a
+structured `error`. Other version 2 envelope fields may be included. See the
 [callback examples](../../explanation/dev/connector_proxy_examples.md#using-callback-urls-long-running-tasks)
 for complete request and response bodies.
 
 The callback URL is an Arena API endpoint. Possession of the URL does not grant
-access. The callback caller MUST authenticate and MUST be authorized to update
+access. The callback caller must authenticate and must be authorized to update
 the process instance under the target Arena deployment's policy. An anonymous
 caller, or a user without access to that process instance, receives `401` or
 `403`. A malformed body, an unknown task, or a task that is no longer waiting
 receives `400`.
 
-Callbacks are not idempotent after completion. A worker SHOULD record the
+Callbacks are not idempotent after completion. A worker should record the
 outcome and stop retrying after Arena accepts the callback. Service task retry
 configuration may cause Arena to schedule another attempt when a callback
 reports a command error.
@@ -223,14 +221,14 @@ reports a command error.
 Arena sends `Spiff-Connector-Proxy-Api-Key` on discovery, authentication
 discovery, and execution requests when
 `SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY` is configured. A proxy that
-uses this mechanism MUST compare the value against its configured secret and
+uses this mechanism must compare the value against its configured secret and
 return `401` when it is absent or wrong.
 
 The header authenticates Arena to the proxy. It does not authenticate the
 proxy or an asynchronous worker to Arena's callback endpoint.
 
 Use HTTPS whenever requests cross a trusted network boundary. Treat command
-parameters and task data as sensitive. A proxy SHOULD use bounded connection
+parameters and task data as sensitive. A proxy should use bounded connection
 and response timeouts, redact secrets from logs, and allow only required
 cross-origin callers. CORS is not required for backend-to-proxy traffic.
 
@@ -252,7 +250,10 @@ A proxy may aggregate catalogs from several services. Execution may return an
 HTTP 307 or 308 redirect to another proxy, provided the client can reach the
 target and the redirect preserves the POST method, body, and authentication
 policy. Do not use 301, 302, or 303 for command routing because clients may
-change POST to GET.
+change POST to GET. The redirect target receives the complete invocation,
+including task data and resolved command parameters, and the connector-proxy
+API-key header. Treat every redirect target as part of the same trusted
+security boundary.
 
 ## Legacy compatibility
 
@@ -263,5 +264,9 @@ behaviors exist for compatibility. New implementations should use POST and the
 version 2 envelope.
 
 Consumers must tolerate additional fields in discovery descriptions,
-invocations, response envelopes, command responses, and errors. Producers must
-not change the meaning of a defined field without a new protocol version.
+invocations, command responses, and errors. Arena reserves legacy response
+fields with special behavior: `api_response` may replace the parsed result,
+while `refreshed_token_set` triggers secret refresh and requires matching
+`auth` and `api_response` fields. Producers must not reuse these names for
+other purposes or change the meaning of a defined field without a new protocol
+version.
