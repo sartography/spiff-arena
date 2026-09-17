@@ -86,8 +86,8 @@ By default, the port published is:
 
 ### `GET /v1/commands`
 
-Returns a list of supported commands and their parameter schemas. This makes the connector proxy **self-describing**.
-
+The protocol reference defines the
+[discovery response](../../reference/api/connector_proxy_protocol.md#command-discovery).
 The async-http example exposes these commands:
 
 - `http/DeleteRequest`
@@ -97,17 +97,11 @@ The async-http example exposes these commands:
 - `http/PostRequest`
 - `http/PutRequest`
 
-Each command includes a `parameters` array describing:
-
-- `id` (parameter name)
-- `type`
-- `required` (true/false)
-
 ---
 
 ## API: Command Execution
 
-Each command is executed through a dedicated route:
+The async-http example exposes these execution routes:
 
 - `POST /v1/do/http/DeleteRequest`
 - `POST /v1/do/http/GetRequest`
@@ -116,16 +110,15 @@ Each command is executed through a dedicated route:
 - `POST /v1/do/http/PostRequest`
 - `POST /v1/do/http/PutRequest`
 
-All execution routes:
-- accept a JSON request body
-- make an outbound HTTP request using `httpx.AsyncClient.request(...)`
-- return a standard response envelope
+Each route accepts JSON, makes an outbound request with
+`httpx.AsyncClient.request(...)`, and returns the
+[version 2 response envelope](../../reference/api/connector_proxy_protocol.md#version-2-response-envelope).
 
 ---
 
 ## Parameters (`/v1/commands`)
 
-These are the schema definitions returned by async-http and should be treated as the public contract.
+The async-http discovery response advertises these parameters.
 
 ### Common parameters (all commands)
 - `url` *(required, string)* — Target URL
@@ -151,13 +144,8 @@ The embedded Arena HTTP connector also supports `body_format` and `include_respo
 
 ## Request and Response Examples
 
-For detailed examples of request payloads and response structures, including:
-- Sample requests for GET, POST, PUT, PATCH, DELETE, and HEAD operations
-- Response envelope structure and parsing behavior
-- Error response examples
-- Long-running task callbacks
-
-See the [Connector Proxy API Examples](connector_proxy_examples) page.
+See [Connector Proxy API Examples](connector_proxy_examples) for HTTP command
+requests, response parsing, errors, and long-running task callbacks.
 
 ---
 
@@ -177,6 +165,7 @@ For production use, implement:
 
 ## API Key Authentication
 
-If Spiff Arena is configured with a `SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY`, it will include a `Spiff-Connector-Proxy-Api-Key` header on every request it sends to the connector proxy.
-Your connector proxy implementation can validate this header to restrict access to authorized Spiff Arena instances only.
-See [Configure a Connector Proxy](../../how_to_guides/deployment/configure_a_connector_proxy) for how to set the key.
+See the protocol's [transport security](../../reference/api/connector_proxy_protocol.md#transport-security)
+section for API-key behavior and
+[Configure a Connector Proxy](../../how_to_guides/deployment/configure_a_connector_proxy)
+for deployment configuration.
