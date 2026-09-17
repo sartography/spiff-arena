@@ -1,0 +1,510 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Spiff Arena connector proxy protocol",
+    "version": "1.0.0",
+    "description": "The HTTP contract used by Spiff Arena to discover and execute connector commands. The version of this document is independent of command_response_version."
+  },
+  "servers": [
+    {
+      "url": "{connectorProxyUrl}",
+      "variables": {
+        "connectorProxyUrl": {
+          "default": "http://localhost:8200"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "ConnectorProxyApiKey": []
+    },
+    {}
+  ],
+  "paths": {
+    "/v1/commands": {
+      "get": {
+        "operationId": "listConnectorCommands",
+        "summary": "List connector commands",
+        "responses": {
+          "200": {
+            "description": "The available command catalog.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandCatalog"
+                },
+                "example": [
+                  {
+                    "id": "example/Example",
+                    "parameters": [
+                      {
+                        "id": "message",
+                        "type": "str",
+                        "required": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/v1/do/{connector}/{command}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Connector"
+        },
+        {
+          "$ref": "#/components/parameters/Command"
+        }
+      ],
+      "post": {
+        "operationId": "executeConnectorCommand",
+        "summary": "Execute a connector command",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommandInvocation"
+              },
+              "example": {
+                "message": "hello",
+                "spiff__process_instance_id": 42,
+                "spiff__process_model_identifier": "examples:hello",
+                "spiff__task_id": "3cf2a334-c066-4ad7-a01e-85f518c65cba",
+                "spiff__task_data": {
+                  "customer_id": 7
+                },
+                "spiff__callback_url": "https://arena.example.com/v1.0/tasks/42/3cf2a334-c066-4ad7-a01e-85f518c65cba/callback"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The command completed. Inspect the response envelope for the command result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorProxyResponseV2"
+                },
+                "example": {
+                  "command_response": {
+                    "body": {
+                      "connector_response": "done"
+                    },
+                    "mimetype": "application/json",
+                    "http_status": 200,
+                    "headers": {}
+                  },
+                  "command_response_version": 2,
+                  "error": null,
+                  "spiff__logs": []
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "The command was accepted for asynchronous completion. Arena waits for a callback unless the envelope contains an error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorProxyResponseV2"
+                },
+                "example": {
+                  "command_response": {
+                    "body": {
+                      "job_id": "job-123"
+                    },
+                    "mimetype": "application/json",
+                    "http_status": 200,
+                    "headers": {}
+                  },
+                  "command_response_version": 2,
+                  "error": null,
+                  "spiff__logs": []
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ProtocolError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/ProtocolError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ProtocolError"
+          }
+        },
+        "callbacks": {
+          "commandCompleted": {
+            "{$request.body#/spiff__callback_url}": {
+              "put": {
+                "operationId": "completeConnectorCommand",
+                "summary": "Complete an asynchronously accepted command",
+                "description": "The callback URL belongs to Arena. The caller must satisfy the authorization policy of that Arena endpoint.",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/ConnectorProxyResponseV2"
+                      },
+                      "example": {
+                        "command_response": {
+                          "body": {
+                            "job_id": "job-123",
+                            "status": "complete"
+                          },
+                          "mimetype": "application/json",
+                          "http_status": 200,
+                          "headers": {}
+                        },
+                        "command_response_version": 2,
+                        "error": null,
+                        "spiff__logs": []
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Arena accepted the completion."
+                  },
+                  "400": {
+                    "description": "The callback body or task state was invalid."
+                  },
+                  "401": {
+                    "description": "The caller was not authenticated."
+                  },
+                  "403": {
+                    "description": "The caller may not update this process instance."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auths": {
+      "get": {
+        "operationId": "listConnectorAuthentications",
+        "summary": "List connector authentication handlers",
+        "description": "Optional extension. A proxy with no authentication handlers may omit this endpoint or return an empty array.",
+        "responses": {
+          "200": {
+            "description": "The available authentication handler catalog.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandCatalog"
+                },
+                "example": []
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/v1/liveness": {
+      "get": {
+        "operationId": "connectorProxyLiveness",
+        "summary": "Report connector proxy liveness",
+        "description": "Optional extension. This endpoint should remain available without connector API-key authentication so an orchestrator can probe it.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "The proxy process is live.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                },
+                "examples": {
+                  "status": {
+                    "value": {
+                      "status": "ok"
+                    }
+                  },
+                  "legacy": {
+                    "value": {
+                      "ok": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ConnectorProxyApiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Spiff-Connector-Proxy-Api-Key",
+        "description": "Optional shared-secret authentication. Arena sends this header when SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_API_KEY is configured."
+      }
+    },
+    "parameters": {
+      "Connector": {
+        "name": "connector",
+        "in": "path",
+        "required": true,
+        "description": "The connector portion of the command id.",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^/]+$"
+        }
+      },
+      "Command": {
+        "name": "command",
+        "in": "path",
+        "required": true,
+        "description": "The command portion of the command id.",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^/]+$"
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "The connector proxy API key is missing or invalid.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "error"
+              ],
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            },
+            "example": {
+              "error": "Unauthorized"
+            }
+          }
+        }
+      },
+      "ProtocolError": {
+        "description": "The proxy could not dispatch or execute the command.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ConnectorProxyProtocolError"
+            },
+            "example": {
+              "command_response": {},
+              "error": {
+                "error_code": "command_not_found",
+                "message": "The command does not exist."
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "CommandCatalog": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/CommandDescription"
+        }
+      },
+      "CommandDescription": {
+        "type": "object",
+        "required": [
+          "id",
+          "parameters"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 3,
+            "pattern": "^[^/]+/[^/]+$",
+            "description": "A connector and command name separated by one slash."
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommandParameter"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "CommandParameter": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "required"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "str",
+              "int",
+              "bool",
+              "any"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      },
+      "CommandInvocation": {
+        "type": "object",
+        "properties": {
+          "spiff__process_instance_id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "spiff__process_model_identifier": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "spiff__task_id": {
+            "type": "string"
+          },
+          "spiff__task_data": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "spiff__callback_url": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "additionalProperties": true
+      },
+      "ConnectorCommandResponse": {
+        "type": "object",
+        "required": [
+          "body",
+          "mimetype"
+        ],
+        "properties": {
+          "body": true,
+          "mimetype": {
+            "type": "string",
+            "minLength": 1
+          },
+          "http_status": {
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 599
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      },
+      "ConnectorError": {
+        "type": "object",
+        "required": [
+          "error_code",
+          "message"
+        ],
+        "properties": {
+          "error_code": {
+            "type": "string",
+            "minLength": 1
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "ConnectorProxyResponseV2": {
+        "type": "object",
+        "required": [
+          "command_response",
+          "command_response_version",
+          "error",
+          "spiff__logs"
+        ],
+        "properties": {
+          "command_response": {
+            "$ref": "#/components/schemas/ConnectorCommandResponse"
+          },
+          "command_response_version": {
+            "const": 2
+          },
+          "error": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConnectorError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "spiff__logs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "ConnectorProxyProtocolError": {
+        "type": "object",
+        "required": [
+          "command_response",
+          "error"
+        ],
+        "properties": {
+          "command_response": {
+            "type": "object"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ConnectorError"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

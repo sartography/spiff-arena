@@ -1,5 +1,11 @@
 import unittest
 
+import httpx
+from falcon import testing
+
+from main import app
+from main import connector_response
+from main import embedded_connectors
 from main import is_sensitive_field_name
 from main import redacted
 
@@ -68,6 +74,41 @@ class RedactionTest(unittest.TestCase):
 
         assert all(is_sensitive_field_name(field_name) for field_name in sensitive_field_names)
         assert not is_sensitive_field_name("display_name")
+
+
+class ProtocolTest(unittest.TestCase):
+    def test_discovery_returns_the_implemented_command_catalog(self):
+        response = testing.TestClient(app).simulate_get("/v1/commands")
+
+        assert response.status_code == 200
+        assert response.json == embedded_connectors
+
+    def test_versioned_response_envelope(self):
+        upstream_response = httpx.Response(
+            200,
+            json={"status": "ok"},
+            headers={"Content-Type": "application/json"},
+        )
+
+        response = connector_response(upstream_response)
+
+        assert response == {
+            "command_response": {
+                "body": {"status": "ok"},
+                "mimetype": "application/json",
+                "http_status": 200,
+                "headers": {},
+            },
+            "command_response_version": 2,
+            "error": None,
+            "spiff__logs": [],
+        }
+
+    def test_versioned_liveness_route(self):
+        response = testing.TestClient(app).simulate_get("/v1/liveness")
+
+        assert response.status_code == 200
+        assert response.json == {"status": "ok"}
 
 
 if __name__ == "__main__":

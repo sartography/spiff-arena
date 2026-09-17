@@ -1,6 +1,8 @@
 # Connector Proxy API Examples
 
 This page provides sample requests and responses for connector proxy implementations.
+For requirements and field semantics, see the
+[connector proxy protocol](../../reference/api/connector_proxy_protocol).
 
 ```{contents}
 :local:
@@ -235,7 +237,8 @@ When an error occurs:
 When SpiffWorkflow invokes a service task, it automatically includes a `spiff__callback_url` parameter. If your service needs to process the request asynchronously:
 
 1. **Return an HTTP 202 response from the connector proxy** to indicate the task is accepted but not yet complete
-2. **Call the callback URL later** when processing is done
+2. **Call the callback URL later** when processing is done, using credentials
+   authorized to update the Arena process instance
 
 ### Accepted Response Format
 
@@ -289,5 +292,10 @@ Content-Type: application/json
 ```
 
 The `command_response.body` field contains your actual result data. SpiffWorkflow extracts this value and stores it in the service task's configured result variable.
+
+The callback URL is an authenticated Arena API endpoint. Possession of the URL
+does not grant access. See
+[Asynchronous completion](../../reference/api/connector_proxy_protocol.md#asynchronous-completion)
+for status handling, authorization, and retry behavior.
 
 See [Long-Running Service Tasks](../../how_to_guides/building_diagrams/long_running_service_tasks) for complete documentation.
