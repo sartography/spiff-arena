@@ -4153,26 +4153,6 @@ paths:
 
 components:
   schemas:
-    BpmnEventCorrelationProperty:
-      type: object
-      description: A serialized correlation property used by a BPMN message event.
-      required:
-        - name
-        - retrieval_expression
-        - correlation_keys
-      properties:
-        name:
-          type: string
-          description: The correlation property name.
-        retrieval_expression:
-          type: string
-          description: The expression used to retrieve the correlation value from the event payload.
-        correlation_keys:
-          type: array
-          description: The process correlation keys that use this property.
-          items:
-            type: string
-
     BpmnEvent:
       type: object
       description: A BPMN event that can be selected and sent from a waiting event-based gateway.
@@ -4216,16 +4196,6 @@ components:
           type: string
           nullable: true
           description: The code used to match an error or escalation event.
-        correlation_properties:
-          type: array
-          description: Correlation properties required when sending a message event.
-          items:
-            $ref: "#/components/schemas/BpmnEventCorrelationProperty"
-        process_correlations:
-          type: array
-          description: Process-level correlation properties associated with a message event.
-          items:
-            $ref: "#/components/schemas/BpmnEventCorrelationProperty"
 
     BpmnSignalEvent:
       type: object
