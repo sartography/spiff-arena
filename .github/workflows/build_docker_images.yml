@@ -137,55 +137,37 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # SARIF is useful to GitHub code scanning, but nearly unreadable in the job log.
-      # Generate the same findings as a text table first so a failed run explains itself.
-      - name: Run Trivy vulnerability scanner (readable report)
+      # Trivy emits one format per command. Scan once to JSON, then cheaply convert
+      # that result into formats for people and GitHub code scanning.
+      - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           version: "v0.70.0"
           image-ref: "${{ steps.full_tag.outputs.full_tag }}"
           scan-type: "image"
           hide-progress: false
-          format: "table"
-          output: "trivy-results.txt"
+          format: "json"
+          output: "trivy-results.json"
           severity: "CRITICAL"
-          exit-code: 0 # The SARIF scan below remains the build gate.
+          exit-code: 0 # Generate and upload the reports before enforcing the result.
           timeout: 15m0s
           ignore-unfixed: true
+      - name: Convert Trivy results
+        run: |
+          trivy convert --format table --output trivy-results.txt trivy-results.json
+          trivy convert --format sarif --output trivy-results.sarif trivy-results.json
       - name: Show Trivy findings
         run: |
-          echo "Trivy report for $IMAGE"
           cat trivy-results.txt
           {
-            echo "## Trivy vulnerability scan: \`${IMAGE}\`"
-            echo
-            echo "Only fixed CRITICAL vulnerabilities fail this build."
+            echo "## Trivy scan results"
             echo
             echo '```text'
             cat trivy-results.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-        env:
-          IMAGE: ${{ steps.full_tag.outputs.full_tag }}
-
-      - name: Run Trivy vulnerability scanner (SARIF build gate)
-        # trivy image --severity CRITICAL --exit-code 1 --timeout 15m0s --ignore-unfixed --scanners vuln "test1:latest"
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          version: "v0.70.0"
-          image-ref: "${{ steps.full_tag.outputs.full_tag }}"
-          scan-type: "image"
-          hide-progress: false
-          limit-severities-for-sarif: true
-          format: "sarif"
-          output: "trivy-results.sarif"
-          severity: "CRITICAL"
-          exit-code: 1 # Fail the workflow if critical vulnerabilities are found.
-          timeout: 15m0s
-          ignore-unfixed: true
       - name: Check if Trivy SARIF results exist
         if: always()
-        # Trivy fails when vulnerabilities are found, but the report must still be uploaded.
         run: |
           if [ -f "trivy-results.sarif" ]; then
             echo "UPLOAD_TRIVY_RESULTS=true" >> "$GITHUB_ENV"
@@ -205,10 +187,13 @@ jobs:
         with:
           name: trivy-results-${{ matrix.artifact_name }}
           path: |
+            trivy-results.json
             trivy-results.txt
             trivy-results.sarif
           if-no-files-found: warn
           retention-days: 14
+      - name: Enforce Trivy scan result
+        run: trivy convert --format table --output /dev/null --exit-code 1 trivy-results.json
 
       - name: Push Docker image
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
