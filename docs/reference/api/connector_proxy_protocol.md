@@ -17,7 +17,6 @@ A conforming connector proxy implements two operations:
 | `GET /v1/commands` | Advertise commands and their parameters | Required |
 | `POST /v1/do/{connector}/{command}` | Execute one advertised command | Required |
 | `GET /v1/auths` | Advertise connector-managed authentication handlers | Optional |
-| `GET /v1/liveness` | Report process liveness | Optional |
 
 The base URL is set in
 `SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL`. Arena appends the paths above
@@ -246,13 +245,6 @@ The browser redirect routes implemented by `spiffworkflow-proxy` are not part
 of this protocol. Their provider configuration, session storage, callback
 parameters, and redirect allowlists are deployment-specific.
 
-### Liveness
-
-`GET /v1/liveness` may return any JSON object with outer status 200 when the
-proxy process can receive requests. It does not prove that downstream services
-are reachable. The older `/liveness` path is a compatibility alias, not a
-required endpoint.
-
 ### Aggregation and redirects
 
 A proxy may aggregate catalogs from several services. Execution may return an
@@ -265,9 +257,9 @@ change POST to GET.
 
 Arena still accepts older unversioned command responses. Some versions of
 `spiffworkflow-proxy` also accept GET on execution routes, return a minimal
-envelope for dispatch errors, and expose `/liveness`. These behaviors exist for
-compatibility. New implementations should use POST, the version 2 envelope,
-and `/v1/liveness`.
+envelope for dispatch errors, and expose additional utility routes. These
+behaviors exist for compatibility. New implementations should use POST and the
+version 2 envelope.
 
 Consumers must tolerate additional fields in discovery descriptions,
 invocations, response envelopes, command responses, and errors. Producers must

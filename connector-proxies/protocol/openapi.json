@@ -196,27 +196,6 @@
           }
         }
       }
-    },
-    "/v1/liveness": {
-      "get": {
-        "operationId": "connectorProxyLiveness",
-        "summary": "Report connector proxy liveness",
-        "description": "Optional extension. This endpoint should remain available without connector API-key authentication so an orchestrator can probe it.",
-        "security": [],
-        "responses": {
-          "200": {
-            "description": "The proxy process is live.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
