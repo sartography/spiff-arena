@@ -2705,7 +2705,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+              $ref: "#/components/schemas/BpmnEvent"
       responses:
         "200":
           description: Event Sent Successfully
@@ -3198,7 +3198,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AwesomeUnspecifiedPayload"
+              $ref: "#/components/schemas/BpmnSignalEvent"
       responses:
         "200":
           description: Event Sent Successfully
@@ -4153,6 +4153,108 @@ paths:
 
 components:
   schemas:
+    BpmnEventCorrelationProperty:
+      type: object
+      description: A serialized correlation property used by a BPMN message event.
+      required:
+        - name
+        - retrieval_expression
+        - correlation_keys
+      properties:
+        name:
+          type: string
+          description: The correlation property name.
+        retrieval_expression:
+          type: string
+          description: The expression used to retrieve the correlation value from the event payload.
+        correlation_keys:
+          type: array
+          description: The process correlation keys that use this property.
+          items:
+            type: string
+
+    BpmnEvent:
+      type: object
+      description: A BPMN event that can be selected and sent from a waiting event-based gateway.
+      required:
+        - name
+        - typename
+      properties:
+        typename:
+          type: string
+          description: The serialized BPMN event definition type.
+          enum:
+            - ConditionalEventDefinition
+            - CycleTimerEventDefinition
+            - DurationTimerEventDefinition
+            - ErrorEventDefinition
+            - EscalationEventDefinition
+            - MessageEventDefinition
+            - SignalEventDefinition
+            - TimeDateEventDefinition
+        name:
+          type: string
+          nullable: true
+          description: The BPMN event name used to match a waiting event.
+        description:
+          type: string
+          nullable: true
+          description: The optional BPMN event description.
+        payload:
+          description: Optional JSON data delivered with a message event.
+          example:
+            message: message 1
+        expression:
+          type: string
+          nullable: true
+          description: The expression from a message, conditional, or timer event definition.
+        variable:
+          type: string
+          nullable: true
+          description: The process variable that receives an item-aware event payload.
+        code:
+          type: string
+          nullable: true
+          description: The code used to match an error or escalation event.
+        correlation_properties:
+          type: array
+          description: Correlation properties required when sending a message event.
+          items:
+            $ref: "#/components/schemas/BpmnEventCorrelationProperty"
+        process_correlations:
+          type: array
+          description: Process-level correlation properties associated with a message event.
+          items:
+            $ref: "#/components/schemas/BpmnEventCorrelationProperty"
+
+    BpmnSignalEvent:
+      type: object
+      description: A signal event sent from a user task signal button.
+      required:
+        - name
+        - typename
+      properties:
+        typename:
+          type: string
+          enum:
+            - SignalEventDefinition
+        name:
+          type: string
+          nullable: true
+          description: The BPMN signal name used to match a waiting signal event.
+        description:
+          type: string
+          nullable: true
+          description: The optional BPMN signal description.
+        expression:
+          type: string
+          nullable: true
+          description: The signal payload expression from the BPMN definition.
+        variable:
+          type: string
+          nullable: true
+          description: The process variable that receives the signal payload.
+
     Pagination:
       type: object
       properties:
