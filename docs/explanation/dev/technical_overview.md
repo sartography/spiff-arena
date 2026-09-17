@@ -25,6 +25,8 @@ C[Connector Proxy]
 
 Spiff Arena is a system that allows users to build and execute BPMN diagrams.
 It is composed of three applications, [spiffworkflow-frontend](frontend), [spiffworkflow-backend](backend_api), and, optionally, a [connector proxy](connector_proxy).
+The backend-to-proxy HTTP contract is defined in the
+[connector proxy protocol](../../reference/api/connector_proxy_protocol).
 
 ## Source code layout
 

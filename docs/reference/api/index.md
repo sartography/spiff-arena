@@ -6,5 +6,6 @@ For endpoint parameters and response schemas, see the generated API documentatio
 ```{toctree}
 :maxdepth: 1
 
+connector_proxy_protocol
 messages
 ```

@@ -1,5 +1,8 @@
 import unittest
 
+import httpx
+
+from main import connector_response
 from main import is_sensitive_field_name
 from main import redacted
 
@@ -69,6 +72,28 @@ class RedactionTest(unittest.TestCase):
         assert all(is_sensitive_field_name(field_name) for field_name in sensitive_field_names)
         assert not is_sensitive_field_name("display_name")
 
+
+class ProtocolTest(unittest.TestCase):
+    def test_versioned_response_envelope(self):
+        upstream_response = httpx.Response(
+            200,
+            json={"status": "ok"},
+            headers={"Content-Type": "application/json"},
+        )
+
+        response = connector_response(upstream_response)
+
+        assert response == {
+            "command_response": {
+                "body": {"status": "ok"},
+                "mimetype": "application/json",
+                "http_status": 200,
+                "headers": {},
+            },
+            "command_response_version": 2,
+            "error": None,
+            "spiff__logs": [],
+        }
 
 if __name__ == "__main__":
     unittest.main()
