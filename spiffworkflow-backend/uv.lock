@@ -2937,9 +2937,7 @@ dependencies = [
     { name = "jinja2" },
     { name = "jsonschema" },
     { name = "lxml" },
-    { name = "mysqlclient" },
     { name = "prometheus-flask-exporter" },
-    { name = "psycopg2" },
     { name = "pyjwt" },
     { name = "pytz" },
     { name = "restrictedpython" },
@@ -2955,6 +2953,14 @@ dependencies = [
     { name = "uvicorn", extra = ["standard"] },
     { name = "uvicorn-worker" },
     { name = "werkzeug" },
+]
+
+[package.optional-dependencies]
+mysql = [
+    { name = "mysqlclient" },
+]
+postgres = [
+    { name = "psycopg2" },
 ]
 
 [package.dev-dependencies]
@@ -3008,9 +3014,9 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "jsonschema", specifier = ">=4.23.0" },
     { name = "lxml", specifier = ">=6.1.0" },
-    { name = "mysqlclient", specifier = ">=2.2.6" },
+    { name = "mysqlclient", marker = "extra == 'mysql'", specifier = ">=2.2.6" },
     { name = "prometheus-flask-exporter", specifier = ">=0.23.1" },
-    { name = "psycopg2", specifier = ">=2.9.10,<2.10" },
+    { name = "psycopg2", marker = "extra == 'postgres'", specifier = ">=2.9.10,<2.10" },
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "pytz", specifier = ">=2025.2" },
     { name = "restrictedpython", specifier = ">=8.0" },
@@ -3027,6 +3033,7 @@ requires-dist = [
     { name = "uvicorn-worker", specifier = ">=0.3.0" },
     { name = "werkzeug", specifier = ">=3.1.6" },
 ]
+provides-extras = ["postgres", "mysql"]
 
 [package.metadata.requires-dev]
 dev = [

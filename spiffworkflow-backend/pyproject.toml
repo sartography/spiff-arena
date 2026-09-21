@@ -23,7 +23,6 @@ dependencies = [
     "flask-restful >=0.3.9",
     "SpiffWorkflow>=3.1.3a1",
     "sentry-sdk[flask] >=2.26",
-    "psycopg2 >= 2.9.10, <2.10",
     "typing-extensions >= 4.12.2",
     "spiffworkflow-connector-command",
     "werkzeug >= 3.1.6",
@@ -47,9 +46,6 @@ dependencies = [
     "cryptography >= 46.0.7",
     "prometheus-flask-exporter >= 0.23.1",
     "sqlalchemy >= 2.0.31",
-    # mysqlclient lib is deemed better than the mysql-connector-python lib by sqlalchemy
-    # https://docs.sqlalchemy.org/en/20/dialects/mysql.html#module-sqlalchemy.dialects.mysql.mysqlconnector
-    "mysqlclient >= 2.2.6",
     "flask-session >= 0.8.0",
     "celery[redis, sqs] >= 5.4.0",
     "flower == 2.1.0",
@@ -65,6 +61,19 @@ dependencies = [
     "starlette>=0.47.2",
     "uvicorn-worker>=0.3.0",
     "httpx2>=2.7.0",
+]
+
+[project.optional-dependencies]
+# Database drivers are optional so a plain install runs on sqlite with no
+# compiler toolchain. Install the extra matching your database:
+#   uv sync --extra postgres   (or --extra mysql, or both)
+postgres = [
+    "psycopg2 >= 2.9.10, <2.10",
+]
+mysql = [
+    # mysqlclient lib is deemed better than the mysql-connector-python lib by sqlalchemy
+    # https://docs.sqlalchemy.org/en/20/dialects/mysql.html#module-sqlalchemy.dialects.mysql.mysqlconnector
+    "mysqlclient >= 2.2.6",
 ]
 
 [dependency-groups]
