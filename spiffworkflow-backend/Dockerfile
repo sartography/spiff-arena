@@ -61,7 +61,9 @@ COPY --from=ghcr.io/astral-sh/uv:alpine /usr/local/bin/uv /usr/local/bin/uvx /us
 RUN apk add --no-cache gcc git openssl-dev libpq-dev mysql-dev pkgconfig libffi-dev libc-dev curl-dev
 
 COPY . /app
-RUN uv sync --no-dev --frozen
+# Database drivers are optional extras; the docker image supports all database
+# types, so install both. A plain `uv sync` elsewhere stays sqlite-only.
+RUN uv sync --no-dev --frozen --extra mysql --extra postgres
 
 ######################## - FINAL
 

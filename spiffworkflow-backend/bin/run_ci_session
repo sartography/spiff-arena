@@ -56,7 +56,11 @@ function setup_db_for_ci() {
   uv run flask db upgrade
 }
 
-uv sync
+if [[ -n "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-}" && "$SPIFFWORKFLOW_BACKEND_DATABASE_TYPE" != "sqlite" ]]; then
+  uv sync --extra "$SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"
+else
+  uv sync
+fi
 
 if [[ "${session_type}" == "tests" ]]; then
   setup_db_for_ci
