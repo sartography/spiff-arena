@@ -24,6 +24,7 @@ from spiffworkflow_backend.routes.authentication_controller import _set_new_acce
 from spiffworkflow_backend.routes.authentication_controller import omni_auth
 from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import openid_blueprint
 from spiffworkflow_backend.routes.user_blueprint import user_blueprint
+from spiffworkflow_backend.services.app_extensions import init_app_extensions
 from spiffworkflow_backend.services.monitoring_service import configure_sentry
 from spiffworkflow_backend.services.monitoring_service import setup_prometheus_metrics
 from spiffworkflow_backend.utils.api_logging import setup_deferred_logging
@@ -84,6 +85,7 @@ def create_app(*, background_job_publisher_factory: BackgroundJobPublisherFactor
     setup_config(app)
     db.init_app(app)
     migrate.init_app(app, db)
+    init_app_extensions(app)
     setup_deferred_logging(app)
     setup_global_api_logging(app)
 

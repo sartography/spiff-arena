@@ -79,6 +79,7 @@ from spiffworkflow_backend.services.process_instance_queue_service import Proces
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_runtime import SubprocessUuidToWorkflowDiffMapping
 from spiffworkflow_backend.services.process_instance_script_engine import CustomBpmnScriptEngine
+from spiffworkflow_backend.services.process_model_history import process_model_history
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
@@ -92,6 +93,15 @@ FileDataGenerator = Generator[tuple[dict | list, str | int, str], None, None]
 class ProcessInstanceService:
     FILE_DATA_DIGEST_PREFIX = "spifffiledatadigest+"
     TASK_STATE_LOCKED = "locked"
+
+    @staticmethod
+    def reject_migration_when_history_enabled() -> None:
+        if process_model_history() is not None:
+            raise ApiError(
+                "history_migration_unavailable",
+                "Version migration with process model history is not yet supported.",
+                status_code=409,
+            )
 
     @staticmethod
     def user_has_started_instance(process_model_identifier: str) -> bool:
@@ -147,7 +157,8 @@ class ProcessInstanceService:
                 git_revision_error = ex
                 current_git_revision = None
 
-        if load_bpmn_process_model:
+        history = process_model_history()
+        if load_bpmn_process_model and history is None:
             with (
                 instrumentation.phase("create_process_instance.persist_bpmn_process_definition")
                 if instrumentation is not None
@@ -170,6 +181,12 @@ class ProcessInstanceService:
                 bpmn_version_control_identifier=current_git_revision,
             )
             db.session.add(process_instance_model)
+            if history is not None:
+                db.session.flush()
+                history.capture(process_instance_model.id, process_model.id)
+                BpmnProcessService.persist_bpmn_process_definition(
+                    process_model.id, specs=history.specs(process_instance_model.id, process_model.id, None), commit=False
+                )
 
         if git_revision_error is not None:
             message = (
@@ -203,6 +220,7 @@ class ProcessInstanceService:
     ) -> tuple[
         ProcessInstanceRuntime, BpmnProcessSpec, IdToBpmnProcessSpecMapping, WorkflowDiff, SubprocessUuidToWorkflowDiffMapping
     ]:
+        cls.reject_migration_when_history_enabled()
         if target_bpmn_process_hash is None:
             (target_bpmn_process_spec, target_subprocess_specs) = BpmnProcessService.get_process_model_and_subprocesses(
                 process_instance.process_model_identifier,
@@ -267,6 +285,7 @@ class ProcessInstanceService:
         preserve_old_process_instance: bool = False,
         target_bpmn_process_hash: str | None = None,
     ) -> None:
+        cls.reject_migration_when_history_enabled()
         initial_git_revision = process_instance.bpmn_version_control_identifier
         initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
         (

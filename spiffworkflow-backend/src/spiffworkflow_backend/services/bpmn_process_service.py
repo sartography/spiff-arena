@@ -87,7 +87,11 @@ class BpmnProcessService:
 
     @classmethod
     def persist_bpmn_process_definition(
-        cls, process_model_identifier: str, bpmn_definition_to_task_definitions_mappings: dict | None = None
+        cls,
+        process_model_identifier: str,
+        bpmn_definition_to_task_definitions_mappings: dict | None = None,
+        specs: tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping] | None = None,
+        commit: bool = True,
     ) -> BpmnProcessDefinitionModel:
         if bpmn_definition_to_task_definitions_mappings is None:
             bpmn_definition_to_task_definitions_mappings = {}
@@ -95,7 +99,7 @@ class BpmnProcessService:
         (
             bpmn_process_spec,
             subprocesses,
-        ) = cls.get_process_model_and_subprocesses(process_model_identifier)
+        ) = specs if specs is not None else cls.get_process_model_and_subprocesses(process_model_identifier)
 
         bpmn_process_instance = cls.get_bpmn_process_instance_from_workflow_spec(bpmn_process_spec, subprocesses)
 
@@ -105,7 +109,9 @@ class BpmnProcessService:
         )
 
         cls.save_to_database(
-            bpmn_definition_to_task_definitions_mappings, bpmn_process_definition_parent=bpmn_process_definition_parent
+            bpmn_definition_to_task_definitions_mappings,
+            bpmn_process_definition_parent=bpmn_process_definition_parent,
+            commit=commit,
         )
         return bpmn_process_definition_parent
 
@@ -253,7 +259,11 @@ class BpmnProcessService:
         cls,
         bpmn_definition_to_task_definitions_mappings: dict,
         bpmn_process_definition_parent: BpmnProcessDefinitionModel | None = None,
+        commit: bool = True,
     ) -> None:
+        if not commit:
+            cls._save_to_database_once(bpmn_definition_to_task_definitions_mappings, bpmn_process_definition_parent, commit=False)
+            return
         last_retryable_exception: Exception | None = None
         for attempt in range(cls.SAVE_TO_DATABASE_MAX_ATTEMPTS):
             try:
@@ -285,6 +295,7 @@ class BpmnProcessService:
         cls,
         bpmn_definition_to_task_definitions_mappings: dict,
         bpmn_process_definition_parent: BpmnProcessDefinitionModel | None = None,
+        commit: bool = True,
     ) -> None:
         parent_id = None
         subprocess_ids = []
@@ -339,7 +350,10 @@ class BpmnProcessService:
             for bpd_id in subprocess_ids:
                 BpmnProcessDefinitionRelationshipModel.insert_or_update_record(parent_id, bpd_id)
 
-        db.session.commit()
+        if commit:
+            db.session.commit()
+        else:
+            db.session.flush()
 
     @classmethod
     def _lookup_bpmn_process_definition_after_insert_or_ignore(

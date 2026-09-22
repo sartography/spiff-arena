@@ -1535,6 +1535,13 @@ paths:
       tags:
         - Process Instances
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_show_for_me
+      parameters:
+        - name: source_file_path
+          in: query
+          required: false
+          description: Return an archived repository-relative file in source_file (requires a history extension).
+          schema:
+            type: string
       summary: Show information about a process instance that is associated with me
       responses:
         "200":
@@ -1589,6 +1596,13 @@ paths:
       tags:
         - Process Instances
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_show
+      parameters:
+        - name: source_file_path
+          in: query
+          required: false
+          description: Return an archived repository-relative file in source_file (requires a history extension).
+          schema:
+            type: string
       summary: Show information about a process instance
       responses:
         "200":

@@ -64,6 +64,7 @@ from spiffworkflow_backend.services.process_instance_event_service import Proces
 from spiffworkflow_backend.services.process_instance_persistence_service import ProcessInstancePersistenceService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_script_engine import CustomBpmnScriptEngine
+from spiffworkflow_backend.services.process_model_history import process_model_history
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
@@ -163,12 +164,15 @@ class ProcessInstanceRuntime:
 
         subprocesses: IdToBpmnProcessSpecMapping | None = None
         if not process_instance_model.spiffworkflow_fully_initialized():
-            (
-                bpmn_process_spec,
-                subprocesses,
-            ) = BpmnProcessService.get_process_model_and_subprocesses(
-                process_instance_model.process_model_identifier, process_id_to_run=process_id_to_run
-            )
+            history = process_model_history() if process_instance_model.id is not None else None
+            if history is not None:
+                bpmn_process_spec, subprocesses = history.specs(
+                    process_instance_model.id, process_instance_model.process_model_identifier, process_id_to_run
+                )
+            else:
+                bpmn_process_spec, subprocesses = BpmnProcessService.get_process_model_and_subprocesses(
+                    process_instance_model.process_model_identifier, process_id_to_run=process_id_to_run
+                )
 
         self.process_model_identifier = process_instance_model.process_model_identifier
         self.process_model_display_name = process_instance_model.process_model_display_name

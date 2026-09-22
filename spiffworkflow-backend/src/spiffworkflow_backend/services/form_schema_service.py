@@ -6,6 +6,7 @@ from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
+from spiffworkflow_backend.services.process_model_history import process_model_history
 from spiffworkflow_backend.services.task_service import TaskModelError
 
 
@@ -19,11 +20,18 @@ class FormSchemaService:
         revision: str | None = None,
     ) -> dict:
         try:
-            form_contents = GitService.get_file_contents_for_revision_if_git_revision(
-                process_model=process_model,
-                revision=revision,
-                file_name=form_file,
-            )
+            if task_model is not None and (history := process_model_history()):
+                form_contents = history.task_file(
+                    task_model.process_instance_id,
+                    task_model.bpmn_process.bpmn_process_definition.bpmn_identifier,
+                    form_file,
+                ).decode("utf-8")
+            else:
+                form_contents = GitService.get_file_contents_for_revision_if_git_revision(
+                    process_model=process_model, revision=revision, file_name=form_file
+                )
+        except FileNotFoundError as exception:
+            raise ApiError("historical_form_unavailable", str(exception), status_code=404) from exception
         except GitCommandError as exception:
             raise ApiError(
                 error_code="git_error_loading_form",

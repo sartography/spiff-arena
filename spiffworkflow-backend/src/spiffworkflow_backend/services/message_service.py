@@ -40,6 +40,7 @@ from spiffworkflow_backend.services.process_instance_queue_service import Proces
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_script_engine import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.process_model_history import process_model_history
 from spiffworkflow_backend.services.user_service import UserService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 
@@ -805,8 +806,19 @@ class MessageService:
         cls,
         receiving_process_instance: ProcessInstanceModel,
     ) -> None:
+        history = process_model_history()
+        specs = (
+            history.specs(
+                receiving_process_instance.id,
+                receiving_process_instance.process_model_identifier,
+                None,
+            )
+            if history is not None
+            else None
+        )
         BpmnProcessService.persist_bpmn_process_definition(
             receiving_process_instance.process_model_identifier,
+            specs=specs,
         )
         cycle_count, _, duration_in_seconds = ProcessInstanceService.next_start_event_configuration(receiving_process_instance)
         ProcessInstanceService.register_process_model_cycles(
