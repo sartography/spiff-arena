@@ -38,7 +38,5 @@ class TestGetCurrentTaskInfo(BaseTest):
         assert spiff_task.data["manual_task_info"]["id"] is not None
         assert isinstance(spiff_task.data["manual_task_info"]["id"], str)
         for key in ("script_task_info", "manual_task_info"):
-            # Metadata must not include either serialized representation of task
-            # data, which contains script globals while this helper is running.
             assert "data" not in spiff_task.data[key]
             assert "delta" not in spiff_task.data[key]
