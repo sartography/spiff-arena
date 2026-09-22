@@ -95,10 +95,10 @@ class ProcessInstanceService:
     TASK_STATE_LOCKED = "locked"
 
     @staticmethod
-    def reject_migration_when_history_enabled() -> None:
-        if process_model_history() is not None:
+    def reject_migration_when_process_model_history_exists(process_instance_id: int) -> None:
+        if process_model_history(process_instance_id) is not None:
             raise ApiError(
-                "history_migration_unavailable",
+                "process_model_history_migration_unavailable",
                 "Version migration with process model history is not yet supported.",
                 status_code=409,
             )
@@ -183,9 +183,10 @@ class ProcessInstanceService:
             db.session.add(process_instance_model)
             if history is not None:
                 db.session.flush()
-                history.capture(process_instance_model.id, process_model.id)
                 BpmnProcessService.persist_bpmn_process_definition(
-                    process_model.id, specs=history.specs(process_instance_model.id, process_model.id, None), commit=False
+                    process_model.id,
+                    specs=history.capture(process_instance_model.id, process_model.id),
+                    commit=False,
                 )
 
         if git_revision_error is not None:
@@ -220,7 +221,7 @@ class ProcessInstanceService:
     ) -> tuple[
         ProcessInstanceRuntime, BpmnProcessSpec, IdToBpmnProcessSpecMapping, WorkflowDiff, SubprocessUuidToWorkflowDiffMapping
     ]:
-        cls.reject_migration_when_history_enabled()
+        cls.reject_migration_when_process_model_history_exists(process_instance.id)
         if target_bpmn_process_hash is None:
             (target_bpmn_process_spec, target_subprocess_specs) = BpmnProcessService.get_process_model_and_subprocesses(
                 process_instance.process_model_identifier,
@@ -285,7 +286,6 @@ class ProcessInstanceService:
         preserve_old_process_instance: bool = False,
         target_bpmn_process_hash: str | None = None,
     ) -> None:
-        cls.reject_migration_when_history_enabled()
         initial_git_revision = process_instance.bpmn_version_control_identifier
         initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
         (

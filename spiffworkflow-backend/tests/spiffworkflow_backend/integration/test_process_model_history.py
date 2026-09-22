@@ -16,9 +16,9 @@ from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessServi
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.form_schema_service import FormSchemaService
 from spiffworkflow_backend.services.message_service import MessageService
-from spiffworkflow_backend.services.process_model_history import process_model_history
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.process_model_history import process_model_history
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -42,7 +42,7 @@ class TestProcessModelHistory(BaseTest):
         model_path = Path(FileSystemService.root_path()) / model.id
         instance, _ = ProcessInstanceService.create_process_instance(model, with_super_admin_user)
         db.session.commit()
-        assert "group/real-history/simple_form.json" in history.file_versions(instance.id)
+        assert history.has_snapshot(instance.id)
         ProcessInstanceRuntime(instance).do_engine_steps(save=True, execution_strategy_name="greedy")
         human_task = HumanTaskModel.query.filter_by(process_instance_id=instance.id).one()
         shutil.rmtree(model_path)
@@ -74,6 +74,8 @@ class TestProcessModelHistory(BaseTest):
         model = load_test_spec("group/hello", "hello_world.bpmn", process_model_source_directory="hello_world")
         captured_specs = BpmnProcessService.get_process_model_and_subprocesses(model.id)
         provider = Mock()
+        provider.has_snapshot.return_value = True
+        provider.capture.side_effect = lambda *args: copy.deepcopy(captured_specs)
         provider.specs.side_effect = lambda *args: copy.deepcopy(captured_specs)
         monkeypatch.setitem(app.extensions, "process_model_history", Mock(return_value=provider))
         with monkeypatch.context() as transaction_patch:
@@ -104,18 +106,19 @@ class TestProcessModelHistory(BaseTest):
         assert response.status_code == 200
         assert response.json()["bpmn_xml_file_contents"] == "archived XML"
         provider.instance_payload.assert_called_with(instance.id, model.id, None)
-        provider.file_payload.return_value = {
+        expected_file_payload = {
             "path": "image.png",
             "encoding": "base64",
             "file_contents": "iVBORw==",
             "content_type": "image/png",
         }
+        provider.file_payload.return_value = expected_file_payload
         endpoint = f"/v1.0/process-instances/{variant}group:hello/{instance.id}"
         response = client.get(
             endpoint, params={"source_file_path": "image.png"}, headers=self.logged_in_headers(with_super_admin_user)
         )
         assert response.status_code == 200
-        assert response.json()["source_file"] == provider.file_payload.return_value
+        assert response.json()["source_file"] == expected_file_payload
         provider.file_payload.assert_called_once_with(instance.id, "image.png")
         provider.file_payload.reset_mock()
         response = client.get(
@@ -155,6 +158,8 @@ class TestProcessModelHistory(BaseTest):
         archived_forms = {name: (model_path / name).read_bytes() for name in ("simple_form.json", "simple_form_ui.json")}
         captured_specs = BpmnProcessService.get_process_model_and_subprocesses(model.id)
         provider = Mock()
+        provider.has_snapshot.return_value = True
+        provider.capture.side_effect = lambda *args: copy.deepcopy(captured_specs)
         provider.specs.side_effect = lambda *args: copy.deepcopy(captured_specs)
         provider.task_file.side_effect = lambda _instance_id, _process_id, filename: archived_forms[filename]
         monkeypatch.setitem(app.extensions, "process_model_history", Mock(return_value=provider))
@@ -175,6 +180,7 @@ class TestProcessModelHistory(BaseTest):
 
     def test_reserved_message_start_persists_archived_specs(self, app: Flask, monkeypatch: pytest.MonkeyPatch) -> None:
         provider = Mock()
+        provider.has_snapshot.return_value = True
         archived_specs = (Mock(), Mock())
         provider.specs.return_value = archived_specs
         monkeypatch.setitem(app.extensions, "process_model_history", Mock(return_value=provider))
@@ -191,6 +197,7 @@ class TestProcessModelHistory(BaseTest):
 
     def test_form_reads_saved_owner_and_does_not_fall_back(self, app: Flask, monkeypatch: pytest.MonkeyPatch) -> None:
         provider = Mock()
+        provider.has_snapshot.return_value = True
         monkeypatch.setitem(app.extensions, "process_model_history", Mock(return_value=provider))
         task = Mock(process_instance_id=123, data=None)
         task.bpmn_process.bpmn_process_definition.bpmn_identifier = "called"
@@ -221,3 +228,12 @@ class TestProcessModelHistory(BaseTest):
             ProcessInstanceService.create_process_instance(model, with_super_admin_user)
         enqueue.assert_not_called()
         db.session.rollback()
+
+    def test_existing_instance_without_snapshot_uses_legacy_behavior(self, app: Flask, monkeypatch: pytest.MonkeyPatch) -> None:
+        provider = Mock()
+        provider.has_snapshot.return_value = False
+        monkeypatch.setitem(app.extensions, "process_model_history", Mock(return_value=provider))
+
+        assert process_model_history() is provider
+        assert process_model_history(123) is None
+        provider.has_snapshot.assert_called_once_with(123)

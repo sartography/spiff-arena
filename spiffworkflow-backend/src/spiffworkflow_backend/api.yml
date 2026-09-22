@@ -1539,7 +1539,7 @@ paths:
         - name: source_file_path
           in: query
           required: false
-          description: Return an archived repository-relative file in source_file (requires a history extension).
+          description: Return a repository-relative file from this instance's process model history in source_file.
           schema:
             type: string
       summary: Show information about a process instance that is associated with me
@@ -1600,7 +1600,7 @@ paths:
         - name: source_file_path
           in: query
           required: false
-          description: Return an archived repository-relative file in source_file (requires a history extension).
+          description: Return a repository-relative file from this instance's process model history in source_file.
           schema:
             type: string
       summary: Show information about a process instance
@@ -4579,6 +4579,31 @@ components:
           x-nullable: true
         file:
           type: string
+    ProcessModelHistoryFile:
+      type: object
+      required: [path, digest, size, content_type]
+      properties:
+        path:
+          type: string
+        digest:
+          type: string
+        size:
+          type: integer
+        content_type:
+          type: string
+    ProcessModelHistoryFilePayload:
+      type: object
+      required: [path, file_contents, encoding, content_type]
+      properties:
+        path:
+          type: string
+        file_contents:
+          type: string
+        encoding:
+          type: string
+          enum: [utf-8, base64]
+        content_type:
+          type: string
     Workflow:
       properties:
         id:
@@ -4606,6 +4631,19 @@ components:
           type: integer
         num_tasks_incomplete:
           type: integer
+        source_file:
+          $ref: "#/components/schemas/ProcessModelHistoryFilePayload"
+        source_files:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProcessModelHistoryFile"
+        decision_source_paths:
+          type: object
+          additionalProperties:
+            type: string
+        diagram_source_path:
+          type: string
+          nullable: true
 
       example:
         id: 291234

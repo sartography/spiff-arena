@@ -12,7 +12,7 @@ from spiffworkflow_backend.services.task_service import TaskModelError
 
 
 def test_prepare_form_data_adds_form_file_note_to_task_model_error(monkeypatch: pytest.MonkeyPatch) -> None:
-    task_model = SimpleNamespace(data={"customer": "Ada"})
+    task_model = SimpleNamespace(data={"customer": "Ada"}, process_instance_id=123)
 
     monkeypatch.setattr(TaskModelError, "get_task_trace", classmethod(lambda cls, task_model: []))
     monkeypatch.setattr(

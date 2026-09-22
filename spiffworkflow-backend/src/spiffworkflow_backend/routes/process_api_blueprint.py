@@ -584,7 +584,7 @@ def _get_task_model_for_request(
             status_code=400,
         )
 
-    history = process_model_history()
+    history = process_model_history(process_instance.id)
     if history is None:
         process_model = _get_process_model(process_instance.process_model_identifier)
     else:

@@ -20,7 +20,8 @@ class FormSchemaService:
         revision: str | None = None,
     ) -> dict:
         try:
-            if task_model is not None and (history := process_model_history()):
+            history = process_model_history(task_model.process_instance_id) if task_model is not None else None
+            if task_model is not None and history is not None:
                 form_contents = history.task_file(
                     task_model.process_instance_id,
                     task_model.bpmn_process.bpmn_process_definition.bpmn_identifier,
@@ -31,7 +32,7 @@ class FormSchemaService:
                     process_model=process_model, revision=revision, file_name=form_file
                 )
         except FileNotFoundError as exception:
-            raise ApiError("historical_form_unavailable", str(exception), status_code=404) from exception
+            raise ApiError("form_schema_file_unavailable", str(exception), status_code=404) from exception
         except GitCommandError as exception:
             raise ApiError(
                 error_code="git_error_loading_form",

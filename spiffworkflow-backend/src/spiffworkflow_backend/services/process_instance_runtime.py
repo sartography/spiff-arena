@@ -164,7 +164,7 @@ class ProcessInstanceRuntime:
 
         subprocesses: IdToBpmnProcessSpecMapping | None = None
         if not process_instance_model.spiffworkflow_fully_initialized():
-            history = process_model_history() if process_instance_model.id is not None else None
+            history = process_model_history(process_instance_model.id) if process_instance_model.id is not None else None
             if history is not None:
                 bpmn_process_spec, subprocesses = history.specs(
                     process_instance_model.id, process_instance_model.process_model_identifier, process_id_to_run

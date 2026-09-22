@@ -806,7 +806,7 @@ class MessageService:
         cls,
         receiving_process_instance: ProcessInstanceModel,
     ) -> None:
-        history = process_model_history()
+        history = process_model_history(receiving_process_instance.id)
         specs = (
             history.specs(
                 receiving_process_instance.id,

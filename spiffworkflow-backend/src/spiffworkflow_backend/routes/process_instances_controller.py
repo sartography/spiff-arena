@@ -573,7 +573,7 @@ def process_instance_check_can_migrate(
     target_bpmn_process_hash: str | None = None,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    ProcessInstanceService.reject_migration_when_history_enabled()
+    ProcessInstanceService.reject_migration_when_process_model_history_exists(process_instance.id)
     return_dict: dict = {
         "can_migrate": True,
         "process_instance_id": process_instance.id,
@@ -716,7 +716,7 @@ def _get_process_instance(
     source_file_path: str | None = None,
 ) -> flask.wrappers.Response:
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    if history := process_model_history():
+    if history := process_model_history(process_instance.id):
         if process_model_identifier != process_instance.process_model_identifier:
             raise ApiError(
                 "process_instance_cannot_be_found", "The instance does not belong to the requested model.", status_code=404
@@ -726,7 +726,7 @@ def _get_process_instance(
             try:
                 result["source_file"] = history.file_payload(process_instance.id, source_file_path)
             except (FileNotFoundError, ValueError) as exception:
-                raise ApiError("historical_file_unavailable", str(exception), status_code=404) from exception
+                raise ApiError("source_file_unavailable", str(exception), status_code=404) from exception
         else:
             result.update(
                 history.instance_payload(process_instance.id, process_instance.process_model_identifier, process_identifier)
@@ -734,7 +734,11 @@ def _get_process_instance(
         return make_response(jsonify(result), 200)
 
     if source_file_path is not None:
-        raise ApiError("historical_file_unavailable", "No process model history provider is configured.", status_code=404)
+        raise ApiError(
+            "source_file_unavailable",
+            "No process model history exists for this process instance.",
+            status_code=404,
+        )
     process_model_with_diagram = None
     name_of_file_with_diagram = None
     if process_identifier:
