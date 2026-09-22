@@ -1,5 +1,7 @@
 import os
+from unittest.mock import MagicMock
 
+import pytest
 from flask.app import Flask
 from starlette.testclient import TestClient
 
@@ -14,6 +16,39 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessInstancesController(BaseTest):
+    @pytest.mark.parametrize("history_is_truthy", [True, False])
+    def test_get_process_instance_uses_present_history(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+        monkeypatch: pytest.MonkeyPatch,
+        history_is_truthy: bool,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="group/sample",
+            process_model_source_directory="sample",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=with_super_admin_user
+        )
+        history = MagicMock()
+        history.__bool__.return_value = history_is_truthy
+        history.has_snapshot.return_value = True
+        history.instance_payload.return_value = {"bpmn_xml_file_contents": "snapshot"}
+        monkeypatch.setitem(app.extensions, "process_model_history", lambda session: history)
+
+        response = client.get(
+            f"/v1.0/process-instances/group:sample/{process_instance.id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json()["id"] == process_instance.id
+        assert response.json()["bpmn_xml_file_contents"] == "snapshot"
+        history.instance_payload.assert_called_once_with(process_instance.id, process_model.id, None)
+
     def test_find_by_id(
         self,
         app: Flask,
