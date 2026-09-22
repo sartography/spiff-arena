@@ -55,11 +55,11 @@ class TestProcessModelHistory(BaseTest):
         assert response.json()["form_schema"]["title"] == "Simple form"
         response = client.get(
             f"/v1.0/process-instances/group:real-history/{instance.id}",
-            params={"source_file_path": "group/real-history/simple_form.json"},
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert response.json()["source_file"]["encoding"] == "utf-8"
+        assert response.json()["diagram_source_path"] == "group/real-history/simple_form.bpmn"
+        assert any(file["path"] == "group/real-history/simple_form.json" for file in response.json()["source_files"])
 
     @pytest.mark.parametrize("variant", ["", "for-me/"])
     def test_capture_deferred_runtime_and_read_delegation(
@@ -106,38 +106,16 @@ class TestProcessModelHistory(BaseTest):
         assert response.status_code == 200
         assert response.json()["bpmn_xml_file_contents"] == "archived XML"
         provider.instance_payload.assert_called_with(instance.id, model.id, None)
-        expected_file_payload = {
-            "path": "image.png",
-            "encoding": "base64",
-            "file_contents": "iVBORw==",
-            "content_type": "image/png",
-        }
-        provider.file_payload.return_value = expected_file_payload
         endpoint = f"/v1.0/process-instances/{variant}group:hello/{instance.id}"
         response = client.get(
-            endpoint, params={"source_file_path": "image.png"}, headers=self.logged_in_headers(with_super_admin_user)
-        )
-        assert response.status_code == 200
-        assert response.json()["source_file"] == expected_file_payload
-        provider.file_payload.assert_called_once_with(instance.id, "image.png")
-        provider.file_payload.reset_mock()
-        response = client.get(
             endpoint.replace("group:hello", "group:wrong"),
-            params={"source_file_path": "image.png"},
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 404
-        provider.file_payload.assert_not_called()
         if hasattr(flask.g, "user"):
             delattr(flask.g, "user")
-        response = client.get(endpoint, params={"source_file_path": "image.png"})
+        response = client.get(endpoint)
         assert response.status_code in (401, 403)
-        provider.file_payload.assert_not_called()
-        provider.file_payload.side_effect = FileNotFoundError("not archived")
-        response = client.get(
-            endpoint, params={"source_file_path": "missing"}, headers=self.logged_in_headers(with_super_admin_user)
-        )
-        assert response.status_code == 404
         with pytest.raises(ApiError, match="not yet supported"):
             ProcessInstanceService.check_process_instance_can_be_migrated(instance)
 

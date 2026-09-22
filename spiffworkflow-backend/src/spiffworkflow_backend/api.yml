@@ -1535,13 +1535,6 @@ paths:
       tags:
         - Process Instances
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_show_for_me
-      parameters:
-        - name: source_file_path
-          in: query
-          required: false
-          description: Return a repository-relative file from this instance's process model history in source_file.
-          schema:
-            type: string
       summary: Show information about a process instance that is associated with me
       responses:
         "200":
@@ -1596,13 +1589,6 @@ paths:
       tags:
         - Process Instances
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_show
-      parameters:
-        - name: source_file_path
-          in: query
-          required: false
-          description: Return a repository-relative file from this instance's process model history in source_file.
-          schema:
-            type: string
       summary: Show information about a process instance
       responses:
         "200":
@@ -4591,19 +4577,6 @@ components:
           type: integer
         content_type:
           type: string
-    ProcessModelHistoryFilePayload:
-      type: object
-      required: [path, file_contents, encoding, content_type]
-      properties:
-        path:
-          type: string
-        file_contents:
-          type: string
-        encoding:
-          type: string
-          enum: [utf-8, base64]
-        content_type:
-          type: string
     Workflow:
       properties:
         id:
@@ -4631,8 +4604,6 @@ components:
           type: integer
         num_tasks_incomplete:
           type: integer
-        source_file:
-          $ref: "#/components/schemas/ProcessModelHistoryFilePayload"
         source_files:
           type: array
           items:
