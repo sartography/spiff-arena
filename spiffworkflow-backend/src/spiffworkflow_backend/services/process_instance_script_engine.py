@@ -15,7 +15,7 @@ from typing import Any
 import dateparser
 import pytz
 from flask import current_app
-from RestrictedPython import safe_globals  # type: ignore
+from RestrictedPython import safe_globals
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.script_engine import BasePythonScriptEngineEnvironment  # type: ignore
 from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine
