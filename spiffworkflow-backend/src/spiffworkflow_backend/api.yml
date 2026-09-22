@@ -4565,18 +4565,6 @@ components:
           x-nullable: true
         file:
           type: string
-    ProcessModelHistoryFile:
-      type: object
-      required: [path, digest, size, content_type]
-      properties:
-        path:
-          type: string
-        digest:
-          type: string
-        size:
-          type: integer
-        content_type:
-          type: string
     Workflow:
       properties:
         id:
@@ -4604,17 +4592,6 @@ components:
           type: integer
         num_tasks_incomplete:
           type: integer
-        source_files:
-          type: array
-          items:
-            $ref: "#/components/schemas/ProcessModelHistoryFile"
-        decision_source_paths:
-          type: object
-          additionalProperties:
-            type: string
-        diagram_source_path:
-          type: string
-          nullable: true
 
       example:
         id: 291234
