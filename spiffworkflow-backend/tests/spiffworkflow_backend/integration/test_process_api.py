@@ -1093,6 +1093,12 @@ class TestProcessApi(BaseTest):
             xml_file_contents = f_open.read()
             assert show_response.json()["bpmn_xml_file_contents"] == xml_file_contents
 
+        wrong_model_response = client.get(
+            f"/v1.0/process-instances/wrong:model/{process_instance_id}",
+            headers=headers,
+        )
+        assert wrong_model_response.status_code == 404
+
     def test_process_instance_show_with_specified_process_identifier(
         self,
         app: Flask,

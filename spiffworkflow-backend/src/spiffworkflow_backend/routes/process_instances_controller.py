@@ -711,12 +711,15 @@ def _get_process_instance(
     process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
+    if process_model_identifier != process_instance.process_model_identifier:
+        raise ApiError(
+            "process_instance_cannot_be_found",
+            "The instance does not belong to the requested model.",
+            status_code=404,
+        )
+
     history = process_model_history(process_instance.id)
     if history is not None:
-        if process_model_identifier != process_instance.process_model_identifier:
-            raise ApiError(
-                "process_instance_cannot_be_found", "The instance does not belong to the requested model.", status_code=404
-            )
         result = process_instance.serialized_with_metadata()
         result.update(
             history.instance_payload(process_instance.id, process_instance.process_model_identifier, process_identifier)
