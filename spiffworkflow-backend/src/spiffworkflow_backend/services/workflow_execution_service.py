@@ -450,6 +450,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         metadata = ProcessModelService.extract_metadata(
             self.process_instance.process_model_identifier,
             spiff_task.data,
+            process_instance=self.process_instance,
         )
         log_extras = {
             "task_id": str(spiff_task.id),

@@ -827,7 +827,7 @@ class ProcessInstanceService:
             if task_model is not None:
                 form_schema_file_name = spiff_task.task_spec.extensions["properties"]["formJsonSchemaFilename"]
 
-                process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
+                process_model = ProcessModelService.get_process_model_for_instance(process_instance)
                 form_schema = FormSchemaService.prepare_form_data(
                     form_file=form_schema_file_name,
                     process_model=process_model,

@@ -31,6 +31,8 @@ class FormSchemaService:
                 form_contents = GitService.get_file_contents_for_revision_if_git_revision(
                     process_model=process_model, revision=revision, file_name=form_file
                 )
+        except ValueError as exception:
+            raise ApiError("form_schema_invalid_reference", str(exception), status_code=400) from exception
         except FileNotFoundError as exception:
             raise ApiError("form_schema_file_unavailable", str(exception), status_code=404) from exception
         except GitCommandError as exception:

@@ -17,7 +17,7 @@ class ErrorHandlingService:
         fault_or_suspend_on_exception = "fault"
         exception_notification_addresses = []
         try:
-            process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
+            process_model = ProcessModelService.get_process_model_for_instance(process_instance)
             fault_or_suspend_on_exception = process_model.fault_or_suspend_on_exception
             exception_notification_addresses = process_model.exception_notification_addresses
         except ProcessEntityNotFoundError:

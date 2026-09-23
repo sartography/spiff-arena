@@ -371,6 +371,7 @@ class ProcessInstanceRuntime:
         return ProcessModelService.extract_metadata(
             self.process_instance_model.process_model_identifier,
             self.get_current_data(),
+            process_instance=self.process_instance_model,
         )
 
     def store_metadata(self, metadata: dict) -> None:

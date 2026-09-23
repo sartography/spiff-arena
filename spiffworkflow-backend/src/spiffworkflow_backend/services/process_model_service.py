@@ -28,6 +28,7 @@ from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.process_model_history import process_model_history
 from spiffworkflow_backend.services.user_service import UserService
 
 T = TypeVar("T")
@@ -129,30 +130,27 @@ class ProcessModelService(FileSystemService):
         cls.write_json_file(json_path, full_json_data)
 
     @classmethod
-    def extract_metadata(cls, process_model_identifier: str, current_data: dict[str, Any]) -> dict[str, Any]:
-        # we are currently not getting the metadata extraction paths based on the version in git from the process instance.
-        # it would make sense to do that if the shell-out-to-git performance cost was not too high.
-        # we also discussed caching this information in new database tables. something like:
-        #   process_model_version
-        #     id
-        #     process_model_identifier
-        #     git_hash
-        #     display_name
-        #     notification_type
-        #   metadata_extraction
-        #     id
-        #     extraction_key
-        #     extraction_path
-        #   metadata_extraction_process_model_version
-        #     process_model_version_id
-        #     metadata_extraction_id
-        process_model_info = cls.get_process_model(process_model_identifier)
-        metadata_extraction_paths = process_model_info.metadata_extraction_paths
-        if metadata_extraction_paths is None:
-            return {}
-        if len(metadata_extraction_paths) <= 0:
-            return {}
-        return process_model_info.__class__.extract_metadata(current_data, process_model_info.metadata_extraction_paths or [])
+    def extract_metadata(
+        cls,
+        process_model_identifier: str,
+        current_data: dict[str, Any],
+        process_instance: ProcessInstanceModel | None = None,
+    ) -> dict[str, Any]:
+        process_model_info = (
+            cls.get_process_model_for_instance(process_instance)
+            if process_instance is not None
+            else cls.get_process_model(process_model_identifier)
+        )
+        return ProcessModelInfo.extract_metadata(current_data, process_model_info.metadata_extraction_paths or [])
+
+    @classmethod
+    def get_process_model_for_instance(cls, process_instance: ProcessInstanceModel) -> ProcessModelInfo:
+        """Resolve instance configuration without consulting a newer model when history exists."""
+        history = process_model_history(process_instance.id) if process_instance.id is not None else None
+        if history is not None:
+            model: ProcessModelInfo = history.model(process_instance.id, process_instance.process_model_identifier)
+            return model
+        return cls.get_process_model(process_instance.process_model_identifier)
 
     @classmethod
     def save_process_model(cls, process_model: ProcessModelInfo) -> None:

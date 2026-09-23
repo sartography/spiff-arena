@@ -588,11 +588,7 @@ def _get_task_model_for_request(
     if history is None:
         process_model = _get_process_model(process_instance.process_model_identifier)
     else:
-        process_model = ProcessModelInfo(
-            id=process_instance.process_model_identifier,
-            display_name=process_instance.process_model_display_name,
-            description="",
-        )
+        process_model = ProcessModelService.get_process_model_for_instance(process_instance)
 
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
     task_definition = task_model.task_definition
