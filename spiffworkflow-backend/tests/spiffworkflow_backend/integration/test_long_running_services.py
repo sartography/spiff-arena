@@ -989,6 +989,18 @@ class TestLongRunningService(BaseTest):
         process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
         assert process_instance.status == "complete"  # The process should not be in an error state.
 
+        # Same for a callback whose task no longer exists at all, e.g. one inside a finished subprocess.
+        task_guid = callback_url.rstrip("/").split("/")[-2]
+        response = client.put(
+            callback_url.replace(task_guid, str(uuid.uuid4())),
+            headers=self.logged_in_headers(with_super_admin_user, {"mimetype": "application/json"}),
+            json=content,
+        )
+        assert response.status_code == 400
+        assert response.json()["title"] == "callback_not_found"
+        process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
+        assert process_instance.status == "complete"
+
     def test__202_permissions(
         self,
         app: Flask,

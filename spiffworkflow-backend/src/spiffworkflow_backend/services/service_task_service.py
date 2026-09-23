@@ -5,6 +5,7 @@ from typing import Any
 
 import sentry_sdk
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
+from SpiffWorkflow.exceptions import TaskNotFoundException  # type: ignore
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
@@ -64,7 +65,17 @@ class ServiceTaskService:
                 )
                 spiff_task = cls._get_spiff_task_from_runtime(task_guid, runtime)
 
-                if spiff_task.state == TaskState.STARTED and isinstance(spiff_task.task_spec, ServiceTask):
+                if spiff_task is None:
+                    # Raised after the dequeued block, like not_waiting_for_callback, so a late callback
+                    # for a task that no longer exists cannot put a finished instance into error.
+                    error = ApiError(
+                        error_code="callback_not_found",
+                        message=(
+                            f"No task found with guid '{task_guid}'. The task may have already completed or the guid is invalid."
+                        ),
+                        status_code=400,
+                    )
+                elif spiff_task.state == TaskState.STARTED and isinstance(spiff_task.task_spec, ServiceTask):
                     callback_content = content or {}
                     try:
                         cls._check_for_callback_errors(spiff_task, callback_content)
@@ -182,17 +193,11 @@ class ServiceTaskService:
         return body
 
     @staticmethod
-    def _get_spiff_task_from_runtime(task_guid: str, runtime: Any) -> SpiffTask:
-        task_uuid = uuid.UUID(task_guid)
-        spiff_task = runtime.bpmn_process_instance.get_task_from_id(task_uuid)
-
-        if spiff_task is None:
-            raise ApiError(
-                error_code="callback_not_found",
-                message=f"No task found with guid '{task_guid}'. The task may have already completed or the guid is invalid.",
-                status_code=400,
-            )
-        return spiff_task
+    def _get_spiff_task_from_runtime(task_guid: str, runtime: Any) -> SpiffTask | None:
+        try:
+            return runtime.bpmn_process_instance.get_task_from_id(uuid.UUID(task_guid))
+        except TaskNotFoundException:
+            return None
 
     @staticmethod
     def available_connectors() -> Any:
