@@ -442,6 +442,7 @@ def _task_submit_shared(
 
     AuthorizationService.assert_user_can_complete_human_task(process_instance.id, task_guid, principal.user)
 
+    error = None
     with sentry_sdk.start_span(op="task", name="complete_form_task"):
         with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
             if ProcessInstanceMigrator.run(process_instance):
@@ -453,33 +454,37 @@ def _task_submit_shared(
             )
             spiff_task = runtime.get_task_by_guid(task_guid)
             if spiff_task is None:
-                raise ApiError(
+                # Raised after the dequeued block, like callback_not_found, so the error handling
+                # inside the block cannot put the process instance into the error state.
+                error = ApiError(
                     error_code="empty_task",
                     message="Runtime failed to obtain task.",
                     status_code=500,
                 )
-
-            if spiff_task.state != TaskState.READY:
+            elif spiff_task.state != TaskState.READY:
                 raise ApiError(
                     error_code="invalid_state",
                     message="You may not update a task unless it is in the READY state.",
                     status_code=400,
                 )
+            else:
+                human_task = _find_human_task_or_raise(
+                    process_instance_id=process_instance_id,
+                    task_guid=task_guid,
+                    only_tasks_that_can_be_completed=True,
+                )
 
-            human_task = _find_human_task_or_raise(
-                process_instance_id=process_instance_id,
-                task_guid=task_guid,
-                only_tasks_that_can_be_completed=True,
-            )
-
-            ProcessInstanceService.complete_form_task(
-                runtime=runtime,
-                spiff_task=spiff_task,
-                data=body,
-                user=g.user,
-                human_task=human_task,
-                execution_mode=execution_mode,
-            )
+                ProcessInstanceService.complete_form_task(
+                    runtime=runtime,
+                    spiff_task=spiff_task,
+                    data=body,
+                    user=g.user,
+                    human_task=human_task,
+                    execution_mode=execution_mode,
+                )
+                spiff_task_extensions = spiff_task.task_spec.extensions
+        if error is not None:
+            raise error
         queue_process_instance_if_appropriate(process_instance, execution_mode)
 
     # currently task_model has the potential to be None. This should be removable once
@@ -501,7 +506,6 @@ def _task_submit_shared(
 
     # a guest user completed a task, it has a guest_confirmation message to display to them,
     # and there is nothing else for them to do
-    spiff_task_extensions = spiff_task.task_spec.extensions
     if "guestConfirmation" in spiff_task_extensions and spiff_task_extensions["guestConfirmation"]:
         guest_confirmation = JinjaService.render_jinja_template(spiff_task_extensions["guestConfirmation"], task_model)
         return {"guest_confirmation": guest_confirmation}
