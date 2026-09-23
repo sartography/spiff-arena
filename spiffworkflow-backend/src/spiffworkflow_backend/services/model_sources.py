@@ -1,6 +1,6 @@
 """Instance-aware model inputs, independent of their storage provider."""
 
-# Service imports are deferred because the existing services also consume this facade.
+# Some service imports stay local while consumers are moved to lower-level APIs.
 # ruff: noqa: PLC0415
 
 import json
@@ -13,16 +13,20 @@ from typing import cast
 
 from flask import current_app
 from flask import has_app_context
+from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
 from sqlalchemy.orm import Session
 
+from spiffworkflow_backend.exceptions import process_entity_not_found_error
+from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
+from spiffworkflow_backend.models.reference_cache import ReferenceNotFoundError
+from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.services.task_service import TaskService
 
 if TYPE_CHECKING:
-    from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
-
-    from spiffworkflow_backend.models.task import TaskModel
     from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcessSpecMapping
 
 
@@ -61,17 +65,21 @@ class ModelSource:
 
     def specs(
         self, identifier: str, process_identifier: str | None = None
-    ) -> tuple["BpmnProcessSpec", "IdToBpmnProcessSpecMapping"]:
-        from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
-        from spiffworkflow_backend.services.custom_parser import MyCustomParser
-        from spiffworkflow_backend.services.process_model_service import ProcessModelService
-        from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcessSpecMapping
-
+    ) -> tuple[BpmnProcessSpec, "IdToBpmnProcessSpecMapping"]:
         if self.files is None:
-            return BpmnProcessService.get_process_model_and_subprocesses(identifier, process_id_to_run=process_identifier)
+            from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
+
+            try:
+                return BpmnProcessService.get_process_model_and_subprocesses(identifier, process_id_to_run=process_identifier)
+            except ProcessEntityNotFoundError as exception:
+                raise process_entity_not_found_error.ProcessEntityNotFoundError(str(exception)) from exception
         config = json.loads(self.files.read(f"{identifier}/process_model.json"))
+        from spiffworkflow_backend.services.custom_parser import MyCustomParser
+
         paths = set(self.files.paths())
         parser = MyCustomParser()
+        from spiffworkflow_backend.services.process_model_service import ProcessModelService
+
         for path in sorted(paths):
             if f"{PurePosixPath(path).parent}/process_model.json" not in paths:
                 continue
@@ -84,11 +92,11 @@ class ModelSource:
         process_identifier = process_identifier or config.get("primary_process_id")
         if not process_identifier:
             raise ValueError("Model source has no primary process ID")
+        from spiffworkflow_backend.services.workflow_spec_service import IdToBpmnProcessSpecMapping
+
         return parser.get_spec(process_identifier), IdToBpmnProcessSpecMapping(parser.get_subprocess_specs(process_identifier))
 
     def process_path(self, identifier: str, process_identifier: str | None) -> str:
-        from spiffworkflow_backend.services.process_model_service import ProcessModelService
-
         if self.files is None:
             raise ValueError("Process path resolution requires a supplied file set")
         if process_identifier is None:
@@ -98,6 +106,8 @@ class ModelSource:
             raise FileNotFoundError("Model source has no primary process ID")
         matches = []
         namespace = "{http://www.omg.org/spec/BPMN/20100524/MODEL}"
+        from spiffworkflow_backend.services.process_model_service import ProcessModelService
+
         for path in self.files.paths():
             if not path.endswith(".bpmn"):
                 continue
@@ -119,33 +129,34 @@ class ModelSource:
         owner = PurePosixPath(self.process_path("", process_identifier)).parent
         return self.files.read((owner / filename).as_posix())
 
-    def form_contents(self, model: ProcessModelInfo, filename: str, task: "TaskModel | None", revision: str | None) -> str:
-        from spiffworkflow_backend.services.git_service import GitService
-
+    def form_contents(self, model: ProcessModelInfo, filename: str, task: TaskModel | None, revision: str | None) -> str:
         if self.files is not None and task is not None:
             return self.task_file(task.bpmn_process.bpmn_process_definition.bpmn_identifier, filename).decode("utf-8")
+        from spiffworkflow_backend.services.git_service import GitService
+
         return GitService.get_file_contents_for_revision_if_git_revision(
             process_model=model, revision=revision, file_name=filename
         )
 
-    def model_for_task(self, model: ProcessModelInfo, task: "TaskModel") -> ProcessModelInfo:
-        from spiffworkflow_backend.services.file_system_service import FileSystemService
-        from spiffworkflow_backend.services.process_model_service import ProcessModelService
-        from spiffworkflow_backend.services.spec_file_service import SpecFileService
-        from spiffworkflow_backend.services.task_service import TaskService
-        from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
-
+    def model_for_task(self, model: ProcessModelInfo, task: TaskModel) -> ProcessModelInfo:
         # Supplied files resolve form ownership directly from the task's BPMN process.
         if self.files is not None:
             return model
+        from spiffworkflow_backend.services.spec_file_service import SpecFileService
+
         process_identifier = task.bpmn_process.bpmn_process_definition.bpmn_identifier
         if process_identifier in [ref.identifier for ref in SpecFileService.get_references_for_process(model)]:
             return model
         top_process = TaskService.bpmn_process_for_called_activity_or_top_level_process(task)
+        from spiffworkflow_backend.services.file_system_service import FileSystemService
+        from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
+
         path = WorkflowSpecService.bpmn_file_full_path_from_bpmn_process_identifier(
             top_process.bpmn_process_definition.bpmn_identifier
         )
         relative_path = os.path.relpath(path, start=FileSystemService.root_path())
+        from spiffworkflow_backend.services.process_model_service import ProcessModelService
+
         return ProcessModelService.get_process_model_from_relative_path(os.path.dirname(relative_path))
 
     def diagram(self, identifier: str, process_identifier: str | None) -> str:
@@ -154,8 +165,6 @@ class ModelSource:
         return self.files.read(self.process_path(identifier, process_identifier)).decode("utf-8")
 
     def diagram_payload(self, instance: ProcessInstanceModel, process_identifier: str | None = None) -> dict:
-        from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
-        from spiffworkflow_backend.models.reference_cache import ReferenceNotFoundError
         from spiffworkflow_backend.services.git_service import GitCommandError
         from spiffworkflow_backend.services.git_service import GitService
         from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -213,7 +222,7 @@ class ModelSources:
         return ModelSource(instance, files)
 
     @classmethod
-    def for_task(cls, task: "TaskModel | None") -> ModelSource:
+    def for_task(cls, task: TaskModel | None) -> ModelSource:
         if task is None or cls.provider() is None:
             return ModelSource()
         instance = ProcessInstanceModel.query.filter_by(id=task.process_instance_id).first()
@@ -223,8 +232,6 @@ class ModelSources:
 
     @classmethod
     def prepare_instance(cls, instance: ProcessInstanceModel, load_definition: bool = True) -> None:
-        from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
-
         provider = cls.provider()
         files = None
         if provider is not None:
@@ -232,6 +239,8 @@ class ModelSources:
             files = provider.prepare(db.session, instance)
         if load_definition or files is not None:
             source = ModelSource(instance, files)
+            from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
+
             BpmnProcessService.persist_bpmn_process_definition(
                 instance.process_model_identifier, specs=source.specs(instance.process_model_identifier), commit=False
             )
