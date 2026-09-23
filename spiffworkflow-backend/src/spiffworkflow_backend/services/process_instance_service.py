@@ -354,9 +354,9 @@ class ProcessInstanceService:
         user_spiff_task_map = {str(t.id): t for t in user_spiff_tasks}
         ready_human_tasks = HumanTaskModel.query.filter(HumanTaskModel.task_guid.in_(user_task_guids)).all()  # type: ignore
         for human_task in ready_human_tasks:
-            spiff_task = runtime.get_task_by_guid(human_task.task_guid)
+            spiff_task = user_spiff_task_map[human_task.task_guid]
             potential_owner_hash = runtime.get_potential_owners_from_task(spiff_task)
-            human_task.update_attributes_from_spiff_task(user_spiff_task_map[human_task.task_guid], potential_owner_hash)
+            human_task.update_attributes_from_spiff_task(spiff_task, potential_owner_hash)
             db.session.add(human_task)
             human_task_user_records = HumanTaskUserModel.query.filter_by(human_task=human_task).all()
             currently_assigned_user_ids = {ht.user_id for ht in human_task_user_records}

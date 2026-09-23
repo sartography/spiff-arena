@@ -1,5 +1,4 @@
 import os
-import uuid
 from typing import Any
 from typing import TypedDict
 
@@ -11,7 +10,6 @@ from flask import g
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
-from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
 from sqlalchemy import or_
@@ -453,7 +451,13 @@ def _task_submit_shared(
             runtime = ProcessInstanceRuntime(
                 process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
             )
-            spiff_task = _get_spiff_task_from_runtime(task_guid, runtime)
+            spiff_task = runtime.get_task_by_guid(task_guid)
+            if spiff_task is None:
+                raise ApiError(
+                    error_code="empty_task",
+                    message="Runtime failed to obtain task.",
+                    status_code=500,
+                )
 
             if spiff_task.state != TaskState.READY:
                 raise ApiError(
@@ -537,22 +541,6 @@ def _find_human_task_or_raise(
             status_code=500,
         )
     return human_task
-
-
-def _get_spiff_task_from_runtime(
-    task_guid: str,
-    runtime: ProcessInstanceRuntime,
-) -> SpiffTask:
-    task_uuid = uuid.UUID(task_guid)
-    spiff_task = runtime.bpmn_process_instance.get_task_from_id(task_uuid)
-
-    if spiff_task is None:
-        raise ApiError(
-            error_code="empty_task",
-            message="Runtime failed to obtain task.",
-            status_code=500,
-        )
-    return spiff_task
 
 
 def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int | None) -> TaskModel:

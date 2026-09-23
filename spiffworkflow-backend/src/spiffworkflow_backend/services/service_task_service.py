@@ -1,11 +1,9 @@
 import json
-import uuid
 from dataclasses import dataclass
 from typing import Any
 
 import sentry_sdk
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
-from SpiffWorkflow.exceptions import TaskNotFoundException  # type: ignore
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
@@ -63,7 +61,7 @@ class ServiceTaskService:
                 runtime = ProcessInstanceRuntime(
                     process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
                 )
-                spiff_task = cls._get_spiff_task_from_runtime(task_guid, runtime)
+                spiff_task = runtime.get_task_by_guid(task_guid)
 
                 if spiff_task is None:
                     # Raised after the dequeued block, like not_waiting_for_callback, so a late callback
@@ -191,13 +189,6 @@ class ServiceTaskService:
             except json.JSONDecodeError:
                 return body
         return body
-
-    @staticmethod
-    def _get_spiff_task_from_runtime(task_guid: str, runtime: Any) -> SpiffTask | None:
-        try:
-            return runtime.bpmn_process_instance.get_task_from_id(uuid.UUID(task_guid))
-        except TaskNotFoundException:
-            return None
 
     @staticmethod
     def available_connectors() -> Any:
