@@ -2,6 +2,7 @@ import base64
 import json
 import os
 import time
+import uuid
 from hashlib import sha256
 from typing import Any
 from unittest.mock import patch
@@ -30,6 +31,7 @@ from spiffworkflow_backend.models.process_model import NotificationType
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
@@ -2607,6 +2609,72 @@ class TestProcessApi(BaseTest):
             task_guid=human_task["guid"], event_type=ProcessInstanceEventType.task_skipped.value
         ).first()
         assert task_event is not None
+
+    def test_task_submit_with_missing_runtime_task_does_not_error_instance(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """A missing runtime task answers empty_task without erroring the instance."""
+        bpmn_file_name = "manual_task.bpmn"
+        bpmn_file_location = "manual_task"
+        process_model = self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_model_id="manual_task",
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location,
+        )
+
+        bpmn_file_data_bytes = self.get_test_data_file_contents(bpmn_file_name, bpmn_file_location)
+        self.create_spec_file(
+            client=client,
+            process_model_id=process_model.id,
+            process_model_location=bpmn_file_location,
+            file_name=bpmn_file_name,
+            file_data=bpmn_file_data_bytes,
+            user=with_super_admin_user,
+        )
+
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        process_instance_id = response.json()["id"]
+
+        client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
+            headers=headers,
+            json={},
+        )
+
+        # The authorization gate rejects unknown guids before the runtime is consulted, so bypass it
+        # to reach the missing-task branch. A human task row can exist while its runtime task is
+        # gone, for example when an interrupting boundary event skips the task.
+        monkeypatch.setattr(
+            AuthorizationService,
+            "assert_user_can_complete_human_task",
+            lambda *args, **kwargs: True,
+        )
+
+        response = client.put(
+            f"/v1.0/tasks/{process_instance_id}/{uuid.uuid4()}",
+            headers=self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"}),
+            json={},
+        )
+        assert response.status_code == 500, response.json()
+        assert response.json()["error_code"] == "empty_task"
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        assert process_instance is not None
+        assert process_instance.status == ProcessInstanceStatus.user_input_required.value
+
+        error_event = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance_id,
+            event_type=ProcessInstanceEventType.process_instance_error.value,
+        ).first()
+        assert error_event is None
 
     def setup_initial_groups_for_move_tests(self, client: TestClient, with_super_admin_user: UserModel) -> None:
         groups = ["group_a", "group_b", "group_b/group_bb"]

@@ -1,5 +1,4 @@
 import os
-import uuid
 from typing import Any
 from typing import TypedDict
 
@@ -11,7 +10,6 @@ from flask import g
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
-from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
 from sqlalchemy import or_
@@ -444,6 +442,7 @@ def _task_submit_shared(
 
     AuthorizationService.assert_user_can_complete_human_task(process_instance.id, task_guid, principal.user)
 
+    error = None
     with sentry_sdk.start_span(op="task", name="complete_form_task"):
         with ProcessInstanceQueueService.dequeued(process_instance, max_attempts=3):
             if ProcessInstanceMigrator.run(process_instance):
@@ -453,29 +452,39 @@ def _task_submit_shared(
             runtime = ProcessInstanceRuntime(
                 process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
             )
-            spiff_task = _get_spiff_task_from_runtime(task_guid, runtime)
-
-            if spiff_task.state != TaskState.READY:
+            spiff_task = runtime.get_task_by_guid(task_guid)
+            if spiff_task is None:
+                # Raised after the dequeued block, like callback_not_found, so the error handling
+                # inside the block cannot put the process instance into the error state.
+                error = ApiError(
+                    error_code="empty_task",
+                    message="Runtime failed to obtain task.",
+                    status_code=500,
+                )
+            elif spiff_task.state != TaskState.READY:
                 raise ApiError(
                     error_code="invalid_state",
                     message="You may not update a task unless it is in the READY state.",
                     status_code=400,
                 )
+            else:
+                human_task = _find_human_task_or_raise(
+                    process_instance_id=process_instance_id,
+                    task_guid=task_guid,
+                    only_tasks_that_can_be_completed=True,
+                )
 
-            human_task = _find_human_task_or_raise(
-                process_instance_id=process_instance_id,
-                task_guid=task_guid,
-                only_tasks_that_can_be_completed=True,
-            )
-
-            ProcessInstanceService.complete_form_task(
-                runtime=runtime,
-                spiff_task=spiff_task,
-                data=body,
-                user=g.user,
-                human_task=human_task,
-                execution_mode=execution_mode,
-            )
+                ProcessInstanceService.complete_form_task(
+                    runtime=runtime,
+                    spiff_task=spiff_task,
+                    data=body,
+                    user=g.user,
+                    human_task=human_task,
+                    execution_mode=execution_mode,
+                )
+                spiff_task_extensions = spiff_task.task_spec.extensions
+        if error is not None:
+            raise error
         queue_process_instance_if_appropriate(process_instance, execution_mode)
 
     # currently task_model has the potential to be None. This should be removable once
@@ -497,7 +506,6 @@ def _task_submit_shared(
 
     # a guest user completed a task, it has a guest_confirmation message to display to them,
     # and there is nothing else for them to do
-    spiff_task_extensions = spiff_task.task_spec.extensions
     if "guestConfirmation" in spiff_task_extensions and spiff_task_extensions["guestConfirmation"]:
         guest_confirmation = JinjaService.render_jinja_template(spiff_task_extensions["guestConfirmation"], task_model)
         return {"guest_confirmation": guest_confirmation}
@@ -537,22 +545,6 @@ def _find_human_task_or_raise(
             status_code=500,
         )
     return human_task
-
-
-def _get_spiff_task_from_runtime(
-    task_guid: str,
-    runtime: ProcessInstanceRuntime,
-) -> SpiffTask:
-    task_uuid = uuid.UUID(task_guid)
-    spiff_task = runtime.bpmn_process_instance.get_task_from_id(task_uuid)
-
-    if spiff_task is None:
-        raise ApiError(
-            error_code="empty_task",
-            message="Runtime failed to obtain task.",
-            status_code=500,
-        )
-    return spiff_task
 
 
 def _get_task_model_from_guid_or_raise(task_guid: str, process_instance_id: int | None) -> TaskModel:

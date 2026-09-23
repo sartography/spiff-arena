@@ -1,5 +1,4 @@
 import json
-import uuid
 from dataclasses import dataclass
 from typing import Any
 
@@ -62,9 +61,19 @@ class ServiceTaskService:
                 runtime = ProcessInstanceRuntime(
                     process_instance, workflow_completed_handler=ProcessInstanceService.schedule_next_process_model_cycle
                 )
-                spiff_task = cls._get_spiff_task_from_runtime(task_guid, runtime)
+                spiff_task = runtime.get_task_by_guid(task_guid)
 
-                if spiff_task.state == TaskState.STARTED and isinstance(spiff_task.task_spec, ServiceTask):
+                if spiff_task is None:
+                    # Raised after the dequeued block, like not_waiting_for_callback, so a late callback
+                    # for a task that no longer exists cannot put a finished instance into error.
+                    error = ApiError(
+                        error_code="callback_not_found",
+                        message=(
+                            f"No task found with guid '{task_guid}'. The task may have already completed or the guid is invalid."
+                        ),
+                        status_code=400,
+                    )
+                elif spiff_task.state == TaskState.STARTED and isinstance(spiff_task.task_spec, ServiceTask):
                     callback_content = content or {}
                     try:
                         cls._check_for_callback_errors(spiff_task, callback_content)
@@ -180,19 +189,6 @@ class ServiceTaskService:
             except json.JSONDecodeError:
                 return body
         return body
-
-    @staticmethod
-    def _get_spiff_task_from_runtime(task_guid: str, runtime: Any) -> SpiffTask:
-        task_uuid = uuid.UUID(task_guid)
-        spiff_task = runtime.bpmn_process_instance.get_task_from_id(task_uuid)
-
-        if spiff_task is None:
-            raise ApiError(
-                error_code="callback_not_found",
-                message=f"No task found with guid '{task_guid}'. The task may have already completed or the guid is invalid.",
-                status_code=400,
-            )
-        return spiff_task
 
     @staticmethod
     def available_connectors() -> Any:
