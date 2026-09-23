@@ -25,7 +25,6 @@ from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.reference_cache import ReferenceNotFoundError
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
-from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
@@ -72,20 +71,15 @@ class ModelSource:
             return BpmnProcessService.get_process_model_and_subprocesses(identifier, process_id_to_run=process_identifier)
         config = json.loads(self.files.read(f"{identifier}/process_model.json"))
         paths = set(self.files.paths())
-        parser = MyCustomParser()
-        for path in sorted(paths):
-            if f"{PurePosixPath(path).parent}/process_model.json" not in paths:
-                continue
-            if path.endswith((".bpmn", ".dmn")):
-                document = ProcessModelService.get_etree_from_xml_bytes(self.files.read(path))
-                if path.endswith(".bpmn"):
-                    parser.add_bpmn_xml(document, filename=path)
-                else:
-                    parser.add_dmn_xml(document, filename=path)
-        process_identifier = process_identifier or config.get("primary_process_id")
-        if not process_identifier:
-            raise ValueError("Model source has no primary process ID")
-        return parser.get_spec(process_identifier), IdToBpmnProcessSpecMapping(parser.get_subprocess_specs(process_identifier))
+        return WorkflowSpecService.get_spec_from_files(
+            (
+                (path, PurePosixPath(path).suffix[1:], self.files.read(path))
+                for path in sorted(paths)
+                if path.endswith((".bpmn", ".dmn")) and f"{PurePosixPath(path).parent}/process_model.json" in paths
+            ),
+            identifier,
+            process_identifier or config.get("primary_process_id"),
+        )
 
     def process_path(self, identifier: str, process_identifier: str | None) -> str:
         if self.files is None:
