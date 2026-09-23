@@ -28,7 +28,7 @@ from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.services.process_model_history import process_model_history
+from spiffworkflow_backend.services.model_sources import ModelSources
 from spiffworkflow_backend.services.user_service import UserService
 
 T = TypeVar("T")
@@ -145,12 +145,8 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def get_process_model_for_instance(cls, process_instance: ProcessInstanceModel) -> ProcessModelInfo:
-        """Resolve instance configuration without consulting a newer model when history exists."""
-        history = process_model_history(process_instance.id) if process_instance.id is not None else None
-        if history is not None:
-            model: ProcessModelInfo = history.model(process_instance.id, process_instance.process_model_identifier)
-            return model
-        return cls.get_process_model(process_instance.process_model_identifier)
+        """Resolve configuration from the instance's model source."""
+        return ModelSources.for_instance(process_instance).model(process_instance.process_model_identifier)
 
     @classmethod
     def save_process_model(cls, process_model: ProcessModelInfo) -> None:

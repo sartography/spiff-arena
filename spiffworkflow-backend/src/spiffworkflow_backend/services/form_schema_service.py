@@ -4,9 +4,8 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.git_service import GitCommandError
-from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
-from spiffworkflow_backend.services.process_model_history import process_model_history
+from spiffworkflow_backend.services.model_sources import ModelSources
 from spiffworkflow_backend.services.task_service import TaskModelError
 
 
@@ -20,17 +19,7 @@ class FormSchemaService:
         revision: str | None = None,
     ) -> dict:
         try:
-            history = process_model_history(task_model.process_instance_id) if task_model is not None else None
-            if task_model is not None and history is not None:
-                form_contents = history.task_file(
-                    task_model.process_instance_id,
-                    task_model.bpmn_process.bpmn_process_definition.bpmn_identifier,
-                    form_file,
-                ).decode("utf-8")
-            else:
-                form_contents = GitService.get_file_contents_for_revision_if_git_revision(
-                    process_model=process_model, revision=revision, file_name=form_file
-                )
+            form_contents = ModelSources.for_task(task_model).form_contents(process_model, form_file, task_model, revision)
         except ValueError as exception:
             raise ApiError("form_schema_invalid_reference", str(exception), status_code=400) from exception
         except FileNotFoundError as exception:

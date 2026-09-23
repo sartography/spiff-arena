@@ -35,12 +35,12 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.message_instrumentation_service import MessageSendInstrumentation
+from spiffworkflow_backend.services.model_sources import ModelSources
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_script_engine import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
-from spiffworkflow_backend.services.process_model_history import process_model_history
 from spiffworkflow_backend.services.user_service import UserService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 
@@ -806,16 +806,7 @@ class MessageService:
         cls,
         receiving_process_instance: ProcessInstanceModel,
     ) -> None:
-        history = process_model_history(receiving_process_instance.id)
-        specs = (
-            history.specs(
-                receiving_process_instance.id,
-                receiving_process_instance.process_model_identifier,
-                None,
-            )
-            if history is not None
-            else None
-        )
+        specs = ModelSources.for_instance(receiving_process_instance).specs(receiving_process_instance.process_model_identifier)
         BpmnProcessService.persist_bpmn_process_definition(
             receiving_process_instance.process_model_identifier,
             specs=specs,

@@ -1,4 +1,3 @@
-import os
 import uuid
 from typing import Any
 from typing import TypedDict
@@ -24,6 +23,7 @@ from spiffworkflow_backend.background_processing.celery_tasks.process_instance_t
 )
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
 from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
 from spiffworkflow_backend.exceptions.error import UserDoesNotHaveAccessToTaskError
@@ -41,18 +41,15 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.form_schema_service import FormSchemaService
 from spiffworkflow_backend.services.jinja_service import JinjaService
+from spiffworkflow_backend.services.model_sources import ModelSources
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
-from spiffworkflow_backend.services.process_model_history import process_model_history
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
-from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskService
-from spiffworkflow_backend.services.workflow_spec_service import WorkflowSpecService
 
 process_api_blueprint = Blueprint("process_api", __name__)
 
@@ -584,11 +581,15 @@ def _get_task_model_for_request(
             status_code=400,
         )
 
-    history = process_model_history(process_instance.id)
-    if history is None:
-        process_model = _get_process_model(process_instance.process_model_identifier)
-    else:
-        process_model = ProcessModelService.get_process_model_for_instance(process_instance)
+    source = ModelSources.for_instance(process_instance)
+    try:
+        process_model = source.model(process_instance.process_model_identifier)
+    except ProcessEntityNotFoundError as exception:
+        raise ApiError(
+            "process_model_cannot_be_found",
+            f"Process model cannot be found: {process_instance.process_model_identifier}",
+            status_code=400,
+        ) from exception
 
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
     task_definition = task_model.task_definition
@@ -612,20 +613,7 @@ def _get_task_model_for_request(
     extensions = TaskService.get_extensions_from_task_model(task_model)
 
     if with_form_data:
-        task_process_identifier = task_model.bpmn_process.bpmn_process_definition.bpmn_identifier
-        process_model_with_form = process_model
-
-        if history is None:
-            refs = SpecFileService.get_references_for_process(process_model_with_form)
-            all_processes = [i.identifier for i in refs]
-            if task_process_identifier not in all_processes:
-                top_bpmn_process = TaskService.bpmn_process_for_called_activity_or_top_level_process(task_model)
-                bpmn_file_full_path = WorkflowSpecService.bpmn_file_full_path_from_bpmn_process_identifier(
-                    top_bpmn_process.bpmn_process_definition.bpmn_identifier
-                )
-                relative_path = os.path.relpath(bpmn_file_full_path, start=FileSystemService.root_path())
-                process_model_relative_path = os.path.dirname(relative_path)
-                process_model_with_form = ProcessModelService.get_process_model_from_relative_path(process_model_relative_path)
+        process_model_with_form = source.model_for_task(process_model, task_model)
 
         form_schema_file_name = ""
         form_ui_schema_file_name = ""
