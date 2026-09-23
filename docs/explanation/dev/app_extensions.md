@@ -9,9 +9,8 @@ SPIFFWORKFLOW_BACKEND_APP_EXTENSIONS='["example"]'
 
 Arena loads `extensions/<name>/__init__.py` beneath
 `SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR` and calls `init_app(app)` after
-initializing the database integration. Packages can use relative imports without
-changing `PYTHONPATH` or building a custom Dockerfile. Any additional dependencies
-must already be installed.
+initializing the database integration. Packages support relative imports. Install
+any additional dependencies in the deployment environment.
 
 ```python
 # extensions/example/__init__.py
@@ -23,12 +22,12 @@ def init_app(app):
 ```
 
 Initializers run in configured order, once per app creation (including workers),
-and own their validation and registration. An empty list, the default, loads
-nothing. Missing packages or initialization errors fail application startup.
-Names must be Python identifiers; duplicates and paths escaping the configured
-repository package are rejected. No repository scanning or automatic discovery
-occurs. Packages receive private module identities to isolate relative imports
-between app instances.
+and own their validation and registration. Extensions are disabled by default;
+Arena loads only the packages listed in the configuration. Missing packages or
+initialization errors fail application startup. Names must be unique Python
+identifiers, and package paths must stay within the configured repository.
+Packages receive private module identities to isolate relative imports between
+app instances.
 
 ## Model source providers
 
@@ -40,21 +39,23 @@ supply instance-specific model inputs. The `ModelSourceProvider` protocol in
   to use Arena's repository/Git behavior.
 - `prepare(session, instance)` prepares a new instance's file set in the caller's
   transaction. Arena flushes the instance first, then compiles the supplied bytes
-  and persists definitions without committing. Providers must not commit either.
+  and persists definitions. The caller owns the commit for both Arena and provider
+  changes.
 - `assert_can_migrate(session, instance)` raises if the provider cannot support
   version migration for the instance.
 
 A file set implements `paths()` (repository-relative paths) and `read(path)`
 (bytes). It must include the root model configuration and all called-model
 BPMN/DMN dependencies. Arena handles parsing, task-owned form resolution, and
-API responses. Once a file set is selected, missing files raise
-`FileNotFoundError`; they must not silently fall back to another source.
-Provider failures propagate rather than selecting the repository as a fallback.
+API responses. Once selected, a file set is authoritative: missing files raise
+`FileNotFoundError`, and provider failures propagate to the caller.
 Unpersisted instances and deployments without a provider use the repository.
-Without a provider, creation commits requested repository definitions before
-adding the new instance; `commit_db=False` leaves the instance and queue work
-uncommitted, not those definitions.
+For repository-backed creation, Arena commits requested definitions before adding
+the new instance. With `commit_db=False`, the caller owns the subsequent commit
+for the instance and queue work.
 
-This executes **trusted deployment code**, not sandboxed process-author code.
-Control who can edit enabled packages. This is separate from BPMN extensions,
-which execute workflows through the extensions API.
+App extensions run with the backend application's privileges. Limit write access
+to enabled packages to trusted deployment maintainers.
+
+BPMN extensions execute workflows through the extensions API; Python app
+extensions initialize packages at application boot.

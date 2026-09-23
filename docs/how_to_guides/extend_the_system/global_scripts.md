@@ -4,12 +4,6 @@ Global Scripts allow you to define custom Python functions that can be used acro
 They're automatically loaded from a directory in your process model repository.
 If you need to make network calls, use connectors instead.
 
-Global scripts are deployment code: Arena loads them from the deployed repository
-and caches their classes in the Python process. They are not pinned separately
-for each process instance. Restart API and worker processes together when updating
-them; existing instances may then execute the updated code. Archiving script
-source bytes alone does not change this loading behavior.
-
 ## Configuration
 
 Global Scripts are **disabled by default**. To enable:
