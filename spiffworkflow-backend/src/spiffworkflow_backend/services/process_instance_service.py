@@ -267,8 +267,6 @@ class ProcessInstanceService:
         preserve_old_process_instance: bool = False,
         target_bpmn_process_hash: str | None = None,
     ) -> None:
-        initial_git_revision = process_instance.bpmn_version_control_identifier
-        initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
         (
             runtime,
             target_bpmn_process_spec,
@@ -276,6 +274,10 @@ class ProcessInstanceService:
             top_level_bpmn_process_diff,
             subprocesses_diffs,
         ) = cls.check_process_instance_can_be_migrated(process_instance, target_bpmn_process_hash=target_bpmn_process_hash)
+        # Read after the check so a model-source rejection surfaces before these
+        # can fail on instances that never initialized a runtime.
+        initial_git_revision = process_instance.bpmn_version_control_identifier
+        initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
 
         migration_task_mask = TaskState.READY | TaskState.WAITING | TaskState.STARTED
 

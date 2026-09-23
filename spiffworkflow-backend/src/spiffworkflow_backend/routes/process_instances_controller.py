@@ -563,7 +563,6 @@ def process_instance_check_can_migrate(
     target_bpmn_process_hash: str | None = None,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    ModelSources.assert_can_migrate(process_instance)
     return_dict: dict = {
         "can_migrate": True,
         "process_instance_id": process_instance.id,
@@ -574,7 +573,9 @@ def process_instance_check_can_migrate(
         ProcessInstanceService.check_process_instance_can_be_migrated(
             process_instance, target_bpmn_process_hash=target_bpmn_process_hash
         )
-    except (ProcessInstanceMigrationNotSafeError, ProcessInstanceMigrationUnnecessaryError) as exception:
+    except (ProcessInstanceMigrationNotSafeError, ProcessInstanceMigrationUnnecessaryError, ApiError) as exception:
+        # ApiError is included so a model-source provider rejecting migration for this
+        # instance reports can_migrate: false like other unavailability checks.
         return_dict["can_migrate"] = False
         return_dict["exception_class"] = exception.__class__.__name__
     return make_response(jsonify(return_dict), 200)
