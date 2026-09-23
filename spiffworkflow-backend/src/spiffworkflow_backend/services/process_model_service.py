@@ -16,6 +16,7 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.interfaces import ProcessGroupLite
 from spiffworkflow_backend.interfaces import ProcessGroupLitesWithCache
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.permission_assignment import PermitDeny
 from spiffworkflow_backend.models.process_group import PROCESS_GROUP_SUPPORTED_KEYS_FOR_DISK_SERIALIZATION
@@ -28,7 +29,6 @@ from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.services.model_sources import ModelSources
 from spiffworkflow_backend.services.user_service import UserService
 
 T = TypeVar("T")
@@ -145,8 +145,17 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def get_process_model_for_instance(cls, process_instance: ProcessInstanceModel) -> ProcessModelInfo:
-        """Resolve configuration from the instance's model source."""
-        return ModelSources.for_instance(process_instance).model(process_instance.process_model_identifier)
+        """Resolve configuration from the instance's model source.
+
+        Looks up a registered provider at runtime rather than importing the
+        higher-level model source facade to keep service layering one-directional.
+        """
+        provider = current_app.extensions.get("model_sources")
+        files = provider.open(db.session, process_instance) if provider is not None and process_instance.id is not None else None
+        if files is not None:
+            config = json.loads(files.read(f"{process_instance.process_model_identifier}/process_model.json"))
+            return ProcessModelInfo.from_dict({**config, "id": process_instance.process_model_identifier})
+        return cls.get_process_model(process_instance.process_model_identifier)
 
     @classmethod
     def save_process_model(cls, process_model: ProcessModelInfo) -> None:
