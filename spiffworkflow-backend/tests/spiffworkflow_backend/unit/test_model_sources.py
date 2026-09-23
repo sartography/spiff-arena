@@ -34,7 +34,7 @@ def source() -> ModelSource:
                     b'<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="test">'
                     b'<process id="main" isExecutable="true"><startEvent id="start"/>'
                     b'<sequenceFlow id="flow" sourceRef="start" targetRef="end"/><endEvent id="end"/>'
-                    b'</process></definitions>'
+                    b"</process></definitions>"
                 ),
                 "called/process_model.json": config,
                 "called/model.bpmn": (
@@ -60,7 +60,7 @@ def test_specs_compile_supplied_bytes() -> None:
         b'<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="test">'
         b'<process id="main" isExecutable="true"><startEvent id="start"/>'
         b'<sequenceFlow id="flow" sourceRef="start" targetRef="end"/><endEvent id="end"/>'
-        b'</process></definitions>'
+        b"</process></definitions>"
     )
     source = ModelSource(files=MemoryFiles({"example/process_model.json": config, "example/model.bpmn": xml}))
     spec, _ = source.specs("example")
