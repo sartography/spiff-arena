@@ -46,8 +46,10 @@ supply instance-specific model inputs. The `ModelSourceProvider` protocol in
 
 A file set implements `paths()` (repository-relative paths) and `read(path)`
 (bytes). It must include the root model configuration and all called-model
-BPMN/DMN dependencies. Arena handles parsing, task-owned form resolution, and
-API responses. Once selected, a file set is authoritative: missing files raise
+BPMN/DMN dependencies. Repository inputs and provider-supplied inputs share Arena's
+BPMN/DMN compilation and validation pipeline. Repository loading can discover
+additional called-model files; provider-supplied inputs form a complete set.
+Arena also handles task-owned form resolution and API responses. Once selected, a file set is authoritative: missing files raise
 `FileNotFoundError`, and provider failures propagate to the caller.
 Unpersisted instances and deployments without a provider use the repository.
 For repository-backed creation, Arena commits requested definitions before adding

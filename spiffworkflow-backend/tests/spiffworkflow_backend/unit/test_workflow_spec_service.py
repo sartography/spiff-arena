@@ -16,7 +16,7 @@ SIMPLE_BPMN = (
     b'<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="test">'
     b'<process id="main" isExecutable="true"><startEvent id="start"/>'
     b'<sequenceFlow id="flow" sourceRef="start" targetRef="end"/><endEvent id="end"/>'
-    b'</process></definitions>'
+    b"</process></definitions>"
 )
 
 
