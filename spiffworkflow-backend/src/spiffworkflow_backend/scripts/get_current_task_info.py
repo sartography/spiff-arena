@@ -17,4 +17,6 @@ class GetCurrentTaskInfo(Script):
     def run(self, script_attributes_context: ScriptAttributesContext, *_args: Any, **kwargs: Any) -> Any:
         task_dict = BpmnProcessService.serializer.to_dict(script_attributes_context.task)
         task_dict.pop("data")
+        # Delta also contains task data, not metadata.
+        task_dict.pop("delta", None)
         return task_dict

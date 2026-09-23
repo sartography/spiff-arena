@@ -17,7 +17,7 @@ import dateparser
 import pytz
 from flask import current_app
 from lxml import etree  # type: ignore
-from RestrictedPython import safe_globals  # type: ignore
+from RestrictedPython import safe_globals
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.script_engine import PythonScriptEngine  # type: ignore
 from SpiffWorkflow.bpmn.specs.defaults import BoundaryEvent  # type: ignore
