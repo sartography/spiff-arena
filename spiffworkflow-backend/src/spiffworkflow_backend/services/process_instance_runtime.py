@@ -17,6 +17,7 @@ from SpiffWorkflow.bpmn.serializer.helpers.registry import DefaultRegistry  # ty
 from SpiffWorkflow.bpmn.specs.bpmn_process_spec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.util.diff import WorkflowDiff  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
+from SpiffWorkflow.exceptions import TaskNotFoundException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.specs.defaults import ServiceTask  # type: ignore
 
@@ -1263,7 +1264,10 @@ class ProcessInstanceRuntime:
         return [t for t in all_tasks if t.state in [TaskState.WAITING, TaskState.READY]]
 
     def get_task_by_guid(self, task_guid: str) -> SpiffTask | None:
-        return self.bpmn_process_instance.get_task_from_id(UUID(task_guid))
+        try:
+            return self.bpmn_process_instance.get_task_from_id(UUID(task_guid))
+        except (TaskNotFoundException, ValueError, AttributeError):
+            return None
 
     @classmethod
     def get_task_by_bpmn_identifier(cls, bpmn_task_identifier: str, bpmn_process_instance: BpmnWorkflow) -> SpiffTask | None:
