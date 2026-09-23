@@ -22,6 +22,13 @@ class ErrorHandlingService:
             exception_notification_addresses = process_model.exception_notification_addresses
         except ProcessEntityNotFoundError:
             pass
+        except Exception:
+            current_app.logger.exception(
+                "Failed to load error-handling configuration for process instance %s; defaulting to fault.",
+                process_instance.id,
+            )
+            fault_or_suspend_on_exception = "fault"
+            exception_notification_addresses = []
 
         cls._update_process_instance_in_database(process_instance, fault_or_suspend_on_exception)
 

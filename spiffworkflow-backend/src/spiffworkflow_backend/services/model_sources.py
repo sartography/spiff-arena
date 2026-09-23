@@ -207,13 +207,13 @@ class ModelSources:
         return cls.for_instance(instance)
 
     @classmethod
-    def prepare_instance(cls, instance: ProcessInstanceModel, load_definition: bool = True) -> None:
+    def prepare_instance(cls, instance: ProcessInstanceModel) -> None:
         provider = cls.provider()
         files = None
         if provider is not None:
             db.session.flush()
             files = provider.prepare(db.session, instance)
-        if load_definition or files is not None:
+        if files is not None:
             source = ModelSource(instance, files)
             BpmnProcessService.persist_bpmn_process_definition(
                 instance.process_model_identifier, specs=source.specs(instance.process_model_identifier), commit=False

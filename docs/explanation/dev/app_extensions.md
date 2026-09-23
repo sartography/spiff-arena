@@ -51,6 +51,9 @@ API responses. Once a file set is selected, missing files raise
 `FileNotFoundError`; they must not silently fall back to another source.
 Provider failures propagate rather than selecting the repository as a fallback.
 Unpersisted instances and deployments without a provider use the repository.
+Without a provider, creation commits requested repository definitions before
+adding the new instance; `commit_db=False` leaves the instance and queue work
+uncommitted, not those definitions.
 
 This executes **trusted deployment code**, not sandboxed process-author code.
 Control who can edit enabled packages. This is separate from BPMN extensions,

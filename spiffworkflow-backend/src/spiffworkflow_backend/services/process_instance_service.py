@@ -148,6 +148,15 @@ class ProcessInstanceService:
                 git_revision_error = ex
                 current_git_revision = None
 
+        if load_bpmn_process_model and ModelSources.provider() is None:
+            with (
+                instrumentation.phase("create_process_instance.persist_bpmn_process_definition")
+                if instrumentation is not None
+                else nullcontext()
+            ):
+                # Preserve repository definition commits without committing the new instance.
+                BpmnProcessService.persist_bpmn_process_definition(process_model.id, commit=True)
+
         with (
             instrumentation.phase("create_process_instance.add_process_instance")
             if instrumentation is not None
@@ -168,7 +177,7 @@ class ProcessInstanceService:
                 if instrumentation is not None
                 else nullcontext()
             ):
-                ModelSources.prepare_instance(process_instance_model, load_definition=load_bpmn_process_model)
+                ModelSources.prepare_instance(process_instance_model)
 
         if git_revision_error is not None:
             message = (

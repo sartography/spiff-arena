@@ -11,10 +11,13 @@ from SpiffWorkflow.bpmn.util import PendingBpmnEvent  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
 from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationNotSafeError
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
+from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
@@ -44,6 +47,26 @@ def _digest_reference(i: int) -> str:
 
 
 class TestProcessInstanceService(BaseTest):
+    @pytest.mark.requires_committed_database
+    def test_uncommitted_instance_preserves_committed_repository_definition(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delitem(app.extensions, "model_sources", raising=False)
+        user = self.find_or_create_user("repository-definition-commit")
+        model = load_test_spec("test_group/sample", process_model_source_directory="sample")
+        db.session.commit()
+        assert BpmnProcessDefinitionModel.query.count() == 0
+
+        instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(model.id, user, commit_db=False)
+        db.session.flush()
+        instance_id = instance.id
+        assert BpmnProcessDefinitionModel.query.count() > 0
+        db.session.rollback()
+
+        assert BpmnProcessDefinitionModel.query.count() > 0
+        assert ProcessInstanceModel.query.filter_by(id=instance_id).first() is None
+        assert ProcessInstanceQueueModel.query.filter_by(process_instance_id=instance_id).first() is None
+
     @pytest.mark.parametrize(
         "data,expected_data,expected_models_len",
         [
