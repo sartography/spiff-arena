@@ -1,12 +1,16 @@
+from unittest.mock import Mock
+
 import pytest
 from flask import Flask
 from starlette.testclient import TestClient
 
+from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
@@ -51,6 +55,41 @@ class TestErrorHandlingService(BaseTest):
         ProcessModelService.save_process_model(process_model)
         process_instance = self.run_process_model_and_handle_error(process_model)
         assert ProcessInstanceStatus.suspended.value == process_instance.status
+
+    @pytest.mark.parametrize(
+        "lookup_error",
+        [
+            ProcessEntityNotFoundError("missing model"),
+            FileNotFoundError("missing configuration"),
+            ValueError("invalid configuration"),
+            RuntimeError("provider unavailable"),
+        ],
+    )
+    def test_lookup_failure_still_faults_instance(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
+        lookup_error: Exception,
+    ) -> None:
+        model = load_test_spec("test_group/error", process_model_source_directory="error", bpmn_file_name="error.bpmn")
+        instance = self.create_process_instance_from_process_model(model)
+        instance_id = instance.id
+        log = Mock()
+        notify = Mock()
+        monkeypatch.setattr(app.logger, "exception", log)
+        monkeypatch.setattr(ErrorHandlingService, "_handle_system_notification", notify)
+        monkeypatch.setattr(ProcessModelService, "get_process_model_for_instance", Mock(side_effect=lookup_error))
+
+        ErrorHandlingService.handle_error(instance, ValueError("original workflow failure"))
+
+        db.session.expire_all()
+        assert ProcessInstanceModel.query.filter_by(id=instance_id).one().status == ProcessInstanceStatus.error.value
+        notify.assert_not_called()
+        if isinstance(lookup_error, ProcessEntityNotFoundError):
+            log.assert_not_called()
+        else:
+            log.assert_called_once()
 
     def test_error_sends_bpmn_message(
         self,

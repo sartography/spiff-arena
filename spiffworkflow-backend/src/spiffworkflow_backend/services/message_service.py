@@ -35,6 +35,7 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.message_instrumentation_service import MessageSendInstrumentation
+from spiffworkflow_backend.services.model_sources import ModelSources
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
@@ -805,8 +806,10 @@ class MessageService:
         cls,
         receiving_process_instance: ProcessInstanceModel,
     ) -> None:
+        specs = ModelSources.for_instance(receiving_process_instance).specs(receiving_process_instance.process_model_identifier)
         BpmnProcessService.persist_bpmn_process_definition(
             receiving_process_instance.process_model_identifier,
+            specs=specs,
         )
         cycle_count, _, duration_in_seconds = ProcessInstanceService.next_start_event_configuration(receiving_process_instance)
         ProcessInstanceService.register_process_model_cycles(

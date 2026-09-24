@@ -1,4 +1,5 @@
 import os
+from collections.abc import Iterable
 from typing import NewType
 
 from flask import current_app
@@ -29,28 +30,46 @@ class WorkflowSpecService:
         process_model_info: ProcessModelInfo,
         process_id_to_run: str | None = None,
     ) -> tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
-        """Returns a SpiffWorkflow specification for the given process_instance spec, using the files provided."""
+        """Load repository files and resolve their called-process dependencies."""
+        return cls.get_spec_from_files(
+            ((file.name, file.type, SpecFileService.get_data(process_model_info, file.name)) for file in files),
+            process_model_info.id,
+            process_id_to_run or process_model_info.primary_process_id,
+            resolve_repository_dependencies=True,
+        )
+
+    @classmethod
+    def get_spec_from_files(
+        cls,
+        files: Iterable[tuple[str, str, bytes]],
+        process_model_identifier: str,
+        process_id: str | None,
+        *,
+        resolve_repository_dependencies: bool = False,
+    ) -> tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
+        """Compile (filename, file type, contents) inputs with shared validation.
+
+        By default the supplied files are authoritative. Repository callers may
+        explicitly enable discovery of additional called-process dependencies.
+        """
         parser = MyCustomParser()
-
-        process_id = process_id_to_run or process_model_info.primary_process_id
-
-        for file in files:
-            data = SpecFileService.get_data(process_model_info, file.name)
+        for filename, file_type, data in files:
             try:
-                if file.type == FileType.bpmn.value:
+                if file_type == FileType.bpmn.value:
                     bpmn: etree.Element = ProcessModelService.get_etree_from_xml_bytes(data)
-                    parser.add_bpmn_xml(bpmn, filename=file.name)
-                elif file.type == FileType.dmn.value:
+                    parser.add_bpmn_xml(bpmn, filename=filename)
+                elif file_type == FileType.dmn.value:
                     dmn: etree.Element = ProcessModelService.get_etree_from_xml_bytes(data)
-                    parser.add_dmn_xml(dmn, filename=file.name)
+                    parser.add_dmn_xml(dmn, filename=filename)
             except XMLSyntaxError as exception:
-                raise ApiError.from_invalid_xml(file.name, exception) from exception
+                raise ApiError.from_invalid_xml(filename, exception) from exception
         if process_id is None or process_id == "":
             raise ApiError(
                 error_code="no_primary_bpmn_error",
-                message=f"There is no primary BPMN process id defined for process_model {process_model_info.id}",
+                message=f"There is no primary BPMN process id defined for process_model {process_model_identifier}",
             )
-        cls.update_spiff_parser_with_all_process_dependency_files(parser)
+        if resolve_repository_dependencies:
+            cls.update_spiff_parser_with_all_process_dependency_files(parser)
 
         try:
             bpmn_process_spec = parser.get_spec(process_id)

@@ -37,18 +37,13 @@ from spiffworkflow_backend.models.process_instance_report import FilterValue
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 from spiffworkflow_backend.models.process_instance_report import Report
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
-from spiffworkflow_backend.models.reference_cache import ReferenceNotFoundError
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_by_id_or_raise
 from spiffworkflow_backend.routes.process_api_blueprint import _find_process_instance_for_me_or_raise
-from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model_for_instantiation
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
-from spiffworkflow_backend.services.git_service import GitCommandError
-from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsNotEnqueuedError
@@ -56,7 +51,7 @@ from spiffworkflow_backend.services.process_instance_queue_service import Proces
 from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.model_sources import ModelSources
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.utils.api_logging import log_api_interaction
 
@@ -578,7 +573,9 @@ def process_instance_check_can_migrate(
         ProcessInstanceService.check_process_instance_can_be_migrated(
             process_instance, target_bpmn_process_hash=target_bpmn_process_hash
         )
-    except (ProcessInstanceMigrationNotSafeError, ProcessInstanceMigrationUnnecessaryError) as exception:
+    except (ProcessInstanceMigrationNotSafeError, ProcessInstanceMigrationUnnecessaryError, ApiError) as exception:
+        # ApiError is included so a model-source provider rejecting migration for this
+        # instance reports can_migrate: false like other unavailability checks.
         return_dict["can_migrate"] = False
         return_dict["exception_class"] = exception.__class__.__name__
     return make_response(jsonify(return_dict), 200)
@@ -709,41 +706,16 @@ def _get_process_instance(
     process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
+    if process_model_identifier != process_instance.process_model_identifier:
+        raise ApiError(
+            "process_instance_cannot_be_found",
+            "The instance does not belong to the requested model.",
+            status_code=404,
+        )
 
-    process_model_with_diagram = None
-    name_of_file_with_diagram = None
-    if process_identifier:
-        spec_reference = ReferenceCacheModel.basic_query().filter_by(identifier=process_identifier, type="process").first()
-        if spec_reference is None:
-            raise ReferenceNotFoundError(f"Could not find given process identifier in the cache: {process_identifier}")
-
-        process_model_with_diagram = ProcessModelService.get_process_model(spec_reference.relative_location)
-        name_of_file_with_diagram = spec_reference.file_name
-        process_instance.process_model_with_diagram_identifier = process_model_with_diagram.id
-    else:
-        try:
-            process_model_with_diagram = _get_process_model(process_model_identifier)
-            if process_model_with_diagram.primary_file_name:
-                name_of_file_with_diagram = process_model_with_diagram.primary_file_name
-        except Exception as ex:
-            current_app.logger.warning(f"Failed to retrieve process model for diagram: {ex}")
-            process_instance.bpmn_xml_file_contents_retrieval_error = "Failed to retrieve process model for diagram."
-
-    if process_model_with_diagram and name_of_file_with_diagram:
-        bpmn_xml_file_contents = None
-        try:
-            bpmn_xml_file_contents = GitService.get_file_contents_for_revision_if_git_revision(
-                process_model=process_model_with_diagram,
-                revision=process_instance.bpmn_version_control_identifier,
-                file_name=name_of_file_with_diagram,
-            )
-        except GitCommandError as ex:
-            current_app.logger.warning(f"Failed to retrieve BPMN XML from git: {ex}")
-            process_instance.bpmn_xml_file_contents_retrieval_error = "Failed to retrieve BPMN XML from version control."
-        process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
-
-    process_instance_as_dict = process_instance.serialized_with_metadata()
-    return make_response(jsonify(process_instance_as_dict), 200)
+    result = process_instance.serialized_with_metadata()
+    result.update(ModelSources.for_instance(process_instance).diagram_payload(process_instance, process_identifier))
+    return make_response(jsonify(result), 200)
 
 
 def _process_instance_run(

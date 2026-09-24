@@ -71,6 +71,7 @@ from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.logging_service import LoggingService
 from spiffworkflow_backend.services.message_instrumentation_service import MessageSendInstrumentation
+from spiffworkflow_backend.services.model_sources import ModelSources
 from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
 from spiffworkflow_backend.services.process_instance_persistence_service import ProcessInstancePersistenceService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
@@ -147,13 +148,14 @@ class ProcessInstanceService:
                 git_revision_error = ex
                 current_git_revision = None
 
-        if load_bpmn_process_model:
+        if load_bpmn_process_model and ModelSources.provider() is None:
             with (
                 instrumentation.phase("create_process_instance.persist_bpmn_process_definition")
                 if instrumentation is not None
                 else nullcontext()
             ):
-                BpmnProcessService.persist_bpmn_process_definition(process_model.id)
+                # Preserve repository definition commits without committing the new instance.
+                BpmnProcessService.persist_bpmn_process_definition(process_model.id, commit=True)
 
         with (
             instrumentation.phase("create_process_instance.add_process_instance")
@@ -170,6 +172,12 @@ class ProcessInstanceService:
                 bpmn_version_control_identifier=current_git_revision,
             )
             db.session.add(process_instance_model)
+            with (
+                instrumentation.phase("create_process_instance.persist_bpmn_process_definition")
+                if instrumentation is not None
+                else nullcontext()
+            ):
+                ModelSources.prepare_instance(process_instance_model)
 
         if git_revision_error is not None:
             message = (
@@ -203,6 +211,7 @@ class ProcessInstanceService:
     ) -> tuple[
         ProcessInstanceRuntime, BpmnProcessSpec, IdToBpmnProcessSpecMapping, WorkflowDiff, SubprocessUuidToWorkflowDiffMapping
     ]:
+        ModelSources.assert_can_migrate(process_instance)
         if target_bpmn_process_hash is None:
             (target_bpmn_process_spec, target_subprocess_specs) = BpmnProcessService.get_process_model_and_subprocesses(
                 process_instance.process_model_identifier,
@@ -267,8 +276,6 @@ class ProcessInstanceService:
         preserve_old_process_instance: bool = False,
         target_bpmn_process_hash: str | None = None,
     ) -> None:
-        initial_git_revision = process_instance.bpmn_version_control_identifier
-        initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
         (
             runtime,
             target_bpmn_process_spec,
@@ -276,6 +283,10 @@ class ProcessInstanceService:
             top_level_bpmn_process_diff,
             subprocesses_diffs,
         ) = cls.check_process_instance_can_be_migrated(process_instance, target_bpmn_process_hash=target_bpmn_process_hash)
+        # Read after the check so a model-source rejection surfaces before these
+        # can fail on instances that never initialized a runtime.
+        initial_git_revision = process_instance.bpmn_version_control_identifier
+        initial_bpmn_process_hash = process_instance.bpmn_process_definition.full_process_model_hash
 
         migration_task_mask = TaskState.READY | TaskState.WAITING | TaskState.STARTED
 
@@ -808,7 +819,7 @@ class ProcessInstanceService:
             if task_model is not None:
                 form_schema_file_name = spiff_task.task_spec.extensions["properties"]["formJsonSchemaFilename"]
 
-                process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
+                process_model = ProcessModelService.get_process_model_for_instance(process_instance)
                 form_schema = FormSchemaService.prepare_form_data(
                     form_file=form_schema_file_name,
                     process_model=process_model,

@@ -61,6 +61,7 @@ from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.logging_service import LoggingService
+from spiffworkflow_backend.services.model_sources import ModelSources
 from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
 from spiffworkflow_backend.services.process_instance_persistence_service import ProcessInstancePersistenceService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
@@ -164,11 +165,8 @@ class ProcessInstanceRuntime:
 
         subprocesses: IdToBpmnProcessSpecMapping | None = None
         if not process_instance_model.spiffworkflow_fully_initialized():
-            (
-                bpmn_process_spec,
-                subprocesses,
-            ) = BpmnProcessService.get_process_model_and_subprocesses(
-                process_instance_model.process_model_identifier, process_id_to_run=process_id_to_run
+            bpmn_process_spec, subprocesses = ModelSources.for_instance(process_instance_model).specs(
+                process_instance_model.process_model_identifier, process_id_to_run
             )
 
         self.process_model_identifier = process_instance_model.process_model_identifier
@@ -368,6 +366,7 @@ class ProcessInstanceRuntime:
         return ProcessModelService.extract_metadata(
             self.process_instance_model.process_model_identifier,
             self.get_current_data(),
+            process_instance=self.process_instance_model,
         )
 
     def store_metadata(self, metadata: dict) -> None:
