@@ -42,7 +42,11 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
 
-    task_guid: str = db.Column(ForeignKey(TaskModel.guid), nullable=True, index=True)
+    task_guid: str = db.Column(
+        ForeignKey(TaskModel.guid, name="human_task_ibfk_task_guid"),
+        nullable=True,
+        index=True,
+    )
     task_model = relationship(TaskModel)
 
     task_id: str = db.Column(db.String(50))  # guid
