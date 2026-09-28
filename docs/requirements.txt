@@ -49,5 +49,5 @@ sphinx-tags==0.4
 tornado==6.5.5
 typeguard==4.3.0
 Unidecode==1.4.0
-urllib3==2.7.0
+urllib3==2.8.0
 wrapt==1.16.0
