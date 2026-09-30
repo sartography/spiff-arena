@@ -222,8 +222,6 @@ class ProcessInstanceRuntime:
         full_bpmn_process_dict = {}
         bpmn_definition_to_task_definitions_mappings: dict = {}
         if process_instance_model.spiffworkflow_fully_initialized():
-            # Deserializing emits no spiff events. Never silence the process-wide spiff logger
-            # here: concurrent request threads would lose their task events.
             full_bpmn_process_dict = ProcessInstancePersistenceService.get_full_bpmn_process_dict(
                 bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
                 include_completed_subprocesses=include_completed_subprocesses,
