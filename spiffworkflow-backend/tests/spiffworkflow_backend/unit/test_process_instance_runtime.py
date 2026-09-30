@@ -1,4 +1,8 @@
 import json
+import logging
+import threading
+from collections.abc import Iterator
+from contextlib import contextmanager
 from types import SimpleNamespace
 from typing import Any
 from typing import Protocol
@@ -42,6 +46,38 @@ from spiffworkflow_backend.services.workflow_execution_service import TaskModelS
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
+
+
+class _RecordCollector(logging.Handler):
+    def __init__(self) -> None:
+        super().__init__(level=logging.INFO)
+        self.records: list[logging.LogRecord] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.records.append(record)
+
+
+@contextmanager
+def capture_spiff_events() -> Iterator[_RecordCollector]:
+    """Configure the spiff loggers like an event-stream deployment and collect what they emit.
+
+    With an event stream only the parent "spiff" logger has a level; the child loggers
+    inherit it, so anything that changes the parent level affects every event type.
+    """
+    parent = logging.getLogger("spiff")
+    children = [logging.getLogger(f"spiff.{name}") for name in ("task", "workflow", "data", "event")]
+    saved = [(parent, parent.level)] + [(child, child.level) for child in children]
+    collector = _RecordCollector()
+    parent.setLevel(logging.INFO)
+    for child in children:
+        child.setLevel(logging.NOTSET)
+    parent.addHandler(collector)
+    try:
+        yield collector
+    finally:
+        parent.removeHandler(collector)
+        for logger, level in saved:
+            logger.setLevel(level)
 
 
 class SupportsCeleryTaskRun(Protocol):
@@ -736,6 +772,64 @@ class TestProcessInstanceRuntime(BaseTest):
         spiff_task = runtime.__class__.get_task_by_bpmn_identifier("level_3_script_task", runtime.bpmn_process_instance)
         assert spiff_task is not None
         assert spiff_task.state == TaskState.COMPLETED
+
+    def test_loading_a_saved_instance_emits_no_spiff_events(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="group/call_activity_with_manual_task",
+            process_model_source_directory="call_activity_with_manual_task",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        ProcessInstanceRuntime(process_instance).do_engine_steps(save=True)
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        assert process_instance.active_human_tasks
+
+        with capture_spiff_events() as collector:
+            ProcessInstanceRuntime(process_instance)
+            ProcessInstanceRuntime(process_instance, include_completed_subprocesses=True)
+
+        assert [record.getMessage() for record in collector.records] == []
+
+    def test_loading_an_instance_does_not_drop_other_threads_spiff_events(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="group/call_activity_with_manual_task",
+            process_model_source_directory="call_activity_with_manual_task",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        ProcessInstanceRuntime(process_instance).do_engine_steps(save=True)
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+
+        original_get_full_bpmn_process_dict = ProcessInstancePersistenceService.get_full_bpmn_process_dict
+
+        def load_while_another_thread_completes_a_task(*args: Any, **kwargs: Any) -> dict:
+            # Another request thread in the same API process completes a task while this one loads.
+            other_request = threading.Thread(
+                target=lambda: logging.getLogger("spiff.task").info("State changed to COMPLETED"),
+            )
+            other_request.start()
+            other_request.join()
+            return original_get_full_bpmn_process_dict(*args, **kwargs)
+
+        with capture_spiff_events() as collector:
+            with patch.object(
+                ProcessInstancePersistenceService,
+                "get_full_bpmn_process_dict",
+                side_effect=load_while_another_thread_completes_a_task,
+            ):
+                ProcessInstanceRuntime(process_instance)
+            level_after_load = logging.getLogger("spiff").level
+
+        assert [record.getMessage() for record in collector.records] == ["State changed to COMPLETED"]
+        assert level_after_load == logging.INFO
 
     def test_properly_resets_process_to_given_task(
         self,
