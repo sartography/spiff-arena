@@ -8,7 +8,7 @@ on:
 jobs:
   clean-ghcr:
     name: Delete old main container images
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       packages: write
     steps:

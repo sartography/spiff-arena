@@ -44,7 +44,7 @@ on:
 jobs:
   create_docker_images:
     name: Build ${{ matrix.context }} image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:

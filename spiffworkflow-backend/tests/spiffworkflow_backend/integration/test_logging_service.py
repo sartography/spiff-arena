@@ -1,3 +1,4 @@
+import json
 import logging
 import sys
 from pathlib import Path
@@ -53,6 +54,15 @@ class TestLoggingService(BaseTest):
         logger = logging.getLogger("spiffworkflow_backend.services.service_task_delegate")
         assert logger.handlers
         assert logger.propagate is False
+
+    def test_spiff_log_handler_formats_unix_timestamp(self, app: Flask) -> None:
+        handler = SpiffLogHandler(app)
+        try:
+            with patch("spiffworkflow_backend.services.logging_service.time.time", return_value=1770000000.125):
+                payload = json.loads(handler.format(self.spiff_event_record()))
+            assert payload["timestamp"] == 1770000000.125
+        finally:
+            handler.close()
 
     def test_spiff_log_handler_skips_internal_diagnostic_records(self, app: Flask) -> None:
         handler = SpiffLogHandler(app)

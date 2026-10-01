@@ -11,7 +11,7 @@ permissions: {}
 
 jobs:
   send_notification:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Notify on Tests failure
         if: ${{ github.event.workflow_run.conclusion != 'success' && github.event.workflow_run.conclusion != 'skipped' }}
