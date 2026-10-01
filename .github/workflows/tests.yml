@@ -446,7 +446,8 @@ jobs:
       fail-fast: false
       matrix:
         suite: [playwright, accessibility]
-    runs-on: ubuntu-26.04
+    # Keep browser jobs on 24.04 until our locked Playwright supports Ubuntu 26.04.
+    runs-on: ubuntu-24.04
     needs:
       [changes, tests-backend, run_pre_commit_checks, check_docker_start_script]
     if: always() && !cancelled() && needs.changes.result == 'success' && (needs.tests-backend.result == 'success' || needs.tests-backend.result == 'skipped') && needs.run_pre_commit_checks.result == 'success' && (needs.check_docker_start_script.result == 'success' || needs.check_docker_start_script.result == 'skipped')
@@ -497,7 +498,7 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           # Both suites use the same browser; invalidate when dependencies change.
-          key: playwright-chromium-v1-ubuntu-26.04-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('spiffworkflow-frontend/test/browser/uv.lock') }}
+          key: playwright-chromium-v1-ubuntu-24.04-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('spiffworkflow-frontend/test/browser/uv.lock') }}
       - name: Install Playwright Chromium
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         working-directory: ./spiffworkflow-frontend/test/browser
