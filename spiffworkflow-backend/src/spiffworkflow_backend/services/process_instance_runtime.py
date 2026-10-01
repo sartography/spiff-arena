@@ -1,6 +1,5 @@
 import copy
 import json
-import logging
 import re
 import time
 from collections.abc import Callable
@@ -223,31 +222,21 @@ class ProcessInstanceRuntime:
         full_bpmn_process_dict = {}
         bpmn_definition_to_task_definitions_mappings: dict = {}
         if process_instance_model.spiffworkflow_fully_initialized():
-            # turn off logging to avoid duplicated spiff logs
-            spiff_logger = logging.getLogger("spiff")
-            original_spiff_logger_log_level = spiff_logger.level
-            spiff_logger.setLevel(logging.WARNING)
-
-            try:
-                full_bpmn_process_dict = ProcessInstancePersistenceService.get_full_bpmn_process_dict(
-                    bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
-                    include_completed_subprocesses=include_completed_subprocesses,
-                    include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
-                    task_model_mapping=task_model_mapping,
-                    bpmn_subprocess_mapping=bpmn_subprocess_mapping,
-                    spiff_serializer_version=process_instance_model.spiff_serializer_version,
-                    bpmn_process_definition=process_instance_model.bpmn_process_definition,
-                    bpmn_process=process_instance_model.bpmn_process,
-                    bpmn_process_definition_id=process_instance_model.bpmn_process_definition_id,
-                )
-                # FIXME: the from_dict entrypoint in spiff will one day do this copy instead
-                process_copy = copy.deepcopy(full_bpmn_process_dict)
-                bpmn_process_instance = BpmnProcessService.serializer.from_dict(process_copy)
-                bpmn_process_instance.get_tasks()
-            except Exception as err:
-                raise err
-            finally:
-                spiff_logger.setLevel(original_spiff_logger_log_level)
+            full_bpmn_process_dict = ProcessInstancePersistenceService.get_full_bpmn_process_dict(
+                bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
+                include_completed_subprocesses=include_completed_subprocesses,
+                include_task_data_for_completed_tasks=include_task_data_for_completed_tasks,
+                task_model_mapping=task_model_mapping,
+                bpmn_subprocess_mapping=bpmn_subprocess_mapping,
+                spiff_serializer_version=process_instance_model.spiff_serializer_version,
+                bpmn_process_definition=process_instance_model.bpmn_process_definition,
+                bpmn_process=process_instance_model.bpmn_process,
+                bpmn_process_definition_id=process_instance_model.bpmn_process_definition_id,
+            )
+            # FIXME: the from_dict entrypoint in spiff will one day do this copy instead
+            process_copy = copy.deepcopy(full_bpmn_process_dict)
+            bpmn_process_instance = BpmnProcessService.serializer.from_dict(process_copy)
+            bpmn_process_instance.get_tasks()
         else:
             bpmn_process_instance = BpmnProcessService.get_bpmn_process_instance_from_workflow_spec(spec, subprocesses)
 
