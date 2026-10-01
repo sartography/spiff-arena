@@ -149,9 +149,17 @@ def test_task_show_has_no_wcag_violations(page: Page) -> None:
     single biggest coverage gap in this suite (every other test scanned
     admin/list views, not a real task form)."""
     login(page)
-    page.goto(BASE_URL)
-    page.get_by_role("button", name="Complete task").first.click()
-    expect(page.locator("h3")).to_contain_text("Task:", timeout=10000)
+    # Create our own task: this suite runs independently of the other browser
+    # tests in CI and cannot rely on tasks left behind by those tests.
+    page.goto(
+        f"{BASE_URL}/process-models/"
+        "misc:acceptance-tests-group-one:acceptance-tests-model-2"
+    )
+    page.get_by_test_id("start-process-instance").first.click()
+    expect(
+        page.get_by_text("Task: get_form_num_one", exact=True)
+    ).to_be_visible(timeout=10000)
+    expect(page.locator("#root_form_num_1")).to_be_visible(timeout=10000)
     assert_no_violations(page, "task_show")
     logout(page)
 
