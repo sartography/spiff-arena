@@ -159,7 +159,10 @@ def test_task_show_has_no_wcag_violations(page: Page) -> None:
     expect(
         page.get_by_text("Task: get_form_num_one", exact=True)
     ).to_be_visible(timeout=10000)
-    expect(page.locator("#root_form_num_1")).to_be_visible(timeout=10000)
+    # The hidden autosave form renders the same field IDs.
+    expect(
+        page.locator('form[id^="form-to-submit-"] #root_form_num_1')
+    ).to_be_visible(timeout=10000)
     assert_no_violations(page, "task_show")
     logout(page)
 
