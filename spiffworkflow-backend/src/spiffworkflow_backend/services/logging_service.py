@@ -5,7 +5,6 @@ import re
 import sys
 import time
 from collections import deque
-from datetime import datetime
 from logging.handlers import SocketHandler
 from threading import Event
 from threading import Thread
@@ -72,7 +71,7 @@ class SpiffLogHandler(SocketHandler):
                 "type": record.name,
                 "id": str(uuid4()),
                 "source": self.app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_SOURCE"],
-                "timestamp": datetime.utcnow().timestamp(),
+                "timestamp": time.time(),
                 "data": record._spiff_data,
             }
         )
