@@ -442,6 +442,10 @@ jobs:
           if-no-files-found: error
 
   playwright-run:
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [playwright, accessibility]
     runs-on: ubuntu-latest
     needs:
       [changes, tests-backend, run_pre_commit_checks, check_docker_start_script]
@@ -491,6 +495,7 @@ jobs:
         working-directory: ./spiffworkflow-frontend/test/browser
         run: uv run playwright install --with-deps
       - name: Playwright run
+        if: matrix.suite == 'playwright'
         working-directory: ./spiffworkflow-frontend/test/browser
         run: uv run pytest --tracing=retain-on-failure --ignore=test_accessibility.py
         env:
@@ -499,13 +504,14 @@ jobs:
           BROWSER_TEST_USERNAME: "ciadmin1"
           BROWSER_TEST_PASSWORD: "ciadmin1"
       - name: Accessibility scan (axe-core)
+        if: matrix.suite == 'accessibility'
         working-directory: ./spiffworkflow-frontend/test/browser
         run: uv run pytest test_accessibility.py -v --tracing=retain-on-failure
         env:
           BROWSER_TEST_USERNAME: "ciadmin1"
           BROWSER_TEST_PASSWORD: "ciadmin1"
       - name: Accessibility scan summary
-        if: always()
+        if: always() && matrix.suite == 'accessibility'
         working-directory: ./spiffworkflow-frontend/test/browser
         run: |
           python3 - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
@@ -539,12 +545,12 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          name: spiffworkflow-backend-logs
+          name: spiffworkflow-backend-logs-${{ matrix.suite }}
           path: "./spiffworkflow-backend/log/*.log"
       - name: Upload Playwright traces
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         if: ${{ !cancelled() }}
         with:
-          name: playwright-traces
+          name: playwright-traces-${{ matrix.suite }}
           path: ./spiffworkflow-frontend/test/browser/test-results/
           if-no-files-found: ignore
