@@ -34,7 +34,7 @@ defaults:
 
 jobs:
   changes:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     defaults:
       run:
         working-directory: .
@@ -72,57 +72,57 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { python: "3.12", os: "ubuntu-24.04", session: "safety" }
-          - { python: "3.12", os: "ubuntu-24.04", session: "mypy" }
-          - { python: "3.11", os: "ubuntu-24.04", session: "safety" }
-          - { python: "3.11", os: "ubuntu-24.04", session: "mypy" }
-          - { python: "3.10", os: "ubuntu-24.04", session: "mypy" }
+          - { python: "3.12", os: "ubuntu-26.04", session: "safety" }
+          - { python: "3.12", os: "ubuntu-26.04", session: "mypy" }
+          - { python: "3.11", os: "ubuntu-26.04", session: "safety" }
+          - { python: "3.11", os: "ubuntu-26.04", session: "mypy" }
+          - { python: "3.10", os: "ubuntu-26.04", session: "mypy" }
           - {
               python: "3.11",
-              os: "ubuntu-24.04",
+              os: "ubuntu-26.04",
               session: "tests",
               database: "mysql",
             }
           - {
               python: "3.12",
-              os: "ubuntu-24.04",
+              os: "ubuntu-26.04",
               session: "tests",
               database: "mysql",
               upload_coverage: true,
             }
           - {
               python: "3.13",
-              os: "ubuntu-24.04",
+              os: "ubuntu-26.04",
               session: "tests",
               database: "mysql",
             }
           - {
               python: "3.11",
-              os: "ubuntu-24.04",
+              os: "ubuntu-26.04",
               session: "tests",
               database: "postgres",
             }
           - {
               python: "3.12",
-              os: "ubuntu-24.04",
+              os: "ubuntu-26.04",
               session: "tests",
               database: "postgres",
             }
           - {
               python: "3.11",
-              os: "ubuntu-24.04",
+              os: "ubuntu-26.04",
               session: "tests",
               database: "sqlite",
             }
           - {
               python: "3.12",
-              os: "ubuntu-24.04",
+              os: "ubuntu-26.04",
               session: "tests",
               database: "sqlite",
             }
           - {
               python: "3.10",
-              os: "ubuntu-24.04",
+              os: "ubuntu-26.04",
               session: "tests",
               database: "sqlite",
             }
@@ -146,7 +146,7 @@ jobs:
               # probably the next release fixes it.
               # https://github.com/agronholm/typeguard/issues/242
               python: "3.11",
-              os: "ubuntu-24.04",
+              os: "ubuntu-26.04",
               session: "typeguard",
               database: "sqlite",
             }
@@ -155,12 +155,12 @@ jobs:
               # probably the next release fixes it.
               # https://github.com/agronholm/typeguard/issues/242
               python: "3.12",
-              os: "ubuntu-24.04",
+              os: "ubuntu-26.04",
               session: "typeguard",
               database: "sqlite",
             }
-          # - { python: "3.11", os: "ubuntu-24.04", session: "xdoctest" }
-          # - { python: "3.11", os: "ubuntu-24.04", session: "docs-build" }
+          # - { python: "3.11", os: "ubuntu-26.04", session: "xdoctest" }
+          # - { python: "3.11", os: "ubuntu-26.04", session: "docs-build" }
 
     env:
       FLASK_SESSION_SECRET_KEY: super_secret_key
@@ -261,7 +261,7 @@ jobs:
           path: "./spiffworkflow-backend/log/*.log"
 
   run_pre_commit_checks:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     defaults:
       run:
         working-directory: .
@@ -293,7 +293,7 @@ jobs:
       contents: read # for actions/checkout to fetch code
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
@@ -314,7 +314,7 @@ jobs:
         run: ./bin/wait_for_backend_to_be_up 5
 
   coverage:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs:
       [changes, tests-backend, run_pre_commit_checks, check_docker_start_script]
     if: needs.changes.outputs.backend == 'true'
@@ -378,7 +378,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   tests-frontend:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs:
       [changes, tests-backend, run_pre_commit_checks, check_docker_start_script]
     if: always() && !cancelled() && needs.changes.result == 'success' && (needs.tests-backend.result == 'success' || needs.tests-backend.result == 'skipped') && needs.run_pre_commit_checks.result == 'success' && (needs.check_docker_start_script.result == 'success' || needs.check_docker_start_script.result == 'skipped')
@@ -415,7 +415,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   dependabot_pr_number:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: tests-frontend
     if: github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'
     defaults:
@@ -446,7 +446,7 @@ jobs:
       fail-fast: false
       matrix:
         suite: [playwright, accessibility]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs:
       [changes, tests-backend, run_pre_commit_checks, check_docker_start_script]
     if: always() && !cancelled() && needs.changes.result == 'success' && (needs.tests-backend.result == 'success' || needs.tests-backend.result == 'skipped') && needs.run_pre_commit_checks.result == 'success' && (needs.check_docker_start_script.result == 'success' || needs.check_docker_start_script.result == 'skipped')
@@ -497,7 +497,7 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           # Both suites use the same browser; invalidate when dependencies change.
-          key: playwright-chromium-v1-ubuntu-24.04-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('spiffworkflow-frontend/test/browser/uv.lock') }}
+          key: playwright-chromium-v1-ubuntu-26.04-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('spiffworkflow-frontend/test/browser/uv.lock') }}
       - name: Install Playwright Chromium
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         working-directory: ./spiffworkflow-frontend/test/browser
