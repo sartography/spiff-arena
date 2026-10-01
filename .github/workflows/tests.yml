@@ -226,11 +226,11 @@ jobs:
 
       - name: Install mysqlclient and psycopg2 lib dependencies
         if: matrix.os == 'macos-latest'
-        # mysql 8.3 causes failure in poetry install so pin to 8.0. https://github.com/feast-dev/feast/issues/3916
-        # 8.0 is keg-only, so we have to force link it in order for pkg-config and everything to find it.
+        # Only client libraries are needed for mysqlclient; this job uses SQLite.
+        # The versioned client is keg-only, so expose its pkg-config metadata explicitly.
         run: |
-          brew install mysql@8.0 postgresql@16
-          brew link mysql@8.0 2>/dev/null || true
+          brew install pkg-config mysql-client@8.4 postgresql@16
+          echo "PKG_CONFIG_PATH=$(brew --prefix mysql-client@8.4)/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}" >> "$GITHUB_ENV"
 
       - name: Run Session
         run: |
@@ -493,7 +493,7 @@ jobs:
         run: pip install --constraint=../.github/workflows/constraints.txt uv
       - name: Cache Playwright Chromium
         id: playwright-cache
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
           path: ~/.cache/ms-playwright
           # Both suites use the same browser; invalidate when dependencies change.
