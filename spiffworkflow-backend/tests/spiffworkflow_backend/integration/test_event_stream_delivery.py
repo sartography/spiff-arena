@@ -1,26 +1,32 @@
 import json
 import logging
 import os
+import select
 import socket
 import time
+import warnings
 from collections.abc import Callable
 from socket import SocketIO
 from threading import Event
 from threading import Thread
+from threading import current_thread
+from typing import Any
 from typing import cast
 from unittest.mock import patch
 
+import pytest
 from flask.app import Flask
 from prometheus_client import REGISTRY
 
 from spiffworkflow_backend.services.logging_service import EVENT_STREAM_ACK_PROTOCOL_LINE
+from spiffworkflow_backend.services.logging_service import EVENT_STREAM_PENDING_EVENTS
 from spiffworkflow_backend.services.logging_service import SpiffLogHandler
 from spiffworkflow_backend.services.logging_service import configure_event_stream_socket
 
 Behavior = Callable[[SocketIO, list[bytes]], None]
 
 
-def event_record() -> logging.LogRecord:
+def event_record(data: dict[str, Any] | None = None) -> logging.LogRecord:
     record = logging.LogRecord(
         name="spiff.event",
         level=logging.INFO,
@@ -30,7 +36,7 @@ def event_record() -> logging.LogRecord:
         args=(),
         exc_info=None,
     )
-    record.__dict__["_spiff_data"] = {"process_instance_id": 123}
+    record.__dict__["_spiff_data"] = data if data is not None else {"process_instance_id": 123}
     return record
 
 
@@ -86,6 +92,44 @@ def reject_first(count: int) -> Behavior:
             lines.append(line)
             stream.write(b"NACK invalid-event\n" if index == 0 else f"ACK {event_id(line)}\n".encode())
         stream.readline()
+
+    return behavior
+
+
+def acknowledge_after_full_window(window: int, total: int, release: Event) -> Behavior:
+    def behavior(stream: SocketIO, lines: list[bytes]) -> None:
+        negotiate(stream)
+        for _ in range(window):
+            lines.append(stream.readline())
+        release.wait(timeout=5)
+        stream.write(b"".join(f"ACK {event_id(line)}\n".encode() for line in lines))
+        while len(lines) < total:
+            line = stream.readline()
+            if not line:
+                return
+            lines.append(line)
+            stream.write(f"ACK {event_id(line)}\n".encode())
+        stream.readline()
+
+    return behavior
+
+
+def acknowledge_some_then_close(count: int, acknowledged: int) -> Behavior:
+    def behavior(stream: SocketIO, lines: list[bytes]) -> None:
+        negotiate(stream)
+        for _ in range(count):
+            lines.append(stream.readline())
+        stream.write(b"".join(f"ACK {event_id(line)}\n".encode() for line in lines[:acknowledged]))
+
+    return behavior
+
+
+def acknowledge_until_closed() -> Behavior:
+    def behavior(stream: SocketIO, lines: list[bytes]) -> None:
+        negotiate(stream)
+        while line := stream.readline():
+            lines.append(line)
+            stream.write(f"ACK {event_id(line)}\n".encode())
 
     return behavior
 
@@ -156,6 +200,27 @@ def emit_without_delivery(handler: SpiffLogHandler, count: int) -> list[str]:
         for _ in range(count):
             handler.emit(event_record())
     return [event_id(payload) for payload in handler.pending_events]
+
+
+def close_in_forked_child(handler: SpiffLogHandler) -> int:
+    with warnings.catch_warnings():
+        # Python 3.12+ warns about forking a process that has other threads.
+        warnings.simplefilter("ignore", DeprecationWarning)
+        pid = os.fork()
+    if pid == 0:
+        exit_code = 1
+        try:
+            handler.close()
+            exit_code = 0
+        finally:
+            os._exit(exit_code)
+    _, status = os.waitpid(pid, 0)
+    return os.waitstatus_to_exitcode(status)
+
+
+def peer_received_data(peer: socket.socket) -> bool:
+    readable, _, _ = select.select([peer], [], [], 0.2)
+    return bool(readable)
 
 
 class TestEventStreamDelivery:
@@ -250,6 +315,121 @@ class TestEventStreamDelivery:
         finally:
             listener.close()
 
+    def test_acknowledged_sender_waits_at_a_full_window_until_acknowledged(self, app: Flask) -> None:
+        release = Event()
+        listener = FakeListener([acknowledge_after_full_window(3, 7, release)])
+        handler = acknowledged_handler(app, listener.address)
+        handler.ack_window = 3
+        try:
+            ids = emit_without_delivery(handler, 7)
+            handler.start_retry_thread()
+
+            assert wait_until(lambda: bool(listener.connections) and len(listener.connections[0]) == 3)
+            # Give the sender time to overrun the window if it were going to.
+            time.sleep(0.2)
+            with handler.state_lock:
+                assert [event_id(payload) for _id, payload in handler.unacknowledged_events] == ids[:3]
+                assert [event_id(payload) for payload in handler.pending_events] == ids[3:]
+            assert len(listener.connections[0]) == 3
+
+            release.set()
+            assert wait_until(lambda: handler.pending_event_count() == 0)
+            assert [event_id(line) for line in listener.connections[0]] == ids
+        finally:
+            handler.close()
+            listener.close()
+
+    def test_acknowledged_sender_resends_only_unacknowledged_events_after_partial_progress(self, app: Flask) -> None:
+        listener = FakeListener([acknowledge_some_then_close(4, 2), acknowledge(2)])
+        handler = acknowledged_handler(app, listener.address)
+        try:
+            ids = emit_without_delivery(handler, 4)
+            handler.start_retry_thread()
+
+            assert wait_until(lambda: handler.pending_event_count() == 0)
+            assert [[event_id(line) for line in lines] for lines in listener.connections] == [ids, ids[2:]]
+        finally:
+            handler.close()
+            listener.close()
+
+    def test_acknowledged_sender_keeps_concurrent_events_while_reconnecting(self, app: Flask) -> None:
+        thread_count = 4
+        events_per_thread = 25
+        listener = FakeListener([read_then_close(5), read_then_close(0, negotiated=False), acknowledge_until_closed()])
+        handler = acknowledged_handler(app, listener.address)
+
+        def emit_sequence(thread_index: int) -> None:
+            for sequence in range(events_per_thread):
+                handler.emit(event_record({"thread": thread_index, "sequence": sequence}))
+                time.sleep(0.002)
+
+        try:
+            emitters = [Thread(target=emit_sequence, args=(index,)) for index in range(thread_count)]
+            for emitter in emitters:
+                emitter.start()
+            for emitter in emitters:
+                emitter.join(timeout=5)
+
+            total = thread_count * events_per_thread
+            assert wait_until(lambda: len(listener.connections) == 3 and len(listener.connections[2]) == total)
+            assert wait_until(lambda: handler.pending_event_count() == 0)
+            delivered = listener.connections[2]
+            assert len({event_id(line) for line in delivered}) == total
+            assert listener.connections[0] == delivered[:5]
+            assert listener.connections[1] == []
+            data = [json.loads(line)["data"] for line in delivered]
+            for thread_index in range(thread_count):
+                sequences = [item["sequence"] for item in data if item["thread"] == thread_index]
+                assert sequences == list(range(events_per_thread))
+        finally:
+            handler.close()
+            listener.close()
+
+    def test_pending_gauge_matches_queue_when_emit_races_a_drain(self, app: Flask) -> None:
+        handler = acknowledged_handler(app)
+        sender_side, peer = socket.socketpair()
+        handler.sock = cast(socket.socket | None, sender_side)
+        emitter_computed_depth = Event()
+        resume_emitter = Event()
+        publish = EVENT_STREAM_PENDING_EVENTS.set
+
+        def emit() -> None:
+            handler.emit(event_record())
+
+        emitter = Thread(target=emit)
+
+        def pause_emitter_before_publishing(value: float) -> None:
+            if current_thread() is emitter and not emitter_computed_depth.is_set():
+                emitter_computed_depth.set()
+                resume_emitter.wait(timeout=5)
+            publish(value)
+
+        def drain() -> None:
+            handler.send_acknowledged_window()
+            handler.handle_acknowledgement(f"ACK {handler.unacknowledged_events[0][0]}".encode())
+            handler.update_pending_metric()
+
+        try:
+            with (
+                patch.object(EVENT_STREAM_PENDING_EVENTS, "set", side_effect=pause_emitter_before_publishing),
+                patch.object(handler, "start_retry_thread"),
+            ):
+                emitter.start()
+                assert emitter_computed_depth.wait(timeout=5)
+                drainer = Thread(target=drain)
+                drainer.start()
+                drainer.join(timeout=0.2)
+                resume_emitter.set()
+                emitter.join(timeout=5)
+                drainer.join(timeout=5)
+
+            assert handler.pending_event_count() == 0
+            assert REGISTRY.get_sample_value("spiff_event_stream_pending_events") == 0
+        finally:
+            resume_emitter.set()
+            handler.close()
+            peer.close()
+
     def test_legacy_sender_reconnects_after_listener_closes_connection(self, app: Flask) -> None:
         listener = FakeListener([read_then_close(1, negotiated=False), read_then_close(1, negotiated=False)])
         handler = connected_handler(app, listener.address)
@@ -283,6 +463,51 @@ class TestEventStreamDelivery:
         assert handler.owner_pid == os.getpid()
         peer.close()
         handler.close()
+
+    @pytest.mark.skipif(not hasattr(os, "fork"), reason="requires os.fork")
+    def test_acknowledged_forked_child_that_only_closes_leaves_parent_connection_alone(self, app: Flask) -> None:
+        handler = acknowledged_handler(app)
+        inherited, peer = socket.socketpair()
+        handler.sock = cast(socket.socket | None, inherited)
+        try:
+            parent_ids = emit_without_delivery(handler, 1)
+
+            assert close_in_forked_child(handler) == 0
+
+            assert not peer_received_data(peer)
+            peer.settimeout(5)
+            stream = peer.makefile("rwb", buffering=0)
+            handler.emit(event_record())
+            lines = [stream.readline(), stream.readline()]
+            assert event_id(lines[0]) == parent_ids[0]
+            stream.write(b"".join(f"ACK {event_id(line)}\n".encode() for line in lines))
+            assert wait_until(lambda: handler.pending_event_count() == 0)
+        finally:
+            handler.close()
+            peer.close()
+
+    @pytest.mark.skipif(not hasattr(os, "fork"), reason="requires os.fork")
+    def test_legacy_forked_child_that_only_closes_leaves_parent_connection_alone(self, app: Flask) -> None:
+        handler = connected_handler(app, None)
+        handler.retry_interval_seconds = 0.01
+        handler.shutdown_drain_seconds = 2
+        inherited, peer = socket.socketpair()
+        handler.sock = cast(socket.socket | None, inherited)
+        parent_payload = handler.makePickle(event_record())
+        handler.pending_events.append(parent_payload)
+        try:
+            assert close_in_forked_child(handler) == 0
+
+            assert not peer_received_data(peer)
+            peer.settimeout(5)
+            stream = peer.makefile("rb", buffering=0)
+            handler.emit(event_record())
+            lines = [stream.readline(), stream.readline()]
+            assert lines[0] == parent_payload
+            assert wait_until(lambda: handler.pending_event_count() == 0)
+        finally:
+            handler.close()
+            peer.close()
 
     def test_event_stream_socket_detects_dead_peers(self) -> None:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:

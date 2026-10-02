@@ -8,9 +8,11 @@ import select
 import socket
 import sys
 import time
+import weakref
 from collections import deque
 from logging.handlers import SocketHandler
 from threading import Event
+from threading import RLock
 from threading import Thread
 from threading import current_thread
 from typing import Any
@@ -96,6 +98,18 @@ def skip_apscheduler_running_job_record(record: logging.LogRecord) -> bool:
     return not record.getMessage().startswith("Running job ")
 
 
+EVENT_STREAM_HANDLERS: "weakref.WeakSet[SpiffLogHandler]" = weakref.WeakSet()
+
+
+def reset_event_stream_handlers_after_fork() -> None:
+    for handler in list(EVENT_STREAM_HANDLERS):
+        handler.reset_after_fork_if_needed()
+
+
+if hasattr(os, "register_at_fork"):
+    os.register_at_fork(after_in_child=reset_event_stream_handlers_after_fork)
+
+
 class SpiffLogHandler(SocketHandler):
     def __init__(self, app: Flask, *args: Any) -> None:
         super().__init__(
@@ -103,6 +117,9 @@ class SpiffLogHandler(SocketHandler):
             app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT"],
         )
         self.app = app
+        # Guards both queues and the pending gauge so every gauge write reflects the
+        # queue state at that moment. Network I/O must stay outside this lock.
+        self.state_lock = RLock()
         self.pending_events: deque[bytes] = deque()
         self.retry_stop = Event()
         self.retry_wakeup = Event()
@@ -127,6 +144,7 @@ class SpiffLogHandler(SocketHandler):
             self.socket_warning_interval_seconds = 60
         if self.socket_warning_interval_seconds < 1:
             self.socket_warning_interval_seconds = 60
+        EVENT_STREAM_HANDLERS.add(self)
 
     def format(self, record: Any) -> str:
         return json.dumps(
@@ -222,19 +240,27 @@ class SpiffLogHandler(SocketHandler):
         return sock
 
     def pending_event_count(self) -> int:
-        return len(self.pending_events) + len(self.unacknowledged_events)
+        with self.state_lock:
+            return len(self.pending_events) + len(self.unacknowledged_events)
 
     def update_pending_metric(self) -> None:
-        EVENT_STREAM_PENDING_EVENTS.set(self.pending_event_count())
+        with self.state_lock:
+            EVENT_STREAM_PENDING_EVENTS.set(self.pending_event_count())
 
     def reset_after_fork_if_needed(self) -> None:
-        """Discard connection and buffer state copied from a parent process."""
+        """Discard connection, buffer, and lock state copied from a parent process."""
         pid = os.getpid()
         if pid == self.owner_pid:
             return
         self.owner_pid = pid
+        # A parent thread may have held these locks at fork time and does not exist in the child.
+        self.state_lock = RLock()
+        self.retry_stop = Event()
+        self.retry_wakeup = Event()
+        self.retry_thread = None
         if self.sock is not None:
-            # Closing the child's descriptor leaves the parent's connection open.
+            # Closing only the child's descriptor leaves the parent's connection open;
+            # shutdown() would tear down the shared connection.
             with contextlib.suppress(OSError):
                 self.sock.close()
             self.sock = None
@@ -242,10 +268,6 @@ class SpiffLogHandler(SocketHandler):
         self.unacknowledged_events.clear()
         self.ack_buffer.clear()
         self.retryTime = None
-        # A parent thread may have held these events' internal locks at fork time.
-        self.retry_stop = Event()
-        self.retry_wakeup = Event()
-        self.retry_thread = None
 
     def schedule_reconnect(self, jitter: bool = False) -> None:
         if self.retryTime is None:
@@ -293,14 +315,14 @@ class SpiffLogHandler(SocketHandler):
         try:
             self.reset_after_fork_if_needed()
             s = self.makePickle(record)
-            if self.ack_enabled:
-                # The request or task thread never touches the socket; the sender thread delivers.
+            with self.state_lock:
+                queue_was_empty = not self.pending_events
                 self.pending_events.append(s)
                 self.update_pending_metric()
+            if self.ack_enabled:
+                # The request or task thread never touches the socket; the sender thread delivers.
                 self.start_retry_thread()
                 return
-            queue_was_empty = not self.pending_events
-            self.pending_events.append(s)
             self.flush_pending(max_events=1, record=record if queue_was_empty else None)
             if self.pending_events:
                 self.start_retry_thread()
@@ -322,26 +344,30 @@ class SpiffLogHandler(SocketHandler):
             payload = self.pending_events[0]
             if not self.send(payload, record):
                 break
-            self.pending_events.popleft()
+            with self.state_lock:
+                self.pending_events.popleft()
             record = None
             sent += 1
         self.update_pending_metric()
 
     def start_retry_thread(self) -> None:
-        if self.retry_thread is None or not self.retry_thread.is_alive():
-            self.retry_thread = Thread(
-                target=self.retry_pending_events,
-                daemon=True,
-                name="spiff-event-stream-retry",
-            )
-            self.retry_thread.start()
-        self.retry_wakeup.set()
+        # Emitters and close() can race here; two senders would interleave writes and acknowledgements.
+        with self.state_lock:
+            if self.retry_thread is None or not self.retry_thread.is_alive():
+                self.retry_thread = Thread(
+                    target=self.retry_pending_events,
+                    daemon=True,
+                    name="spiff-event-stream-retry",
+                )
+                self.retry_thread.start()
+            self.retry_wakeup.set()
 
     def retry_pending_events(self) -> None:
         while not self.retry_stop.is_set():
             if self.ack_enabled:
                 if self.pending_event_count() and self.deliver_acknowledged():
                     continue
+                self.update_pending_metric()
                 self.retry_wakeup.wait(self.retry_interval_seconds)
                 self.retry_wakeup.clear()
                 continue
@@ -416,17 +442,22 @@ class SpiffLogHandler(SocketHandler):
         if self.sock is None:
             raise EventStreamProtocolError("event stream socket is not connected")
         batch: list[bytes] = []
-        while self.pending_events and len(self.unacknowledged_events) < self.ack_window:
-            payload = self.pending_events.popleft()
-            try:
-                event_id = str(json.loads(payload)["id"])
-            except (ValueError, KeyError, TypeError):
-                self.reject_event(None, payload, "event has no id")
-                continue
-            if not self.unacknowledged_events:
-                self.last_ack_progress_at = time.monotonic()
-            self.unacknowledged_events.append((event_id, payload))
-            batch.append(payload)
+        invalid_payloads: list[bytes] = []
+        with self.state_lock:
+            while self.pending_events and len(self.unacknowledged_events) < self.ack_window:
+                payload = self.pending_events.popleft()
+                try:
+                    event_id = str(json.loads(payload)["id"])
+                except (ValueError, KeyError, TypeError):
+                    invalid_payloads.append(payload)
+                    continue
+                if not self.unacknowledged_events:
+                    self.last_ack_progress_at = time.monotonic()
+                self.unacknowledged_events.append((event_id, payload))
+                batch.append(payload)
+            self.update_pending_metric()
+        for payload in invalid_payloads:
+            self.reject_event(None, payload, "event has no id")
         if batch:
             self.sock.settimeout(self.ack_timeout_seconds)
             self.sock.sendall(b"".join(batch))
@@ -454,16 +485,17 @@ class SpiffLogHandler(SocketHandler):
             raise EventStreamProtocolError("event stream listener sent an oversized protocol line")
 
     def handle_acknowledgement(self, line: bytes) -> None:
-        if not self.unacknowledged_events:
-            raise EventStreamProtocolError("event stream listener replied with no event awaiting acknowledgement")
-        event_id, payload = self.unacknowledged_events[0]
-        if line == f"ACK {event_id}".encode():
+        with self.state_lock:
+            if not self.unacknowledged_events:
+                raise EventStreamProtocolError("event stream listener replied with no event awaiting acknowledgement")
+            event_id, payload = self.unacknowledged_events[0]
+            rejected = line.startswith(b"NACK ")
+            if line != f"ACK {event_id}".encode() and not rejected:
+                raise EventStreamProtocolError("event stream listener sent an acknowledgement out of order")
             self.unacknowledged_events.popleft()
-        elif line.startswith(b"NACK "):
-            self.unacknowledged_events.popleft()
+            self.update_pending_metric()
+        if rejected:
             self.reject_event(event_id, payload, line[5:].decode("utf-8", errors="replace"))
-        else:
-            raise EventStreamProtocolError("event stream listener sent an acknowledgement out of order")
         self.last_ack_progress_at = time.monotonic()
 
     def reject_event(self, event_id: str | None, payload: bytes, reason: str) -> None:
@@ -485,10 +517,12 @@ class SpiffLogHandler(SocketHandler):
                 self.sock.close()
             self.sock = None
         self.ack_buffer.clear()
-        if self.unacknowledged_events:
-            # Resend in the original order; the listener's receipt ledger drops duplicates.
-            self.pending_events.extendleft(reversed([payload for _event_id, payload in self.unacknowledged_events]))
-            self.unacknowledged_events.clear()
+        with self.state_lock:
+            if self.unacknowledged_events:
+                # Resend in the original order; the listener's receipt ledger drops duplicates.
+                self.pending_events.extendleft(reversed([payload for _event_id, payload in self.unacknowledged_events]))
+                self.unacknowledged_events.clear()
+                self.update_pending_metric()
 
     def close_acknowledged(self) -> None:
         deadline = time.monotonic() + self.shutdown_drain_seconds
@@ -515,6 +549,8 @@ class SpiffLogHandler(SocketHandler):
             )
 
     def close(self) -> None:
+        # A forked child that never emitted must not drain the parent's events over the parent's connection.
+        self.reset_after_fork_if_needed()
         if self.ack_enabled:
             self.close_acknowledged()
             super().close()
