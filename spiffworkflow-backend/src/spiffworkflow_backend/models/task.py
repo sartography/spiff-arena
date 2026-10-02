@@ -47,7 +47,7 @@ class MultiInstanceType(enum.Enum):
 class TaskModel(SpiffworkflowBaseDBModel):
     __tablename__ = "task"
     __allow_unmapped__ = True
-    guid: str = db.Column(db.String(36), nullable=False, index=True, primary_key=True, unique=True)
+    guid: str = db.Column(db.String(36), nullable=False, primary_key=True)
     bpmn_process_id: int = db.Column(ForeignKey(BpmnProcessModel.id), nullable=False, index=True)  # type: ignore
     bpmn_process = relationship(BpmnProcessModel, back_populates="tasks")
     human_tasks = relationship("HumanTaskModel", back_populates="task_model", cascade="delete")
