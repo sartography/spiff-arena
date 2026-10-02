@@ -64,7 +64,7 @@ See [Connector Proxy](../../explanation/dev/connector_proxy) for details on how 
 
 ## Testing
 
-Create a new process model as described in the [QuickStart Guide](../../getting_started/quickstart_guide#how-to-create-a-bpmn-process).
+Create a new process model as described in the [QuickStart Guide](quickstart-create-process).
 Add a `Service Task` and in its properties panel, you will see a dropdown from which you can select the connector in your `Connector Proxy` to call.
 In this demo, we deployed HTTP GET and POST connectors:
 

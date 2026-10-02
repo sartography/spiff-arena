@@ -66,7 +66,7 @@ pymysql.install_as_MySQLdb()
 
 If you prefer not to install anything locally:
 
-- Follow the hosted demo login instructions in the [QuickStart Guide](../getting_started/quickstart_guide#how-to-log-in-to-spiff-arena).
+- Follow the hosted demo login instructions in the [QuickStart Guide](quickstart-login).
 
 - Access a version of Spiff hosted on the internet.
 
