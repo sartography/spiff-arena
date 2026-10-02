@@ -37,7 +37,7 @@ If you prefer not to use the `sample-process-models` directory or want to start 
 
 For a potentially faster setup:
 
-- Follow the guide at [https://www.spiffworkflow.org/posts/articles/get_started_docker](https://www.spiffworkflow.org/posts/articles/get_started_docker).
+- Follow the Docker Compose instructions in [Developer Setup](../explanation/dev/developer_setup).
 
 - Use the provided commands to run the server with Docker Compose.
 
@@ -66,7 +66,7 @@ pymysql.install_as_MySQLdb()
 
 If you prefer not to install anything locally:
 
-- Navigate to [https://www.spiffworkflow.org/posts/articles/get_started](https://www.spiffworkflow.org/posts/articles/get_started).
+- Follow the hosted demo login instructions in the [QuickStart Guide](quickstart-login).
 
 - Access a version of Spiff hosted on the internet.
 

@@ -3,7 +3,7 @@
 ## Setting the Environment Variable
 
 Once a `Connector Proxy` has been deployed, to integrate it with Spiff Arena, we simply need to update an environment variable and restart the backend.
-If you're using the [Getting Started Guide](https://www.spiffworkflow.org/posts/articles/get_started/), open the docker-compose.yml file; otherwise, edit the environment variable in the way that is appropriate for your deployment.
+If you're using the Docker Compose setup in [Developer Setup](../../explanation/dev/developer_setup), open the docker-compose.yml file; otherwise, edit the environment variable in the way that is appropriate for your deployment.
 The variable we need to change is called `SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL`.
 
 Here's an example diff using the function URL from the AWS tutorial:
@@ -64,7 +64,7 @@ See [Connector Proxy](../../explanation/dev/connector_proxy) for details on how 
 
 ## Testing
 
-Create a new process model as described in the [Getting Started Guide](https://www.spiffworkflow.org/posts/articles/get_started/).
+Create a new process model as described in the [QuickStart Guide](quickstart-create-process).
 Add a `Service Task` and in its properties panel, you will see a dropdown from which you can select the connector in your `Connector Proxy` to call.
 In this demo, we deployed HTTP GET and POST connectors:
 

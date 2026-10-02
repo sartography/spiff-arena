@@ -26,7 +26,7 @@
 - [SpiffExample CLI](https://github.com/sartography/spiff-example-cli)
 - [Spiff Arena documentation](https://spiff.works/docs/spiff-arena/)
 - [SpiffWorkflow Documentation](https://spiff.works/docs/spiffworkflow/)
-- [Getting Started with SpiffWorkflow](https://www.spiffworkflow.org/posts/articles/get_started/)
+- [Spiff Arena QuickStart Guide](../getting_started/quickstart_guide)
 
 ### **4. Understanding Task Data in Custom Connectors**
 
@@ -224,7 +224,7 @@ For instance, the configuration for a service task can be found [here](https://g
 
 **Q:** How do I start a task? What do I need besides BPMN?
 
-**A:** To start a task, you'll need to have a proper BPMN diagram and a configured environment. The docker compose file, as mentioned on the [spiffworkflow.org](https://www.spiffworkflow.org/posts/articles/get_started/) website, provides a containerized environment for both the API and asynchronous processing. For a more robust production deployment, it's recommended to use separate containers for different functionalities.
+**A:** To start a task, you'll need to have a proper BPMN diagram and a configured environment. The Docker Compose file described in [Developer Setup](../explanation/dev/developer_setup), provides a containerized environment for both the API and asynchronous processing. For a more robust production deployment, it's recommended to use separate containers for different functionalities.
 
 ### **28: Setting Up Own OpenID Provider**
 
@@ -344,7 +344,7 @@ By following these steps, you can successfully configure SpiffWorkflow to work w
 
 6. **Review and Test**: Once you have modeled the approval process, review it to ensure it accurately represents the required workflow. Test the process to confirm that each task is assigned to the correct approver and that the workflow behaves as expected.
 
-7. **Refer to SpiffWorkflow Documentation**: For detailed guidance and examples, refer to the SpiffWorkflow documentation, particularly the section on approval processes. The documentation provides valuable insights and best practices for modeling complex workflows. You can find more information at [SpiffWorkflow Approval Process Deep Dive](https://www.spiffworkflow.org/posts/deep_dives/approval).
+7. **Configure Approver Assignments**: See [Assigning Tasks to People](../how_to_guides/building_diagrams/assigning_tasks_to_people) for guidance on using lanes to assign approval tasks to users, roles, or groups.
 
 By following these steps and utilizing the features of SpiffWorkflow, you can effectively model an approval process with multiple tasks and approvers, ensuring a smooth and efficient workflow.
 
@@ -547,7 +547,7 @@ Users need to change task data or adjust token positions in running processes. T
 **Q:** How do I change "localhost" to a custom hostname in SpiffWorkflow's Docker setup?
 
 **A:**   
-By default, the **Docker Compose** setup for SpiffWorkflow (as described in [this guide](https://www.spiffworkflow.org/posts/articles/get_started_docker/)) runs on `localhost`. If you want to access the environment from another machine on the same network, you need to change `localhost` to a custom hostname (e.g., `mycomputer1`).  
+By default, the **Docker Compose** setup for SpiffWorkflow (as described in [Developer Setup](../explanation/dev/developer_setup)) runs on `localhost`. If you want to access the environment from another machine on the same network, you need to change `localhost` to a custom hostname (e.g., `mycomputer1`).
 
 When attempting to modify `docker-compose.yml` by replacing `localhost` with `mycomputer1`, the setup fails with the following error after running `docker compose down && docker compose up --build`:  
 

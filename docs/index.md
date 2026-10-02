@@ -63,7 +63,7 @@ Spiff Arena is part of the open-source SpiffWorkflow ecosystem, and the project 
 - [Join our online chat](https://discord.gg/F6Kb7HNK7B)
 - [Contribute](https://github.com/sartography/spiff-arena/blob/main/CONTRIBUTING.rst)
 - [Roadmap](https://github.com/sartography/spiff-arena/issues)
-- Thinking about using Spiff Arena for your next project? [Get in touch!](https://www.spiffworkflow.org/)
+- Thinking about using Spiff Arena for your next project? [Get in touch!](https://spiff.works/)
 
 ## Additional Documentation
 
