@@ -46,7 +46,7 @@ sphinxcontrib-qthelp==2.0.0
 sphinxcontrib-serializinghtml==2.0.0
 sphinxcontrib-mermaid==0.9.2
 sphinx-tags==0.4
-tornado==6.5.5
+tornado==6.5.10
 typeguard==4.3.0
 Unidecode==1.4.0
 urllib3==2.8.0

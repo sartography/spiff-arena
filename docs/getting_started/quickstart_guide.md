@@ -11,6 +11,7 @@
 Sartography, the company that shepherds the SpiffWorkflow and Spiff Arena projects, provides users with a platform to explore workflow concepts through a collection of examples, diagrams, and workflows.
 Users can interact with pre-built models, make modifications, and visualize process flows.
 
+(quickstart-login)=
 ## How to Log in to Spiff Arena
 
 ```{image} /images/Login.png
@@ -166,6 +167,7 @@ In the tests, we have the following fields:
 
 By submitting these details, a BPMN unit test is automatically generated, which can be stored and reused to validate future changes to the same workflow.
 
+(quickstart-create-process)=
 ## How to Create a BPMN Process
 
 With SpiffWorkflow, you can easily initiate a new process instance.
