@@ -4,7 +4,7 @@ SpiffArena is a low(ish)-code software development platform for building, runnin
 It is intended to support Citizen Developers and to enhance their ability to contribute to the software development process.
 Using tools that look a lot like flow-charts and spreadsheets, it is possible to capture complex rules in a way that everyone in your organization can see, understand, and directly execute.
 
-Please visit the [SpiffWorkflow website](https://www.spiffworkflow.org) for a [Getting Started Guide](https://www.spiffworkflow.org/posts/articles/get_started/) to see how to use SpiffArena and try it out.
+Please visit the [SpiffWorkflow website](https://spiff.works/) for a [Getting Started Guide](https://spiff.works/docs/spiff-arena/) to see how to use SpiffArena and try it out.
 There are also additional articles, videos, and tutorials about SpiffArena and its components, including SpiffWorkflow, Service Connectors, and BPMN.js extensions.
 
 ## Backend Setup, local
@@ -71,7 +71,7 @@ Get the app running so you can access the frontend at <http://localhost:7001> in
 
 ## Docker
 
-For full instructions, see [Running SpiffWorkflow Locally with Docker](https://www.spiffworkflow.org/posts/articles/get_started_docker/).
+For full instructions, see [Running SpiffWorkflow Locally with Docker](https://spiff.works/docs/spiff-arena/explanation/dev/developer_setup).
 
 The `docker-compose.yml` file is for running a full-fledged instance of spiff-arena while `editor.docker-compose.yml` provides BPMN graphical editor capability to libraries and projects that depend on SpiffWorkflow but have no built-in BPMN edit capabilities.
 
@@ -96,7 +96,7 @@ Please refer to the [Makefile](Makefile) as the source of truth, but for a summa
 
 To start understanding the system, you might:
 
-1. Explore the demo site via the [Getting Started Guide](https://www.spiffworkflow.org/posts/articles/get_started)
+1. Explore the demo site via the [Getting Started Guide](https://spiff.works/docs/spiff-arena/)
 1. Clone this repo, `cd docs`, run `./bin/build`, and open your browser to [http://127.0.0.1:8000](http://127.0.0.1:8000) to view (and ideally edit!) the docs
 1. Check out our [GitHub issues](https://github.com/sartography/spiff-arena/issues), find something you like, and ask for help on discord
 
@@ -116,4 +116,4 @@ SpiffArena's main components are published under the terms of the
 
 You can find us on [our Discord Channel](https://discord.gg/BYHcc7PpUC).
 Commercial support for SpiffWorkflow is available from [Sartography](https://sartography.com).
-Please contact us via the schedule a demo link on the [SpiffWorkflow website](https://spiffworkflow.org) to discuss your needs.
+Please contact us via the schedule a demo link on the [SpiffWorkflow website](https://spiff.works/) to discuss your needs.
