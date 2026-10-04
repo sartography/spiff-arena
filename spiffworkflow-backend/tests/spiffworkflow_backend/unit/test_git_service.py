@@ -174,7 +174,7 @@ class TestGitService(BaseTest):
         ]
         mock_refresh.assert_called_once_with()
 
-    def test_force_sync_to_webhook_revision_refreshes_cached_revision_before_sync(
+    def test_force_sync_to_webhook_revision_ignores_stale_cached_revision(
         self,
         app: Flask,
         client: FlaskClient,
@@ -311,3 +311,34 @@ class TestGitService(BaseTest):
         mock_get_current_revision.assert_not_called()
         mock_run_shell_command.assert_not_called()
         mock_refresh.assert_not_called()
+
+    def test_handle_web_hook_ignores_stale_cached_revision(
+        self,
+        app: Flask,
+        mocker: MockerFixture,
+    ) -> None:
+        webhook = self._build_webhook()
+        revision_for_head = {"value": webhook["after"]}
+
+        def stdout_side_effect(command: list[str], context_directory: str | None = None, prepend_with_git: bool = True) -> str:
+            if command == ["config", "--get", "remote.origin.url"]:
+                return webhook["repository"]["clone_url"]
+            if command == ["rev-parse", "HEAD"]:
+                return revision_for_head["value"]
+            raise AssertionError(f"Unexpected git stdout command: {command}")
+
+        mocker.patch.object(GitService, "run_shell_command_to_get_stdout", side_effect=stdout_side_effect)
+        mock_run_shell_command = mocker.patch.object(GitService, "run_shell_command")
+        mock_refresh = mocker.patch("spiffworkflow_backend.services.git_service.DataSetupService.refresh_process_model_caches")
+
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_GIT_CURRENT_REVISION_CACHE_TTL_SECONDS", 30):
+            assert GitService.get_current_revision(short_rev=False) == webhook["after"]
+            revision_for_head["value"] = "1111111111111111111111111111111111111111"
+
+            with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH", "sandbox"):
+                result = GitService.handle_web_hook(webhook)
+
+        repo_path = app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
+        assert result is True
+        mock_run_shell_command.assert_called_once_with(["pull", "--rebase"], context_directory=repo_path)
+        mock_refresh.assert_called_once_with()

@@ -76,7 +76,9 @@ elif [[ "${session_type}" == "mypy" ]]; then
 elif [[ "${session_type}" == "safety" ]]; then
   # 72731 because flask-cors 5 actually fixes but safety just doesn't know: allows the Access-Control-Allow-Private-Network CORS header to be set to true by default
   ##  --ignore=72731 # is the syntax if you want to ignore these
-  uv run safety check --full-report
+  # SFTY-20260902-58666 (CVE-2026-81726): nltk path traversal in model save/load helpers. nltk is only pulled in by
+  # safety itself, the backend never imports it, and no fixed nltk release exists yet (3.10.3 is affected).
+  uv run safety check --full-report --ignore=SFTY-20260902-58666
 
 elif [[ "${session_type}" == "coverage" ]]; then
   if ls .coverage.* 1>/dev/null 2>&1; then
