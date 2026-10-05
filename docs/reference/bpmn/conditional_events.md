@@ -11,6 +11,13 @@ Thus, it remains evaluated as false until the specified condition turns true.
 Importantly, this variable needs to be accessible within the process context.
 ```
 
+```{admonition} Where the condition looks for variables
+⚠  A waiting conditional event sees its own task data and the process's data objects.
+A variable set by a task on another branch (for example, a parallel branch) is not copied into the waiting event's task data.
+To make such a value visible, write it to a data object with a data output association from the task that sets it, and reference the data object's name in the condition.
+A data object that has not been written yet evaluates as `None`, so a condition like `task_a_done == True` stays false until the value is set.
+```
+
 **Reasons to Use a Conditional Event:**
 
 - A Conditional Event is ideal for processes where decision-making is based on data or state changes.
@@ -94,8 +101,9 @@ Always revert the condition to its default state to ensure appropriate behavior.
 | ---------------------------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
 | ![name_field](/images/name_field.png)                                   | **Name:** Request Assistance                           | A descriptive name given to the element, providing a human-readable label or title. |
 | ![id_field](/images/id_field.png)                                       | **ID:** Example - request_assistance                   | An identifier used to uniquely identify the element within the BPMN model.          |
-| ![configure_conditional_event](/images/configure_conditional_event.png) | **Conditional Expression:** request_assistance == true | Set the expression that needs to be evaluated to take action.                       |
+| ![configure_conditional_event](/images/configure_conditional_event.png) | **Conditional Expression:** request_assistance == True | Set the expression that needs to be evaluated to take action.                       |
 
 ```{admonition} Note
 ⚠  When configuring the conditional expression, ensure there's such a variable in your process context.
+The expression is Python, so use `True` and `False`; a lowercase `true` fails with an evaluation error.
 ```
