@@ -460,6 +460,55 @@ class TestMessageService(BaseTest):
         for message_instance in message_instances:
             assert message_instance.correlation_keys == {"invoice": {"po_number": 1001, "customer_id": "Sartography"}}
 
+    def test_message_sent_before_receiver_waits_is_delivered_by_correlation_property(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        # The receiver matches on a process-variable correlation property with no correlation key,
+        # and only starts waiting after the sender's message is already queued.
+        process_model_receive = load_test_spec(
+            "test_group/message_receive",
+            process_model_source_directory="message_basic_test",
+            bpmn_file_name="testreceive.bpmn",
+        )
+        process_model_send = load_test_spec(
+            "test_group/message",
+            process_model_source_directory="message_basic_test",
+            bpmn_file_name="testsender.bpmn",
+        )
+
+        process_instance_send = self.create_process_instance_from_process_model(process_model_send)
+        ProcessInstanceRuntime(process_instance_send).do_engine_steps(save=True)
+        send_messages = MessageInstanceModel.query.filter_by(
+            message_type="send", process_instance_id=process_instance_send.id
+        ).all()
+        assert len(send_messages) == 1
+        assert send_messages[0].name == "Test_message"
+        assert send_messages[0].payload == {"orderId": 22}
+        assert send_messages[0].status == "ready"
+
+        process_instance_receive = self.create_process_instance_from_process_model(process_model_receive)
+        ProcessInstanceRuntime(process_instance_receive).do_engine_steps(save=True)
+        receive_messages = MessageInstanceModel.query.filter_by(
+            message_type="receive", status="ready", process_instance_id=process_instance_receive.id
+        ).all()
+        assert len(receive_messages) == 1
+
+        MessageService.correlate_all_message_instances()
+
+        db.session.refresh(process_instance_send)
+        db.session.refresh(process_instance_receive)
+        assert process_instance_send.status == "complete"
+        assert process_instance_receive.status == "complete"
+        message_instances = MessageInstanceModel.query.all()
+        assert len(message_instances) == 2
+        assert {m.status for m in message_instances} == {"completed"}
+        # SpiffWorkflow files a property that has no correlation key under its default key.
+        for message_instance in message_instances:
+            assert message_instance.correlation_keys == {"MainCorrelationKey": {"orderId": 22}}
+
     def test_start_process_with_message_when_failure(
         self,
         app: Flask,
