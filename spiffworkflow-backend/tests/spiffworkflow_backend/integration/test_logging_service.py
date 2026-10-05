@@ -1,19 +1,23 @@
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 from threading import Event
 from unittest.mock import patch
 from uuid import UUID
 
+import pytest
 from flask.app import Flask
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.logging_service import SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR
+from spiffworkflow_backend.services.logging_service import InvalidLogLevelError
 from spiffworkflow_backend.services.logging_service import SpiffLogHandler
 from spiffworkflow_backend.services.logging_service import configure_celery_stdout_logger
+from spiffworkflow_backend.services.logging_service import setup_logger_for_app
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -54,6 +58,22 @@ class TestLoggingService(BaseTest):
         logger = logging.getLogger("spiffworkflow_backend.services.service_task_delegate")
         assert logger.handlers
         assert logger.propagate is False
+
+    def test_setup_logger_for_app_skips_flask_setup_in_celery_worker(self, app: Flask) -> None:
+        # Setup rejects an invalid level before changing any logger, so only a skipped setup returns cleanly.
+        with (
+            patch.dict(os.environ, {"SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER": "true"}),
+            patch.dict(app.config, {"SPIFFWORKFLOW_BACKEND_LOG_LEVEL": "not-a-level"}),
+        ):
+            setup_logger_for_app(app, logging)
+            with pytest.raises(InvalidLogLevelError):
+                setup_logger_for_app(app, logging, force_run_with_celery=True)
+
+    def test_local_development_quiets_spiff_workflow_loggers_but_not_events(self, app: Flask) -> None:
+        assert app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST"] is None
+        for name in ("spiff.task", "spiff.workflow", "spiff.data"):
+            assert logging.getLogger(name).level == logging.WARNING
+        assert logging.getLogger("spiff.event").level == logging.NOTSET
 
     def test_spiff_log_handler_formats_unix_timestamp(self, app: Flask) -> None:
         handler = SpiffLogHandler(app)

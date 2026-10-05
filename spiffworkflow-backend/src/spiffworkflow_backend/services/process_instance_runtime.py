@@ -509,13 +509,16 @@ class ProcessInstanceRuntime:
                 self.process_instance_model.process_initiator.id,
             ):
                 current_app.logger.warning(
-                    f"Cannot trigger task-available process model '{task_available_process_model_identifier}' "
-                    f"for task {task_guid}: Celery is not enabled."
+                    "Cannot trigger task-available process model '%s' for task %s: Celery is not enabled.",
+                    task_available_process_model_identifier,
+                    task_guid,
                 )
         except Exception as exception:
             current_app.logger.exception(
-                f"Failed to trigger task-available process model '{task_available_process_model_identifier}' "
-                f"from process instance {self.process_instance_model.id}, task {task_guid}"
+                "Failed to trigger task-available process model '%s' from process instance %s, task %s",
+                task_available_process_model_identifier,
+                self.process_instance_model.id,
+                task_guid,
             )
             ProcessInstanceEventService.add_event_to_process_instance(
                 self.process_instance_model,
