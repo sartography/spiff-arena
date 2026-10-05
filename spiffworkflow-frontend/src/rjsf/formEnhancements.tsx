@@ -505,20 +505,34 @@ export function FormattedNumberWidget({
     formatLocalizedNumber(value, locale, widgetOptions),
   );
   const [focused, setFocused] = useState(false);
-  // Invalid text is stored as undefined, so the echoed value must not
-  // overwrite what the user is still typing.
-  const lastEmittedValue = useRef<any>(value);
+  // RJSF echoes each emitted value back as a prop, and during fast typing
+  // those echoes can lag several keystrokes behind. Echoes of our own
+  // emissions (including undefined for invalid text) must never overwrite
+  // what the user is typing; only values that came from elsewhere should.
+  const pendingEmits = useRef<any[]>([]);
+  const lastSeenValue = useRef<any>(value);
   const lastLocale = useRef(locale);
 
   useEffect(() => {
-    const changedExternally = !Object.is(value, lastEmittedValue.current);
     const localeChanged = lastLocale.current !== locale;
     lastLocale.current = locale;
+    let changedExternally = false;
+    if (!Object.is(value, lastSeenValue.current)) {
+      lastSeenValue.current = value;
+      const echoIndex = pendingEmits.current.findIndex((emitted) =>
+        Object.is(emitted, value),
+      );
+      if (echoIndex >= 0) {
+        pendingEmits.current.splice(0, echoIndex + 1);
+      } else {
+        pendingEmits.current = [];
+        changedExternally = true;
+      }
+    }
     const hasStoredValue = value !== undefined && value !== null;
     if (!changedExternally && !(localeChanged && !focused && hasStoredValue)) {
       return;
     }
-    lastEmittedValue.current = value;
     setDisplayValue(formatLocalizedNumber(value, locale, widgetOptions));
   }, [focused, locale, value, widgetOptions]);
 
@@ -569,7 +583,9 @@ export function FormattedNumberWidget({
       ...widgetOptions,
       locale,
     });
-    lastEmittedValue.current = nextValue;
+    if (!Object.is(nextValue, lastSeenValue.current)) {
+      pendingEmits.current.push(nextValue);
+    }
     onChange(nextValue);
   };
 

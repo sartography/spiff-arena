@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import CustomForm from '../components/CustomForm';
 import i18next from '../i18n';
+import { FormattedNumberWidget } from './formEnhancements';
 
 const renderAmountForm = ({
   amountSchema = { type: 'number' },
@@ -109,6 +110,36 @@ describe('FormattedNumberWidget', () => {
     typeAndBlur(input, '12,5');
     submit();
     expect(onSubmit.mock.calls[0][0].formData).toEqual({ amount: 12.5 });
+  });
+
+  it('keeps typed text when older values are echoed back', () => {
+    const props: any = {
+      id: 'amount',
+      label: 'Amount',
+      schema: { type: 'number' },
+      uiSchema: {},
+      options: { locale: 'de-DE', decimals: 2 },
+      onChange: vi.fn(),
+      onBlur: vi.fn(),
+      onFocus: vi.fn(),
+    };
+    const { rerender } = render(<FormattedNumberWidget {...props} />);
+    const input = screen.getByLabelText('Amount');
+
+    fireEvent.focus(input);
+    ['1', '10', '100', '100,', '100,5'].forEach((text) => {
+      fireEvent.change(input, { target: { value: text } });
+    });
+    [1, 10, 100].forEach((echo) => {
+      rerender(<FormattedNumberWidget {...props} value={echo} />);
+      expect(input).toHaveValue('100,5');
+    });
+    rerender(<FormattedNumberWidget {...props} value={100.5} />);
+    fireEvent.blur(input);
+    expect(input).toHaveValue('100,50');
+
+    rerender(<FormattedNumberWidget {...props} value={7} />);
+    expect(input).toHaveValue('7,00');
   });
 });
 
