@@ -104,6 +104,14 @@ class TestProcessModelTestRunner(BaseTest):
         process_model_test_runner = self._run_model_tests(bpmn_process_directory_name="loopback-to-user-task")
         assert len(process_model_test_runner.test_case_results) == 1
 
+    def test_can_test_process_model_with_conditional_catch_event(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model_test_runner = self._run_model_tests(bpmn_process_directory_name="conditional-catch-event")
+        assert len(process_model_test_runner.test_case_results) == 1
+
     def _run_model_tests(
         self,
         bpmn_process_directory_name: str | None = None,

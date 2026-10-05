@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from flask.app import Flask
+from SpiffWorkflow.util.task import TaskState  # type: ignore
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -40,6 +41,31 @@ class TestVariousBpmnConstructs(BaseTest):
         process_instance = self.create_process_instance_from_process_model(process_model)
         runtime = ProcessInstanceRuntime(process_instance)
         runtime.do_engine_steps(save=True)
+
+    def test_conditional_intermediate_catch_event_fires_when_condition_becomes_true(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/conditional_catch_event",
+            process_model_source_directory="conditional_catch_event",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
+
+        tasks_by_bpmn_id = {t.task_spec.bpmn_id: t for t in runtime.get_all_ready_or_waiting_tasks()}
+        assert set(tasks_by_bpmn_id) == {"task_a", "event_1"}
+        assert tasks_by_bpmn_id["task_a"].state == TaskState.READY
+        assert tasks_by_bpmn_id["event_1"].state == TaskState.WAITING
+
+        self.complete_next_manual_task(runtime)
+
+        assert runtime.bpmn_process_instance.data_objects == {"task_a_done": True}
+        assert runtime.get_all_ready_or_waiting_tasks() == []
+        assert process_instance.status == ProcessInstanceStatus.complete.value
 
     # the bug here was that we were failing to persist the multi-instance task to the db.
     # normally, we persist all waiting tasks to the db, but for human tasks, we follow a different code path.
