@@ -70,9 +70,15 @@ def configure_event_stream_socket(sock: socket.socket) -> None:
 def event_stream_peer_has_closed(sock: socket.socket) -> bool:
     """Detect a peer that closed or reset an otherwise idle connection without blocking."""
     try:
-        readable, _, _ = select.select([sock], [], [], 0)
-        if not readable:
-            return False
+        if hasattr(select, "poll"):
+            poller = select.poll()
+            poller.register(sock, select.POLLIN)
+            if not poller.poll(0):
+                return False
+        else:
+            readable, _, _ = select.select([sock], [], [], 0)
+            if not readable:
+                return False
         return sock.recv(1, socket.MSG_PEEK) == b""
     except (OSError, ValueError):
         return True
