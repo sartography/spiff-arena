@@ -8,6 +8,7 @@ from spiffworkflow_backend.interfaces import PotentialOwnerIdList
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -75,9 +76,43 @@ class TestTaskAvailableProcessModelTrigger(BaseTest):
             runtime._trigger_task_available_process_model(task_available_pm_id, human_task.task_guid)
 
             mock_logger.warning.assert_called_once_with(
-                f"Cannot trigger task-available process model '{task_available_pm_id}' "
-                f"for task {human_task.task_id}: Celery is not enabled."
+                "Cannot trigger task-available process model '%s' for task %s: Celery is not enabled.",
+                task_available_pm_id,
+                human_task.task_guid,
             )
+
+    @patch("spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceRuntime.setup_runtime_with_process_instance")
+    @patch("spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceEventService.add_event_to_process_instance")
+    @patch("spiffworkflow_backend.services.process_instance_runtime.queue_start_process_instance_if_appropriate")
+    def test_trigger_task_available_process_model_logs_and_records_failure(
+        self,
+        mock_queue_start: MagicMock,
+        mock_add_event: MagicMock,
+        mock_setup: MagicMock,
+        app: Flask,
+    ) -> None:
+        error = RuntimeError("broker unavailable")
+        mock_queue_start.side_effect = error
+
+        process_initiator = UserModel(id=1, username="testuser", service="test", service_id="testuser")
+        process_instance = ProcessInstanceModel(id=123, process_initiator=process_initiator)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.process_instance_model = process_instance
+
+        with patch.object(current_app, "logger") as mock_logger:
+            runtime._trigger_task_available_process_model("task_available_model", "task_guid_456")
+
+            mock_logger.exception.assert_called_once_with(
+                "Failed to trigger task-available process model '%s' from process instance %s, task %s",
+                "task_available_model",
+                123,
+                "task_guid_456",
+            )
+        mock_add_event.assert_called_once_with(
+            process_instance,
+            ProcessInstanceEventType.process_instance_error.value,
+            exception=error,
+        )
 
     @patch("spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceRuntime.setup_runtime_with_process_instance")
     @patch("spiffworkflow_backend.services.process_instance_runtime.ProcessInstanceRuntime._trigger_task_available_process_model")
