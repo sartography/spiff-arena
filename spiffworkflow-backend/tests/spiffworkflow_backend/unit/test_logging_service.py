@@ -39,6 +39,10 @@ def test_event_stream_peer_has_closed_with_high_descriptor() -> None:
     if not hasattr(select, "poll"):
         pytest.skip("poll is unavailable")
     fcntl = pytest.importorskip("fcntl")
+    resource = pytest.importorskip("resource")
+    soft_limit, _ = resource.getrlimit(resource.RLIMIT_NOFILE)
+    if soft_limit != resource.RLIM_INFINITY and soft_limit <= 1024:
+        pytest.skip("RLIMIT_NOFILE does not permit descriptor 1024")
     sock, peer = socket.socketpair()
     with sock, peer:
         with socket.socket(fileno=fcntl.fcntl(sock, fcntl.F_DUPFD, 1024)) as high_sock:
