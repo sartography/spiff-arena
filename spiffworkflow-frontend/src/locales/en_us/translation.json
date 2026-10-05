@@ -248,6 +248,7 @@
   "instance_has_error": "Instance has an error",
   "instances_with_tasks_completed_by_me": "Instances with tasks completed by me",
   "instances_with_tasks_waiting_for_me": "Instances with tasks waiting for me",
+  "invalid_number_format": "Invalid number. Example: {{example}}",
   "invalid_schema_error": "Invalid schema: {{error}}",
   "json_schema": "JSON Schema",
   "json_schema_description": "The JSON Schema describes the structure of the data you want to collect, and what validation rules should be applied to each field",

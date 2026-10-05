@@ -23,6 +23,7 @@ import AutoSelectSingleOptionWidget from '../rjsf/custom_widgets/AutoSelectSingl
 import {
   applyCalculatedFields,
   CalculatedField,
+  FormattedNumberFormContext,
   FormattedNumberWidget,
 } from '../rjsf/formEnhancements';
 import ObjectFieldRestrictedGridTemplate from '../rjsf/custom_templates/ObjectFieldRestrictGridTemplate';
@@ -498,8 +499,22 @@ export default function CustomForm({
     return errors;
   };
 
+  // Formatted number widgets store invalid text as undefined, so form data
+  // alone cannot block submission; each widget reports its invalid text here.
+  const [formContext] = useState<FormattedNumberFormContext>(() => ({
+    invalidFormattedNumbers: new Map<string, string>(),
+  }));
+
   const customValidate = (formDataToCheck: any, errors: any) => {
-    return checkFieldsWithCustomValidations(schema, formDataToCheck, errors);
+    const result = checkFieldsWithCustomValidations(
+      schema,
+      formDataToCheck,
+      errors,
+    );
+    formContext.invalidFormattedNumbers?.forEach((message) => {
+      errors.addError(message);
+    });
+    return result;
   };
 
   let childrenToUse = children;
@@ -616,6 +631,7 @@ export default function CustomForm({
     noValidate,
     fields: rjsfFields,
     templates: rjsfTemplates,
+    formContext,
     omitExtraData: true,
   };
 
