@@ -40,6 +40,13 @@ EVENT_STREAM_TCP_OPTIONS = (
     ("TCP_USER_TIMEOUT", 30_000),
 )
 
+# In multiprocess mode, prometheus_client opens this process's metric file as
+# soon as an unlabeled metric is defined. Every entry point imports this module
+# (bin/wait_for_db_to_be_ready.py, Celery, apscheduler) before create_app or
+# boot_server_in_docker creates the directory.
+if prometheus_multiproc_dir := os.environ.get("PROMETHEUS_MULTIPROC_DIR"):
+    os.makedirs(prometheus_multiproc_dir, exist_ok=True)
+
 EVENT_STREAM_PENDING_EVENTS = Gauge(
     "spiff_event_stream_pending_events",
     "Analytics events buffered or awaiting listener acknowledgement in this process.",

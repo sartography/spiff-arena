@@ -1,6 +1,10 @@
 import logging
+import os
 import select
 import socket
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
 from flask import Flask
@@ -8,6 +12,19 @@ from flask import Flask
 from spiffworkflow_backend.services.logging_service import JsonFormatter
 from spiffworkflow_backend.services.logging_service import event_stream_peer_has_closed
 from spiffworkflow_backend.services.logging_service import setup_logger_for_app
+
+
+def test_import_creates_missing_prometheus_multiproc_dir(tmp_path: Path) -> None:
+    multiproc_dir = tmp_path / "prometheus_multiproc"
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, "-c", "import spiffworkflow_backend.services.logging_service"],
+        env={**os.environ, "PROMETHEUS_MULTIPROC_DIR": str(multiproc_dir)},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert multiproc_dir.is_dir()
 
 
 @pytest.mark.parametrize("use_poll", [True, False])
