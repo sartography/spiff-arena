@@ -14,7 +14,7 @@ Importantly, this variable needs to be accessible within the process context.
 ```{admonition} Where the condition looks for variables
 ⚠  A waiting conditional event sees its own task data and the process's data objects.
 A variable set by a task on another branch (for example, a parallel branch) is not copied into the waiting event's task data.
-To make such a value visible, write it to a data object with a data output association from the task that sets it, and reference the data object's name in the condition.
+To make such a value visible, write it to a data object with a data output association from the task that sets it, and reference the data object's BPMN ID (`dataObject/@id`) in the condition, not its display name.
 A data object that has not been written yet evaluates as `None`, so a condition like `task_a_done == True` stays false until the value is set.
 ```
 
