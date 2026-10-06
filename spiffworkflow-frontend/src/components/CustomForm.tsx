@@ -499,11 +499,26 @@ export default function CustomForm({
     return errors;
   };
 
-  // Formatted number widgets store invalid text as undefined, so form data
-  // alone cannot block submission; each widget reports its invalid text here.
+  // Each formatted number widget reports its invalid text here, so the form
+  // shows one localized message per field and blocks submission even when
+  // the schema itself would not.
   const [formContext] = useState<FormattedNumberFormContext>(() => ({
     invalidFormattedNumbers: new Map<string, string>(),
   }));
+
+  // Invalid text is stored as an object, which also fails the schema's type
+  // check; the widget's own message replaces that generic error.
+  const transformErrors = (errors: any[]) =>
+    errors.filter(
+      (error) =>
+        !(
+          error.name === 'type' &&
+          typeof error.property === 'string' &&
+          formContext.invalidFormattedNumbers?.has(
+            `root${error.property.replace(/\./g, '_')}`,
+          )
+        ),
+    );
 
   const customValidate = (formDataToCheck: any, errors: any) => {
     const result = checkFieldsWithCustomValidations(
@@ -628,6 +643,7 @@ export default function CustomForm({
     widgets: rjsfWidgets,
     validator: rjsfValidator,
     customValidate,
+    transformErrors,
     noValidate,
     fields: rjsfFields,
     templates: rjsfTemplates,

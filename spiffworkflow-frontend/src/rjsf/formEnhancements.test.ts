@@ -49,13 +49,25 @@ describe('formatted number helpers', () => {
   it('rejects notation from another locale instead of reinterpreting it', () => {
     expect(
       coerceFormattedNumberValue('100.000,00', { type: 'number' }, enUS),
-    ).toBeUndefined();
+    ).toEqual({ invalidNumberText: '100.000,00' });
     expect(
       coerceFormattedNumberValue('100,5', { type: 'number' }, enUS),
-    ).toBeUndefined();
+    ).toEqual({ invalidNumberText: '100,5' });
     expect(
       coerceFormattedNumberValue('100.5', { type: 'number' }, deDE),
-    ).toBeUndefined();
+    ).toEqual({ invalidNumberText: '100.5' });
+    expect(
+      coerceFormattedNumberValue('1.50', { type: 'string' }, deDE),
+    ).toEqual({ invalidNumberText: '1.50' });
+  });
+
+  it('rounds stored values to the configured decimals for display', () => {
+    const options = { ...deDE, decimals: 2 };
+    expect(formatNumberForDisplay(1.1 * 3, options)).toBe('3,30');
+    expect(formatNumberForDisplay(12.345, options)).toBe('12,35');
+    expect(formatNumberForDisplay(-0.004, options)).toBe('0,00');
+    expect(formatNumberForDisplay(999.995, options)).toBe('1.000,00');
+    expect(formatNumberForDisplay(2.5, { ...deDE, decimals: 0 })).toBe('3');
   });
 
   it('honors non-negative schemas when normalizing calculation input', () => {
@@ -71,14 +83,14 @@ describe('formatted number helpers', () => {
         { type: 'number', minimum: 0 },
         enUS,
       ),
-    ).toBeUndefined();
+    ).toEqual({ invalidNumberText: '-1,234' });
   });
 
   it('keeps invalid fractional input visible for integer schemas and rejects it', () => {
     expect(formatNumberForDisplay('12.9', enUS)).toBe('12.9');
     expect(
       coerceFormattedNumberValue('12.9', { type: 'integer' }, enUS),
-    ).toBeUndefined();
+    ).toEqual({ invalidNumberText: '12.9' });
   });
 });
 

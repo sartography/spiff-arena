@@ -271,6 +271,10 @@ Prefer Jinja-rendered UI Schema files when the visibility logic is complex or wh
 
 Use `ui:widget: "formattedNumber"` when users should enter numeric values with thousands separators while still submitting numeric data.
 
+Plain `type: "number"` fields without this widget use the browser's number input.
+It does not accept thousands separators, and some browsers ignore a decimal comma, so `100,5` can be read as `1005`.
+Use `formattedNumber` for amounts that users enter in their own notation, such as German `100.000,00`.
+
 JSON Schema example:
 
 ```json
@@ -305,6 +309,7 @@ For `type: "string"` fields, the submitted value is an unformatted numeric strin
 Use `ui:options.decimals` to limit decimal places and `ui:options.allowNegative` to explicitly allow or disallow negative values.
 If `allowNegative` is not set, a schema with `minimum: 0` prevents negative values.
 Integer schemas reject fractional values.
+Existing values with more decimal places, such as script results, are displayed rounded and submitted unchanged unless the user edits them.
 
 ```json
 {
@@ -336,6 +341,7 @@ The symbol is not part of the submitted value.
 ```
 
 If a value doesn't match the field's notation, the field shows an example of the expected format and the form can't be submitted until it is corrected.
+Saved drafts keep the text as typed, so the user can correct it later.
 
 #### Calculated Fields
 

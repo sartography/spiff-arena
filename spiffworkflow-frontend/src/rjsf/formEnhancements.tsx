@@ -82,9 +82,28 @@ export const formatNumberForDisplay = (value: any, options: any = {}) =>
   formatLocalizedNumber(value, resolveNumberLocale(options.locale), options);
 
 /**
+ * Form data for text that is not a valid number in the field's locale. An
+ * object cannot be mistaken for a stored value (a JSON number, or a
+ * dot-decimal string for string schemas), so drafts keep the text exactly as
+ * typed, and schema validation still rejects it.
+ */
+export type InvalidNumberText = { invalidNumberText: string };
+
+export const isInvalidNumberText = (value: any): value is InvalidNumberText =>
+  isPlainObject(value) && typeof value.invalidNumberText === 'string';
+
+const isSameStoredValue = (left: any, right: any) =>
+  Object.is(left, right) ||
+  (isInvalidNumberText(left) &&
+    isInvalidNumberText(right) &&
+    left.invalidNumberText === right.invalidNumberText);
+
+const MAX_PENDING_EMITS = 100;
+
+/**
  * Converts text typed in the field's locale to the value stored in form data:
  * a number for numeric schemas or a dot-decimal string for string schemas.
- * Empty and invalid text both yield undefined.
+ * Empty text yields undefined, and invalid text an `InvalidNumberText`.
  */
 export const coerceFormattedNumberValue = (
   text: any,
@@ -97,6 +116,9 @@ export const coerceFormattedNumberValue = (
     schema,
     options,
   );
+  if (parsed.status === 'invalid') {
+    return { invalidNumberText: String(text) };
+  }
   return parsed.status === 'valid' ? parsed.value : undefined;
 };
 
@@ -105,7 +127,12 @@ export type FormattedNumberFormContext = {
 };
 
 const toNumber = (value: any) => {
-  if (value === null || value === undefined || value === '') {
+  if (
+    value === null ||
+    value === undefined ||
+    value === '' ||
+    isInvalidNumberText(value)
+  ) {
     return 0;
   }
   if (typeof value === 'number') {
@@ -501,39 +528,77 @@ export function FormattedNumberWidget({
     uiSchema,
     rawErrors,
   );
+  const textForStoredValue = (storedValue: any) =>
+    isInvalidNumberText(storedValue)
+      ? storedValue.invalidNumberText
+      : formatLocalizedNumber(storedValue, locale, widgetOptions);
   const [displayValue, setDisplayValue] = useState(() =>
-    formatLocalizedNumber(value, locale, widgetOptions),
+    textForStoredValue(value),
+  );
+  // Only text the user typed (now or in a saved draft) is validated. Values
+  // from task data, such as script results with float noise, are displayed
+  // rounded and submitted unchanged unless the user edits them.
+  const [isUserText, setIsUserText] = useState(() =>
+    isInvalidNumberText(value),
   );
   const [focused, setFocused] = useState(false);
   // RJSF echoes each emitted value back as a prop, and during fast typing
   // those echoes can lag several keystrokes behind. Echoes of our own
-  // emissions (including undefined for invalid text) must never overwrite
-  // what the user is typing; only values that came from elsewhere should.
+  // emissions must never overwrite what the user is typing; only values that
+  // came from elsewhere should.
   const pendingEmits = useRef<any[]>([]);
   const lastSeenValue = useRef<any>(value);
-  const lastLocale = useRef(locale);
+  const displayLocale = useRef(locale);
+
+  const emit = (nextValue: any) => {
+    pendingEmits.current.push(nextValue);
+    if (pendingEmits.current.length > MAX_PENDING_EMITS) {
+      pendingEmits.current.shift();
+    }
+    onChange(nextValue);
+  };
 
   useEffect(() => {
-    const localeChanged = lastLocale.current !== locale;
-    lastLocale.current = locale;
-    let changedExternally = false;
-    if (!Object.is(value, lastSeenValue.current)) {
+    if (!isSameStoredValue(value, lastSeenValue.current)) {
       lastSeenValue.current = value;
       const echoIndex = pendingEmits.current.findIndex((emitted) =>
-        Object.is(emitted, value),
+        isSameStoredValue(emitted, value),
       );
       if (echoIndex >= 0) {
         pendingEmits.current.splice(0, echoIndex + 1);
       } else {
         pendingEmits.current = [];
-        changedExternally = true;
+        displayLocale.current = locale;
+        setIsUserText(isInvalidNumberText(value));
+        setDisplayValue(textForStoredValue(value));
+        return;
       }
     }
-    const hasStoredValue = value !== undefined && value !== null;
-    if (!changedExternally && !(localeChanged && !focused && hasStoredValue)) {
+    if (focused || displayLocale.current === locale) {
       return;
     }
-    setDisplayValue(formatLocalizedNumber(value, locale, widgetOptions));
+    displayLocale.current = locale;
+    if (value !== undefined && value !== null && !isInvalidNumberText(value)) {
+      setDisplayValue(formatLocalizedNumber(value, locale, widgetOptions));
+      return;
+    }
+    // Invalid text may be valid in the new locale. Store what the field now
+    // shows as valid, so the form never looks filled while the data is empty.
+    if (isUserText && !disabled && !readonly) {
+      const nextValue = coerceFormattedNumberValue(displayValue, schema, {
+        ...widgetOptions,
+        locale,
+      });
+      if (!isSameStoredValue(nextValue, value)) {
+        if (!isInvalidNumberText(nextValue)) {
+          setDisplayValue(
+            formatLocalizedNumber(nextValue, locale, widgetOptions),
+          );
+        }
+        emit(nextValue);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focused, locale, value, widgetOptions]);
 
   const parsed = parseLocalizedNumber(
@@ -542,7 +607,7 @@ export function FormattedNumberWidget({
     schema,
     widgetOptions,
   );
-  const isInvalid = parsed.status === 'invalid';
+  const isInvalid = isUserText && parsed.status === 'invalid';
   const decimalLimit = decimalLimitFor(schema, widgetOptions);
   const exampleDecimals = decimalLimit ?? 2;
   const example = formatLocalizedNumber(
@@ -576,17 +641,17 @@ export function FormattedNumberWidget({
   const handleChange = (event: any) => {
     const text = event.currentTarget.value;
     setDisplayValue(text);
+    setIsUserText(true);
+    displayLocale.current = locale;
     if (disabled || readonly) {
       return;
     }
-    const nextValue = coerceFormattedNumberValue(text, schema, {
-      ...widgetOptions,
-      locale,
-    });
-    if (!Object.is(nextValue, lastSeenValue.current)) {
-      pendingEmits.current.push(nextValue);
-    }
-    onChange(nextValue);
+    emit(
+      coerceFormattedNumberValue(text, schema, {
+        ...widgetOptions,
+        locale,
+      }),
+    );
   };
 
   const handleBlur = (event: any) => {
@@ -597,7 +662,7 @@ export function FormattedNumberWidget({
       schema,
       widgetOptions,
     );
-    if (result.status === 'valid') {
+    if (isUserText && result.status === 'valid') {
       setDisplayValue(
         formatLocalizedNumber(result.canonical, locale, widgetOptions),
       );

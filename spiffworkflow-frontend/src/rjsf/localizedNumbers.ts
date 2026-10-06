@@ -215,10 +215,32 @@ const canonicalFromStoredValue = (value: unknown): string | null => {
   return null;
 };
 
+// Rounds half away from zero on the decimal digits, so float noise such as
+// 3.3000000000000003 displays as 3.30 rather than failing the decimals limit.
+const roundCanonical = (canonical: string, decimals: number): string => {
+  const negative = canonical.startsWith('-');
+  const [integerDigits, fraction = ''] = (
+    negative ? canonical.slice(1) : canonical
+  ).split('.');
+  if (fraction.length <= decimals) {
+    return canonical;
+  }
+  const roundUp = fraction[decimals] >= '5' ? BigInt(1) : BigInt(0);
+  const digits = (
+    BigInt(`${integerDigits}${fraction.slice(0, decimals)}`) + roundUp
+  )
+    .toString()
+    .padStart(decimals + 1, '0');
+  const integerPart = digits.slice(0, digits.length - decimals);
+  const fractionPart = decimals > 0 ? `.${digits.slice(-decimals)}` : '';
+  const isZero = /^0*$/.test(digits);
+  return `${negative && !isZero ? '-' : ''}${integerPart}${fractionPart}`;
+};
+
 /**
- * Formats a stored value (a JSON number or a dot-decimal string) for display.
- * Anything else, such as invalid text from an older draft, is shown unchanged
- * so it is never silently rewritten.
+ * Formats a stored value (a JSON number or a dot-decimal string) for display,
+ * rounded to `options.decimals` when set. Anything else, such as invalid text
+ * from an older draft, is shown unchanged so it is never silently rewritten.
  */
 export const formatLocalizedNumber = (
   value: unknown,
@@ -228,16 +250,19 @@ export const formatLocalizedNumber = (
   if (value === null || value === undefined || value === '') {
     return '';
   }
-  const canonical = canonicalFromStoredValue(value);
-  if (canonical === null) {
+  const storedCanonical = canonicalFromStoredValue(value);
+  if (storedCanonical === null) {
     return String(value);
   }
+  const hasDecimals = typeof options.decimals === 'number';
+  const decimals = hasDecimals ? Math.max(0, options.decimals) : 0;
+  const canonical = hasDecimals
+    ? roundCanonical(storedCanonical, decimals)
+    : storedCanonical;
   const negative = canonical.startsWith('-');
   const [integerDigits, fraction = ''] = (
     negative ? canonical.slice(1) : canonical
   ).split('.');
-  const decimals =
-    typeof options.decimals === 'number' ? Math.max(0, options.decimals) : 0;
   const paddedFraction = fraction.padEnd(decimals, '0');
   const symbols = getNumberSymbols(locale);
   const minusSign = negative ? symbols.minusSigns[0] : '';
