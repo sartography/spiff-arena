@@ -218,7 +218,6 @@ config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_SOURCE", default="spiffworkflow.org")
 # Events stay buffered until the listener acknowledges them (SPIFF-ANALYTICS/2).
-# The listener must support the protocol; leave this off for older listeners.
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_ACK_ENABLED", default=False)
 # Time limit for connect, send, and READY, and for the next ACK while events are unacknowledged.
 # On timeout the sender reconnects and resends them; the listener drops duplicates.
