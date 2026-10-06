@@ -317,14 +317,17 @@ class MessageService:
                         else:
                             db.session.commit()
 
-                        if should_queue_process_instance(execution_mode=execution_mode):
-                            queue_process_instance_if_appropriate(receiving_process_instance, execution_mode=execution_mode)
-
-                        return message_instance_receive
-
                 except ProcessInstanceIsAlreadyLockedError:
                     # Someone else has this locked, keep looking for another match
                     continue
+
+                # Publish only after dequeued() released the lock: a worker that picks the job up while
+                # this request still holds it gets ProcessInstanceIsAlreadyLockedError, and the tasks the
+                # message made ready would wait for a run nobody else schedules.
+                if should_queue_process_instance(execution_mode=execution_mode):
+                    queue_process_instance_if_appropriate(receiving_process_instance, execution_mode=execution_mode)
+
+                return message_instance_receive
         except Exception as exception:
             cls._handle_correlation_failure(
                 exception,

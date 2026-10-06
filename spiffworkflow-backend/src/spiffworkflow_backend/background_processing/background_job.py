@@ -31,6 +31,8 @@ class BackgroundJobEnvelope:
     job_id: str
     process_instance_id: int | None = None
     task_guid: str | None = None
+    # How many times in a row this run found the process instance locked by someone else.
+    lock_retry_count: int = 0
 
     @classmethod
     def create(
@@ -43,6 +45,7 @@ class BackgroundJobEnvelope:
         task_guid: str | None = None,
         correlation_id: str | None = None,
         now: float | None = None,
+        lock_retry_count: int = 0,
     ) -> BackgroundJobEnvelope:
         published_at = time.time() if now is None else now
         eligible_at = published_at + max(0.0, countdown or 0.0)
@@ -57,6 +60,7 @@ class BackgroundJobEnvelope:
             job_id=job_id,
             process_instance_id=process_instance_id,
             task_guid=task_guid,
+            lock_retry_count=lock_retry_count,
         )
 
     @classmethod
@@ -86,6 +90,7 @@ class BackgroundJobEnvelope:
             job_id=job_id,
             process_instance_id=process_instance_id,
             task_guid=task_guid,
+            lock_retry_count=_safe_int(headers.get(f"{HEADER_PREFIX}lock_retry_count"), 0),
         )
 
     def headers(self) -> dict[str, JobArgument]:
@@ -94,6 +99,7 @@ class BackgroundJobEnvelope:
             f"{HEADER_PREFIX}eligible_at": self.eligible_at,
             f"{HEADER_PREFIX}correlation_id": self.correlation_id,
             f"{HEADER_PREFIX}job_id": self.job_id,
+            f"{HEADER_PREFIX}lock_retry_count": self.lock_retry_count,
         }
 
     def message(self) -> dict[str, object]:
@@ -106,6 +112,7 @@ class BackgroundJobEnvelope:
             "job_id": self.job_id,
             "process_instance_id": self.process_instance_id,
             "task_guid": self.task_guid,
+            "lock_retry_count": self.lock_retry_count,
         }
 
     @classmethod
@@ -119,6 +126,7 @@ class BackgroundJobEnvelope:
             job_id=cast(str, message["job_id"]),
             process_instance_id=cast(int | None, message.get("process_instance_id")),
             task_guid=cast(str | None, message.get("task_guid")),
+            lock_retry_count=_safe_int(message.get("lock_retry_count"), 0),
         )
 
     def structured_fields(self) -> dict[str, JobArgument]:
@@ -212,5 +220,12 @@ def _safe_lifecycle_log(message: str, event_name: str, envelope: BackgroundJobEn
 def _safe_float(value: Any, default: float) -> float:
     try:
         return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _safe_int(value: Any, default: int) -> int:
+    try:
+        return int(value)
     except (TypeError, ValueError):
         return default

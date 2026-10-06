@@ -86,6 +86,28 @@ def test_application_defaults_to_celery_background_job_publisher(app: Flask) -> 
     assert isinstance(publisher, BackgroundJobPublisher)
 
 
+def test_lock_retry_count_survives_publishing_and_delivery() -> None:
+    calls: list[dict[str, object]] = []
+
+    def send_task(*args: object, **kwargs: object) -> SimpleNamespace:
+        calls.append(kwargs)
+        return SimpleNamespace(task_id="delivery-1")
+
+    envelope = BackgroundJobEnvelope.create(
+        CELERY_TASK_PROCESS_INSTANCE_RUN, {"process_instance_id": 42}, now=10.0, lock_retry_count=3
+    )
+    BackgroundJobPublisher(send_task=send_task).publish(envelope)
+    headers = calls[0]["headers"]
+    assert isinstance(headers, dict)
+
+    delivered = BackgroundJobEnvelope.from_delivery(CELERY_TASK_PROCESS_INSTANCE_RUN, {"process_instance_id": 42}, headers)
+    headerless = BackgroundJobEnvelope.from_delivery(CELERY_TASK_PROCESS_INSTANCE_RUN, {"process_instance_id": 42}, None)
+
+    assert delivered.lock_retry_count == 3
+    assert headerless.lock_retry_count == 0
+    assert BackgroundJobEnvelope.from_message(envelope.message()).lock_retry_count == 3
+
+
 def test_decodes_publisher_headers_and_headerless_deliveries() -> None:
     published = BackgroundJobEnvelope.from_delivery(
         CELERY_TASK_PROCESS_INSTANCE_RUN,

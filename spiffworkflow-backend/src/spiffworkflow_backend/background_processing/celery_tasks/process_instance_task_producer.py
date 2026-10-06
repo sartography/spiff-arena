@@ -107,6 +107,27 @@ def queue_process_instance_if_appropriate(
     return False
 
 
+def queue_locked_process_instance_run_retry(
+    process_instance_id: int, task_guid: str | None, lock_retry_count: int, countdown: float
+) -> str:
+    published_job = configured_background_job_publisher().publish(
+        BackgroundJobEnvelope.create(
+            CELERY_TASK_PROCESS_INSTANCE_RUN,
+            {"process_instance_id": process_instance_id, "task_guid": task_guid},
+            countdown=countdown,
+            process_instance_id=process_instance_id,
+            task_guid=task_guid,
+            lock_retry_count=lock_retry_count,
+        ),
+        countdown=countdown,
+    )
+    current_app.logger.info(
+        f"Process instance ({process_instance_id}) was locked; retrying its run in {countdown:g}s "
+        f"(lock retry {lock_retry_count}, background job {published_job.delivery_id})"
+    )
+    return published_job.delivery_id
+
+
 def queue_event_notifier_if_appropriate(updated_process_instance: ProcessInstanceModel, event_type: str) -> bool:
     if (
         queue_enabled_for_process_model()
