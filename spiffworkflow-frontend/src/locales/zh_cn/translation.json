@@ -233,6 +233,7 @@
   "instance_has_error": "实例有错误",
   "instances_with_tasks_completed_by_me": "我完成任务的实例",
   "instances_with_tasks_waiting_for_me": "等待我处理任务的实例",
+  "invalid_number_format": "无效的数字。示例：{{example}}",
   "invalid_schema_error": "无效的架构：{{error}}",
   "json_schema": "JSON 架构",
   "json_schema_description": "JSON 架构描述了您要收集的数据的结构，以及应应用于每个字段的验证规则",

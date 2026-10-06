@@ -233,6 +233,7 @@
   "instance_has_error": "Instance má chybu",
   "instances_with_tasks_completed_by_me": "Instance s úkoly dokončenými mnou",
   "instances_with_tasks_waiting_for_me": "Instance s úkoly čekajícími na mě",
+  "invalid_number_format": "Neplatné číslo. Příklad: {{example}}",
   "invalid_schema_error": "Neplatné schéma: {{error}}",
   "json_schema": "JSON schéma",
   "json_schema_description": "JSON schéma popisuje strukturu dat, která chcete shromažďovat, a jaká pravidla ověření by měla být použita pro každé pole",

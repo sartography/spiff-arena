@@ -1,40 +1,20 @@
 import { FieldProps, WidgetProps } from '@rjsf/utils';
-import { TextField } from '@mui/material';
-import { useEffect, useMemo, useState } from 'react';
+import { InputAdornment, TextField } from '@mui/material';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getCommonAttributes } from './helpers';
+import {
+  allowsNegative,
+  currencyAffixFor,
+  decimalLimitFor,
+  formatLocalizedNumber,
+  parseLocalizedNumber,
+  resolveNumberLocale,
+  schemaHasIntegerType,
+} from './localizedNumbers';
 
 const isPlainObject = (value: any) =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
-
-const schemaTypes = (schema: any): string[] => {
-  const type = schema?.type;
-  return Array.isArray(type) ? type : type ? [type] : [];
-};
-
-const schemaHasNumericType = (schema: any) => {
-  const types = schemaTypes(schema);
-  return types.includes('number') || types.includes('integer');
-};
-
-const schemaHasIntegerType = (schema: any) =>
-  schemaTypes(schema).includes('integer');
-
-const decimalLimitFor = (schema: any, options: any = {}) => {
-  if (typeof options.decimals === 'number') {
-    return Math.max(0, options.decimals);
-  }
-  if (schemaHasIntegerType(schema)) {
-    return 0;
-  }
-  return null;
-};
-
-const allowsNegative = (schema: any, options: any = {}) => {
-  if (typeof options.allowNegative === 'boolean') {
-    return options.allowNegative;
-  }
-  return !(typeof schema?.minimum === 'number' && schema.minimum >= 0);
-};
 
 const normalizeNumberInput = (
   value: any,
@@ -94,55 +74,65 @@ export const stripNumberFormatting = (
   return normalizeNumberInput(value, schema, options).normalized;
 };
 
-export const formatNumberForDisplay = (
-  value: any,
-  schema: any = {},
-  options: any = {},
-) => {
-  const normalized = stripNumberFormatting(value, schema, options);
-  if (!normalized || normalized === '-' || normalized === '-.') {
-    return normalized;
-  }
+/**
+ * Formats a stored value for display in the locale from `options.locale`
+ * (unset or "auto" follows the user's language).
+ */
+export const formatNumberForDisplay = (value: any, options: any = {}) =>
+  formatLocalizedNumber(value, resolveNumberLocale(options.locale), options);
 
-  const negative = normalized.startsWith('-');
-  const unsigned = negative ? normalized.slice(1) : normalized;
-  const [integerPart, decimalPart] = unsigned.split('.');
-  const integerWithCommas = (integerPart || '0').replace(
-    /\B(?=(\d{3})+(?!\d))/g,
-    ',',
-  );
-  const decimalSuffix = normalized.includes('.') ? `.${decimalPart ?? ''}` : '';
+/**
+ * Form data for text that is not a valid number in the field's locale. An
+ * object cannot be mistaken for a stored value (a JSON number, or a
+ * dot-decimal string for string schemas), so drafts keep the text exactly as
+ * typed, and schema validation still rejects it.
+ */
+export type InvalidNumberText = { invalidNumberText: string };
 
-  return `${negative ? '-' : ''}${integerWithCommas}${decimalSuffix}`;
-};
+export const isInvalidNumberText = (value: any): value is InvalidNumberText =>
+  isPlainObject(value) && typeof value.invalidNumberText === 'string';
 
+const isSameStoredValue = (left: any, right: any) =>
+  Object.is(left, right) ||
+  (isInvalidNumberText(left) &&
+    isInvalidNumberText(right) &&
+    left.invalidNumberText === right.invalidNumberText);
+
+const MAX_PENDING_EMITS = 100;
+
+/**
+ * Converts text typed in the field's locale to the value stored in form data:
+ * a number for numeric schemas or a dot-decimal string for string schemas.
+ * Empty text yields undefined, and invalid text an `InvalidNumberText`.
+ */
 export const coerceFormattedNumberValue = (
-  value: any,
+  text: any,
   schema: any = {},
   options: any = {},
 ) => {
-  const { normalized, hasInvalidFractionalPart } = normalizeNumberInput(
-    value,
+  const parsed = parseLocalizedNumber(
+    text,
+    resolveNumberLocale(options.locale),
     schema,
     options,
   );
-  if (!normalized || normalized === '-' || normalized === '-.') {
-    return undefined;
+  if (parsed.status === 'invalid') {
+    return { invalidNumberText: String(text) };
   }
-  if (hasInvalidFractionalPart) {
-    return undefined;
-  }
+  return parsed.status === 'valid' ? parsed.value : undefined;
+};
 
-  if (!schemaHasNumericType(schema)) {
-    return normalized;
-  }
-
-  const numericValue = Number(normalized);
-  return Number.isFinite(numericValue) ? numericValue : undefined;
+export type FormattedNumberFormContext = {
+  invalidFormattedNumbers?: Map<string, string>;
 };
 
 const toNumber = (value: any) => {
-  if (value === null || value === undefined || value === '') {
+  if (
+    value === null ||
+    value === undefined ||
+    value === '' ||
+    isInvalidNumberText(value)
+  ) {
     return 0;
   }
   if (typeof value === 'number') {
@@ -526,35 +516,174 @@ export function FormattedNumberWidget({
   uiSchema,
   label,
   rawErrors = [],
+  registry,
 }: WidgetProps) {
+  // Subscribing re-renders the widget when the user switches language.
+  const { t } = useTranslation();
   const widgetOptions = useMemo(() => options ?? {}, [options]);
+  const locale = resolveNumberLocale(widgetOptions.locale);
   const commonAttributes = getCommonAttributes(
     label || '',
     schema,
     uiSchema,
     rawErrors,
   );
+  const textForStoredValue = (storedValue: any) =>
+    isInvalidNumberText(storedValue)
+      ? storedValue.invalidNumberText
+      : formatLocalizedNumber(storedValue, locale, widgetOptions);
   const [displayValue, setDisplayValue] = useState(() =>
-    formatNumberForDisplay(value, schema, widgetOptions),
+    textForStoredValue(value),
   );
+  // Only text the user typed (now or in a saved draft) is validated. Values
+  // from task data, such as script results with float noise, are displayed
+  // rounded and submitted unchanged unless the user edits them.
+  const [isUserText, setIsUserText] = useState(() =>
+    isInvalidNumberText(value),
+  );
+  const [focused, setFocused] = useState(false);
+  // RJSF echoes each emitted value back as a prop, and during fast typing
+  // those echoes can lag several keystrokes behind. Echoes of our own
+  // emissions must never overwrite what the user is typing; only values that
+  // came from elsewhere should.
+  const pendingEmits = useRef<any[]>([]);
+  const lastSeenValue = useRef<any>(value);
+  const displayLocale = useRef(locale);
+
+  const emit = (nextValue: any) => {
+    pendingEmits.current.push(nextValue);
+    if (pendingEmits.current.length > MAX_PENDING_EMITS) {
+      pendingEmits.current.shift();
+    }
+    onChange(nextValue);
+  };
 
   useEffect(() => {
-    setDisplayValue(formatNumberForDisplay(value, schema, widgetOptions));
-  }, [schema, value, widgetOptions]);
+    if (!isSameStoredValue(value, lastSeenValue.current)) {
+      lastSeenValue.current = value;
+      const echoIndex = pendingEmits.current.findIndex((emitted) =>
+        isSameStoredValue(emitted, value),
+      );
+      if (echoIndex >= 0) {
+        pendingEmits.current.splice(0, echoIndex + 1);
+      } else {
+        pendingEmits.current = [];
+        displayLocale.current = locale;
+        setIsUserText(isInvalidNumberText(value));
+        setDisplayValue(textForStoredValue(value));
+        return;
+      }
+    }
+    if (focused || displayLocale.current === locale) {
+      return;
+    }
+    displayLocale.current = locale;
+    if (value !== undefined && value !== null && !isInvalidNumberText(value)) {
+      setDisplayValue(formatLocalizedNumber(value, locale, widgetOptions));
+      return;
+    }
+    // Invalid text may be valid in the new locale. Store what the field now
+    // shows as valid, so the form never looks filled while the data is empty.
+    if (isUserText && !disabled && !readonly) {
+      const nextValue = coerceFormattedNumberValue(displayValue, schema, {
+        ...widgetOptions,
+        locale,
+      });
+      if (!isSameStoredValue(nextValue, value)) {
+        if (!isInvalidNumberText(nextValue)) {
+          setDisplayValue(
+            formatLocalizedNumber(nextValue, locale, widgetOptions),
+          );
+        }
+        emit(nextValue);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focused, locale, value, widgetOptions]);
+
+  const parsed = parseLocalizedNumber(
+    displayValue,
+    locale,
+    schema,
+    widgetOptions,
+  );
+  const isInvalid = isUserText && parsed.status === 'invalid';
+  const decimalLimit = decimalLimitFor(schema, widgetOptions);
+  const exampleDecimals = decimalLimit ?? 2;
+  const example = formatLocalizedNumber(
+    exampleDecimals > 0
+      ? `1234567.${'89'.padEnd(exampleDecimals, '0').slice(0, exampleDecimals)}`
+      : '1234567',
+    locale,
+    { decimals: exampleDecimals },
+  );
+  const invalidMessage = t('invalid_number_format', { example });
+  const fieldLabel = commonAttributes.label;
+  const invalidRegistry = (
+    registry?.formContext as FormattedNumberFormContext | undefined
+  )?.invalidFormattedNumbers;
+  const blocksSubmission = isInvalid && !disabled && !readonly;
+
+  useEffect(() => {
+    if (!invalidRegistry) {
+      return undefined;
+    }
+    if (blocksSubmission) {
+      invalidRegistry.set(id, `${fieldLabel}: ${invalidMessage}`);
+    } else {
+      invalidRegistry.delete(id);
+    }
+    return () => {
+      invalidRegistry.delete(id);
+    };
+  }, [blocksSubmission, fieldLabel, id, invalidMessage, invalidRegistry]);
 
   const handleChange = (event: any) => {
-    const nextDisplayValue = formatNumberForDisplay(
+    const text = event.currentTarget.value;
+    setDisplayValue(text);
+    setIsUserText(true);
+    displayLocale.current = locale;
+    if (disabled || readonly) {
+      return;
+    }
+    emit(
+      coerceFormattedNumberValue(text, schema, {
+        ...widgetOptions,
+        locale,
+      }),
+    );
+  };
+
+  const handleBlur = (event: any) => {
+    setFocused(false);
+    const result = parseLocalizedNumber(
       event.currentTarget.value,
+      locale,
       schema,
       widgetOptions,
     );
-    setDisplayValue(nextDisplayValue);
-    if (!disabled && !readonly) {
-      onChange(
-        coerceFormattedNumberValue(nextDisplayValue, schema, widgetOptions),
+    if (isUserText && result.status === 'valid') {
+      setDisplayValue(
+        formatLocalizedNumber(result.canonical, locale, widgetOptions),
       );
     }
+    onBlur?.(id, result.status === 'valid' ? result.value : undefined);
   };
+
+  const showInvalid = isInvalid && !focused;
+  const currencyAffix = currencyAffixFor(widgetOptions.currency, locale);
+  const adornment = currencyAffix ? (
+    <InputAdornment position={currencyAffix.position}>
+      {currencyAffix.symbol}
+    </InputAdornment>
+  ) : undefined;
+
+  let helperText = commonAttributes.helperText;
+  if (showInvalid) {
+    helperText = invalidMessage;
+  } else if (commonAttributes.invalid) {
+    helperText = commonAttributes.errorMessageForField;
+  }
 
   return (
     <TextField
@@ -570,27 +699,25 @@ export function FormattedNumberWidget({
         htmlInput: {
           readOnly: readonly,
           inputMode: schemaHasIntegerType(schema) ? 'numeric' : 'decimal',
+          lang: locale,
         },
+        input: adornment
+          ? {
+              [currencyAffix?.position === 'start'
+                ? 'startAdornment'
+                : 'endAdornment']: adornment,
+            }
+          : undefined,
       }}
       value={displayValue}
-      onBlur={(event: any) =>
-        onBlur?.(
-          id,
-          coerceFormattedNumberValue(
-            event.currentTarget.value,
-            schema,
-            widgetOptions,
-          ),
-        )
-      }
+      onBlur={handleBlur}
       onChange={handleChange}
-      onFocus={(event: any) => onFocus?.(id, event.currentTarget.value)}
-      error={commonAttributes.invalid}
-      helperText={
-        commonAttributes.invalid
-          ? commonAttributes.errorMessageForField
-          : commonAttributes.helperText
-      }
+      onFocus={(event: any) => {
+        setFocused(true);
+        onFocus?.(id, event.currentTarget.value);
+      }}
+      error={commonAttributes.invalid || showInvalid}
+      helperText={helperText}
       placeholder={placeholder}
       autoFocus={autofocus}
       fullWidth
@@ -602,16 +729,25 @@ const formatCalculatedFieldValue = (value: any, options: any = {}) => {
   if (value === undefined || value === null) {
     return '';
   }
+  const locale = resolveNumberLocale(options.locale);
   if (options.format === 'currency') {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: options.currency ?? 'USD',
-      minimumFractionDigits: options.decimals ?? 2,
-      maximumFractionDigits: options.decimals ?? 2,
-    }).format(value);
+    try {
+      return new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: options.currency ?? 'USD',
+        minimumFractionDigits: options.decimals ?? 2,
+        maximumFractionDigits: options.decimals ?? 2,
+      }).format(value);
+    } catch {
+      // An invalid currency code falls back to plain number formatting.
+    }
   }
-  if (options.format === 'number' || typeof value === 'number') {
-    return formatNumberForDisplay(value, { type: 'number' }, options);
+  if (
+    options.format === 'number' ||
+    options.format === 'currency' ||
+    typeof value === 'number'
+  ) {
+    return formatLocalizedNumber(value, locale, options);
   }
   return String(value);
 };
@@ -626,6 +762,8 @@ export function CalculatedField({
   schema,
   uiSchema,
 }: FieldProps) {
+  // Subscribing re-renders the field when the user switches language.
+  useTranslation();
   const commonAttributes = getCommonAttributes(
     label || '',
     schema,

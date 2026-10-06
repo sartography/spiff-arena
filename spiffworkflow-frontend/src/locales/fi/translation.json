@@ -233,6 +233,7 @@
   "instance_has_error": "Instanssissa on virhe",
   "instances_with_tasks_completed_by_me": "Instanssit minun suorittamillani tehtävillä",
   "instances_with_tasks_waiting_for_me": "Instanssit minua odottavilla tehtävillä",
+  "invalid_number_format": "Virheellinen luku. Esimerkki: {{example}}",
   "invalid_schema_error": "Virheellinen skeema: {{error}}",
   "json_schema": "JSON-skeema",
   "json_schema_description": "JSON-skeema kuvaa kerättävien tietojen rakenteen ja kunkin kentän validointisäännöt",

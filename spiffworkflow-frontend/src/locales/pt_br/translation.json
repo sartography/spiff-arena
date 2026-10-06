@@ -233,6 +233,7 @@
   "instance_has_error": "A instância contém um erro",
   "instances_with_tasks_completed_by_me": "Instâncias com tarefas concluídas por mim",
   "instances_with_tasks_waiting_for_me": "Instâncias com tarefas aguardando por mim",
+  "invalid_number_format": "Número inválido. Exemplo: {{example}}",
   "invalid_schema_error": "Esquema inválido: {{error}}",
   "json_schema": "Esquema JSON",
   "json_schema_description": "O esquema JSON descreve a estrutura dos dados que você deseja coletar e quais regras de validação devem ser aplicadas a cada campo",
