@@ -217,6 +217,13 @@ config_from_env("SPIFFWORKFLOW_BACKEND_LOG_MILESTONES", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT", default=None)
 config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_SOURCE", default="spiffworkflow.org")
+# Events stay buffered until the listener acknowledges them (SPIFF-ANALYTICS/2).
+config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_ACK_ENABLED", default=False)
+# Time limit for connect, send, and READY, and for the next ACK while events are unacknowledged.
+# On timeout the sender reconnects and resends them; the listener drops duplicates.
+config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_ACK_TIMEOUT_SECONDS", default=30)
+# Maximum events sent but not yet acknowledged on one connection.
+config_from_env("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_ACK_WINDOW", default=100)
 config_from_env("SPIFFWORKFLOW_BACKEND_API_LOGGING_ENABLED", default=False)
 config_from_env("SPIFFWORKFLOW_BACKEND_API_LOG_ALL_ENDPOINTS", default=False)
 

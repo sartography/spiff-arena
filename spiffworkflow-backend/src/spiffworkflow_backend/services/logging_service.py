@@ -1,23 +1,95 @@
+import contextlib
 import json
 import logging
 import os
+import random
 import re
+import select
+import socket
 import sys
 import time
+import weakref
 from collections import deque
 from logging.handlers import SocketHandler
 from threading import Event
+from threading import RLock
 from threading import Thread
+from threading import current_thread
 from typing import Any
 from uuid import uuid4
 
 from flask import g
 from flask.app import Flask
+from prometheus_client import Counter
+from prometheus_client import Gauge
 
 SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR = "spiff_log_handler_skip_record"
 EVENT_STREAM_PAUSE_FILE = "/tmp/spiff-event-stream-paused"  # noqa: S108 - container-local operator control marker
 EVENT_STREAM_RETRY_INTERVAL_SECONDS = 1.0
 EVENT_STREAM_SHUTDOWN_DRAIN_SECONDS = 5.0
+EVENT_STREAM_ACK_PROTOCOL_LINE = b"SPIFF-ANALYTICS/2\n"
+EVENT_STREAM_MAX_PROTOCOL_LINE_BYTES = 512
+# Short receive waits let the sender interleave new events with outstanding
+# acknowledgements; the ACK timeout still bounds a listener that stops progressing.
+EVENT_STREAM_ACK_POLL_SECONDS = 0.05
+EVENT_STREAM_TCP_OPTIONS = (
+    ("TCP_KEEPIDLE", 30),
+    ("TCP_KEEPINTVL", 10),
+    ("TCP_KEEPCNT", 3),
+    # Without this, writes to a vanished peer succeed locally for ~15 minutes of retransmits.
+    ("TCP_USER_TIMEOUT", 30_000),
+)
+
+# In multiprocess mode, prometheus_client opens this process's metric file as
+# soon as an unlabeled metric is defined. Every entry point imports this module
+# (bin/wait_for_db_to_be_ready.py, Celery, apscheduler) before create_app or
+# boot_server_in_docker creates the directory.
+if prometheus_multiproc_dir := os.environ.get("PROMETHEUS_MULTIPROC_DIR"):
+    os.makedirs(prometheus_multiproc_dir, exist_ok=True)
+
+EVENT_STREAM_PENDING_EVENTS = Gauge(
+    "spiff_event_stream_pending_events",
+    "Analytics events buffered or awaiting listener acknowledgement in this process.",
+    multiprocess_mode="livesum",
+)
+EVENT_STREAM_REJECTED_EVENTS_TOTAL = Counter(
+    "spiff_event_stream_rejected_events_total",
+    "Analytics events the listener permanently rejected.",
+)
+
+
+class EventStreamProtocolError(ConnectionError):
+    pass
+
+
+def configure_event_stream_socket(sock: socket.socket) -> None:
+    if sock.family not in (socket.AF_INET, socket.AF_INET6):
+        return
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+    for option_name, value in EVENT_STREAM_TCP_OPTIONS:
+        option = getattr(socket, option_name, None)
+        if option is None:
+            continue
+        with contextlib.suppress(OSError):
+            sock.setsockopt(socket.IPPROTO_TCP, option, value)
+
+
+def event_stream_peer_has_closed(sock: socket.socket) -> bool:
+    """Detect a peer that closed or reset an otherwise idle connection without blocking."""
+    try:
+        if hasattr(select, "poll"):
+            poller = select.poll()
+            poller.register(sock, select.POLLIN)
+            if not poller.poll(0):
+                return False
+        else:
+            readable, _, _ = select.select([sock], [], [], 0)
+            if not readable:
+                return False
+        return sock.recv(1, socket.MSG_PEEK) == b""
+    except (OSError, ValueError):
+        return True
+
 
 # flask logging formats:
 #   from: https://www.askpython.com/python-modules/flask/flask-logging
@@ -39,6 +111,18 @@ def skip_apscheduler_running_job_record(record: logging.LogRecord) -> bool:
     return not record.getMessage().startswith("Running job ")
 
 
+EVENT_STREAM_HANDLERS: "weakref.WeakSet[SpiffLogHandler]" = weakref.WeakSet()
+
+
+def reset_event_stream_handlers_after_fork() -> None:
+    for handler in list(EVENT_STREAM_HANDLERS):
+        handler.reset_after_fork_if_needed()
+
+
+if hasattr(os, "register_at_fork"):
+    os.register_at_fork(after_in_child=reset_event_stream_handlers_after_fork)
+
+
 class SpiffLogHandler(SocketHandler):
     def __init__(self, app: Flask, *args: Any) -> None:
         super().__init__(
@@ -46,6 +130,9 @@ class SpiffLogHandler(SocketHandler):
             app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT"],
         )
         self.app = app
+        # Guards both queues and the pending gauge so every gauge write reflects the
+        # queue state at that moment. Network I/O must stay outside this lock.
+        self.state_lock = RLock()
         self.pending_events: deque[bytes] = deque()
         self.retry_stop = Event()
         self.retry_wakeup = Event()
@@ -55,6 +142,13 @@ class SpiffLogHandler(SocketHandler):
         self.shutdown_drain_seconds = EVENT_STREAM_SHUTDOWN_DRAIN_SECONDS
         self.delivery_failure_count = 0
         self.next_socket_warning_at = 0.0
+        self.ack_enabled = bool(app.config.get("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_ACK_ENABLED", False))
+        self.ack_timeout_seconds = float(app.config.get("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_ACK_TIMEOUT_SECONDS", 30))
+        self.ack_window = max(int(app.config.get("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_ACK_WINDOW", 100)), 1)
+        self.unacknowledged_events: deque[tuple[str, bytes]] = deque()
+        self.ack_buffer = bytearray()
+        self.last_ack_progress_at = 0.0
+        self.owner_pid = os.getpid()
         try:
             self.socket_warning_interval_seconds = int(
                 os.environ.get("SPIFFWORKFLOW_BACKEND_EVENT_STREAM_WARNING_INTERVAL_SECONDS", "60")
@@ -63,6 +157,7 @@ class SpiffLogHandler(SocketHandler):
             self.socket_warning_interval_seconds = 60
         if self.socket_warning_interval_seconds < 1:
             self.socket_warning_interval_seconds = 60
+        EVENT_STREAM_HANDLERS.add(self)
 
     def format(self, record: Any) -> str:
         return json.dumps(
@@ -152,6 +247,49 @@ class SpiffLogHandler(SocketHandler):
         # Instead of returning a pickled log record, write the json entry to the socket
         return (self.format(record) + "\n").encode("utf-8")
 
+    def makeSocket(self, timeout: float = 1) -> socket.socket:  # noqa: N802
+        sock = super().makeSocket(timeout)
+        configure_event_stream_socket(sock)
+        return sock
+
+    def pending_event_count(self) -> int:
+        with self.state_lock:
+            return len(self.pending_events) + len(self.unacknowledged_events)
+
+    def update_pending_metric(self) -> None:
+        with self.state_lock:
+            EVENT_STREAM_PENDING_EVENTS.set(self.pending_event_count())
+
+    def reset_after_fork_if_needed(self) -> None:
+        """Discard connection, buffer, and lock state copied from a parent process."""
+        pid = os.getpid()
+        if pid == self.owner_pid:
+            return
+        self.owner_pid = pid
+        # A parent thread may have held these locks at fork time and does not exist in the child.
+        self.state_lock = RLock()
+        self.retry_stop = Event()
+        self.retry_wakeup = Event()
+        self.retry_thread = None
+        if self.sock is not None:
+            # Closing only the child's descriptor leaves the parent's connection open;
+            # shutdown() would tear down the shared connection.
+            with contextlib.suppress(OSError):
+                self.sock.close()
+            self.sock = None
+        self.pending_events.clear()
+        self.unacknowledged_events.clear()
+        self.ack_buffer.clear()
+        self.retryTime = None
+
+    def schedule_reconnect(self, jitter: bool = False) -> None:
+        if self.retryTime is None:
+            self.retryPeriod = self.retryStart
+        else:
+            self.retryPeriod = min(self.retryPeriod * self.retryFactor, self.retryMax)
+        delay = self.retryPeriod * random.uniform(0.5, 1.0) if jitter else self.retryPeriod  # noqa: S311
+        self.retryTime = time.time() + delay
+
     def createSocket(self, record: Any | None = None) -> None:  # noqa: N802
         now = time.time()
         if self.retryTime is None:
@@ -163,18 +301,17 @@ class SpiffLogHandler(SocketHandler):
                 self.sock = self.makeSocket()
                 self.retryTime = None
             except OSError as exception:
-                if self.retryTime is None:
-                    self.retryPeriod = self.retryStart
-                else:
-                    self.retryPeriod = self.retryPeriod * self.retryFactor
-                    if self.retryPeriod > self.retryMax:
-                        self.retryPeriod = self.retryMax
-                self.retryTime = now + self.retryPeriod
+                self.schedule_reconnect()
                 self.log_socket_failure(exception, record)
         elif record is not None:
             self.log_socket_failure(None, record)
 
     def send(self, s: bytes, record: Any | None = None) -> bool:  # type: ignore[override]
+        if self.sock is not None and event_stream_peer_has_closed(self.sock):
+            # A listener that restarted closed this connection. Writing would
+            # succeed locally and the event would be lost.
+            self.sock.close()
+            self.sock = None
         if self.sock is None:
             self.createSocket(record)
         if self.sock:
@@ -189,9 +326,16 @@ class SpiffLogHandler(SocketHandler):
 
     def emit(self, record: Any) -> None:
         try:
+            self.reset_after_fork_if_needed()
             s = self.makePickle(record)
-            queue_was_empty = not self.pending_events
-            self.pending_events.append(s)
+            with self.state_lock:
+                queue_was_empty = not self.pending_events
+                self.pending_events.append(s)
+                self.update_pending_metric()
+            if self.ack_enabled:
+                # The request or task thread never touches the socket; the sender thread delivers.
+                self.start_retry_thread()
+                return
             self.flush_pending(max_events=1, record=record if queue_was_empty else None)
             if self.pending_events:
                 self.start_retry_thread()
@@ -212,23 +356,34 @@ class SpiffLogHandler(SocketHandler):
         while self.pending_events and (max_events is None or sent < max_events):
             payload = self.pending_events[0]
             if not self.send(payload, record):
-                return
-            self.pending_events.popleft()
+                break
+            with self.state_lock:
+                self.pending_events.popleft()
             record = None
             sent += 1
+        self.update_pending_metric()
 
     def start_retry_thread(self) -> None:
-        if self.retry_thread is None or not self.retry_thread.is_alive():
-            self.retry_thread = Thread(
-                target=self.retry_pending_events,
-                daemon=True,
-                name="spiff-event-stream-retry",
-            )
-            self.retry_thread.start()
-        self.retry_wakeup.set()
+        # Emitters and close() can race here; two senders would interleave writes and acknowledgements.
+        with self.state_lock:
+            if self.retry_thread is None or not self.retry_thread.is_alive():
+                self.retry_thread = Thread(
+                    target=self.retry_pending_events,
+                    daemon=True,
+                    name="spiff-event-stream-retry",
+                )
+                self.retry_thread.start()
+            self.retry_wakeup.set()
 
     def retry_pending_events(self) -> None:
         while not self.retry_stop.is_set():
+            if self.ack_enabled:
+                if self.pending_event_count() and self.deliver_acknowledged():
+                    continue
+                self.update_pending_metric()
+                self.retry_wakeup.wait(self.retry_interval_seconds)
+                self.retry_wakeup.clear()
+                continue
             self.retry_wakeup.wait(self.retry_interval_seconds)
             self.retry_wakeup.clear()
             if self.retry_stop.is_set():
@@ -239,7 +394,180 @@ class SpiffLogHandler(SocketHandler):
             finally:
                 self.release()
 
+    def deliver_acknowledged(self) -> bool:
+        """Run one send and receive step. Return False when the sender should wait before retrying."""
+        if self.delivery_is_paused():
+            self.drop_acknowledged_connection()
+            return False
+        if self.sock is None:
+            self.connect_acknowledged()
+            if self.sock is None:
+                return False
+        try:
+            self.send_acknowledged_window()
+            if self.unacknowledged_events:
+                self.receive_acknowledgements()
+        except OSError as exception:
+            self.drop_acknowledged_connection()
+            self.schedule_reconnect(jitter=True)
+            self.log_socket_failure(exception, None)
+            return False
+        finally:
+            self.update_pending_metric()
+        return True
+
+    def connect_acknowledged(self) -> None:
+        if self.retryTime is not None and time.time() < self.retryTime:
+            return
+        sock: socket.socket | None = None
+        try:
+            sock = self.makeSocket(timeout=self.ack_timeout_seconds)
+            sock.settimeout(self.ack_timeout_seconds)
+            sock.sendall(EVENT_STREAM_ACK_PROTOCOL_LINE)
+            self.ack_buffer.clear()
+            reply = self.read_protocol_line(sock)
+            if reply != b"READY":
+                raise EventStreamProtocolError("event stream listener did not accept acknowledged delivery")
+        except OSError as exception:
+            if sock is not None:
+                sock.close()
+            self.ack_buffer.clear()
+            self.schedule_reconnect(jitter=True)
+            self.log_socket_failure(exception, None)
+            return
+        self.sock = sock
+        self.retryTime = None
+        self.last_ack_progress_at = time.monotonic()
+
+    def read_protocol_line(self, sock: socket.socket) -> bytes:
+        while b"\n" not in self.ack_buffer:
+            chunk = sock.recv(EVENT_STREAM_MAX_PROTOCOL_LINE_BYTES)
+            if not chunk:
+                raise EventStreamProtocolError("event stream listener closed the connection during negotiation")
+            self.ack_buffer.extend(chunk)
+            if len(self.ack_buffer) > EVENT_STREAM_MAX_PROTOCOL_LINE_BYTES and b"\n" not in self.ack_buffer:
+                raise EventStreamProtocolError("event stream listener sent an oversized protocol line")
+        line, _, rest = bytes(self.ack_buffer).partition(b"\n")
+        self.ack_buffer[:] = rest
+        return line
+
+    def send_acknowledged_window(self) -> None:
+        if self.sock is None:
+            raise EventStreamProtocolError("event stream socket is not connected")
+        batch: list[bytes] = []
+        invalid_payloads: list[bytes] = []
+        with self.state_lock:
+            while self.pending_events and len(self.unacknowledged_events) < self.ack_window:
+                payload = self.pending_events.popleft()
+                try:
+                    event_id = str(json.loads(payload)["id"])
+                except (ValueError, KeyError, TypeError):
+                    invalid_payloads.append(payload)
+                    continue
+                if not self.unacknowledged_events:
+                    self.last_ack_progress_at = time.monotonic()
+                self.unacknowledged_events.append((event_id, payload))
+                batch.append(payload)
+            self.update_pending_metric()
+        for payload in invalid_payloads:
+            self.reject_event(None, payload, "event has no id")
+        if batch:
+            self.sock.settimeout(self.ack_timeout_seconds)
+            self.sock.sendall(b"".join(batch))
+
+    def receive_acknowledgements(self) -> None:
+        if self.sock is None:
+            raise EventStreamProtocolError("event stream socket is not connected")
+        self.sock.settimeout(EVENT_STREAM_ACK_POLL_SECONDS)
+        try:
+            chunk = self.sock.recv(64 * 1024)
+        except TimeoutError:
+            if time.monotonic() - self.last_ack_progress_at > self.ack_timeout_seconds:
+                raise TimeoutError(
+                    f"event stream listener sent no acknowledgement for {self.ack_timeout_seconds:g} seconds"
+                ) from None
+            return
+        if not chunk:
+            raise EventStreamProtocolError("event stream listener closed the connection with unacknowledged events")
+        self.ack_buffer.extend(chunk)
+        while b"\n" in self.ack_buffer:
+            line, _, rest = bytes(self.ack_buffer).partition(b"\n")
+            self.ack_buffer[:] = rest
+            self.handle_acknowledgement(line)
+        if len(self.ack_buffer) > EVENT_STREAM_MAX_PROTOCOL_LINE_BYTES:
+            raise EventStreamProtocolError("event stream listener sent an oversized protocol line")
+
+    def handle_acknowledgement(self, line: bytes) -> None:
+        with self.state_lock:
+            if not self.unacknowledged_events:
+                raise EventStreamProtocolError("event stream listener replied with no event awaiting acknowledgement")
+            event_id, payload = self.unacknowledged_events[0]
+            rejected = line.startswith(b"NACK ")
+            if line != f"ACK {event_id}".encode() and not rejected:
+                raise EventStreamProtocolError("event stream listener sent an acknowledgement out of order")
+            self.unacknowledged_events.popleft()
+            self.update_pending_metric()
+        if rejected:
+            self.reject_event(event_id, payload, line[5:].decode("utf-8", errors="replace"))
+        self.last_ack_progress_at = time.monotonic()
+
+    def reject_event(self, event_id: str | None, payload: bytes, reason: str) -> None:
+        EVENT_STREAM_REJECTED_EVENTS_TOTAL.inc()
+        event_type = None
+        with contextlib.suppress(ValueError, AttributeError):
+            event_type = json.loads(payload).get("type")
+        self.app.logger.error(
+            "Event stream listener permanently rejected a Spiff event; dropping it.",
+            extra={
+                SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR: True,
+                "extras": {"event_id": event_id, "event_type": event_type, "rejection_reason": reason},
+            },
+        )
+
+    def drop_acknowledged_connection(self) -> None:
+        if self.sock is not None:
+            with contextlib.suppress(OSError):
+                self.sock.close()
+            self.sock = None
+        self.ack_buffer.clear()
+        with self.state_lock:
+            if self.unacknowledged_events:
+                # Resend in the original order; the listener's receipt ledger drops duplicates.
+                self.pending_events.extendleft(reversed([payload for _event_id, payload in self.unacknowledged_events]))
+                self.unacknowledged_events.clear()
+                self.update_pending_metric()
+
+    def close_acknowledged(self) -> None:
+        deadline = time.monotonic() + self.shutdown_drain_seconds
+        if self.pending_event_count() and not self.delivery_is_paused():
+            # Shutdown is the last chance to deliver, so skip reconnect backoff.
+            self.retryTime = None
+            self.start_retry_thread()
+            while self.pending_event_count() and time.monotonic() < deadline:
+                time.sleep(EVENT_STREAM_ACK_POLL_SECONDS)
+        self.retry_stop.set()
+        self.retry_wakeup.set()
+        sender = self.retry_thread
+        if sender is not None and sender is not current_thread():
+            sender.join(timeout=1)
+        if sender is None or not sender.is_alive():
+            self.drop_acknowledged_connection()
+        if self.pending_event_count():
+            self.app.logger.error(
+                "Event stream handler closed with unacknowledged events still pending.",
+                extra={
+                    SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR: True,
+                    "extras": {"pending_event_count": self.pending_event_count()},
+                },
+            )
+
     def close(self) -> None:
+        # A forked child that never emitted must not drain the parent's events over the parent's connection.
+        self.reset_after_fork_if_needed()
+        if self.ack_enabled:
+            self.close_acknowledged()
+            super().close()
+            return
         deadline = time.monotonic() + self.shutdown_drain_seconds
         self.acquire()
         try:
@@ -284,7 +612,7 @@ class SpiffLogHandler(SocketHandler):
                     "event_stream_host": self.host,
                     "event_stream_port": self.port,
                     "delivery_failure_count": delivery_failure_count,
-                    "pending_event_count": len(self.pending_events),
+                    "pending_event_count": self.pending_event_count(),
                     "event_logger_name": getattr(record, "name", None),
                     "event_message": getattr(record, "msg", None),
                     "process_instance_id": spiff_data.get("process_instance_id"),
