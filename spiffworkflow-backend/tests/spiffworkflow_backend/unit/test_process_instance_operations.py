@@ -9,6 +9,8 @@ from spiffworkflow_backend.background_processing.process_instance_operations imp
 from spiffworkflow_backend.background_processing.process_instance_operations import ProcessInstanceOperationError
 from spiffworkflow_backend.background_processing.process_instance_operations import run_queued_process_instance
 from spiffworkflow_backend.background_processing.process_instance_operations import start_reserved_process_from_message
+from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 
 
@@ -86,3 +88,68 @@ def test_start_message_operation_rolls_back_and_raises_typed_error(mocker: Mocke
         start_reserved_process_from_message(42, 10, 11)
 
     session.rollback.assert_called_once_with()
+
+
+def _runnable_process_instance(mocker: MockerFixture) -> None:
+    query = mocker.MagicMock()
+    mocker.patch(
+        "spiffworkflow_backend.background_processing.process_instance_operations.ProcessInstanceModel",
+        SimpleNamespace(query=query),
+    )
+    query.filter_by.return_value.first.return_value = SimpleNamespace(id=42)
+    mocker.patch(
+        "spiffworkflow_backend.background_processing.process_instance_operations.ProcessInstanceQueueService.is_enqueued_to_run_in_the_future",
+        return_value=False,
+    )
+
+
+def _queue_entry(mocker: MockerFixture, entry: SimpleNamespace | None) -> None:
+    query = mocker.MagicMock()
+    query.filter_by.return_value.first.return_value = entry
+    mocker.patch(
+        "spiffworkflow_backend.background_processing.process_instance_operations.ProcessInstanceQueueModel",
+        SimpleNamespace(query=query),
+    )
+
+
+def test_run_operation_asks_for_a_retry_when_the_process_instance_is_locked(mocker: MockerFixture) -> None:
+    _runnable_process_instance(mocker)
+    _queue_entry(mocker, SimpleNamespace(locked_by="web:1", locked_at_in_seconds=1000, updated_at_in_seconds=990))
+    mocker.patch(
+        "spiffworkflow_backend.background_processing.process_instance_operations.ProcessInstanceQueueService.dequeued",
+        side_effect=ProcessInstanceIsAlreadyLockedError("locked by web"),
+    )
+
+    result = run_queued_process_instance(42, "task-1")
+
+    assert result.outcome == BackgroundOperationOutcome.locked
+    assert result.should_requeue is True
+    assert result.requeue_task_guid == "task-1"
+    assert result.locked_at_in_seconds == 1000
+
+
+def test_run_operation_reports_no_lock_age_once_the_lock_is_released(mocker: MockerFixture) -> None:
+    _runnable_process_instance(mocker)
+    _queue_entry(mocker, SimpleNamespace(locked_by=None, locked_at_in_seconds=None, updated_at_in_seconds=990))
+    mocker.patch(
+        "spiffworkflow_backend.background_processing.process_instance_operations.ProcessInstanceQueueService.dequeued",
+        side_effect=ProcessInstanceIsAlreadyLockedError("locked by web"),
+    )
+
+    result = run_queued_process_instance(42)
+
+    assert result.should_requeue is True
+    assert result.locked_at_in_seconds is None
+
+
+def test_run_operation_does_not_retry_a_process_instance_that_cannot_run(mocker: MockerFixture) -> None:
+    _runnable_process_instance(mocker)
+    mocker.patch(
+        "spiffworkflow_backend.background_processing.process_instance_operations.ProcessInstanceQueueService.dequeued",
+        side_effect=ProcessInstanceCannotBeRunError("terminated"),
+    )
+
+    result = run_queued_process_instance(42)
+
+    assert result.outcome == BackgroundOperationOutcome.locked
+    assert result.should_requeue is False

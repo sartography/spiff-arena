@@ -12,6 +12,7 @@ from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.message_service import MessageService
@@ -43,6 +44,8 @@ class RunQueuedProcessInstanceResult:
     exception: str | None = None
     should_requeue: bool = False
     requeue_task_guid: str | None = None
+    # When the run found the instance locked: when the holder took the lock, if it still holds it.
+    locked_at_in_seconds: int | None = None
 
     def result(self) -> dict[str, object]:
         result: dict[str, object] = {
@@ -181,7 +184,19 @@ def run_queued_process_instance(
             should_requeue=should_requeue,
             requeue_task_guid=task_guid_for_requeueing if should_requeue else None,
         )
-    except (ProcessInstanceIsAlreadyLockedError, ProcessInstanceCannotBeRunError) as exception:
+    except ProcessInstanceIsAlreadyLockedError as exception:
+        # The lock holder may not run the tasks this job was queued for (a message delivery runs only
+        # the receive step), so try again once it lets go instead of dropping the run.
+        return RunQueuedProcessInstanceResult(
+            BackgroundOperationOutcome.locked,
+            process_instance_id,
+            task_guid,
+            exception=str(exception),
+            should_requeue=True,
+            requeue_task_guid=task_guid,
+            locked_at_in_seconds=_current_lock_acquired_at(process_instance_id),
+        )
+    except ProcessInstanceCannotBeRunError as exception:
         return RunQueuedProcessInstanceResult(
             BackgroundOperationOutcome.locked,
             process_instance_id,
@@ -242,3 +257,12 @@ def start_reserved_process_from_message(
             f"Error starting reserved process instance {process_instance_id} from message instance {message_instance_id}. "
             f"{str(exception)}"
         ) from exception
+
+
+def _current_lock_acquired_at(process_instance_id: int) -> int | None:
+    queue_entry = ProcessInstanceQueueModel.query.filter_by(process_instance_id=process_instance_id).first()
+    if queue_entry is None or queue_entry.locked_by is None:
+        return None
+    # remove_stale_locks falls back to updated_at_in_seconds the same way.
+    locked_at: int | None = queue_entry.locked_at_in_seconds or queue_entry.updated_at_in_seconds
+    return locked_at

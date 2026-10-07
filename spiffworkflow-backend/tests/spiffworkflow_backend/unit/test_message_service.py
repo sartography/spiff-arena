@@ -460,6 +460,45 @@ class TestMessageService(BaseTest):
         for message_instance in message_instances:
             assert message_instance.correlation_keys == {"invoice": {"po_number": 1001, "customer_id": "Sartography"}}
 
+    def test_delivering_to_a_waiting_receiver_queues_its_run_after_releasing_the_lock(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        # A worker that picked the run up while the delivery still held the lock got
+        # ProcessInstanceIsAlreadyLockedError and dropped it, leaving the receiver's next tasks READY forever.
+        payload = {"customer_id": "Sartography", "po_number": 1001, "description": "lock order", "amount": "100.00"}
+        load_test_spec(
+            "test_group/message_receive",
+            process_model_source_directory="message_send_one_conversation",
+            bpmn_file_name="message_receiver.bpmn",
+        )
+        sender = self.start_sender_process(client, payload, "test_between_processes")
+        MessageService.correlate_all_message_instances()
+        self.assure_there_is_a_process_waiting_on_a_message(sender)
+
+        lock_holders_when_queued: list[str | None] = []
+
+        def record_lock_holder(process_instance: ProcessInstanceModel, **_kwargs: Any) -> bool:
+            queue_entry = ProcessInstanceQueueModel.query.filter_by(process_instance_id=process_instance.id).one()
+            db.session.refresh(queue_entry)
+            lock_holders_when_queued.append(queue_entry.locked_by)
+            return True
+
+        with (
+            self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True),
+            patch(
+                "spiffworkflow_backend.services.message_service.queue_process_instance_if_appropriate",
+                side_effect=record_lock_holder,
+            ) as queue_process_instance,
+        ):
+            MessageService.correlate_all_message_instances()
+
+        queue_process_instance.assert_called_once()
+        assert queue_process_instance.call_args.args[0].id == sender.id
+        assert lock_holders_when_queued == [None]
+
     def test_message_sent_before_receiver_waits_is_delivered_by_correlation_property(
         self,
         app: Flask,
