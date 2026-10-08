@@ -8,8 +8,13 @@
             width: 100%;
             background-color: black;
         }
-        .logo_small {
+        .spiffworks-logo {
+            display: block;
+            height: 42px;
+            width: auto;
+            max-width: calc(100% - 40px);
             padding: 5px 20px;
+            filter: invert(1);
         }
         .error {
             margin: 20px auto;

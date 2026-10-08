@@ -48,6 +48,13 @@ class TestOpenidBlueprint(BaseTest):
         response = client.get("/openid/auth", params=data)
         assert b"<h2>Login</h2>" in response.content
         assert b"bubblegum" in response.content
+        assert b'alt="SpiffWorks Arena"' in response.content
+        assert b"spiffworks_arena.svg" in response.content
+        assert b"logo_small.png" not in response.content
+
+        logo = client.get("/openid/static/spiffworks_arena.svg")
+        assert logo.status_code == 200
+        assert logo.headers["content-type"].startswith("image/svg+xml")
 
     def test_get_token(
         self,
