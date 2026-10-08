@@ -24,7 +24,8 @@
 .login-pf-page-header {
     background-repeat:no-repeat;
     background-position: center center;
-    background-image: url(../images/spiffworkflow_logo.png);
+    background-image: url(../images/spiffworks_arena.svg);
+    background-size: auto 42px;
     min-height: 60px;
 }
 
