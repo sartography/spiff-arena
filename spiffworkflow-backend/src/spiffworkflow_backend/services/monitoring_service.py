@@ -10,6 +10,7 @@ import sentry_sdk
 from connexion import FlaskApp
 from connexion.middleware import MiddlewarePosition
 from prometheus_client import CollectorRegistry
+from prometheus_client import Gauge
 from prometheus_flask_exporter import ConnexionPrometheusMetrics  # type: ignore
 from sentry_sdk.integrations.flask import FlaskIntegration
 from werkzeug.exceptions import NotFound
@@ -70,11 +71,15 @@ def setup_prometheus_metrics(connexion_app: FlaskApp, registry: CollectorRegistr
         position=MiddlewarePosition.BEFORE_EXCEPTION,
         metrics=http_metrics_for_registry(metrics.registry),
     )
-    version_info_data = get_version_info_data()
-    if len(version_info_data) > 0:
-        # prometheus does not allow periods in key names
-        version_info_data_normalized = {k.replace(".", "_"): v for k, v in version_info_data.items()}
-        metrics.info("version_info", "Application Version Info", **version_info_data_normalized)
+    # The registry has no public collector lookup API. Keep an existing Gauge,
+    # including its label schema and values, when multiple apps share a registry.
+    version_info_metric = metrics.registry._names_to_collectors.get("version_info")
+    if not isinstance(version_info_metric, Gauge):
+        version_info_data = get_version_info_data()
+        if len(version_info_data) > 0:
+            # prometheus does not allow periods in key names
+            version_info_data_normalized = {k.replace(".", "_"): v for k, v in version_info_data.items()}
+            metrics.info("version_info", "Application Version Info", **version_info_data_normalized)
 
 
 def traces_sampler(sampling_context: Any, default_sample_rate: float = 0.01) -> Any:

@@ -1,4 +1,7 @@
+import json
+from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 from connexion import FlaskApp
@@ -6,6 +9,7 @@ from connexion.lifecycle import ConnexionRequest
 from connexion.lifecycle import ConnexionResponse
 from connexion.resolver import Resolver
 from prometheus_client import CollectorRegistry
+from prometheus_client import Gauge
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -96,6 +100,31 @@ def test_connexion_validation_error_is_counted_as_400() -> None:
     assert registry.get_sample_value("flask_http_request_total", {"method": "GET", "status": "400"}) == 1
     assert registry.get_sample_value("flask_http_request_total", {"method": "GET", "status": "200"}) == 1
     assert registry.get_sample_value("flask_http_request_total", {"method": "GET", "status": "500"}) is None
+
+
+@pytest.mark.parametrize("version_data", [None, {}, {"org.opencontainers.image.version": "test-version"}])
+def test_version_info_registration(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, version_data: dict[str, str] | None) -> None:
+    monkeypatch.chdir(tmp_path)
+    if version_data is not None:
+        (tmp_path / "version_info.json").write_text(json.dumps(version_data))
+    registry = CollectorRegistry()
+    for _ in range(2):
+        setup_prometheus_metrics(FlaskApp(__name__), registry=registry)
+    assert registry.get_sample_value("version_info", {"org_opencontainers_image_version": "test-version"}) == (
+        1 if version_data else None
+    )
+
+
+def test_existing_version_info_gauge_is_reused() -> None:
+    registry = CollectorRegistry()
+    gauge = Gauge("version_info", "Existing version", ("revision",), registry=registry)
+    gauge.labels(revision="existing").set(1)
+    with patch("spiffworkflow_backend.services.monitoring_service.get_version_info_data") as read_version:
+        setup_prometheus_metrics(FlaskApp(__name__), registry=registry)
+        read_version.assert_not_called()
+    assert registry.get_sample_value("version_info", {"revision": "existing"}) == 1
+    gauge.labels(revision="existing").set(2)
+    assert registry.get_sample_value("version_info", {"revision": "existing"}) == 2
 
 
 def test_multiple_apps_can_share_registry() -> None:
