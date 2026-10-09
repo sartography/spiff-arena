@@ -260,24 +260,18 @@ def should_notify_sentry(exception: Exception) -> bool:
          make sure we'll have access, but there are some cases
          where it's more convenient to just make the call from the frontend and handle the 403 appropriately.
     """
-    if isinstance(exception, ApiError):
-        if exception.error_code == "invalid_token":
-            return False
-        if exception.error_code == "invalid_xml":
-            return False
-        if exception.error_code == "message_not_accepted":
-            return False
-        # when someone is looking for a process instance that doesn't exist or that they don't have access to
-        if exception.error_code == "process_instance_cannot_be_found":
-            return False
-        if exception.error_code == "process_instance_has_error_tasks":
-            return False
-        if exception.error_code == "process_instance_validation_error":
-            return False
-        if exception.error_code == "invalid_login":
-            return False
-        if exception.error_code == "missing_token":
-            return False
+    if isinstance(exception, ApiError) and exception.error_code in {
+        "invalid_token",
+        "invalid_xml",
+        "message_not_accepted",
+        # The process instance doesn't exist or the user doesn't have access to it.
+        "process_instance_cannot_be_found",
+        "process_instance_has_error_tasks",
+        "process_instance_validation_error",
+        "invalid_login",
+        "missing_token",
+    }:
+        return False
     if isinstance(exception, NotAuthorizedError):
         return False
 
