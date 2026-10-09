@@ -41,6 +41,7 @@ class MessageSendInstrumentation(OperationInstrumentation):
     ttl: int
     message_instance_uuid: str | None
     correlation_result: str | None = None
+    correlation_lock_error: Exception | None = None
 
     def __post_init__(self) -> None:
         super().__init__()
