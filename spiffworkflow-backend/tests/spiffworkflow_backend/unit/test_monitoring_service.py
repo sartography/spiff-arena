@@ -186,6 +186,17 @@ class TestMonitoringService(unittest.TestCase):
             )
         )
 
+    def test_message_not_accepted_api_error_is_not_captured(self) -> None:
+        self.assertFalse(
+            should_capture_exception_in_sentry(
+                ApiError(
+                    error_code="message_not_accepted",
+                    message="No running process instances correlate with the given message name.",
+                    status_code=400,
+                )
+            )
+        )
+
     def test_missing_process_instance_api_error_is_not_captured(self) -> None:
         self.assertFalse(
             should_capture_exception_in_sentry(

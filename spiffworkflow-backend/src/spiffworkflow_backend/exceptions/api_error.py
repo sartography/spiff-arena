@@ -265,6 +265,8 @@ def should_notify_sentry(exception: Exception) -> bool:
             return False
         if exception.error_code == "invalid_xml":
             return False
+        if exception.error_code == "message_not_accepted":
+            return False
         # when someone is looking for a process instance that doesn't exist or that they don't have access to
         if exception.error_code == "process_instance_cannot_be_found":
             return False
