@@ -2,6 +2,7 @@ import json
 import os
 import tempfile
 import unittest
+from typing import Any
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -208,7 +209,7 @@ class TestMonitoringService(unittest.TestCase):
         self.assertEqual(exception.status_code, 400)
         self.assertIs(exception.__cause__, cause)
         self.assertTrue(should_capture_exception_in_sentry(exception))
-        event = {"exception": {"values": []}}
+        event: dict[str, Any] = {"exception": {"values": []}}
         self.assertIs(
             filter_sentry_error_event(event, {"exc_info": (type(exception), exception, exception.__traceback__)}),
             event,
