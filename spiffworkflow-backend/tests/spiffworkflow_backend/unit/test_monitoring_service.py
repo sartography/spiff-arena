@@ -2,6 +2,7 @@ import json
 import os
 import tempfile
 import unittest
+from typing import Any
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -12,6 +13,7 @@ from werkzeug.exceptions import NotFound
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import NotAuthorizedError
+from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.monitoring_service import configure_sentry
 from spiffworkflow_backend.services.monitoring_service import ensure_prometheus_multiproc_dir
 from spiffworkflow_backend.services.monitoring_service import filter_sentry_error_event
@@ -19,6 +21,7 @@ from spiffworkflow_backend.services.monitoring_service import get_public_version
 from spiffworkflow_backend.services.monitoring_service import scrub_transaction_event
 from spiffworkflow_backend.services.monitoring_service import should_capture_exception_in_sentry
 from spiffworkflow_backend.services.monitoring_service import traces_sampler
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 
 
 class Generic404HTTPException(HTTPException):
@@ -184,6 +187,32 @@ class TestMonitoringService(unittest.TestCase):
                     status_code=400,
                 )
             )
+        )
+
+    def test_message_not_accepted_api_error_is_not_captured(self) -> None:
+        self.assertFalse(
+            should_capture_exception_in_sentry(
+                ApiError(
+                    error_code="message_not_accepted",
+                    message="No running process instances correlate with the given message name.",
+                    status_code=400,
+                )
+            )
+        )
+
+    def test_message_rejection_from_lock_contention_is_captured(self) -> None:
+        cause = ProcessInstanceIsAlreadyLockedError("Receiver is locked")
+        with self.assertRaises(ApiError) as raised:
+            MessageService._raise_message_not_accepted("No receiver accepted the message", cause=cause)
+
+        exception = raised.exception
+        self.assertEqual(exception.status_code, 400)
+        self.assertIs(exception.__cause__, cause)
+        self.assertTrue(should_capture_exception_in_sentry(exception))
+        event: dict[str, Any] = {"exception": {"values": []}}
+        self.assertIs(
+            filter_sentry_error_event(event, {"exc_info": (type(exception), exception, exception.__traceback__)}),
+            event,
         )
 
     def test_missing_process_instance_api_error_is_not_captured(self) -> None:

@@ -317,8 +317,10 @@ class MessageService:
                         else:
                             db.session.commit()
 
-                except ProcessInstanceIsAlreadyLockedError:
-                    # Someone else has this locked, keep looking for another match
+                except ProcessInstanceIsAlreadyLockedError as exception:
+                    # Keep looking, but preserve contention if no receiver accepts the message.
+                    if instrumentation is not None:
+                        instrumentation.correlation_lock_error = exception
                     continue
 
                 # Publish only after dequeued() released the lock: a worker that picks the job up while
@@ -618,12 +620,12 @@ class MessageService:
         )
 
     @classmethod
-    def _raise_message_not_accepted(cls, message: str) -> NoReturn:
+    def _raise_message_not_accepted(cls, message: str, cause: Exception | None = None) -> NoReturn:
         raise ApiError(
             error_code="message_not_accepted",
             message=message,
             status_code=400,
-        )
+        ) from cause
 
     @classmethod
     def correlate_all_message_instances(
@@ -1035,7 +1037,7 @@ class MessageService:
                     message_instance_id=message_instance.id,
                     error_code="message_not_accepted",
                 )
-                cls._raise_message_not_accepted(message_not_accepted)
+                cls._raise_message_not_accepted(message_not_accepted, cause=instrumentation.correlation_lock_error)
 
             instrumentation.finish(
                 instrumentation.correlation_result or "correlated",
