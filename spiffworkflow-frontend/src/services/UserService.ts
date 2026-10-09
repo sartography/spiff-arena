@@ -1,5 +1,5 @@
 import { jwtDecode } from 'jwt-decode';
-import * as cookie from 'cookie';
+import { parseCookie } from 'cookie';
 import { BACKEND_BASE_URL } from '../config';
 import { AuthenticationOption } from '../interfaces';
 import { parseTaskShowUrl } from '../helpers';
@@ -14,7 +14,7 @@ import { withBasePath } from '../helpers/basePath';
 // https://dev.to/nilanth/how-to-secure-jwt-in-a-single-page-application-cko
 
 const getCookie = (key: string) => {
-  const parsedCookies = cookie.parse(document.cookie);
+  const parsedCookies = parseCookie(document.cookie);
   if (key in parsedCookies) {
     return parsedCookies[key];
   }
