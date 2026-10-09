@@ -25,6 +25,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.services.message_instrumentation_service import MessageSendInstrumentation
 from spiffworkflow_backend.services.message_service import MessageService
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -857,3 +858,13 @@ class TestMessageService(BaseTest):
         message_receive_instance = message_receive_instances[0]
         assert message_receive_instance.status == "ready"
         assert message_receive_instance.failure_cause is None
+
+        g.user = user
+        with pytest.raises(ApiError) as rejected:
+            MessageService.run_process_model_from_message(
+                message_send_instance.name,
+                message_send_instance.payload,
+            )
+        assert rejected.value.error_code == "message_not_accepted"
+        assert rejected.value.status_code == 400
+        assert isinstance(rejected.value.__cause__, ProcessInstanceIsAlreadyLockedError)
