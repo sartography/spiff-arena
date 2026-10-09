@@ -8,11 +8,17 @@ from typing import cast
 import flask.wrappers
 import sentry_sdk
 from connexion import FlaskApp
+from connexion.middleware import MiddlewarePosition
+from prometheus_client import CollectorRegistry
 from prometheus_flask_exporter import ConnexionPrometheusMetrics  # type: ignore
 from sentry_sdk.integrations.flask import FlaskIntegration
 from werkzeug.exceptions import NotFound
 
 from spiffworkflow_backend.exceptions.api_error import should_notify_sentry
+from spiffworkflow_backend.services.http_metrics_service import HttpMetricsMiddleware
+from spiffworkflow_backend.services.http_metrics_service import capture_http_metric_endpoint
+from spiffworkflow_backend.services.http_metrics_service import capture_http_metric_exception
+from spiffworkflow_backend.services.http_metrics_service import http_metrics_for_registry
 
 
 def get_version_info_data() -> dict[str, Any]:
@@ -47,10 +53,23 @@ def ensure_prometheus_multiproc_dir() -> None:
         os.makedirs(prometheus_multiproc_dir, exist_ok=True)
 
 
-def setup_prometheus_metrics(connexion_app: FlaskApp) -> None:
+def setup_prometheus_metrics(connexion_app: FlaskApp, registry: CollectorRegistry | None = None) -> None:
     ensure_prometheus_multiproc_dir()
-    metrics = ConnexionPrometheusMetrics(connexion_app, group_by="endpoint")
+    # Flask teardown sees exceptions before Connexion handles them and incorrectly
+    # labels even expected 4xx errors as 500. Count the final ASGI response instead.
+    metrics = ConnexionPrometheusMetrics(connexion_app, export_defaults=False, registry=registry)
     connexion_app.app.config["PROMETHEUS_METRICS"] = metrics
+    try:
+        metrics.info("flask_exporter_info", "Information about the Prometheus Flask exporter", version=metrics.version)
+    except ValueError:
+        pass  # Another application already registered exporter metadata in this registry.
+    connexion_app.app.before_request(capture_http_metric_endpoint)
+    connexion_app.app.teardown_request(capture_http_metric_exception)
+    connexion_app.add_middleware(
+        HttpMetricsMiddleware,
+        position=MiddlewarePosition.BEFORE_EXCEPTION,
+        metrics=http_metrics_for_registry(metrics.registry),
+    )
     version_info_data = get_version_info_data()
     if len(version_info_data) > 0:
         # prometheus does not allow periods in key names
