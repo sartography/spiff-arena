@@ -859,7 +859,6 @@ class TestMessageService(BaseTest):
         assert message_receive_instance.status == "ready"
         assert message_receive_instance.failure_cause is None
 
-        # An API send to the locked receiver must retain the contention signal.
         g.user = user
         with pytest.raises(ApiError) as rejected:
             MessageService.run_process_model_from_message(

@@ -71,8 +71,7 @@ def setup_prometheus_metrics(connexion_app: FlaskApp, registry: CollectorRegistr
         position=MiddlewarePosition.BEFORE_EXCEPTION,
         metrics=http_metrics_for_registry(metrics.registry),
     )
-    # The registry has no public collector lookup API. Keep an existing Gauge,
-    # including its label schema and values, when multiple apps share a registry.
+    # No public collector lookup API; preserve the existing Gauge and its labels.
     version_info_metric = metrics.registry._names_to_collectors.get("version_info")
     if not isinstance(version_info_metric, Gauge):
         version_info_data = get_version_info_data()
