@@ -263,7 +263,6 @@ def should_notify_sentry(exception: Exception) -> bool:
     if isinstance(exception, ApiError) and exception.error_code in {
         "invalid_token",
         "invalid_xml",
-        "message_not_accepted",
         # The process instance doesn't exist or the user doesn't have access to it.
         "process_instance_cannot_be_found",
         "process_instance_has_error_tasks",
@@ -271,6 +270,9 @@ def should_notify_sentry(exception: Exception) -> bool:
         "invalid_login",
         "missing_token",
     }:
+        return False
+    # A rejection caused by lock contention is not a caller error.
+    if isinstance(exception, ApiError) and exception.error_code == "message_not_accepted" and exception.__cause__ is None:
         return False
     if isinstance(exception, NotAuthorizedError):
         return False
