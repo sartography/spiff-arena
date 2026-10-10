@@ -488,13 +488,19 @@ def hydrate_workflow(specs, state, session_id=None):
     return workflow
 
 def lazy_loads(workflow):
+    # This runs after every task, so read each workflow's flat task table
+    # instead of walking the task tree.
     specs = set()
-    for t in workflow.get_tasks(task_filter=TaskFilter(spec_class=CallActivity)):
-        specs.add(t.task_spec.spec)
-    for t in workflow.get_tasks(task_filter=TaskFilter(spec_class=LoopTask)):
-        task_spec = t.workflow.spec.task_specs.get(t.task_spec.task_spec)
-        if task_spec and hasattr(task_spec, "spec"):
-            specs.add(task_spec.spec)
+    for wf in (workflow, *workflow.subprocesses.values()):
+        task_specs = wf.spec.task_specs
+        for t in wf.tasks.values():
+            task_spec = t.task_spec
+            if isinstance(task_spec, CallActivity):
+                specs.add(task_spec.spec)
+            if isinstance(task_spec, LoopTask):
+                looped = task_specs.get(task_spec.task_spec)
+                if looped and hasattr(looped, "spec"):
+                    specs.add(looped.spec)
     return list(specs)
 
 
