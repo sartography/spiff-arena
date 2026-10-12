@@ -17,6 +17,7 @@ script_dir="$(
   cd -- "$(dirname "$0")" >/dev/null 2>&1
   pwd -P
 )"
+"${script_dir}/prepare_worker_process_models"
 "${script_dir}/wait_for_db_schema_migrations"
 if [[ "${SPIFFWORKFLOW_BACKEND_CELERY_WORKER_DIRECT_EXEC:-false}" == "true" ]]; then
   exec "${script_dir}/../.venv/bin/celery" \

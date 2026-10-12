@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+set -o errexit -o nounset -o pipefail
+
+model_root="${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR:-}"
+if [[ -z "$model_root" ]]; then
+  echo >&2 "ERROR: SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR must be set before starting the worker."
+  exit 1
+fi
+
+if [[ -e "$model_root" && ! -d "$model_root" ]]; then
+  echo >&2 "ERROR: The worker process-model root is not a directory: $model_root"
+  exit 1
+fi
+
+if [[ -d "$model_root" && ( ! -r "$model_root" || ! -x "$model_root" ) ]]; then
+  echo >&2 "ERROR: The worker cannot read or traverse its process-model root: $model_root"
+  exit 1
+fi
+
+if [[ "${SPIFFWORKFLOW_BACKEND_GIT_CLONE_PROCESS_MODELS:-}" == "true" ]]; then
+  if [[ ! -e "$model_root/.git" ]]; then
+    # Never clear an existing mount or checkout to make room for a clone.
+    if [[ -d "$model_root" && -n "$(find "$model_root" -mindepth 1 -maxdepth 1 -print -quit)" ]]; then
+      echo >&2 "ERROR: Refusing to clone over the worker's nonempty process-model root: $model_root"
+      exit 1
+    fi
+    script_dir="$(cd -- "$(dirname "$0")" && pwd -P)"
+    "${script_dir}/clone_process_models"
+  fi
+  if ! git -C "$model_root" rev-parse --verify HEAD >/dev/null 2>&1; then
+    echo >&2 "ERROR: The worker process-model checkout has no readable HEAD: $model_root"
+    exit 1
+  fi
+fi
+
+if [[ ! -d "$model_root" || ! -r "$model_root" || ! -x "$model_root" ]]; then
+  echo >&2 "ERROR: The worker process-model root is unavailable: $model_root. Mount the models or configure clone-on-start."
+  exit 1
+fi

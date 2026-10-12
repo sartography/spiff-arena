@@ -32,7 +32,7 @@ if [[ -z "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH:-}" ]]; then
 fi
 
 # Only configure SSH if a private key is available; CLONE_URL might be HTTPS, which is still valid
-if [[ -n "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH}" ]]; then
+if [[ -n "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH:-}" ]]; then
   export GIT_SSH_COMMAND="ssh -F /dev/null -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH}"
 fi
 
