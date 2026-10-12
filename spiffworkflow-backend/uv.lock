@@ -2938,7 +2938,7 @@ wheels = [
 [[package]]
 name = "spiffworkflow"
 version = "3.2.0"
-source = { git = "https://github.com/sartography/SpiffWorkflow?branch=reset-into-loop-pass#7c72b2d9e137f0a69cd803b5a1b6a923a7fddd1e" }
+source = { git = "https://github.com/sartography/SpiffWorkflow?branch=main#902055aa5c214581c4ca01bbe7dbed79c985c65f" }
 dependencies = [
     { name = "lxml" },
 ]
@@ -3055,7 +3055,7 @@ requires-dist = [
     { name = "security", specifier = ">=1.3.1" },
     { name = "sentry-sdk", extras = ["flask"], specifier = ">=2.26" },
     { name = "spiff-arena-common", specifier = ">=0.1.0" },
-    { name = "spiffworkflow", git = "https://github.com/sartography/SpiffWorkflow?branch=reset-into-loop-pass" },
+    { name = "spiffworkflow", git = "https://github.com/sartography/SpiffWorkflow?branch=main" },
     { name = "spiffworkflow-connector-command", git = "https://github.com/sartography/spiffworkflow-connector-command.git?branch=main" },
     { name = "sqlalchemy", specifier = ">=2.0.31" },
     { name = "sqlalchemy-stubs", git = "https://github.com/burnettk/sqlalchemy-stubs.git?branch=scoped-session-delete" },

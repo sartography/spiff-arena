@@ -516,9 +516,78 @@ def next_task(workflow, state, from_task=None):
         The next task, or None if not found
     """
     task_filter = TaskFilter(state=state)
-    for task in workflow.get_tasks(first_task=from_task, task_filter=task_filter):
-        return task
-    return None
+    if from_task is not None:
+        # Below one task the tree is usually small, and walking it stops at the first match.
+        return workflow.get_next_task(first_task=from_task, task_filter=task_filter)
+    tasks = find_tasks(workflow, task_filter)
+    return tasks[0] if tasks else None
+
+
+def _tree_position(task, min_state, first_task, owners):
+    """Where a walk of the task tree from first_task reaches task, or None if it does not.
+
+    The position is the list of turns taken from first_task: the index among a
+    parent's children, or -1 for stepping from a task into its subprocess, which
+    the walk visits before that task's children. Sorting by position gives the
+    order of `workflow.get_tasks`.
+
+    owners maps a subprocess to the task that owns it, and is filled as needed.
+    """
+    top_workflow = task.workflow.top_workflow
+    subprocesses = top_workflow.subprocesses
+    turns = []
+    while task is not first_task:
+        workflow = task.workflow
+        parent = workflow.tasks.get(task._parent)
+        if parent is not None:
+            # The walk goes below a task only if it could have children in the
+            # wanted state, or if it owns a subprocess.
+            if parent.state < min_state and parent.id not in subprocesses:
+                return None
+            turns.append(parent._children.index(task.id))
+        elif workflow is top_workflow:
+            return None
+        else:
+            if workflow not in owners:
+                owners[workflow] = top_workflow.get_task_from_id(workflow.parent_task_id)
+            parent = owners[workflow]
+            if parent is None or subprocesses.get(parent.id) is not workflow:
+                return None
+            turns.append(-1)
+        task = parent
+    turns.reverse()
+    return turns
+
+
+def find_tasks(workflow, task_filter, first_task=None):
+    """The same tasks, in the same order, as `workflow.get_tasks(first_task, task_filter=task_filter)`.
+
+    `get_tasks` walks the task tree. Every workflow and subprocess also keeps a
+    flat table of its tasks, so this reads the tables, keeps the tasks that
+    match, and works out where each one sits in the tree by following its
+    parents. Few tasks match a search for ready or waiting tasks, so this is
+    much less work in a large tree that is mostly finished.
+
+    One difference: `get_tasks` stops descending at a depth of 1000.
+    """
+    if task_filter.state & TaskState.PREDICTED_MASK:
+        min_state = TaskState.MAYBE
+    elif task_filter.state & TaskState.DEFINITE_MASK:
+        min_state = TaskState.FUTURE
+    else:
+        min_state = TaskState.COMPLETED
+    first_task = first_task or workflow.task_tree
+    state = task_filter.state
+    owners = {}
+    found = []
+    for wf in (workflow, *workflow.subprocesses.values()):
+        for task in wf.tasks.values():
+            if task.state & state and task_filter.matches(task):
+                position = _tree_position(task, min_state, first_task, owners)
+                if position is not None:
+                    found.append((position, task))
+    found.sort(key=lambda item: item[0])
+    return [task for _, task in found]
 
 
 def print_unittest_break(reason, **fields):
@@ -665,7 +734,7 @@ def _replay_recorded_timer(
     return True, timer_task
 
 
-def _advance_workflow(workflow, task, strategy_name, compress_response=False, session_id=None):
+def _advance_workflow(workflow, task, strategy_name, compress_response=False, session_id=None, **response_options):
     iters = 0
     lazy_loads_list = None
     fixture_cache = {"file": None, "recording": None}
@@ -805,7 +874,7 @@ def _advance_workflow(workflow, task, strategy_name, compress_response=False, se
                     task.run()
                     task.data.update(expected["data"])
                     _consume_unittest_fixture(workflow, cursor)
-    return build_response(workflow, None, compress_response=compress_response, lazy_loads_result=lazy_loads_list, session_id=session_id)
+    return build_response(workflow, None, compress_response=compress_response, lazy_loads_result=lazy_loads_list, session_id=session_id, **response_options)
 
 def _is_timer_event_task(task):
     event_definition = getattr(task.task_spec, "event_definition", None)
@@ -823,7 +892,22 @@ def _force_timer_event(task):
     task.task_spec._update(task)
 
 
-def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_response=False, session_id=None, jump_to_step_idx=None):
+def advance_workflow(specs, state, completed_task, strategy_name, start_params, compress_response=False, session_id=None, jump_to_step_idx=None, record_step_history=True, include_state=True):
+    """Advance a workflow and return the response from build_response.
+
+    record_step_history and include_state are passed to build_response. Callers
+    that step through a workflow without jumping back or coloring a diagram,
+    such as test runners, can turn both off to skip a full serialization and a
+    full walk of the task tree on every step.
+    """
+    # Only non-default options are passed on, so a replaced build_response
+    # with the older signature keeps working.
+    response_options = {}
+    if not record_step_history:
+        response_options["record_step_history"] = False
+    if not include_state:
+        response_options["include_state"] = False
+
     # If jumping to a specific step, restore state from step history cache
     if jump_to_step_idx is not None and session_id and session_id in _step_history_cache:
         steps = _step_history_cache[session_id]
@@ -851,21 +935,22 @@ def advance_workflow(specs, state, completed_task, strategy_name, start_params, 
         else:
             task = next_task(workflow, TaskState.READY)
 
-        return _advance_workflow(workflow, task, strategy_name, compress_response=compress_response, session_id=session_id)
+        return _advance_workflow(workflow, task, strategy_name, compress_response=compress_response, session_id=session_id, **response_options)
     except Exception as e:
         try:
-            return build_response(workflow, e, compress_response=compress_response, session_id=session_id)
+            return build_response(workflow, e, compress_response=compress_response, session_id=session_id, **response_options)
         except Exception:
             return json.dumps({"status": "error", "message": f"{e}"})
 
-def get_tasks(workflow, task_filter):
-    tasks = workflow.get_tasks(task_filter=task_filter)
+_TASK_SPEC_KEYS = frozenset([
+    "name", "description", "manual", "bpmn_id", "bpmn_name",
+    "lane", "documentation", "extensions", "typename",
+    "result_variable", "spec", "event_definition",
+])
 
-    spec_keys = set([
-        "name", "description", "manual", "bpmn_id", "bpmn_name",
-        "lane", "documentation", "extensions", "typename",
-        "result_variable", "spec", "event_definition",
-    ])
+
+def get_tasks(workflow, task_filter):
+    tasks = find_tasks(workflow, task_filter)
 
     return [{
         "id": str(t.id),
@@ -873,7 +958,7 @@ def get_tasks(workflow, task_filter):
         "bpmn_process_id": t.workflow.spec.name,
         "state": t.state,
         "task_spec": {
-            k: v for k, v in serializer.to_dict(t.task_spec).items() if k in spec_keys
+            k: v for k, v in serializer.to_dict(t.task_spec).items() if k in _TASK_SPEC_KEYS
         },
     } for t in tasks]
     
@@ -937,7 +1022,7 @@ def get_minimal_state(workflow):
         "subprocesses": subprocesses
     }
 
-def build_response(workflow, e, compress_response=False, lazy_loads_result=None, session_id=None):
+def build_response(workflow, e, compress_response=False, lazy_loads_result=None, session_id=None, record_step_history=True, include_state=True):
     """Build response with workflow state.
 
     Args:
@@ -946,6 +1031,10 @@ def build_response(workflow, e, compress_response=False, lazy_loads_result=None,
         compress_response: If True, compress entire response with gzip
         lazy_loads_result: Optional pre-computed lazy_loads list. If None, will be computed.
         session_id: Optional session ID for caching step history
+        record_step_history: If False, do not keep this step's full state. The
+            step still gets its step_idx, but it cannot be jumped back to.
+        include_state: If False, leave the minimal state (for diagram coloring)
+            out of the response.
 
     Returns:
         JSON string with response data (or base64-encoded gzip if compress_response=True)
@@ -976,15 +1065,17 @@ def build_response(workflow, e, compress_response=False, lazy_loads_result=None,
         response["lazy_loads"] = lazy_loads_result if lazy_loads_result is not None else lazy_loads(workflow)
 
     # Return minimal state (for diagram coloring) and step_idx (for navigation)
-    response["state"] = get_minimal_state(workflow)
+    if include_state:
+        response["state"] = get_minimal_state(workflow)
 
     # Cache full state in Python for jump/state surgery operations
     if session_id:
         if session_id not in _step_history_cache:
             _step_history_cache[session_id] = []
 
-        # Store full state in cache
-        full_state = get_state(workflow, compress=False)
+        # Store full state in cache. A step that is not recorded holds its
+        # place with None, like a step dropped by the cap below.
+        full_state = get_state(workflow, compress=False) if record_step_history else None
         _step_history_cache[session_id].append(full_state)
 
         # Cap step history at 64 steps - replace oldest entries with None to reduce memory
