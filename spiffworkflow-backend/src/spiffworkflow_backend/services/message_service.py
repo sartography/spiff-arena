@@ -248,17 +248,23 @@ class MessageService:
         runtime_receive: ProcessInstanceRuntime | None = None,
         claim_message_instance: bool = True,
         instrumentation: MessageSendInstrumentation | None = None,
+        *,
+        sweep_expired_messages: bool = True,
     ) -> MessageInstanceModel | None:
         """Connects the given send message to a 'receive' message if possible.
 
         :param message_instance_send:
+        :param sweep_expired_messages: Disable when the caller already swept expired messages.
+            The individual message's TTL is still checked before correlation.
         :return: the message instance that received this message.
         """
-        if instrumentation is not None:
-            with instrumentation.phase("correlate_expire_ready_send_messages"):
+        if sweep_expired_messages:
+            with (
+                instrumentation.phase("correlate_expire_ready_send_messages")
+                if instrumentation is not None
+                else contextlib.nullcontext()
+            ):
                 cls.expire_ready_send_messages()
-        else:
-            cls.expire_ready_send_messages()
 
         if claim_message_instance:
             with instrumentation.phase("claim_send_message") if instrumentation is not None else contextlib.nullcontext():
@@ -344,6 +350,7 @@ class MessageService:
                 execution_mode=execution_mode,
                 receiving_process_instance_id=receiving_process_instance.id,
                 runtime_receive=runtime_receive,
+                sweep_expired_messages=False,
             )
 
     @classmethod
@@ -735,7 +742,7 @@ class MessageService:
                 f"Runtime waiting send messages: Processing message id {message_instance_send.id}. "
                 f"Name: '{message_instance_send.name}'"
             )
-            cls.correlate_send_message(message_instance_send, execution_mode=execution_mode)
+            cls.correlate_send_message(message_instance_send, execution_mode=execution_mode, sweep_expired_messages=False)
 
     @classmethod
     def start_process_with_message(
@@ -1112,6 +1119,7 @@ class MessageService:
                 execution_mode=execution_mode,
                 claim_message_instance=False,
                 instrumentation=instrumentation,
+                sweep_expired_messages=False,
             )
             if receiver_message is None:
                 if ttl > 0:
