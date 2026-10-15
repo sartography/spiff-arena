@@ -162,6 +162,38 @@ class DataSetupService:
         db.session.commit()
 
     @classmethod
+    def refresh_message_usage_for_process_groups(cls, process_group_ids: set[str], message_identifiers: set[str]) -> None:
+        """Refresh affected usage inside the caller's transaction, without rebuilding other caches."""
+        if not message_identifiers:
+            return
+        message_models = MessageModel.query.filter(MessageModel.identifier.in_(message_identifiers)).all()  # type: ignore
+        models_by_key = {(model.identifier, model.location): model for model in message_models}
+        references = []
+        refreshed_model_ids: set[str] = set()
+        # Avoid parsing a subtree twice when both its parent and child groups changed.
+        roots = {
+            group_id
+            for group_id in process_group_ids
+            if not any(group_id.startswith(f"{other}/") for other in process_group_ids if other != group_id)
+        }
+        for group_id in roots:
+            for process_model in ProcessModelService.get_process_models(process_group_id=group_id, recursive=True):
+                try:
+                    model_references = SpecFileService.get_references_for_process(process_model)
+                except Exception:
+                    # An unrelated invalid diagram must not prevent saving a shared definition.
+                    # Keep its previously known usage until it can be parsed successfully.
+                    current_app.logger.warning("Could not refresh message usage for %s", process_model.id, exc_info=True)
+                    continue
+                references.extend(model_references)
+                refreshed_model_ids.add(process_model.id)
+        usage_map = cls._build_message_usage_map(references, models_by_key)
+        for key, model in models_by_key.items():
+            previous_ids = set(model.process_model_identifiers or []) - refreshed_model_ids
+            model.process_model_identifiers = sorted(previous_ids | set(usage_map.get(key, [])))
+            db.session.add(model)
+
+    @classmethod
     def _message_locations_by_identifier(cls, message_model_keys: Any) -> dict[str, set[str]]:
         locations_by_identifier: dict[str, set[str]] = {}
         for identifier, location in message_model_keys:

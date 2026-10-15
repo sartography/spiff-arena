@@ -12,6 +12,8 @@ from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.messages_controller import message_send
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -162,6 +164,33 @@ class TestMessages(BaseTest):
         assert response.status_code == 200
         assert response.json() is not None
         assert len(response.json()["messages"]) == 4
+
+    def test_creating_shared_message_immediately_lists_existing_bpmn_usage(
+        self, app: Flask, client: TestClient, with_db_and_bpmn_file_cleanup: None, with_super_admin_user: UserModel
+    ) -> None:
+        self.create_process_group("test_group")
+        load_test_spec(
+            "test_group/receiver",
+            process_model_source_directory="simple-message-send-receive",
+            bpmn_file_name="message_start_event.bpmn",
+        )
+        models = ProcessModelService.get_process_models(process_group_id="test_group", recursive=True)
+        assert models
+        references = SpecFileService.get_references_for_process(models[0])
+        message_identifier = "Message_0rcwl5q"
+        assert message_identifier in {name for ref in references for name in ref.messages}
+        assert MessageModel.query.filter_by(identifier=message_identifier).count() == 0
+        headers = self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"})
+        response = client.put(
+            "/v1.0/process-groups/test_group",
+            headers=headers,
+            json={"display_name": "Test Group", "messages": {message_identifier: {"schema": {}}}},
+        )
+        assert response.status_code == 200
+        response = client.get("/v1.0/message-models/test_group", headers=headers)
+        assert response.status_code == 200
+        message = next(message for message in response.json()["messages"] if message["identifier"] == message_identifier)
+        assert message["process_model_identifiers"] == ["test_group/receiver"]
 
     def test_process_group_update_syncs_message_models(
         self,

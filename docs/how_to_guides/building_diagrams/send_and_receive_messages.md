@@ -42,7 +42,12 @@ Use its message editor button to open **Message Editor**.
 - **Correlation Properties**: define the values used to associate messages with process instances.
   Each property has a **Property Name** and a **Retrieval Expression**, evaluated against the message body.
 
-Save the definition. Create `order_dispatch` too. For the reply, add property `order_id`
+Save the definition. The Messages page's **Used in** column is refreshed from saved BPMN
+files when the shared definition is saved, including diagrams that already declared the
+message before it existed in the shared catalog. Unsaved diagram changes are not included;
+a backend restart is not required.
+
+Create `order_dispatch` too. For the reply, add property `order_id`
 with retrieval expression `order_id`. The reply body will contain that key.
 
 The nearest definition wins if a child group and an ancestor define the same message identifier.
