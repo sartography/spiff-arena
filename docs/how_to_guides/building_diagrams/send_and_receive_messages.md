@@ -22,7 +22,9 @@ Use a different ID for each order in a real process.
 ## 2. Define shared messages
 
 Select a Send Task or Message Event and open the **Message** section of the properties panel.
-Use its message editor button to open **Message Editor**.
+Click **Open message editor** to open the Messages page in a new tab. For a selected message,
+the page opens its edit dialog. To create a definition from the Messages page, click
+**Add Message Model**, choose the process-group location, and click **Continue**.
 
 ![Opening the message editor from the Message section](/images/message_example1.png)
 

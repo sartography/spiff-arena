@@ -187,8 +187,8 @@ class DataSetupService:
                     process_model = ProcessModelService.get_process_model_from_path(model_file)
                     model_references = SpecFileService.get_references_for_process(process_model)
                 except Exception:
-                    # An unrelated invalid diagram must not prevent saving a shared definition.
-                    # Keep its previously known usage until it can be parsed successfully.
+                    # Unreadable metadata or invalid BPMN must not prevent saving a shared definition.
+                    # Preserve this model's known usage and continue with the remaining models.
                     current_app.logger.warning("Could not refresh message usage for %s", model_file, exc_info=True)
                     continue
                 references.extend(model_references)

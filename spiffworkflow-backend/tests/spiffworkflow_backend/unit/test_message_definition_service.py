@@ -1,5 +1,3 @@
-from types import SimpleNamespace
-
 import pytest
 from flask.app import Flask
 from sqlalchemy.exc import IntegrityError
@@ -7,42 +5,12 @@ from sqlalchemy.exc import IntegrityError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
-from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.message_definition_service import MessageDefinitionConflictError
 from spiffworkflow_backend.services.message_definition_service import MessageDefinitionService
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestMessageDefinitionService(BaseTest):
-    def test_saving_missing_shared_message_discovers_existing_diagram_usage(
-        self, app: Flask, with_db_and_bpmn_file_cleanup: None, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        group = ProcessGroup(id="orders", display_name="Orders")
-        group.messages = {"reply": {"schema": {}}}
-        process_model_id = "orders/waiter"
-        monkeypatch.setattr(ProcessModelService, "read_process_group_json", lambda *_: {})
-        monkeypatch.setattr(ProcessModelService, "update_process_group", lambda *_: None)
-        monkeypatch.setattr(FileSystemService, "walk_files", lambda *_: iter([f"{process_model_id}/process_model.json"]))
-        monkeypatch.setattr(ProcessModelService, "get_process_model_from_path", lambda *_: SimpleNamespace(id=process_model_id))
-        monkeypatch.setattr(
-            SpecFileService,
-            "get_references_for_process",
-            lambda *_: [SimpleNamespace(relative_location=process_model_id, messages={"reply": {}})],
-        )
-        assert MessageModel.query.filter_by(identifier="reply").count() == 0
-
-        MessageDefinitionService.persist_process_groups_with_messages({group.id: group}, {group.id: group})
-
-        message = MessageModel.query.filter_by(identifier="reply", location="orders").one()
-        assert message.process_model_identifiers == [process_model_id]
-        # Saving again must not duplicate the usage or require a process-model save/restart.
-        MessageDefinitionService.persist_process_groups_with_messages({group.id: group}, {group.id: group})
-        assert MessageModel.query.filter_by(identifier="reply", location="orders").one().process_model_identifiers == [
-            process_model_id
-        ]
-
     def test_descendant_location_detects_more_specific_target(self) -> None:
         assert MessageDefinitionService._is_descendant_location(
             "order",

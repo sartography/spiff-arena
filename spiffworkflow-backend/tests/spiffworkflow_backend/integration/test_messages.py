@@ -181,16 +181,18 @@ class TestMessages(BaseTest):
         assert message_identifier in {name for ref in references for name in ref.messages}
         assert MessageModel.query.filter_by(identifier=message_identifier).count() == 0
         headers = self.logged_in_headers(with_super_admin_user, additional_headers={"Content-Type": "application/json"})
-        response = client.put(
-            "/v1.0/process-groups/test_group",
-            headers=headers,
-            json={"display_name": "Test Group", "messages": {message_identifier: {"schema": {}}}},
-        )
-        assert response.status_code == 200
-        response = client.get("/v1.0/message-models/test_group", headers=headers)
-        assert response.status_code == 200
-        message = next(message for message in response.json()["messages"] if message["identifier"] == message_identifier)
-        assert message["process_model_identifiers"] == ["test_group/receiver"]
+        # Check both initial creation and a repeated save: usage must remain present without duplicates.
+        for _ in range(2):
+            response = client.put(
+                "/v1.0/process-groups/test_group",
+                headers=headers,
+                json={"display_name": "Test Group", "messages": {message_identifier: {"schema": {}}}},
+            )
+            assert response.status_code == 200
+            response = client.get("/v1.0/message-models/test_group", headers=headers)
+            assert response.status_code == 200
+            message = next(message for message in response.json()["messages"] if message["identifier"] == message_identifier)
+            assert message["process_model_identifiers"] == ["test_group/receiver"]
 
     def test_process_group_update_syncs_message_models(
         self,
