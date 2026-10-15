@@ -657,12 +657,10 @@ class TestMessageService(BaseTest):
         db.session.add(message)
         db.session.commit()
         with patch("spiffworkflow_backend.services.message_instrumentation_service.log_message_send_expired") as record:
-            savepoint = db.session.begin_nested()
-            MessageService._expire_send_message(message, "ready", commit=False)
-            if rollback_savepoint:
-                savepoint.rollback()
-            else:
-                savepoint.commit()
+            with db.session.begin_nested() as savepoint:
+                MessageService._expire_send_message(message, "ready", commit=False)
+                if rollback_savepoint:
+                    savepoint.rollback()
             record.assert_not_called()
             if rollback_outer:
                 db.session.rollback()
@@ -684,7 +682,7 @@ class TestMessageService(BaseTest):
             db.session.commit()
             record.assert_not_called()
             assert "message_send_expiries" not in db.session.info
-            assert db.session.get(MessageInstanceModel, message_id).status == "ready"
+            assert MessageInstanceModel.query.filter_by(id=message_id).one().status == "ready"
 
     def test_owned_send_expiring_before_correlation_is_not_delivered(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
