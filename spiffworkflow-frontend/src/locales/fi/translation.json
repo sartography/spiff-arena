@@ -442,6 +442,7 @@
   "status_complete": "Valmis",
   "status_completed": "Valmis",
   "status_error": "Virhe",
+  "status_expired": "Vanhentunut",
   "status_failed": "Epäonnistui",
   "status_not_started": "Ei aloitettu",
   "status_ready": "Valmis",

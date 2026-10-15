@@ -130,6 +130,7 @@ const MESSAGE_STATUSES = [
   'completed',
   'failed',
   'cancelled',
+  'expired',
 ];
 
 const MESSAGE_TYPES = ['send', 'receive'];

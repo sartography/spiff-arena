@@ -105,5 +105,11 @@ Content-Type: application/json
 When `time_to_live_in_seconds` is greater than `0`, `message_instance_uuid` is required.
 The UUID is an idempotency key: retrying the same message with the same UUID returns the existing message instead of creating a duplicate.
 
+If the TTL elapses before any process instance correlates with the message, SpiffWorkflow marks the
+message instance `expired` instead of leaving it buffered. The message instance keeps a `failure_cause`
+that says whether any process instance was waiting and lists the correlation values found in the payload.
+A retry with the same `message_instance_uuid` returns that expired message instance rather than creating a
+new buffered message.
+
 TTL is currently limited to a short window.
 Use the generated OpenAPI documentation for the current maximum.

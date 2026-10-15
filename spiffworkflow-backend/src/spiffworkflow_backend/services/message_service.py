@@ -140,10 +140,10 @@ class MessageService:
             .all()
         )
         for message_instance in expired_messages:
-            cls._cancel_expired_send_message(message_instance, MessageStatuses.ready.value, commit=commit)
+            cls._expire_send_message(message_instance, MessageStatuses.ready.value, commit=commit)
 
     @classmethod
-    def _cancel_expired_send_message(
+    def _expire_send_message(
         cls, message_instance_send: MessageInstanceModel, from_status: str, commit: bool = True
     ) -> None:
         failure_cause = cls._expired_send_message_failure_cause(message_instance_send)
@@ -156,7 +156,7 @@ class MessageService:
             )
             .update(
                 {
-                    "status": MessageStatuses.cancelled.value,
+                    "status": MessageStatuses.expired.value,
                     "failure_cause": failure_cause,
                     "updated_at_in_seconds": cls.current_time_in_seconds(),
                 },
@@ -257,7 +257,7 @@ class MessageService:
             message_instance_send.expires_at_in_seconds is not None
             and message_instance_send.expires_at_in_seconds <= cls.current_time_in_seconds()
         ):
-            cls._cancel_expired_send_message(message_instance_send, MessageStatuses.running.value)
+            cls._expire_send_message(message_instance_send, MessageStatuses.running.value)
             return None
 
         message_instance_receive: MessageInstanceModel | None = None

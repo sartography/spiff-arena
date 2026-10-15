@@ -33,6 +33,7 @@ class MessageStatuses(enum.Enum):
     completed = "completed"
     failed = "failed"
     cancelled = "cancelled"
+    expired = "expired"
     not_accepted = "not_accepted"
 
 

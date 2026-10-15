@@ -443,6 +443,7 @@
   "status_complete": "Terminé",
   "status_completed": "Terminé",
   "status_error": "Erreur",
+  "status_expired": "Expiré",
   "status_failed": "Échoué",
   "status_not_started": "Non démarré",
   "status_ready": "Prêt",

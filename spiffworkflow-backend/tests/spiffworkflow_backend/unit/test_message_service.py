@@ -580,7 +580,7 @@ class TestMessageService(BaseTest):
             MessageService.expire_ready_send_messages(now_in_seconds=expires_at_in_seconds + 1)
 
         db.session.refresh(message_instance_send)
-        assert message_instance_send.status == "cancelled"
+        assert message_instance_send.status == "expired"
         assert message_instance_send.failure_cause == (
             "Expired before any process instance received it."
             " 1 process instance(s) were waiting for message 'Test_message', but it was not delivered to any of them."
