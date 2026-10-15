@@ -444,6 +444,7 @@
   "status_error": "Chyba",
   "status_expired": "Vypršelo",
   "status_failed": "Selhalo",
+  "status_not_accepted": "Nepřijato",
   "status_not_started": "Nespuštěno",
   "status_ready": "Připraveno",
   "status_running": "Běží",

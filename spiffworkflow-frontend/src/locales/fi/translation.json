@@ -444,6 +444,7 @@
   "status_error": "Virhe",
   "status_expired": "Vanhentunut",
   "status_failed": "Epäonnistui",
+  "status_not_accepted": "Ei hyväksytty",
   "status_not_started": "Ei aloitettu",
   "status_ready": "Valmis",
   "status_running": "Käynnissä",

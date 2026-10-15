@@ -482,6 +482,7 @@
   "status_error": "Error",
   "status_expired": "Expired",
   "status_failed": "Failed",
+  "status_not_accepted": "Not Accepted",
   "status_not_started": "Not Started",
   "status_ready": "Ready",
   "status_running": "Running",

@@ -444,6 +444,7 @@
   "status_error": "Erro",
   "status_expired": "Expirado",
   "status_failed": "Falhou",
+  "status_not_accepted": "Não aceito",
   "status_not_started": "Não iniciado",
   "status_ready": "Pronto",
   "status_running": "Em execução",
