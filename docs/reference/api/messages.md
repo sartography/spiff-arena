@@ -106,10 +106,21 @@ When `time_to_live_in_seconds` is greater than `0`, `message_instance_uuid` is r
 The UUID is an idempotency key: retrying the same message with the same UUID returns the existing message instead of creating a duplicate.
 
 If the TTL elapses before any process instance correlates with the message, SpiffWorkflow marks the
-message instance `expired` instead of leaving it buffered. The message instance keeps a `failure_cause`
-that says whether any process instance was waiting and lists the correlation values found in the payload.
-A retry with the same `message_instance_uuid` returns that expired message instance rather than creating a
-new buffered message.
+message instance `expired` during subsequent message handling, rather than delivering it. Cleanup is
+opportunistic, not a timer guaranteed to run at the TTL deadline. A retry with the same
+`message_instance_uuid` returns that expired message instance rather than creating a new buffered message.
+
+The message instance keeps a `failure_cause` describing waiting receive events **at cleanup time**,
+not necessarily at the TTL deadline. When receivers exist, it includes sampled correlation values
+(up to 10 receivers and 20 distinct retrieval expressions). Values and the overall diagnostic are
+truncated; an expression evaluation failure does not necessarily mean a field is missing.
+This snapshot does not prove a correlation mismatch: a matching receiver may have been locked or
+otherwise unable to accept delivery. Payload-derived values remain on the message record and are not
+included in the structured expiry log.
+
+The `spiff_message_send_expired_total` metric increments after the expiry transaction commits, with
+reason `no_waiting_receiver` or `waiting_receiver_not_delivered`. As with other in-process counters,
+it is best-effort telemetry, not an exactly-once audit record.
 
 TTL is currently limited to a short window.
 Use the generated OpenAPI documentation for the current maximum.

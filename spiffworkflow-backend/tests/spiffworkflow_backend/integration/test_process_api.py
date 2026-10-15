@@ -1409,7 +1409,8 @@ class TestProcessApi(BaseTest):
         assert expired_message_instance is not None
         assert expired_message_instance.status == "expired"
         assert expired_message_instance.failure_cause == (
-            "Expired before any process instance received it. No process instance was waiting for message 'Approval Result'."
+            "Expired before any process instance received it."
+            " No receive event was waiting for message 'Approval Result' at expiry cleanup."
         )
 
     def test_buffered_ttl_message_is_delivered_when_receive_event_becomes_available(

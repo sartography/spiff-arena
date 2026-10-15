@@ -2,6 +2,8 @@ import contextlib
 import time
 from collections.abc import Generator
 from collections.abc import Iterable
+from copy import deepcopy
+from reprlib import Repr
 from typing import Any
 from typing import NoReturn
 from typing import cast
@@ -34,8 +36,8 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
+from spiffworkflow_backend.services.message_instrumentation_service import MessageSendExpiry
 from spiffworkflow_backend.services.message_instrumentation_service import MessageSendInstrumentation
-from spiffworkflow_backend.services.message_instrumentation_service import log_message_send_expired
 from spiffworkflow_backend.services.model_sources import ModelSources
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
@@ -137,15 +139,16 @@ class MessageService:
             )
             .filter(cast(Any, MessageInstanceModel.expires_at_in_seconds).isnot(None))
             .filter(cast(Any, MessageInstanceModel.expires_at_in_seconds) <= now)
+            .order_by(MessageInstanceModel.id)
             .all()
         )
         for message_instance in expired_messages:
-            cls._expire_send_message(message_instance, MessageStatuses.ready.value, commit=commit)
+            cls._expire_send_message(message_instance, MessageStatuses.ready.value, commit=False)
+        if expired_messages and commit:
+            db.session.commit()
 
     @classmethod
-    def _expire_send_message(
-        cls, message_instance_send: MessageInstanceModel, from_status: str, commit: bool = True
-    ) -> None:
+    def _expire_send_message(cls, message_instance_send: MessageInstanceModel, from_status: str, commit: bool = True) -> None:
         failure_cause, reason = cls._expired_send_message_failure_cause_and_reason(message_instance_send)
         # Guard on the status so that two processes expiring the same message record it once.
         rows_updated = (
@@ -163,28 +166,23 @@ class MessageService:
                 synchronize_session=False,
             )
         )
+        if rows_updated:
+            MessageSendExpiry(
+                message_instance_send.name,
+                message_instance_send.id,
+                message_instance_send.message_instance_uuid,
+                reason,
+            ).record_after_commit(db.session())
+        db.session.expire(message_instance_send)
         if commit:
             db.session.commit()
-        if rows_updated == 0:
-            db.session.expire(message_instance_send)
-            return
-
-        db.session.refresh(message_instance_send)
-        log_message_send_expired(
-            message_instance_send.name,
-            message_instance_send.id,
-            message_instance_send.message_instance_uuid,
-            failure_cause,
-            reason,
-        )
 
     @classmethod
     def _expired_send_message_failure_cause_and_reason(cls, message_instance_send: MessageInstanceModel) -> tuple[str, str]:
         """Returns why nothing received the message and a low-cardinality reason for the expiry metric.
 
-        The reason is either ``no_waiting_receiver`` (nothing was waiting for the message) or
-        ``waiting_receiver_did_not_match`` (process instances were waiting but the correlation values
-        did not line up).
+        This is a snapshot at cleanup time, not proof of a correlation mismatch: a matching
+        receiver may have been locked or unable to receive the message before its TTL elapsed.
         """
         failure_cause = "Expired before any process instance received it."
         waiting_receive_messages_query = MessageInstanceModel.query.filter_by(
@@ -195,7 +193,7 @@ class MessageService:
         waiting_count = waiting_receive_messages_query.count()
         if waiting_count == 0:
             return (
-                f"{failure_cause} No process instance was waiting for message '{message_instance_send.name}'.",
+                f"{failure_cause} No receive event was waiting for message '{message_instance_send.name}' at expiry cleanup.",
                 "no_waiting_receiver",
             )
 
@@ -216,20 +214,30 @@ class MessageService:
             }
         )
         failure_cause = (
-            f"{failure_cause} {waiting_count} process instance(s) were waiting for message"
-            f" '{message_instance_send.name}', but it was not delivered to any of them."
+            f"{failure_cause} {waiting_count} receive event(s) were waiting for message"
+            f" '{message_instance_send.name}' at expiry cleanup, but it was not delivered to any of them."
         )
         if retrieval_expressions:
             expression_engine = CustomBpmnScriptEngine()
             correlation_values = []
-            for retrieval_expression in retrieval_expressions:
+            bounded_repr = Repr()
+            bounded_repr.maxstring = 256
+            # Diagnostics must not mutate the buffered payload or overflow MySQL's TEXT column.
+            for retrieval_expression in retrieval_expressions[:20]:
                 try:
-                    value = repr(expression_engine.environment.evaluate(retrieval_expression, message_instance_send.payload))
+                    value = bounded_repr.repr(
+                        expression_engine.environment.evaluate(retrieval_expression, deepcopy(message_instance_send.payload))
+                    )
                 except Exception:
-                    value = "<not in the message>"
-                correlation_values.append(f"{retrieval_expression}={value}")
-            failure_cause = f"{failure_cause} Correlation values of this message: {', '.join(correlation_values)}."
-        return failure_cause, "waiting_receiver_did_not_match"
+                    value = "<could not evaluate>"
+                expression_label = (
+                    retrieval_expression if len(retrieval_expression) <= 256 else retrieval_expression[:253] + "..."
+                )
+                correlation_values.append(f"{expression_label}={value}")
+            failure_cause = f"{failure_cause} Sampled correlation values of this message: {', '.join(correlation_values)}."
+        if len(failure_cause.encode("utf-8")) > 8192:
+            failure_cause = failure_cause.encode("utf-8")[:8189].decode("utf-8", errors="ignore") + "..."
+        return failure_cause, "waiting_receiver_not_delivered"
 
     @classmethod
     def correlate_send_message(
