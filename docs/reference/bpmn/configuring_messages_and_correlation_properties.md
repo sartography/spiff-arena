@@ -109,3 +109,8 @@ Ed's message editor currently reads the selected BPMN diagram's embedded message
 Its schema selection references a project JSON file. It does not import Arena's shared message catalog
 from `process_group.json`, so a message available through an Arena process group may not appear in Ed
 unless it is also embedded in the selected BPMN file.
+
+## Related guides
+
+- [Message Events](message_events) — overview of Start, Intermediate, and End Message Events, correlation, and the Collaboration-based Message Event Configuration.
+- [Message Tasks vs. Message Events](message_events_vs_tasks) — choose the right element when a message exchange is an explicit task versus an event that influences process flow.

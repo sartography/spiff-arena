@@ -30,3 +30,7 @@ fi
 #   -n                nit-picky mode, warn about all missing references
 #   -W                turn warnings into errors
 "$sphinx_command" . _build/html -W -a -n -j auto $additional_args
+
+if [[ "$run_ci" == "true" ]]; then
+  python3 bin/check_navigation.py _build/html
+fi

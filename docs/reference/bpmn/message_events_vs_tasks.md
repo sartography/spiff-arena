@@ -67,4 +67,9 @@ Use **Message Tasks** when the **act of sending/receiving a message is part of a
 
 Use **Message Events** when a message **affects the process flow** but is **not a discrete task**.  
  
-Understanding the distinction between **Message Tasks** and **Message Events** ensures accurate BPMN modeling of message-based interactions. 
+Understanding the distinction between **Message Tasks** and **Message Events** ensures accurate BPMN modeling of message-based interactions.
+
+## Related guides
+
+- [Message Events](message_events) — overview of Start, Intermediate, and End Message Events, correlation, and Message Event Configuration.
+- [Configuring Messages and Correlation Properties](configuring_messages_and_correlation_properties) — define messages in the Message Editor and wire them to Send Tasks and Message Events.

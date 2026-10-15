@@ -100,6 +100,10 @@ It is important to configure the correlation of the Catch and Throw Events.
 
 ## Message Event Configuration
 
+```{admonition} Related configuration guide
+This section describes the Collaboration-based configuration (Correlation Keys, Correlation Properties, and Messages defined on the Collaboration, then referenced by each Throw and Catch Message Event). For the Message Editor workflow used with Send Tasks and Message Events (message name, location, JSON schema, and correlation properties per message), see [Configuring Messages and Correlation Properties](configuring_messages_and_correlation_properties).
+```
+
 Three separate configurations need to be completed.
 
 - Collaboration
@@ -144,10 +148,7 @@ The connected catch event is configured in precisely the same manner as the thro
 | ![conditions](/images/payload_msg.png) | **Variable Name:** order_amount | The Variable Name can include a variable, holding unique information specific to the instance, or in this scenario, the order. |
 | ![conditions](/images/event_correlation_msg.png) | **Correlation:** invoice_number | Select the correlation that can identify the distinct property distinguishing one process instance from another. |
 
-Learn more about configuring Message Events and the differences between Message Events and Message Tasks.
+## Related guides
 
-```{toctree}
-:maxdepth: 1
-configuring_messages_and_correlation_properties
-message_events_vs_tasks
-``` 
+- [Configuring Messages and Correlation Properties](configuring_messages_and_correlation_properties) — define messages in the Message Editor and wire them to Send Tasks and Message Events.
+- [Message Tasks vs. Message Events](message_events_vs_tasks) — choose the right element when a message exchange is an explicit task versus an event that influences process flow.
