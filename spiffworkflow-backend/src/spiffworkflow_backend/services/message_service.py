@@ -35,7 +35,7 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.message_instrumentation_service import MessageSendInstrumentation
-from spiffworkflow_backend.services.message_instrumentation_service import record_message_send_expired
+from spiffworkflow_backend.services.message_instrumentation_service import log_message_send_expired
 from spiffworkflow_backend.services.model_sources import ModelSources
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
@@ -146,7 +146,7 @@ class MessageService:
     def _expire_send_message(
         cls, message_instance_send: MessageInstanceModel, from_status: str, commit: bool = True
     ) -> None:
-        failure_cause = cls._expired_send_message_failure_cause(message_instance_send)
+        failure_cause, reason = cls._expired_send_message_failure_cause_and_reason(message_instance_send)
         # Guard on the status so that two processes expiring the same message record it once.
         rows_updated = (
             db.session.query(MessageInstanceModel)
@@ -170,16 +170,22 @@ class MessageService:
             return
 
         db.session.refresh(message_instance_send)
-        record_message_send_expired(
+        log_message_send_expired(
             message_instance_send.name,
             message_instance_send.id,
             message_instance_send.message_instance_uuid,
             failure_cause,
+            reason,
         )
 
     @classmethod
-    def _expired_send_message_failure_cause(cls, message_instance_send: MessageInstanceModel) -> str:
-        """Says what was waiting when the message expired, so a caller can see why nothing received it."""
+    def _expired_send_message_failure_cause_and_reason(cls, message_instance_send: MessageInstanceModel) -> tuple[str, str]:
+        """Returns why nothing received the message and a low-cardinality reason for the expiry metric.
+
+        The reason is either ``no_waiting_receiver`` (nothing was waiting for the message) or
+        ``waiting_receiver_did_not_match`` (process instances were waiting but the correlation values
+        did not line up).
+        """
         failure_cause = "Expired before any process instance received it."
         waiting_receive_messages_query = MessageInstanceModel.query.filter_by(
             name=message_instance_send.name,
@@ -188,7 +194,10 @@ class MessageService:
         )
         waiting_count = waiting_receive_messages_query.count()
         if waiting_count == 0:
-            return f"{failure_cause} No process instance was waiting for message '{message_instance_send.name}'."
+            return (
+                f"{failure_cause} No process instance was waiting for message '{message_instance_send.name}'.",
+                "no_waiting_receiver",
+            )
 
         # Receivers of one message normally share their correlation properties, so a few are enough to
         # find the expressions that pick the correlation values out of this message's payload.
@@ -220,7 +229,7 @@ class MessageService:
                     value = "<not in the message>"
                 correlation_values.append(f"{retrieval_expression}={value}")
             failure_cause = f"{failure_cause} Correlation values of this message: {', '.join(correlation_values)}."
-        return failure_cause
+        return failure_cause, "waiting_receiver_did_not_match"
 
     @classmethod
     def correlate_send_message(

@@ -8,6 +8,7 @@ from uuid import UUID
 import pytest
 from flask import Flask
 from flask import g
+from prometheus_client import REGISTRY
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import (
@@ -575,7 +576,7 @@ class TestMessageService(BaseTest):
         db.session.add(message_instance_send)
         db.session.commit()
 
-        with patch("spiffworkflow_backend.services.message_service.record_message_send_expired") as record_expired:
+        with patch("spiffworkflow_backend.services.message_service.log_message_send_expired") as record_expired:
             MessageService.expire_ready_send_messages(now_in_seconds=expires_at_in_seconds + 1)
             MessageService.expire_ready_send_messages(now_in_seconds=expires_at_in_seconds + 1)
 
@@ -591,9 +592,37 @@ class TestMessageService(BaseTest):
             message_instance_send.id,
             "44444444-4444-4444-8444-444444444444",
             message_instance_send.failure_cause,
+            "waiting_receiver_did_not_match",
         )
         db.session.refresh(process_instance_receive)
         assert process_instance_receive.status == "waiting"
+
+    def test_expired_send_message_increments_metric_with_reason(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        metric_name = "spiff_message_send_expired_total"
+        labels = {"reason": "no_waiting_receiver"}
+        before = REGISTRY.get_sample_value(metric_name, labels) or 0.0
+
+        expires_at_in_seconds = round(time.time()) + 5
+        message_instance_send = MessageInstanceModel(
+            message_type=MessageTypes.send.value,
+            name="Test_message_without_receiver",
+            payload={"orderId": 99},
+            status=MessageStatuses.ready.value,
+            expires_at_in_seconds=expires_at_in_seconds,
+        )
+        db.session.add(message_instance_send)
+        db.session.commit()
+
+        MessageService.expire_ready_send_messages(now_in_seconds=expires_at_in_seconds + 1)
+
+        db.session.refresh(message_instance_send)
+        assert message_instance_send.status == "expired"
+        assert REGISTRY.get_sample_value(metric_name, labels) == before + 1
 
     def test_start_process_with_message_when_failure(
         self,

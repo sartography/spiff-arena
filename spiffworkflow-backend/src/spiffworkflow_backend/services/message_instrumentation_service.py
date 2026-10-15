@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from dataclasses import dataclass
 
 from flask import current_app
@@ -28,17 +29,27 @@ MESSAGE_SEND_PHASE_DURATION_SECONDS = Histogram(
     buckets=(0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30),
 )
 
+MESSAGE_SEND_EXPIRED_TOTAL = Counter(
+    "spiff_message_send_expired_total",
+    "Total send messages that expired before any process instance received them.",
+    ["reason"],
+)
+
 
 def _execution_mode_label(execution_mode: str | None) -> str:
     return execution_mode or "default"
 
 
-def record_message_send_expired(
+def log_message_send_expired(
     message_name: str,
     message_instance_id: int,
     message_instance_uuid: str | None,
     failure_cause: str,
+    reason: str,
 ) -> None:
+    with contextlib.suppress(Exception):
+        # Observability must never alter application behavior.
+        MESSAGE_SEND_EXPIRED_TOTAL.labels(reason=reason).inc()
     try:
         logger = current_app.logger
     except RuntimeError:
@@ -48,6 +59,7 @@ def record_message_send_expired(
         extra={
             "extras": {
                 "event_name": "message_send_expired",
+                "reason": reason,
                 "message_name": message_name,
                 "message_instance_id": message_instance_id,
                 "message_instance_uuid": message_instance_uuid,
