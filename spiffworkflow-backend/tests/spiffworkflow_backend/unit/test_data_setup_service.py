@@ -1,5 +1,6 @@
 import os
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 from flask.app import Flask
@@ -10,6 +11,7 @@ from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.reference_cache import Reference
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -158,9 +160,12 @@ class TestDataSetupService(BaseTest):
         db.session.add_all([parent, child])
         db.session.commit()
         monkeypatch.setattr(
-            ProcessModelService,
-            "get_process_models",
-            lambda **_: [SimpleNamespace(id="orders/child/waiter"), SimpleNamespace(id="orders/child/broken")],
+            FileSystemService,
+            "walk_files",
+            lambda *_: iter(["orders/child/waiter/process_model.json", "orders/child/broken/process_model.json"]),
+        )
+        monkeypatch.setattr(
+            ProcessModelService, "get_process_model_from_path", lambda path: SimpleNamespace(id=os.path.dirname(path))
         )
 
         def references(model: SimpleNamespace) -> list:
@@ -177,6 +182,38 @@ class TestDataSetupService(BaseTest):
         db.session.flush()
         DataSetupService.refresh_message_usage_for_process_groups({"orders/child"}, {"reply"})
         assert parent.process_model_identifiers == ["orders/child/broken", "orders/child/waiter", "orders/waiter"]
+        db.session.rollback()
+
+    def test_message_usage_refresh_skips_unreadable_metadata_and_continues(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        message = MessageModel(identifier="reply", location="orders", schema={}, process_model_identifiers=["orders/broken"])
+        db.session.add(message)
+        db.session.commit()
+        root = FileSystemService.root_path()
+        broken_file = os.path.join(root, "orders", "broken", "process_model.json")
+        valid_file = os.path.join(root, "orders", "waiter", "process_model.json")
+        os.makedirs(os.path.dirname(broken_file), exist_ok=True)
+        with open(broken_file, "w") as handle:
+            handle.write("{invalid json")
+        os.makedirs(os.path.dirname(valid_file), exist_ok=True)
+        with open(valid_file, "w") as handle:
+            handle.write('{"display_name": "Waiter", "description": ""}')
+        # Ensure the unreadable model is encountered before the valid one.
+        monkeypatch.setattr(FileSystemService, "walk_files", lambda *_: iter([broken_file, valid_file]))
+        monkeypatch.setattr(
+            SpecFileService,
+            "get_references_for_process",
+            lambda model: [SimpleNamespace(relative_location=model.id, messages={"reply": {}})],
+        )
+        warning = Mock()
+        monkeypatch.setattr(app.logger, "warning", warning)
+        DataSetupService.refresh_message_usage_for_process_groups({"orders"}, {"reply"})
+        assert message.process_model_identifiers == ["orders/broken", "orders/waiter"]
+        warning.assert_called_once_with("Could not refresh message usage for %s", broken_file, exc_info=True)
         db.session.rollback()
 
     def test_copy_example_process_models_replaces_existing_directory(

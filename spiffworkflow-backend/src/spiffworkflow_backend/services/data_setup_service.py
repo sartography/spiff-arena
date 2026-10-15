@@ -177,13 +177,19 @@ class DataSetupService:
             if not any(group_id.startswith(f"{other}/") for other in process_group_ids if other != group_id)
         }
         for group_id in roots:
-            for process_model in ProcessModelService.get_process_models(process_group_id=group_id, recursive=True):
+            model_files = FileSystemService.walk_files(
+                os.path.join(FileSystemService.root_path(), group_id.replace("/", os.sep)),
+                FileSystemService.standard_directory_predicate(recursive=True),
+                FileSystemService.is_process_model_json_file,
+            )
+            for model_file in model_files:
                 try:
+                    process_model = ProcessModelService.get_process_model_from_path(model_file)
                     model_references = SpecFileService.get_references_for_process(process_model)
                 except Exception:
                     # An unrelated invalid diagram must not prevent saving a shared definition.
                     # Keep its previously known usage until it can be parsed successfully.
-                    current_app.logger.warning("Could not refresh message usage for %s", process_model.id, exc_info=True)
+                    current_app.logger.warning("Could not refresh message usage for %s", model_file, exc_info=True)
                     continue
                 references.extend(model_references)
                 refreshed_model_ids.add(process_model.id)

@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.message_definition_service import MessageDefinitionConflictError
 from spiffworkflow_backend.services.message_definition_service import MessageDefinitionService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -23,7 +24,8 @@ class TestMessageDefinitionService(BaseTest):
         process_model_id = "orders/waiter"
         monkeypatch.setattr(ProcessModelService, "read_process_group_json", lambda *_: {})
         monkeypatch.setattr(ProcessModelService, "update_process_group", lambda *_: None)
-        monkeypatch.setattr(ProcessModelService, "get_process_models", lambda **_: [SimpleNamespace(id=process_model_id)])
+        monkeypatch.setattr(FileSystemService, "walk_files", lambda *_: iter([f"{process_model_id}/process_model.json"]))
+        monkeypatch.setattr(ProcessModelService, "get_process_model_from_path", lambda *_: SimpleNamespace(id=process_model_id))
         monkeypatch.setattr(
             SpecFileService,
             "get_references_for_process",
