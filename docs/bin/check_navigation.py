@@ -26,24 +26,30 @@ class SidebarLinks(HTMLParser):
 
 
 def check(build_dir):
-    bpmn = build_dir / "reference" / "bpmn"
+    bpmn = "reference/bpmn/"
     pages = {
-        "configuring_messages_and_correlation_properties": "message_events",
         "message_events_vs_tasks": "message_events",
         "exclusive_gateways_example": "gateways",
         "inclusive_gateway_example": "gateways",
         "parallel_gateways_example": "gateways",
     }
+    cases = [(bpmn + page, bpmn + parent, bpmn + "index") for page, parent in pages.items()]
+    cases.append((
+        "how_to_guides/building_diagrams/send_and_receive_messages",
+        "how_to_guides/building_diagrams/index",
+        "how_to_guides/building_diagrams/index",
+    ))
     errors = []
-    for page, parent in pages.items():
-        for source in (page, parent, "index"):
+    for page, parent, index in cases:
+        for source in set((page, parent, index)):
             parser = SidebarLinks()
-            parser.feed((bpmn / f"{source}.html").read_text(encoding="utf-8"))
+            source_file = build_dir / f"{source}.html"
+            parser.feed(source_file.read_text(encoding="utf-8"))
             matches = []
             for link in parser.links:
                 url = urlsplit(link.get("href", ""))
-                target = url.path or f"{source}.html"
-                if not url.scheme and target == f"{page}.html" and not url.fragment:
+                target = (source_file.parent / url.path).resolve() if url.path else source_file.resolve()
+                if not url.scheme and target == (build_dir / f"{page}.html").resolve() and not url.fragment:
                     matches.append(link)
             if not matches:
                 errors.append(f"{source}: missing sidebar page link to {page}")
@@ -53,7 +59,7 @@ def check(build_dir):
                 errors.append(f"{page}: missing current-page sidebar link")
     if errors:
         raise SystemExit("\n".join(errors))
-    print("BPMN sidebar navigation checks passed (5 pages).")
+    print("Message guide and BPMN sidebar navigation checks passed (5 pages).")
 
 
 if __name__ == "__main__":

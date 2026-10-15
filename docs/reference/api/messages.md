@@ -58,7 +58,7 @@ A matching condition is not required when the workflow already has the expected 
 from an earlier message. If you need to establish that value from task data, enable condition matching
 and supply the expression. Merely defining a correlation property does not establish an expected value:
 a receiver with no saved correlation values can accept a message by name alone.
-See [Configuring Messages and Correlation Properties](/reference/bpmn/configuring_messages_and_correlation_properties)
+See [Send and Receive Messages Between Processes](/how_to_guides/building_diagrams/send_and_receive_messages)
 for the editor configuration.
 
 ## Matching Behavior
