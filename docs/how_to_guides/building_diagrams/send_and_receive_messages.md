@@ -4,11 +4,6 @@ Use messages to start another process or deliver a response to a waiting process
 This guide covers the Spiff Arena diagram editor. For browser-based authoring in Ed, see the
 [Ed documentation](https://spiff.works/docs/ed/); the editors do not share the same message catalog.
 
-```{note}
-The screenshots below are retained from the earlier guide and await an update. UI labels
-and example values may differ; follow the written steps for the current configuration.
-```
-
 ## 1. Prepare the sender and receiver
 
 For a restaurant example, create Waiter and Chef process models in the same process group,
@@ -29,9 +24,9 @@ Use a different ID for each order in a real process.
 Select a Send Task or Message Event and open the **Message** section of the properties panel.
 Use its message editor button to open **Message Editor**.
 
-![Opening the message editor (earlier UI)](/images/message_example1.png)
+![Opening the message editor from the Message section](/images/message_example1.png)
 
-![Message definition and correlation properties (earlier UI)](/images/message_example2.png)
+![Message definition and correlation properties](/images/message_example2.png)
 
 - **Use Existing Shared Message**: select an existing definition when reusing one; otherwise
   leave **Do Not Use Existing Shared Message** selected.
@@ -60,13 +55,13 @@ message and correlation definitions it uses. After changing a shared message, us
 In the Waiter's Send Task, select `order_accept` under **Which message is this associated with?**
 and set **Payload** to `order`.
 
-![Send Task configuration (earlier UI)](/images/message_example3.png)
+![Send Task configuration](/images/message_example3.png)
 
 In the Chef, use a Message Start Event, select `order_accept`, and set **Variable Name** to
 `order_to_cook`. This variable receives the payload; it is not a correlation expression.
 The Message Start Event starts a new instance rather than finding an already-running Chef.
 
-![Message Start Event configuration (earlier UI)](/images/message_example6.png)
+![Message Start Event configuration](/images/message_example6.png)
 
 A Send Task sends a message; it does not also wait for a reply. Add a separate Receive Task
 or Intermediate Message Catch Event in the Waiter after the Send Task.
@@ -89,7 +84,7 @@ On the Waiter's Receive Task or Intermediate Message Catch Event:
 3. Enable **Enable Condition Matching**.
 4. In **Matching Conditions**, set the `order_id` field to `order["id"]`.
 
-![Correlation configuration (earlier UI; example values differ)](/images/message_example4.png)
+![Matching conditions on the receiver](/images/message_example4.png)
 
 These are two different expressions:
 

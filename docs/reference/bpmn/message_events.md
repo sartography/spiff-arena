@@ -78,39 +78,9 @@ The current Arena properties panel exposes a **Message** section on message-capa
 Location identifies the existing process group that owns the shared definition. Definitions are
 available to that group and descendants, with the nearest definition taking precedence.
 
-Older screenshots showing a Collaboration **Correlation Keys** control or an event-level
-**Correlation** selector do not describe the current Arena editing workflow. Use Message Editor
-and the receiver's matching conditions instead. BPMN files still contain embedded message and
+BPMN files still contain embedded message and
 correlation definitions; after shared definitions change, synchronize with **Update diagram**
 and save each affected diagram.
-
-## Earlier UI screenshots
-
-```{note}
-These screenshots are retained for context and await an update. They show an older UI,
-including Collaboration Correlation Keys and the event-level Correlation selector.
-Follow the current field descriptions above and the how-to guide rather than these older controls.
-```
-
-![Name field](/images/name_field.png)
-
-![ID field](/images/id_field.png)
-
-![Element documentation field](/images/documentation_field.png)
-
-![Earlier Collaboration configuration](/images/collaboration_msg.png)
-
-![Earlier Correlation Keys control](/images/correlation_keys_1.png)
-
-![Earlier Correlation Properties control](/images/correlation_properties_1.png)
-
-![Earlier Collaboration Messages control](/images/collaboration_messages_1.png)
-
-![Earlier message selector](/images/message_1.png)
-
-![Earlier payload field](/images/payload_msg.png)
-
-![Earlier event-level Correlation selector](/images/event_correlation_msg.png)
 
 ## Related guides
 
