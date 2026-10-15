@@ -33,6 +33,30 @@ def _execution_mode_label(execution_mode: str | None) -> str:
     return execution_mode or "default"
 
 
+def record_message_send_expired(
+    message_name: str,
+    message_instance_id: int,
+    message_instance_uuid: str | None,
+    failure_cause: str,
+) -> None:
+    try:
+        logger = current_app.logger
+    except RuntimeError:
+        return
+    logger.info(
+        "Message send expired",
+        extra={
+            "extras": {
+                "event_name": "message_send_expired",
+                "message_name": message_name,
+                "message_instance_id": message_instance_id,
+                "message_instance_uuid": message_instance_uuid,
+                "failure_cause": failure_cause,
+            }
+        },
+    )
+
+
 @dataclass
 class MessageSendInstrumentation(OperationInstrumentation):
     modified_message_name: str
@@ -96,7 +120,7 @@ class MessageSendInstrumentation(OperationInstrumentation):
                     "modified_message_name": self.modified_message_name,
                     "execution_mode": execution_mode,
                     "ttl": self.ttl,
-                    "has_message_instance_uuid": self.message_instance_uuid is not None,
+                    "message_instance_uuid": self.message_instance_uuid,
                     **fields,
                 }
             },

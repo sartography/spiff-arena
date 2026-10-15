@@ -549,6 +549,52 @@ class TestMessageService(BaseTest):
         for message_instance in message_instances:
             assert message_instance.correlation_keys == {"MainCorrelationKey": {"orderId": 22}}
 
+    def test_expired_send_message_records_why_no_waiting_receiver_got_it(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model_receive = load_test_spec(
+            "test_group/message_receive",
+            process_model_source_directory="message_basic_test",
+            bpmn_file_name="testreceive.bpmn",
+        )
+        process_instance_receive = self.create_process_instance_from_process_model(process_model_receive)
+        ProcessInstanceRuntime(process_instance_receive).do_engine_steps(save=True)
+
+        expires_at_in_seconds = round(time.time()) + 5
+        message_instance_send = MessageInstanceModel(
+            message_type=MessageTypes.send.value,
+            name="Test_message",
+            payload={"orderId": 99},
+            status=MessageStatuses.ready.value,
+            message_instance_uuid="44444444-4444-4444-8444-444444444444",
+            expires_at_in_seconds=expires_at_in_seconds,
+        )
+        db.session.add(message_instance_send)
+        db.session.commit()
+
+        with patch("spiffworkflow_backend.services.message_service.record_message_send_expired") as record_expired:
+            MessageService.expire_ready_send_messages(now_in_seconds=expires_at_in_seconds + 1)
+            MessageService.expire_ready_send_messages(now_in_seconds=expires_at_in_seconds + 1)
+
+        db.session.refresh(message_instance_send)
+        assert message_instance_send.status == "cancelled"
+        assert message_instance_send.failure_cause == (
+            "Expired before any process instance received it."
+            " 1 process instance(s) were waiting for message 'Test_message', but it was not delivered to any of them."
+            " Correlation values of this message: orderId=99."
+        )
+        record_expired.assert_called_once_with(
+            "Test_message",
+            message_instance_send.id,
+            "44444444-4444-4444-8444-444444444444",
+            message_instance_send.failure_cause,
+        )
+        db.session.refresh(process_instance_receive)
+        assert process_instance_receive.status == "waiting"
+
     def test_start_process_with_message_when_failure(
         self,
         app: Flask,

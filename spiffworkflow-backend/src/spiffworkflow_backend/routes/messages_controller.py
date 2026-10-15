@@ -113,16 +113,6 @@ def message_instance_search(
     return _create_message_instance_response(message_instances)
 
 
-# body: {
-#   payload: dict,
-#   process_instance_id: Optional[int],
-# }
-#
-# For example:
-# curl 'http://localhost:7000/v1.0/messages/gogo' \
-#  -H 'authorization: Bearer [FIXME]' \
-#  -H 'content-type: application/json' \
-#  --data-raw '{"payload":{"sure": "yes", "food": "spicy"}}'
 @log_api_interaction
 def message_send(
     modified_message_name: str,

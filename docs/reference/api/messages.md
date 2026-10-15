@@ -22,6 +22,44 @@ POST /v1.0/messages/orders:payment_failed
 ```
 
 The JSON body is the message payload used for correlation.
+Do not add a `payload` wrapper unless your message's retrieval expressions explicitly expect that field.
+
+## JSON Schema Validation
+
+The endpoint requires a JSON object, but currently does **not** validate it against the JSON schema
+stored on the shared message model. A schema in the Message Editor does not make required fields,
+field types, or `additionalProperties` restrictions enforceable at `/messages`.
+Validate incoming data explicitly in your process or integration when those checks are required.
+
+## Correlating With a Running Process
+
+The message name identifies the kind of message. Correlation values identify the waiting process.
+Configure the message's **Correlation Properties** in the Message Editor and, when the expected
+value comes from task data, configure **Matching Conditions** on the receiving task or event.
+
+For example:
+
+| Setting | Value |
+| --- | --- |
+| Correlation property identifier | `order_id` |
+| Message retrieval expression | `callback["orderId"]` |
+| Receiving task's matching condition for `order_id` | `order["id"]` |
+
+With task data `{"order": {"id": 123}}`, post `{"callback": {"orderId": 123}}`.
+The retrieval expression runs against the posted JSON; the matching condition runs against task data
+when the receiving task becomes active. Their results must compare equal; the string `"123"` does not
+match the integer `123`.
+The property identifier connects these two settings; it does not automatically look up a task variable.
+
+Expressions use Python dictionary access for nested JSON, such as `callback["orderId"]`.
+JavaScript-style dot notation such as `callback.orderId` does not access a plain JSON dictionary.
+
+A matching condition is not required when the workflow already has the expected correlation value
+from an earlier message. If you need to establish that value from task data, enable condition matching
+and supply the expression. Merely defining a correlation property does not establish an expected value:
+a receiver with no saved correlation values can accept a message by name alone.
+See [Configuring Messages and Correlation Properties](/reference/bpmn/configuring_messages_and_correlation_properties)
+for the editor configuration.
 
 ## Matching Behavior
 

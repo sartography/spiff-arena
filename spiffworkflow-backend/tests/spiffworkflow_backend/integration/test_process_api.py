@@ -1408,6 +1408,9 @@ class TestProcessApi(BaseTest):
         expired_message_instance = MessageInstanceModel.query.filter_by(id=first_message_instance_id).first()
         assert expired_message_instance is not None
         assert expired_message_instance.status == "cancelled"
+        assert expired_message_instance.failure_cause == (
+            "Expired before any process instance received it. No process instance was waiting for message 'Approval Result'."
+        )
 
     def test_buffered_ttl_message_is_delivered_when_receive_event_becomes_available(
         self,
