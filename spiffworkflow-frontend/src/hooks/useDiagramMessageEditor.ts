@@ -60,7 +60,9 @@ export default function useDiagramMessageEditor({
 
   const refresh = useCallback(async () => {
     const bus = eventBus.current;
-    if (!bus || !canAccessMessages) return null;
+    if (!bus || !canAccessMessages) {
+      return null;
+    }
     const currentGeneration = generation.current;
     const sequence = ++refreshSequence.current;
     try {
@@ -73,8 +75,12 @@ export default function useDiagramMessageEditor({
           });
         },
       );
-      if (generation.current !== currentGeneration || eventBus.current !== bus)
+      if (
+        generation.current !== currentGeneration ||
+        eventBus.current !== bus
+      ) {
         return null;
+      }
       // A slow response must not replace a more recently requested catalog.
       if (sequence === refreshSequence.current) {
         bus.fire('spiff.messages.returned', { configuration: result });
@@ -103,10 +109,13 @@ export default function useDiagramMessageEditor({
         source_location: sourceLocation,
         [MESSAGE_EDITOR_REQUEST_PARAM]: requestId,
       });
-      if (event.value?.messageId)
+      if (event.value?.messageId) {
         params.set('message_id', event.value.messageId);
+      }
       const popup = window.open(`${messagesHref}?${params}`, '_blank');
-      if (!popup) return;
+      if (!popup) {
+        return;
+      }
       for (const [id, launch] of launches.current) {
         if (
           launch.popup.closed ||
@@ -125,11 +134,14 @@ export default function useDiagramMessageEditor({
         stopWatching: () => {},
       };
       const changed = () => {
-        if (messageRef(event.element) !== launch.originalMessage)
+        if (messageRef(event.element) !== launch.originalMessage) {
           launch.assign = false;
+        }
       };
       const removed = (removedEvent: any) => {
-        if (removedEvent.element === event.element) launch.assign = false;
+        if (removedEvent.element === event.element) {
+          launch.assign = false;
+        }
       };
       event.eventBus.on('commandStack.changed', changed);
       event.eventBus.on('shape.removed', removed);
@@ -144,7 +156,9 @@ export default function useDiagramMessageEditor({
 
   useEffect(() => {
     const onReturn = () => {
-      if (document.visibilityState === 'visible') void refresh();
+      if (document.visibilityState === 'visible') {
+        void refresh();
+      }
     };
     const onSaved = async (notification: MessageEvent) => {
       const data = notification.data;
@@ -154,18 +168,22 @@ export default function useDiagramMessageEditor({
         typeof data.requestId !== 'string' ||
         typeof data.messageId !== 'string' ||
         typeof data.location !== 'string'
-      )
+      ) {
         return;
+      }
       const launch = launches.current.get(data.requestId);
-      if (!launch || notification.source !== launch.popup) return;
+      if (!launch || notification.source !== launch.popup) {
+        return;
+      }
       const catalog = await refresh();
       if (
         !catalog ||
         launches.current.get(data.requestId) !== launch ||
         !launch.assign ||
         messageRef(launch.event.element) !== launch.originalMessage
-      )
+      ) {
         return;
+      }
       // Never assign an out-of-scope definition or a shadowed ancestor's definition.
       const candidates = catalog.filter(
         (message) => message.identifier === data.messageId,
@@ -178,7 +196,9 @@ export default function useDiagramMessageEditor({
         (message) =>
           message.location === nearest && message.location === data.location,
       );
-      if (!saved) return;
+      if (!saved) {
+        return;
+      }
       launch.assign = false;
       launch.event.applyMessage(saved);
     };

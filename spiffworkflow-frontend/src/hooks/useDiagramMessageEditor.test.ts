@@ -18,7 +18,9 @@ function bus() {
       listeners.get(name)?.forEach((fn) => fn(event)),
     ),
     on: (name: string, fn: (event?: any) => void) => {
-      if (!listeners.has(name)) listeners.set(name, new Set());
+      if (!listeners.has(name)) {
+        listeners.set(name, new Set());
+      }
       listeners.get(name)!.add(fn);
     },
     off: (name: string, fn: (event?: any) => void) =>
