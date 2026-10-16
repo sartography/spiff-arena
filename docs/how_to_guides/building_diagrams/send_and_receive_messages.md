@@ -80,8 +80,13 @@ On the Waiter's Receive Task or Intermediate Message Catch Event:
 
 1. Select `order_dispatch`.
 2. Set **Variable Name** to `meal_ready`.
-3. Enable **Enable Condition Matching**.
-4. In **Matching Conditions**, set the `order_id` field to `order["id"]`.
+3. Enable **Enable Condition Matching**. Missing expressions are prefilled with their
+   correlation property identifiers (for example, `order_id`). This reads a same-named
+   variable from the receiver's task data, not from the incoming message.
+4. In **Matching Conditions**, change the `order_id` field to `order["id"]` for this example.
+
+Check each expression before saving: if the property identifier is not a valid Python variable name, or your data
+uses a different name or nested structure, replace it with an appropriate Python expression.
 
 ![Matching conditions on the receiver](/images/message_example4.png)
 
