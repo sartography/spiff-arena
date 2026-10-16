@@ -31,6 +31,7 @@ import {
   Info,
 } from '@mui/icons-material';
 
+import useDiagramMessageEditor from '../hooks/useDiagramMessageEditor';
 import ThemedCodeMirror from '../components/ThemedCodeMirror';
 import ThemedCodeMirrorMerge from '../components/ThemedCodeMirrorMerge';
 import { python } from '@codemirror/lang-python';
@@ -224,25 +225,16 @@ export default function ProcessModelEditDiagram() {
   // CRITICAL: params.process_model_id is ALREADY colon-separated from URL!
   const modifiedProcessModelId = params.process_model_id || '';
 
-  // Navigate to the Messages page to edit a message model rather than opening
-  // an inline modal. This makes it clear the message is a shared resource.
-  const onLaunchMessageEditor = useCallback(
-    (event: any) => {
-      const messageId = event?.value?.messageId;
-      const nextSearchParams = new URLSearchParams({ tab: 'models' });
-      if (messageId) {
-        nextSearchParams.set('message_id', messageId);
-      }
-      const sourceLocation = unModifyProcessIdentifierForPathParam(
+  const { onLaunchMessageEditor, onMessagesRequested } =
+    useDiagramMessageEditor({
+      diagramKey: `${modifiedProcessModelId}/${params.file_name || ''}`,
+      sourceLocation: unModifyProcessIdentifierForPathParam(
         modifiedProcessModelId,
-      );
-      if (sourceLocation) {
-        nextSearchParams.set('source_location', sourceLocation);
-      }
-      window.open(`${messagesHref}?${nextSearchParams.toString()}`, '_blank');
-    },
-    [messagesHref, modifiedProcessModelId],
-  );
+      ),
+      messagesHref,
+      messageListPath: `/message-models/${modifiedProcessModelId}`,
+      canAccessMessages: ability.can('GET', targetUris.messageModelListPath),
+    });
 
   const { addError, removeError } = useAPIError();
   const [processModelFile, setProcessModelFile] = useState<ProcessFile | null>(
@@ -1268,7 +1260,7 @@ export default function ProcessModelEditDiagram() {
         onLaunchMarkdownEditor={onLaunchMarkdownEditor}
         onLaunchMessageEditor={onLaunchMessageEditor}
         onLaunchScriptEditor={onLaunchScriptEditor}
-        onMessagesRequested={bpmnEditorCallbacks.onMessagesRequested}
+        onMessagesRequested={onMessagesRequested}
         onSearchProcessModels={onSearchProcessModels}
         onServiceTasksRequested={bpmnEditorCallbacks.onServiceTasksRequested}
         onSetPrimaryFile={onSetPrimaryFileCallback}

@@ -27,6 +27,10 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import HttpService from '../../services/HttpService';
+import {
+  MESSAGE_EDITOR_REQUEST_PARAM,
+  notifyMessageEditorSaved,
+} from '../../hooks/useDiagramMessageEditor';
 import { Notification } from '../Notification';
 import {
   getPageInfoFromSearchParams,
@@ -401,7 +405,8 @@ export default function MessageModelList({
     setEditorState(null);
     if (
       !searchParams.has('message_id') &&
-      !searchParams.has('source_location')
+      !searchParams.has('source_location') &&
+      !searchParams.has(MESSAGE_EDITOR_REQUEST_PARAM)
     ) {
       return;
     }
@@ -410,6 +415,7 @@ export default function MessageModelList({
     const nextSearchParams = new URLSearchParams(searchParams);
     nextSearchParams.delete('message_id');
     nextSearchParams.delete('source_location');
+    nextSearchParams.delete(MESSAGE_EDITOR_REQUEST_PARAM);
     setSearchParams(nextSearchParams, { replace: true });
   }, [searchParams, setSearchParams]);
 
@@ -618,6 +624,11 @@ export default function MessageModelList({
                   hideSubmitButton={true}
                   managePageTitle={false}
                   onSave={(savedMessage) => {
+                    notifyMessageEditorSaved(
+                      searchParams.get(MESSAGE_EDITOR_REQUEST_PARAM),
+                      savedMessage.messageId,
+                      savedMessage.location,
+                    );
                     setEditorState(savedMessage);
                     loadMessageModels({
                       identifier: savedMessage.messageId,

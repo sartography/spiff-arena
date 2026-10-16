@@ -262,6 +262,45 @@ describe('MessageModelList', () => {
     },
   );
 
+  it('notifies the originating diagram after a successful message save', async () => {
+    const postMessage = vi.fn();
+    vi.stubGlobal('opener', { postMessage, closed: false });
+    try {
+      render(
+        <MemoryRouter
+          initialEntries={[
+            '/messages?tab=models&source_location=misc%2Freceiver&message_editor_request=request-1',
+          ]}
+        >
+          <MessageModelList initialSourceLocation="misc/receiver" />
+        </MemoryRouter>,
+      );
+      const listCall = makeCallToBackend.mock.calls
+        .map((call) => call[0])
+        .find((call) => call.path === ALL_MESSAGE_MODELS_PATH);
+      await act(async () => listCall.successCallback({ messages: [] }));
+      expect(postMessage).not.toHaveBeenCalled();
+      act(() =>
+        messageEditorMock.mock.calls.at(-1)?.[0].onSave({
+          messageId: 'reply',
+          location: 'misc',
+          correlationProperties: [],
+        }),
+      );
+      expect(postMessage).toHaveBeenCalledWith(
+        {
+          type: 'spiff-arena:message-model-saved',
+          requestId: 'request-1',
+          messageId: 'reply',
+          location: 'misc',
+        },
+        window.location.origin,
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('opens the nearest matching message model for the provided source location', async () => {
     render(
       <MemoryRouter>

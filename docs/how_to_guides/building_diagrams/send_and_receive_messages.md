@@ -41,7 +41,12 @@ from the Messages page, click
 - **Correlation Properties**: define the values used to associate messages with process instances.
   Each property has a **Property Name** and a **Retrieval Expression**, evaluated against the message body.
 
-Save the definition.
+Save the definition, then return to the diagram tab. The message dropdown refreshes without
+reloading the diagram or discarding unsaved edits. If you opened the editor from a task/event
+with no message selected, the new message is selected there automatically, unless you changed
+that selection or removed the element in the meantime. You can undo the assignment; save the
+diagram when you are ready. Messages created independently from the Messages page become
+available in the dropdown on return but are not automatically selected.
 
 Create `order_dispatch` too. For the reply, add property `order_id`
 with retrieval expression `order_id`. The reply body will contain that key.
