@@ -48,6 +48,7 @@ class Reference:
     called_element_ids: list  # The element ids of any called elements
 
     properties: dict
+    referenced_messages: list[str] = dataclasses.field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert the Reference object to a dictionary."""

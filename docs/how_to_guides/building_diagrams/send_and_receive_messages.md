@@ -22,11 +22,8 @@ Use a different ID for each order in a real process.
 ## 2. Define shared messages
 
 Select a Send Task or Message Event and open the **Message** section of the properties panel.
-Click **Open message editor** to open the Messages page in a new tab. For a selected message,
-the page opens its edit dialog. If no message is selected, it opens a blank message editor
-with **Location** prefilled with the diagram's process group. To create a definition directly
-from the Messages page, click
-**Add Message Model**, choose the process-group location, and click **Continue**.
+Click **Open message editor** to edit the selected message or create a new one in the
+diagram's process group.
 
 ![Opening the message editor from the Message section](/images/message_example1.png)
 
@@ -41,12 +38,13 @@ from the Messages page, click
 - **Correlation Properties**: define the values used to associate messages with process instances.
   Each property has a **Property Name** and a **Retrieval Expression**, evaluated against the message body.
 
-Save the definition, then return to the diagram tab. The message dropdown refreshes without
-reloading the diagram or discarding unsaved edits. If you opened the editor from a task/event
-with no message selected, the new message is selected there automatically, unless you changed
-that selection or removed the element in the meantime. You can undo the assignment; save the
-diagram when you are ready. Messages created independently from the Messages page become
-available in the dropdown on return but are not automatically selected.
+The Messages page's **Used In** column lists saved process models whose tasks or events
+reference the message. An unused message declaration in the BPMN file does not count as usage;
+it is retained in the file for reuse. Refresh the Messages page after saving diagram changes
+to see updated usage.
+
+Save the definition and return to the diagram. Available messages refresh automatically;
+a message created from an unassigned task/event is selected for you.
 
 Create `order_dispatch` too. For the reply, add property `order_id`
 with retrieval expression `order_id`. The reply body will contain that key.

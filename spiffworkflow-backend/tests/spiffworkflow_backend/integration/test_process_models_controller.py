@@ -89,6 +89,9 @@ class TestProcessModelsController(BaseTest):
         original = SpecFileService.get_data(model, file_name)
         old_id = "Message_0rcwl5q"
         new_id = "Message_reply"
+        group = ProcessModelService.get_process_group("test_group")
+        group.messages = {old_id: {"schema": {}}, new_id: {"schema": {}}}
+        ProcessModelService.update_process_group(group)
         db.session.add_all(
             [
                 MessageModel(identifier=old_id, location="test_group", schema={}),
@@ -103,7 +106,11 @@ class TestProcessModelsController(BaseTest):
         assert MessageModel.query.filter_by(identifier=old_id).one().process_model_identifiers == [model.id]
         assert not MessageModel.query.filter_by(identifier=new_id).one().process_model_identifiers
 
-        updated = original.replace(old_id.encode(), new_id.encode())
+        # Leave the old declaration in place, as the editor does when changing a selection.
+        updated = original.replace(f'messageRef="{old_id}"'.encode(), f'messageRef="{new_id}"'.encode())
+        updated = updated.replace(
+            b"</bpmn:definitions>", f'<bpmn:message id="{new_id}" name="reply" /></bpmn:definitions>'.encode()
+        )
         response = client.put(
             f"/v1.0/process-models/{model.modified_process_model_identifier()}/files/{file_name}",
             params={"file_contents_hash": sha256(original).hexdigest()},
@@ -116,6 +123,13 @@ class TestProcessModelsController(BaseTest):
         usage = {message["identifier"]: message["process_model_identifiers"] for message in response.json()["messages"]}
         assert usage[new_id] == [model.id]
         assert usage[old_id] == ([model.id] if has_other_file else [])
+        assert SpecFileService.get_data(model, file_name) == updated
+        # A full startup-style rebuild must agree with the incremental save path.
+        DataSetupService.refresh_process_model_caches()
+        assert MessageModel.query.filter_by(identifier=new_id).one().process_model_identifiers == [model.id]
+        assert MessageModel.query.filter_by(identifier=old_id).one().process_model_identifiers == (
+            [model.id] if has_other_file else []
+        )
 
     def test_process_model_show(
         self,

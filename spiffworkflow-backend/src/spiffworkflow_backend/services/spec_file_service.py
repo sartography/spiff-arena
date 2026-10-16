@@ -122,6 +122,21 @@ class SpecFileService(FileSystemService):
                     type=parser_type,
                     file_name=file_name,
                     messages=messages,
+                    # Declarations alone are not usage. Restrict references to executable
+                    # message-capable elements, excluding correlation retrieval expressions.
+                    referenced_messages=(
+                        sorted(
+                            set(
+                                sub_parser.node.xpath(
+                                    './/bpmn:sendTask/@messageRef | .//bpmn:receiveTask/@messageRef | '
+                                    './/bpmn:messageEventDefinition/@messageRef',
+                                    namespaces={"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"},
+                                )
+                            )
+                        )
+                        if parser_type == "process"
+                        else []
+                    ),
                     correlations=correlations,
                     start_messages=start_messages,
                     called_element_ids=called_element_ids,
