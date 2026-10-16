@@ -96,7 +96,8 @@ class DataSetupService:
             references, model_failures = cls._extract_process_model_references(process_model, reference_objects)
             failing_process_models.extend(model_failures)
             cls._update_process_model_caches_for_references(references, failing_process_models)
-            cls._update_message_usage_for_process_model(process_model_id, references)
+            if not model_failures:
+                cls._update_message_usage_for_process_model(process_model_id, references)
         except Exception as ex:
             failing_process_models.append((process_model_id, str(ex)))
 

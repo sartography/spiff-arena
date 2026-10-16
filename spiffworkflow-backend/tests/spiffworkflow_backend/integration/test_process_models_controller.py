@@ -131,6 +131,41 @@ class TestProcessModelsController(BaseTest):
             [model.id] if has_other_file else []
         )
 
+    def test_saving_bpmn_with_unparseable_sibling_preserves_usage_and_reports_refresh_failure(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group("test_group")
+        file_name = "message_start_event.bpmn"
+        model = load_test_spec(
+            "test_group/receiver",
+            bpmn_file_name=file_name,
+            process_model_source_directory="simple-message-send-receive",
+        )
+        old_id = "Message_0rcwl5q"
+        db.session.add(MessageModel(identifier=old_id, location="test_group", schema={}))
+        db.session.commit()
+        DataSetupService.refresh_single_process_model_cache(model.id)
+        assert MessageModel.query.filter_by(identifier=old_id).one().process_model_identifiers == [model.id]
+
+        SpecFileService.write_file_data_to_system(
+            SpecFileService.full_file_path(model, "broken.bpmn"),
+            b"<not xml",
+        )
+        original = SpecFileService.get_data(model, file_name)
+        response = client.put(
+            f"/v1.0/process-models/{model.modified_process_model_identifier()}/files/{file_name}",
+            params={"file_contents_hash": sha256(original).hexdigest()},
+            files=[("file", (file_name, original))],
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 500
+        assert response.json()["error_code"] == "process_model_cache_refresh_failed"
+        assert MessageModel.query.filter_by(identifier=old_id).one().process_model_identifiers == [model.id]
+
     def test_process_model_show(
         self,
         app: Flask,
