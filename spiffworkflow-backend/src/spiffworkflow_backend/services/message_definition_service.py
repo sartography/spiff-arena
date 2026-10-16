@@ -259,7 +259,13 @@ class MessageDefinitionService:
         process_groups_with_message_metadata: dict[str, ProcessGroup],
     ) -> None:
         """Persist process groups and their message models in a single transaction with rollback support."""
+        # DataSetupService also uses this service during startup; defer to avoid a circular import.
+        from spiffworkflow_backend.services.data_setup_service import DataSetupService  # noqa: PLC0415
+
         all_message_models = cls.collect_for_multiple_process_groups(process_groups_with_message_metadata)
+        affected_message_identifiers = {identifier for identifier, _ in all_message_models}
+        for message_model in MessageModel.query.filter(MessageModel.location.in_(updated_process_groups)).all():  # type: ignore
+            affected_message_identifiers.add(message_model.identifier)
         file_backups = {
             process_group_id: ProcessModelService.read_process_group_json(process_group_id)
             for process_group_id in updated_process_groups
@@ -273,6 +279,8 @@ class MessageDefinitionService:
                 cls.delete_message_models_at_location(process_group_id)
             db.session.flush()
             cls.save_all_message_models(all_message_models)
+            db.session.flush()
+            DataSetupService.refresh_message_usage_for_process_groups(set(updated_process_groups), affected_message_identifiers)
             db.session.commit()
         except Exception:
             db.session.rollback()

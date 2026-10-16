@@ -52,12 +52,7 @@ It serves as a valuable mechanism for synchronizing and consolidating multiple p
 
 ![exclusive_merge](/images/exclusive_merge.png)
 
-Check out this detailed exclusive gateway example:
-
-```{toctree}
-:maxdepth: 1
-exclusive_gateways_example
-```
+Check out this [detailed exclusive gateway example](exclusive_gateways_example).
 
 ## Inclusive Gateway
 
@@ -98,10 +93,7 @@ They can be used independently, depending on the specific scenario and process r
 In some cases, only the Inclusive Gateway might be used to split the flow into multiple paths based on different conditions without necessarily requiring a merge later in the process.
 Similarly, the Inclusive Gateway merge can be used without an Inclusive Gateway to consolidate parallel paths from other types of gateways, or even from different parts of the process.
 
-```{toctree}
-:maxdepth: 1
-inclusive_gateway_example
-```
+Check out this [detailed inclusive gateway example](inclusive_gateway_example).
 
 ## Parallel Gateway
 
@@ -128,12 +120,7 @@ Note that the behavior for a parallel join, also known as a Parallel Gateway mer
 When the process flow reaches the parallel join, it evaluates the completion of all incoming sequence flows from the corresponding parallel split.
 It ensures that all parallel paths have completed their execution before the process continues along the single outgoing sequence flow after the join.
 
-Check out this detailed parallel gateway example:
-
-```{toctree}
-:maxdepth: 1
-parallel_gateways_example
-```
+Check out this [detailed parallel gateway example](parallel_gateways_example).
 
 ## Event-Based Gateway
 

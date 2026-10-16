@@ -8,6 +8,7 @@ from uuid import UUID
 import pytest
 from flask import Flask
 from flask import g
+from prometheus_client import REGISTRY
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import (
@@ -19,6 +20,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance import MessageStatuses
 from spiffworkflow_backend.models.message_instance import MessageTypes
+from spiffworkflow_backend.models.message_instance_correlation import MessageInstanceCorrelationRuleModel
 from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -81,7 +83,9 @@ class TestMessageService(BaseTest):
         db.session.commit()
         assert MessageService._claim_ready_message_instance(message_instance) is True
 
-        assert MessageService.correlate_send_message(message_instance) is None
+        with patch.object(MessageService, "expire_ready_send_messages", wraps=MessageService.expire_ready_send_messages) as sweep:
+            assert MessageService.correlate_send_message(message_instance) is None
+            sweep.assert_called_once_with()
 
         db.session.refresh(message_instance)
         assert message_instance.status == MessageStatuses.running.value
@@ -127,6 +131,8 @@ class TestMessageService(BaseTest):
             runtime_receive: ProcessInstanceRuntime | None = None,
             claim_message_instance: bool = True,
             instrumentation: MessageSendInstrumentation | None = None,
+            *,
+            sweep_expired_messages: bool = True,
         ) -> MessageInstanceModel | None:
             ready_message_count = int(
                 MessageInstanceModel.query.filter_by(
@@ -148,6 +154,7 @@ class TestMessageService(BaseTest):
                 runtime_receive=runtime_receive,
                 claim_message_instance=claim_message_instance,
                 instrumentation=instrumentation,
+                sweep_expired_messages=sweep_expired_messages,
             )
 
         with patch.object(MessageService, "correlate_send_message", side_effect=observing_correlate_send_message):
@@ -548,6 +555,275 @@ class TestMessageService(BaseTest):
         # SpiffWorkflow files a property that has no correlation key under its default key.
         for message_instance in message_instances:
             assert message_instance.correlation_keys == {"MainCorrelationKey": {"orderId": 22}}
+
+    def test_expired_send_message_records_why_no_waiting_receiver_got_it(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model_receive = load_test_spec(
+            "test_group/message_receive",
+            process_model_source_directory="message_basic_test",
+            bpmn_file_name="testreceive.bpmn",
+        )
+        process_instance_receive = self.create_process_instance_from_process_model(process_model_receive)
+        ProcessInstanceRuntime(process_instance_receive).do_engine_steps(save=True)
+
+        expires_at_in_seconds = round(time.time()) + 5
+        message_instance_send = MessageInstanceModel(
+            message_type=MessageTypes.send.value,
+            name="Test_message",
+            payload={"orderId": 99},
+            status=MessageStatuses.ready.value,
+            message_instance_uuid="44444444-4444-4444-8444-444444444444",
+            expires_at_in_seconds=expires_at_in_seconds,
+        )
+        db.session.add(message_instance_send)
+        db.session.commit()
+
+        with patch("spiffworkflow_backend.services.message_instrumentation_service.log_message_send_expired") as record_expired:
+            MessageService.expire_ready_send_messages(now_in_seconds=expires_at_in_seconds + 1)
+            MessageService.expire_ready_send_messages(now_in_seconds=expires_at_in_seconds + 1)
+
+        db.session.refresh(message_instance_send)
+        assert message_instance_send.status == "expired"
+        assert message_instance_send.failure_cause == (
+            "Expired before any process instance received it."
+            " 1 receive event(s) were waiting for message 'Test_message' at expiry cleanup,"
+            " but it was not delivered to any of them."
+            " Sampled correlation values of this message: orderId=99."
+        )
+        record_expired.assert_called_once_with(
+            "Test_message",
+            message_instance_send.id,
+            "44444444-4444-4444-8444-444444444444",
+            "waiting_receiver_not_delivered",
+        )
+        db.session.refresh(process_instance_receive)
+        assert process_instance_receive.status == "waiting"
+
+    def test_expired_send_message_increments_metric_with_reason(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        metric_name = "spiff_message_send_expired_total"
+        labels = {"reason": "no_waiting_receiver"}
+        before = REGISTRY.get_sample_value(metric_name, labels) or 0.0
+
+        expires_at_in_seconds = round(time.time()) + 5
+        message_instance_send = MessageInstanceModel(
+            message_type=MessageTypes.send.value,
+            name="Test_message_without_receiver",
+            payload={"orderId": 99},
+            status=MessageStatuses.ready.value,
+            expires_at_in_seconds=expires_at_in_seconds,
+        )
+        db.session.add(message_instance_send)
+        db.session.commit()
+
+        MessageService.expire_ready_send_messages(now_in_seconds=expires_at_in_seconds + 1)
+
+        db.session.refresh(message_instance_send)
+        assert message_instance_send.status == "expired"
+        assert REGISTRY.get_sample_value(metric_name, labels) == before + 1
+
+    @pytest.mark.parametrize("from_status", ["ready", "running"])
+    def test_expiry_is_reported_only_after_commit(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None, from_status: str
+    ) -> None:
+        message = MessageInstanceModel(message_type="send", name="expiry", payload={}, status=from_status)
+        db.session.add(message)
+        db.session.commit()
+        with patch("spiffworkflow_backend.services.message_instrumentation_service.log_message_send_expired") as record:
+            MessageService._expire_send_message(message, from_status, commit=False)
+            assert message.status == "expired"
+            record.assert_not_called()
+            db.session.rollback()
+            assert message.status == from_status
+            db.session.commit()
+            record.assert_not_called()
+
+            MessageService._expire_send_message(message, from_status, commit=False)
+            # A second attempt must not record an already-expired message again.
+            MessageService._expire_send_message(message, from_status, commit=False)
+            record.assert_not_called()
+            db.session.commit()
+            record.assert_called_once_with("expiry", message.id, None, "no_waiting_receiver")
+
+    @pytest.mark.parametrize("rollback_savepoint", [False, True])
+    @pytest.mark.parametrize("rollback_outer", [False, True])
+    def test_expiry_reporting_respects_savepoints(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None, rollback_savepoint: bool, rollback_outer: bool
+    ) -> None:
+        message = MessageInstanceModel(message_type="send", name="expiry", payload={}, status="ready")
+        db.session.add(message)
+        db.session.commit()
+        with patch("spiffworkflow_backend.services.message_instrumentation_service.log_message_send_expired") as record:
+            with db.session.begin_nested() as savepoint:
+                MessageService._expire_send_message(message, "ready", commit=False)
+                if rollback_savepoint:
+                    savepoint.rollback()
+            record.assert_not_called()
+            if rollback_outer:
+                db.session.rollback()
+            else:
+                db.session.commit()
+            rolled_back = rollback_savepoint or rollback_outer
+            assert record.call_count == (0 if rolled_back else 1)
+            assert message.status == ("ready" if rolled_back else "expired")
+            assert "message_send_expiries" not in db.session.info
+
+    def test_expiry_reporting_is_discarded_when_session_closes(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
+        message = MessageInstanceModel(message_type="send", name="expiry", payload={}, status="ready")
+        db.session.add(message)
+        db.session.commit()
+        message_id = message.id
+        with patch("spiffworkflow_backend.services.message_instrumentation_service.log_message_send_expired") as record:
+            MessageService._expire_send_message(message, "ready", commit=False)
+            db.session.close()
+            db.session.commit()
+            record.assert_not_called()
+            assert "message_send_expiries" not in db.session.info
+            assert MessageInstanceModel.query.filter_by(id=message_id).one().status == "ready"
+
+    @pytest.mark.parametrize("from_status", ["ready", "running"])
+    @pytest.mark.parametrize("sweep_expired_messages", [False, True])
+    def test_send_expiring_before_correlation_is_not_delivered(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None, from_status: str, sweep_expired_messages: bool
+    ) -> None:
+        message = MessageInstanceModel(
+            message_type="send", name="expiry", payload={}, status=from_status, expires_at_in_seconds=1
+        )
+        db.session.add(message)
+        db.session.commit()
+        with (
+            patch("spiffworkflow_backend.services.message_instrumentation_service.log_message_send_expired") as record,
+            patch.object(MessageService, "_try_correlate_with_existing_receiver") as correlate,
+            patch.object(MessageService, "_try_start_new_process_for_message") as start,
+        ):
+            assert (
+                MessageService.correlate_send_message(
+                    message,
+                    claim_message_instance=from_status == "ready",
+                    sweep_expired_messages=sweep_expired_messages,
+                )
+                is None
+            )
+            assert message.status == "expired"
+            record.assert_called_once_with("expiry", message.id, None, "no_waiting_receiver")
+            correlate.assert_not_called()
+            start.assert_not_called()
+
+    def test_message_send_sweeps_once_and_expires_before_uuid_replay(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        g.user = self.find_or_create_user()
+        message_uuid = "44444444-4444-4444-8444-444444444444"
+        with (
+            patch.object(MessageService, "current_time_in_seconds", return_value=100) as clock,
+            patch.object(MessageService, "expire_ready_send_messages", wraps=MessageService.expire_ready_send_messages) as sweep,
+            patch.object(MessageService, "_try_correlate_with_existing_receiver", return_value=None) as correlate,
+            patch.object(MessageService, "_try_start_new_process_for_message", return_value=None) as start,
+        ):
+            message = MessageService.run_process_model_from_message(
+                "expiry", {}, time_to_live_in_seconds=1, message_instance_uuid=message_uuid
+            )
+            assert message.status == "ready"
+            sweep.assert_called_once_with(now_in_seconds=100)
+            sweep.reset_mock()
+
+            clock.return_value = 101
+            replay = MessageService.run_process_model_from_message(
+                "expiry", {}, time_to_live_in_seconds=1, message_instance_uuid=message_uuid
+            )
+            assert replay.id == message.id
+            assert replay.status == "expired"
+            sweep.assert_called_once_with(now_in_seconds=101)
+            correlate.assert_called_once()
+            start.assert_called_once()
+
+    @pytest.mark.parametrize("process_instance_only", [False, True])
+    def test_batch_correlation_sweeps_once_but_checks_each_message_deadline(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None, process_instance_only: bool
+    ) -> None:
+        process_model = load_test_spec(
+            "test_group/message_receive",
+            process_model_source_directory="message_basic_test",
+            bpmn_file_name="testreceive.bpmn",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        runtime = ProcessInstanceRuntime(process_instance)
+        messages = [
+            MessageInstanceModel(message_type="send", name="expiry", payload={}, status="ready", expires_at_in_seconds=deadline)
+            for deadline in (1, 3, 3)
+        ]
+        db.session.add_all(messages)
+        db.session.commit()
+
+        with (
+            patch.object(MessageService, "current_time_in_seconds", return_value=2) as clock,
+            patch.object(MessageService, "expire_ready_send_messages", wraps=MessageService.expire_ready_send_messages) as sweep,
+            patch.object(MessageService, "_try_correlate_with_existing_receiver", return_value=None) as correlate,
+            patch.object(MessageService, "_try_start_new_process_for_message", return_value=None) as start,
+        ):
+
+            def advance_clock(*args: Any, **kwargs: Any) -> None:
+                # The next message expires while the first eligible message is being processed.
+                clock.return_value = 4
+
+            correlate.side_effect = advance_clock
+            if process_instance_only:
+                MessageService.correlate_ready_send_messages_for_process_instance(["expiry"], process_instance, runtime)
+            else:
+                MessageService.correlate_all_message_instances()
+
+            sweep.assert_called_once_with()
+            correlate.assert_called_once()
+            assert correlate.call_args.args[0].id == messages[1].id
+            start.assert_called_once()
+
+        assert [message.status for message in messages] == ["expired", "ready", "expired"]
+
+    def test_expiry_cleanup_commits_batch_once(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
+        messages = [
+            MessageInstanceModel(message_type="send", name="expiry", payload={}, status="ready", expires_at_in_seconds=1)
+            for _ in range(3)
+        ]
+        db.session.add_all(messages)
+        db.session.commit()
+        with patch.object(db.session, "commit", wraps=db.session.commit) as commit:
+            MessageService.expire_ready_send_messages(now_in_seconds=2)
+            commit.assert_called_once()
+        assert all(message.status == "expired" for message in messages)
+
+    def test_expiry_diagnostics_are_bounded_and_do_not_mutate_payload(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        payload = {"values": ["秘密" * 40000]}
+        message = MessageInstanceModel(message_type="send", name="expiry", payload=payload, status="ready")
+        receiver = MessageInstanceModel(message_type="receive", name="expiry", status="ready")
+        db.session.add_all([message, receiver])
+        db.session.flush()
+        db.session.add_all(
+            [
+                MessageInstanceCorrelationRuleModel(
+                    message_instance_id=receiver.id,
+                    name=f"property_{index}",
+                    retrieval_expression=f"values.pop() # {index}",
+                )
+                for index in range(30)
+            ]
+        )
+        db.session.commit()
+        MessageService._expire_send_message(message, "ready")
+        assert message.status == "expired"
+        assert len(message.failure_cause.encode("utf-8")) <= 8192
+        assert "秘密" in message.failure_cause
+        assert "..." in message.failure_cause
+        assert message.payload == payload
 
     def test_start_process_with_message_when_failure(
         self,

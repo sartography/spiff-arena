@@ -1404,10 +1404,14 @@ class TestProcessApi(BaseTest):
         assert duplicate_after_expiration_response.status_code == 202, duplicate_after_expiration_response.text
         assert duplicate_after_expiration_response.json()
         assert duplicate_after_expiration_response.json()["message_instance"]["id"] == first_message_instance_id
-        assert duplicate_after_expiration_response.json()["message_instance"]["status"] == "cancelled"
+        assert duplicate_after_expiration_response.json()["message_instance"]["status"] == "expired"
         expired_message_instance = MessageInstanceModel.query.filter_by(id=first_message_instance_id).first()
         assert expired_message_instance is not None
-        assert expired_message_instance.status == "cancelled"
+        assert expired_message_instance.status == "expired"
+        assert expired_message_instance.failure_cause == (
+            "Expired before any process instance received it."
+            " No receive event was waiting for message 'Approval Result' at expiry cleanup."
+        )
 
     def test_buffered_ttl_message_is_delivered_when_receive_event_becomes_available(
         self,

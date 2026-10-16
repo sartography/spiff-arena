@@ -1360,7 +1360,8 @@ export default function ProcessModelEditDiagram() {
             : t('save_warning_message')}
           {!messageModelIsMissing ? (
             <Button
-              color="inherit"
+              variant="contained"
+              color="primary"
               size="small"
               sx={{ ml: 1 }}
               onClick={syncMessageModelsToDiagram}

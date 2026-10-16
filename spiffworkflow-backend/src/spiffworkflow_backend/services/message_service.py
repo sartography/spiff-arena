@@ -2,6 +2,8 @@ import contextlib
 import time
 from collections.abc import Generator
 from collections.abc import Iterable
+from copy import deepcopy
+from reprlib import Repr
 from typing import Any
 from typing import NoReturn
 from typing import cast
@@ -34,6 +36,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.bpmn_process_service import BpmnProcessService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
+from spiffworkflow_backend.services.message_instrumentation_service import MessageSendExpiry
 from spiffworkflow_backend.services.message_instrumentation_service import MessageSendInstrumentation
 from spiffworkflow_backend.services.model_sources import ModelSources
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
@@ -136,13 +139,105 @@ class MessageService:
             )
             .filter(cast(Any, MessageInstanceModel.expires_at_in_seconds).isnot(None))
             .filter(cast(Any, MessageInstanceModel.expires_at_in_seconds) <= now)
+            .order_by(MessageInstanceModel.id)
             .all()
         )
         for message_instance in expired_messages:
-            message_instance.status = MessageStatuses.cancelled.value
-            db.session.add(message_instance)
+            cls._expire_send_message(message_instance, MessageStatuses.ready.value, commit=False)
         if expired_messages and commit:
             db.session.commit()
+
+    @classmethod
+    def _expire_send_message(cls, message_instance_send: MessageInstanceModel, from_status: str, commit: bool = True) -> None:
+        failure_cause, reason = cls._expired_send_message_failure_cause_and_reason(message_instance_send)
+        # Guard on the status so that two processes expiring the same message record it once.
+        rows_updated = (
+            db.session.query(MessageInstanceModel)
+            .filter(
+                MessageInstanceModel.id == message_instance_send.id,
+                MessageInstanceModel.status == from_status,
+            )
+            .update(
+                {
+                    "status": MessageStatuses.expired.value,
+                    "failure_cause": failure_cause,
+                    "updated_at_in_seconds": cls.current_time_in_seconds(),
+                },
+                synchronize_session=False,
+            )
+        )
+        if rows_updated:
+            MessageSendExpiry(
+                message_instance_send.name,
+                message_instance_send.id,
+                message_instance_send.message_instance_uuid,
+                reason,
+            ).record_after_commit(db.session())
+        db.session.expire(message_instance_send)
+        if commit:
+            db.session.commit()
+
+    @classmethod
+    def _expired_send_message_failure_cause_and_reason(cls, message_instance_send: MessageInstanceModel) -> tuple[str, str]:
+        """Returns why nothing received the message and a low-cardinality reason for the expiry metric.
+
+        This is a snapshot at cleanup time, not proof of a correlation mismatch: a matching
+        receiver may have been locked or unable to receive the message before its TTL elapsed.
+        """
+        failure_cause = "Expired before any process instance received it."
+        waiting_receive_messages_query = MessageInstanceModel.query.filter_by(
+            name=message_instance_send.name,
+            status=MessageStatuses.ready.value,
+            message_type=MessageTypes.receive.value,
+        )
+        waiting_count = waiting_receive_messages_query.count()
+        if waiting_count == 0:
+            return (
+                f"{failure_cause} No receive event was waiting for message '{message_instance_send.name}' at expiry cleanup.",
+                "no_waiting_receiver",
+            )
+
+        # Receivers of one message normally share their correlation properties, so a few are enough to
+        # find the expressions that pick the correlation values out of this message's payload.
+        waiting_receive_messages = (
+            waiting_receive_messages_query.options(selectinload(MessageInstanceModel.correlation_rules))
+            .order_by(MessageInstanceModel.id.desc())  # type: ignore
+            .limit(10)
+            .all()
+        )
+        retrieval_expressions = sorted(
+            {
+                correlation_rule.retrieval_expression
+                for waiting_receive_message in waiting_receive_messages
+                for correlation_rule in waiting_receive_message.correlation_rules
+                if correlation_rule.retrieval_expression
+            }
+        )
+        failure_cause = (
+            f"{failure_cause} {waiting_count} receive event(s) were waiting for message"
+            f" '{message_instance_send.name}' at expiry cleanup, but it was not delivered to any of them."
+        )
+        if retrieval_expressions:
+            expression_engine = CustomBpmnScriptEngine()
+            correlation_values = []
+            bounded_repr = Repr()
+            bounded_repr.maxstring = 256
+            # Diagnostics must not mutate the buffered payload or overflow MySQL's TEXT column.
+            for retrieval_expression in retrieval_expressions[:20]:
+                try:
+                    value = bounded_repr.repr(
+                        expression_engine.environment.evaluate(retrieval_expression, deepcopy(message_instance_send.payload))
+                    )
+                except Exception:
+                    value = "<could not evaluate>"
+                expression_label = (
+                    retrieval_expression if len(retrieval_expression) <= 256 else retrieval_expression[:253] + "..."
+                )
+                correlation_values.append(f"{expression_label}={value}")
+            failure_cause = f"{failure_cause} Sampled correlation values of this message: {', '.join(correlation_values)}."
+        if len(failure_cause.encode("utf-8")) > 8192:
+            failure_cause = failure_cause.encode("utf-8")[:8189].decode("utf-8", errors="ignore") + "..."
+        return failure_cause, "waiting_receiver_not_delivered"
 
     @classmethod
     def correlate_send_message(
@@ -153,17 +248,23 @@ class MessageService:
         runtime_receive: ProcessInstanceRuntime | None = None,
         claim_message_instance: bool = True,
         instrumentation: MessageSendInstrumentation | None = None,
+        *,
+        sweep_expired_messages: bool = True,
     ) -> MessageInstanceModel | None:
         """Connects the given send message to a 'receive' message if possible.
 
         :param message_instance_send:
+        :param sweep_expired_messages: Disable when the caller already swept expired messages.
+            The individual message's TTL is still checked before correlation.
         :return: the message instance that received this message.
         """
-        if instrumentation is not None:
-            with instrumentation.phase("correlate_expire_ready_send_messages"):
+        if sweep_expired_messages:
+            with (
+                instrumentation.phase("correlate_expire_ready_send_messages")
+                if instrumentation is not None
+                else contextlib.nullcontext()
+            ):
                 cls.expire_ready_send_messages()
-        else:
-            cls.expire_ready_send_messages()
 
         if claim_message_instance:
             with instrumentation.phase("claim_send_message") if instrumentation is not None else contextlib.nullcontext():
@@ -179,11 +280,7 @@ class MessageService:
             message_instance_send.expires_at_in_seconds is not None
             and message_instance_send.expires_at_in_seconds <= cls.current_time_in_seconds()
         ):
-            cls._transition_message_instance_status(
-                message_instance_send,
-                MessageStatuses.running.value,
-                MessageStatuses.cancelled.value,
-            )
+            cls._expire_send_message(message_instance_send, MessageStatuses.running.value)
             return None
 
         message_instance_receive: MessageInstanceModel | None = None
@@ -253,6 +350,7 @@ class MessageService:
                 execution_mode=execution_mode,
                 receiving_process_instance_id=receiving_process_instance.id,
                 runtime_receive=runtime_receive,
+                sweep_expired_messages=False,
             )
 
     @classmethod
@@ -644,7 +742,7 @@ class MessageService:
                 f"Runtime waiting send messages: Processing message id {message_instance_send.id}. "
                 f"Name: '{message_instance_send.name}'"
             )
-            cls.correlate_send_message(message_instance_send, execution_mode=execution_mode)
+            cls.correlate_send_message(message_instance_send, execution_mode=execution_mode, sweep_expired_messages=False)
 
     @classmethod
     def start_process_with_message(
@@ -1021,6 +1119,7 @@ class MessageService:
                 execution_mode=execution_mode,
                 claim_message_instance=False,
                 instrumentation=instrumentation,
+                sweep_expired_messages=False,
             )
             if receiver_message is None:
                 if ttl > 0:
