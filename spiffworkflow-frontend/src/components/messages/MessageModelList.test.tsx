@@ -213,55 +213,6 @@ describe('MessageModelList', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it.each(['focus', 'visibilitychange'])(
-    'refreshes usage on %s without resetting an open editor',
-    async (eventName) => {
-      const message = {
-        id: 1,
-        identifier: 'reply',
-        location: 'misc',
-        schema: {},
-        correlation_properties: [],
-        process_model_identifiers: [] as string[],
-      };
-      const { unmount } = render(
-        <MemoryRouter>
-          <MessageModelList initialMessageId="reply" />
-        </MemoryRouter>,
-      );
-      const listCalls = () =>
-        makeCallToBackend.mock.calls
-          .map((call) => call[0])
-          .filter((call) => call.path === ALL_MESSAGE_MODELS_PATH);
-      await act(async () =>
-        listCalls()[0].successCallback({ messages: [message] }),
-      );
-      const editor = screen.getByTestId(MESSAGE_EDITOR_TEST_ID);
-      const before = listCalls().length;
-      const target = eventName === 'focus' ? window : document;
-      fireEvent(target, new Event(eventName));
-      expect(listCalls()).toHaveLength(before + 1);
-      await act(async () =>
-        listCalls()
-          .at(-1)
-          .successCallback({
-            messages: [
-              { ...message, process_model_identifiers: ['misc/receiver'] },
-            ],
-          }),
-      );
-      expect(
-        screen.getByRole('link', { name: 'misc/receiver', hidden: true }),
-      ).toBeInTheDocument();
-      expect(screen.getByTestId(MESSAGE_EDITOR_TEST_ID)).toBe(editor);
-      expect(messageEditorMock.mock.calls.at(-1)?.[0].messageId).toBe('reply');
-      unmount();
-      const after = listCalls().length;
-      fireEvent(target, new Event(eventName));
-      expect(listCalls()).toHaveLength(after);
-    },
-  );
-
   it('notifies the originating diagram after a successful message save', async () => {
     const postMessage = vi.fn();
     vi.stubGlobal('opener', { postMessage, closed: false });

@@ -340,21 +340,6 @@ export default function MessageModelList({
     }
   }, [loadMessageModels, listPath, processGroupId]);
 
-  useEffect(() => {
-    const refreshOnReturn = () => {
-      if (document.visibilityState === 'visible') {
-        // Refresh usage changed in another tab without resetting an open editor.
-        loadMessageModels();
-      }
-    };
-    window.addEventListener('focus', refreshOnReturn);
-    document.addEventListener('visibilitychange', refreshOnReturn);
-    return () => {
-      window.removeEventListener('focus', refreshOnReturn);
-      document.removeEventListener('visibilitychange', refreshOnReturn);
-    };
-  }, [loadMessageModels]);
-
   const paginatedMessageModels = useMemo(() => {
     const startingIndex = (page - 1) * perPage;
     return messageModels.slice(startingIndex, startingIndex + perPage);
