@@ -155,6 +155,7 @@ export default function useDiagramMessageEditor({
   );
 
   useEffect(() => {
+    const activeLaunches = launches.current;
     const onReturn = () => {
       if (document.visibilityState === 'visible') {
         void refresh();
@@ -208,8 +209,8 @@ export default function useDiagramMessageEditor({
     return () => {
       generation.current += 1;
       eventBus.current = null;
-      launches.current.forEach((launch) => launch.stopWatching());
-      launches.current.clear();
+      activeLaunches.forEach((launch) => launch.stopWatching());
+      activeLaunches.clear();
       window.removeEventListener('focus', onReturn);
       document.removeEventListener('visibilitychange', onReturn);
       window.removeEventListener('message', onSaved);
