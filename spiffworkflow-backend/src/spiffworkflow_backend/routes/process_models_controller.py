@@ -661,7 +661,7 @@ def _create_or_update_process_model_file(
     file.file_contents_hash = file_contents_hash
     GitService.commit_on_save(f"{message_for_git_commit} {process_model_identifier}/{file.name}")
 
-    if is_new_file and file.name.endswith(".bpmn"):
+    if file.name.endswith(".bpmn"):
         DataSetupService.refresh_single_process_model_cache(process_model_identifier)
 
     return make_response(jsonify(file), http_status_to_return)

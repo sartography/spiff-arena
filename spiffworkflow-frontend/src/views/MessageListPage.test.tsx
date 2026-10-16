@@ -54,6 +54,25 @@ describe('MessageListPage', () => {
     expect(screen.getByText('message models')).toBeInTheDocument();
   });
 
+  it('forwards diagram creation context without a message id', () => {
+    messageModelListMock.mockReset();
+    render(
+      <MemoryRouter
+        initialEntries={[
+          '/messages?tab=models&source_location=restaurant%2Fwaiter',
+        ]}
+      >
+        <MessageListPage />
+      </MemoryRouter>,
+    );
+    expect(messageModelListMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        initialMessageId: undefined,
+        initialSourceLocation: 'restaurant/waiter',
+      }),
+    );
+  });
+
   it('forwards the source location query param to the message model list', () => {
     messageModelListMock.mockReset();
 

@@ -23,7 +23,9 @@ Use a different ID for each order in a real process.
 
 Select a Send Task or Message Event and open the **Message** section of the properties panel.
 Click **Open message editor** to open the Messages page in a new tab. For a selected message,
-the page opens its edit dialog. To create a definition from the Messages page, click
+the page opens its edit dialog. If no message is selected, it opens a blank message editor
+with **Location** prefilled with the diagram's process group. To create a definition directly
+from the Messages page, click
 **Add Message Model**, choose the process-group location, and click **Continue**.
 
 ![Opening the message editor from the Message section](/images/message_example1.png)

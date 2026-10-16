@@ -308,6 +308,12 @@ export default function MessageModelList({
             );
             if (initialMessageModel) {
               setEditorState(toEditorState(initialMessageModel));
+            } else if (!initialMessageId && initialSourceLocation) {
+              setEditorState({
+                messageId: '',
+                location: processGroupLocationForSource(initialSourceLocation),
+                correlationProperties: [],
+              });
             }
           }
         },
@@ -329,6 +335,21 @@ export default function MessageModelList({
       loadMessageModels();
     }
   }, [loadMessageModels, listPath, processGroupId]);
+
+  useEffect(() => {
+    const refreshOnReturn = () => {
+      if (document.visibilityState === 'visible') {
+        // Refresh usage changed in another tab without resetting an open editor.
+        loadMessageModels();
+      }
+    };
+    window.addEventListener('focus', refreshOnReturn);
+    document.addEventListener('visibilitychange', refreshOnReturn);
+    return () => {
+      window.removeEventListener('focus', refreshOnReturn);
+      document.removeEventListener('visibilitychange', refreshOnReturn);
+    };
+  }, [loadMessageModels]);
 
   const paginatedMessageModels = useMemo(() => {
     const startingIndex = (page - 1) * perPage;
@@ -385,8 +406,7 @@ export default function MessageModelList({
       return;
     }
 
-    // Clear message_id and source_location params when the editor was opened
-    // from a URL that selected a specific message model.
+    // Clear launch context so closing either an edit or create dialog does not reopen it.
     const nextSearchParams = new URLSearchParams(searchParams);
     nextSearchParams.delete('message_id');
     nextSearchParams.delete('source_location');

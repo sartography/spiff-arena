@@ -229,21 +229,17 @@ export default function ProcessModelEditDiagram() {
   const onLaunchMessageEditor = useCallback(
     (event: any) => {
       const messageId = event?.value?.messageId;
+      const nextSearchParams = new URLSearchParams({ tab: 'models' });
       if (messageId) {
-        const nextSearchParams = new URLSearchParams({
-          message_id: messageId,
-          tab: 'models',
-        });
-        const sourceLocation = unModifyProcessIdentifierForPathParam(
-          modifiedProcessModelId,
-        );
-        if (sourceLocation) {
-          nextSearchParams.set('source_location', sourceLocation);
-        }
-        window.open(`${messagesHref}?${nextSearchParams.toString()}`, '_blank');
-      } else {
-        window.open(`${messagesHref}?tab=models`, '_blank');
+        nextSearchParams.set('message_id', messageId);
       }
+      const sourceLocation = unModifyProcessIdentifierForPathParam(
+        modifiedProcessModelId,
+      );
+      if (sourceLocation) {
+        nextSearchParams.set('source_location', sourceLocation);
+      }
+      window.open(`${messagesHref}?${nextSearchParams.toString()}`, '_blank');
     },
     [messagesHref, modifiedProcessModelId],
   );
