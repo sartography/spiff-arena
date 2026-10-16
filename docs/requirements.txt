@@ -33,7 +33,7 @@ snowballstemmer==2.2.0
 soupsieve==2.9.2
 Sphinx==8.2.3
 sphinx-autoapi==3.6.0
-sphinx-autobuild==2024.4.16
+sphinx-autobuild==2025.8.25
 sphinx-basic-ng==1.0.0b2
 sphinx-click==6.2.0
 sphinx-rtd-theme==3.0.2
