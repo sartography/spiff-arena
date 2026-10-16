@@ -96,7 +96,8 @@ class DataSetupService:
             references, model_failures = cls._extract_process_model_references(process_model, reference_objects)
             failing_process_models.extend(model_failures)
             cls._update_process_model_caches_for_references(references, failing_process_models)
-            cls._update_message_usage_for_process_model(process_model_id, references)
+            if not model_failures:
+                cls._update_message_usage_for_process_model(process_model_id, references)
         except Exception as ex:
             failing_process_models.append((process_model_id, str(ex)))
 
@@ -107,11 +108,11 @@ class DataSetupService:
     def _build_message_usage_map(
         cls, references: list, all_message_models: dict[tuple[str, str], Any]
     ) -> dict[tuple[str, str], list[str]]:
-        """Build a map of (message_name, location) -> sorted list of process_model_ids that declare the message."""
+        """Map message definitions to models whose tasks/events reference them."""
         usage: dict[tuple[str, str], set[str]] = {}
         message_locations_by_identifier = cls._message_locations_by_identifier(all_message_models.keys())
         for ref in references:
-            for msg_name in ref.messages:
+            for msg_name in ref.referenced_messages:
                 nearest_location = cls._find_nearest_message_location(
                     ref.relative_location, message_locations_by_identifier.get(msg_name, set())
                 )
@@ -123,7 +124,7 @@ class DataSetupService:
     @classmethod
     def _update_message_usage_for_process_model(cls, process_model_id: str, references: list) -> None:
         """After a single-model refresh, update process_model_identifiers on affected MessageModels."""
-        new_message_names = {msg_name for ref in references for msg_name in ref.messages}
+        new_message_names = {msg_name for ref in references for msg_name in ref.referenced_messages}
         message_models = (
             MessageModel.query.filter(MessageModel.identifier.in_(new_message_names)).all()  # type: ignore
             if new_message_names
@@ -139,9 +140,9 @@ class DataSetupService:
         # Remove this process model from all messages it's no longer in
         MessageDefinitionService.remove_process_model_from_usage(process_model_id)
 
-        # Add it to messages it now declares
+        # Add it to messages its tasks/events now reference
         for ref in references:
-            for msg_name in ref.messages:
+            for msg_name in ref.referenced_messages:
                 nearest_location = cls._find_nearest_message_location(
                     ref.relative_location, message_locations_by_identifier.get(msg_name, set())
                 )

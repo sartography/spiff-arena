@@ -170,6 +170,88 @@ describe('MessageModelList', () => {
     expect(screen.getByRole('button', { name: 'edit' })).toBeInTheDocument();
   });
 
+  it('opens a blank editor in the source model group when no message is selected', async () => {
+    render(
+      <MemoryRouter
+        initialEntries={[
+          '/messages?tab=models&source_location=order%2Frequest-for-information%2Freceiver',
+        ]}
+      >
+        <MessageModelList initialSourceLocation="order/request-for-information/receiver" />
+      </MemoryRouter>,
+    );
+    const listCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === ALL_MESSAGE_MODELS_PATH);
+    await act(async () => listCall.successCallback({ messages: [] }));
+
+    const editor = screen.getByTestId(MESSAGE_EDITOR_TEST_ID);
+    expect(editor).toHaveAttribute('data-message-id', '');
+    expect(editor).toHaveAttribute(
+      'data-location',
+      'order:request-for-information',
+    );
+    expect(
+      screen.queryByText('choose_message_model_location'),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'close' }));
+    expect(
+      screen.queryByTestId(MESSAGE_EDITOR_TEST_ID),
+    ).not.toBeInTheDocument();
+  });
+
+  it('does not auto-open an editor when visiting the message list without launch context', async () => {
+    render(
+      <MemoryRouter>
+        <MessageModelList />
+      </MemoryRouter>,
+    );
+    const listCall = makeCallToBackend.mock.calls
+      .map((call) => call[0])
+      .find((call) => call.path === ALL_MESSAGE_MODELS_PATH);
+    await act(async () => listCall.successCallback({ messages: [] }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('notifies the originating diagram after a successful message save', async () => {
+    const postMessage = vi.fn();
+    vi.stubGlobal('opener', { postMessage, closed: false });
+    try {
+      render(
+        <MemoryRouter
+          initialEntries={[
+            '/messages?tab=models&source_location=misc%2Freceiver&message_editor_request=request-1',
+          ]}
+        >
+          <MessageModelList initialSourceLocation="misc/receiver" />
+        </MemoryRouter>,
+      );
+      const listCall = makeCallToBackend.mock.calls
+        .map((call) => call[0])
+        .find((call) => call.path === ALL_MESSAGE_MODELS_PATH);
+      await act(async () => listCall.successCallback({ messages: [] }));
+      expect(postMessage).not.toHaveBeenCalled();
+      act(() =>
+        messageEditorMock.mock.calls.at(-1)?.[0].onSave({
+          messageId: 'reply',
+          location: 'misc',
+          correlationProperties: [],
+        }),
+      );
+      expect(postMessage).toHaveBeenCalledWith(
+        {
+          type: 'spiff-arena:message-model-saved',
+          requestId: 'request-1',
+          messageId: 'reply',
+          location: 'misc',
+        },
+        window.location.origin,
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('opens the nearest matching message model for the provided source location', async () => {
     render(
       <MemoryRouter>
