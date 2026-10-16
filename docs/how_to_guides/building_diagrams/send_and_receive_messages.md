@@ -38,11 +38,6 @@ diagram's process group.
 - **Correlation Properties**: define the values used to associate messages with process instances.
   Each property has a **Property Name** and a **Retrieval Expression**, evaluated against the message body.
 
-The Messages page's **Used In** column lists saved process models whose tasks or events
-reference the message. An unused message declaration in the BPMN file does not count as usage;
-it is retained in the file for reuse. Refresh the Messages page after saving diagram changes
-to see updated usage.
-
 Save the definition and return to the diagram. Available messages refresh automatically;
 a message created from an unassigned task/event is selected for you.
 
