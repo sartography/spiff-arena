@@ -3377,6 +3377,7 @@ paths:
         - Messages
       operationId: spiffworkflow_backend.routes.messages_controller.message_send
       summary: Instantiate and run a given process model with a message start event matching given name
+      description: Send the JSON body as the message payload to a matching waiting receiver or message start event. The body is not validated against the shared message model's JSON schema. Correlation retrieval expressions are evaluated against the complete body.
       requestBody:
         required: true
         content:
