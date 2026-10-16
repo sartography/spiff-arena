@@ -38,6 +38,7 @@ from spiffworkflow_backend.background_processing.celery_tasks.process_instance_t
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.error import HumanTaskAlreadyCompletedError
+from spiffworkflow_backend.helpers.schema_validation_helper import validate_instance_against_schema
 from spiffworkflow_backend.exceptions.error import HumanTaskNotFoundError
 from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationNotSafeError
 from spiffworkflow_backend.exceptions.error import ProcessInstanceMigrationUnnecessaryError
@@ -827,29 +828,12 @@ class ProcessInstanceService:
                     revision=process_instance.bpmn_version_control_identifier,
                 )
 
-                # Validate data against the JSON schema
-                try:
-                    jsonschema.validate(
-                        instance=data,
-                        schema=form_schema,
-                        format_checker=jsonschema.FormatChecker(),
-                    )
-                except jsonschema.exceptions.ValidationError as validation_error:
-                    # Provide a detailed error message
-                    error_message = f"Task data validation failed: {validation_error.message}"
-                    if validation_error.path:
-                        error_message += f" at path: {'.'.join(str(p) for p in validation_error.path)}"
-
-                    # Raise API error with validation details
-                    raise ApiError(
-                        error_code="task_data_validation_error", message=error_message, status_code=400
-                    ) from validation_error
-                except (jsonschema.exceptions.SchemaError, TypeError) as error:
-                    # Handle other errors without trying to access .message or .path
-                    error_message = f"Task data validation failed: {str(error)}"
-
-                    # Raise API error with validation details
-                    raise ApiError(error_code="task_data_validation_error", message=error_message, status_code=400) from error
+                validate_instance_against_schema(
+                    instance=data,
+                    schema=form_schema,
+                    error_code="task_data_validation_error",
+                    error_prefix="Task data validation failed",
+                )
 
         # Process file data and merge form data
         cls.save_file_data_and_replace_with_digest_references(

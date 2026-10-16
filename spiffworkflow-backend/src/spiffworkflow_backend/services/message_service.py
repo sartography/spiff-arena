@@ -26,11 +26,13 @@ from spiffworkflow_backend.background_processing.celery_tasks.process_instance_t
 )
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import should_queue_process_instance
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.helpers.schema_validation_helper import validate_instance_against_schema
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance import MessageStatuses
 from spiffworkflow_backend.models.message_instance import MessageTypes
+from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
@@ -44,6 +46,7 @@ from spiffworkflow_backend.services.process_instance_queue_service import Proces
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_script_engine import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.upsearch_service import UpsearchService
 from spiffworkflow_backend.services.user_service import UserService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 
@@ -1042,6 +1045,27 @@ class MessageService:
         return mtp
 
     @classmethod
+    def validate_message_body(cls, modified_message_name: str, body: dict[str, Any]) -> None:
+        message_name, process_group_identifier = MessageInstanceModel.split_modified_message_name(modified_message_name)
+        locations = UpsearchService.upsearch_locations(process_group_identifier)
+        messages = MessageModel.query.filter(
+            MessageModel.identifier == message_name,
+            MessageModel.location.in_(locations),  # type: ignore
+        ).all()
+        if not messages:
+            return
+
+        matching_message = min(messages, key=lambda m: locations.index(m.location))
+        schema = matching_message.schema
+        if schema:
+            validate_instance_against_schema(
+                instance=body,
+                schema=schema,
+                error_code="message_data_validation_error",
+                error_prefix="Message data validation failed",
+            )
+
+    @classmethod
     def run_process_model_from_message(
         cls,
         modified_message_name: str,
@@ -1050,6 +1074,9 @@ class MessageService:
         time_to_live_in_seconds: int | None = None,
         message_instance_uuid: str | None = None,
     ) -> MessageInstanceModel:
+        if current_app.config.get("SPIFFWORKFLOW_BACKEND_VALIDATE_MESSAGE_BODY_AGAINST_SCHEMA", False):
+            cls.validate_message_body(modified_message_name, body)
+
         message_name, _process_group_identifier = MessageInstanceModel.split_modified_message_name(modified_message_name)
         ttl = cls._validated_time_to_live(time_to_live_in_seconds, message_instance_uuid)
         message_instance_uuid = cls._validated_message_instance_uuid(message_instance_uuid)
