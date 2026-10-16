@@ -52,7 +52,7 @@ RUN git config --global --add safe.directory '*'
 FROM base AS setup
 
 # Astral is the company behind uv
-COPY --from=ghcr.io/astral-sh/uv:alpine /usr/local/bin/uv /usr/local/bin/uvx /usr/local/bin/
+COPY --from=ghcr.io/astral-sh/uv:alpine@sha256:ffc7a8b9b0bbf136676da234e29915f66480322b68111b31115c5bbcf6b2cab0 /usr/local/bin/uv /usr/local/bin/uvx /usr/local/bin/
 
 # mysqldev for mysqlclient lib
 # libpq-dev in order to be able to install postgres lib. See also libpq above in deployment image.
