@@ -128,8 +128,8 @@ class SpecFileService(FileSystemService):
                         sorted(
                             set(
                                 sub_parser.node.xpath(
-                                    './/bpmn:sendTask/@messageRef | .//bpmn:receiveTask/@messageRef | '
-                                    './/bpmn:messageEventDefinition/@messageRef',
+                                    ".//bpmn:sendTask/@messageRef | .//bpmn:receiveTask/@messageRef | "
+                                    ".//bpmn:messageEventDefinition/@messageRef",
                                     namespaces={"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"},
                                 )
                             )
