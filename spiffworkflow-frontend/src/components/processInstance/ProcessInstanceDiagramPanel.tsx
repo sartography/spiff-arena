@@ -1,6 +1,6 @@
 import { CircularProgress } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { BasicTask, ProcessInstance } from '../../interfaces';
+import { BasicTask, ProcessInstanceDiagram } from '../../interfaces';
 import ReactDiagramEditor from '../ReactDiagramEditor';
 import { Notification } from '../Notification';
 import {
@@ -9,7 +9,7 @@ import {
 } from '../ErrorDisplay';
 
 type ProcessInstanceDiagramPanelProps = {
-  processInstance: ProcessInstance | null;
+  diagram: ProcessInstanceDiagram | null;
   tasks: BasicTask[] | null;
   tasksCallHadError: boolean;
   diagramFileName: string | null;
@@ -21,7 +21,7 @@ type ProcessInstanceDiagramPanelProps = {
 };
 
 export default function ProcessInstanceDiagramPanel({
-  processInstance,
+  diagram,
   tasks,
   tasksCallHadError,
   diagramFileName,
@@ -32,18 +32,14 @@ export default function ProcessInstanceDiagramPanel({
   onElementClick,
 }: ProcessInstanceDiagramPanelProps) {
   const { t } = useTranslation();
-  if (!processInstance) {
-    return null;
-  }
-  if (!tasks && !tasksCallHadError) {
+  if (!diagram || (!tasks && !tasksCallHadError)) {
     return <CircularProgress size={24} />;
   }
 
-  const hasDiagramXml = !!processInstance.bpmn_xml_file_contents;
+  const hasDiagramXml = !!diagram.bpmn_xml_file_contents;
   const canLoadFromModel =
     !!diagramFileName && !!diagramProcessModelId && !hasDiagramXml;
-  const retrievalError =
-    processInstance.bpmn_xml_file_contents_retrieval_error || '';
+  const retrievalError = diagram.bpmn_xml_file_contents_retrieval_error || '';
 
   if (
     !hasDiagramXml &&
@@ -70,7 +66,7 @@ export default function ProcessInstanceDiagramPanel({
   return (
     <ReactDiagramEditor
       diagramType="readonly"
-      diagramXML={processInstance.bpmn_xml_file_contents || ''}
+      diagramXML={diagram.bpmn_xml_file_contents || ''}
       fileName={canLoadFromModel ? diagramFileName || undefined : undefined}
       onCallActivityOverlayClick={onCallActivityNavigate}
       onElementClick={onElementClick}

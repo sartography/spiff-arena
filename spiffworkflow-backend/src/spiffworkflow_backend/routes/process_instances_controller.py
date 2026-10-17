@@ -242,27 +242,36 @@ def process_instance_report_column_list(
 def process_instance_show_for_me(
     modified_process_model_identifier: str,
     process_instance_id: int,
-    process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
-    return _get_process_instance(
-        process_instance=process_instance,
-        modified_process_model_identifier=modified_process_model_identifier,
-        process_identifier=process_identifier,
-    )
+    return _get_process_instance(modified_process_model_identifier, process_instance)
 
 
 def process_instance_show(
     modified_process_model_identifier: str,
     process_instance_id: int,
-    process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    return _get_process_instance(
-        process_instance=process_instance,
-        modified_process_model_identifier=modified_process_model_identifier,
-        process_identifier=process_identifier,
-    )
+    return _get_process_instance(modified_process_model_identifier, process_instance)
+
+
+def process_instance_diagram_show(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    process_identifier: str | None = None,
+) -> flask.wrappers.Response:
+    # the diagram permission is granted per model, so also require that the instance itself is visible
+    if AuthorizationService.user_has_permission(
+        user=g.user,
+        permission="read",
+        target_uri=f"/process-instances/{modified_process_model_identifier}/{process_instance_id}",
+    ):
+        process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    else:
+        process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
+    _raise_unless_process_instance_belongs_to_model(modified_process_model_identifier, process_instance)
+    diagram = ModelSources.for_instance(process_instance).diagram_payload(process_instance, process_identifier)
+    return make_response(jsonify(diagram), 200)
 
 
 def process_instance_delete(process_instance_id: int, modified_process_model_identifier: str) -> flask.wrappers.Response:
@@ -703,8 +712,15 @@ def _send_bpmn_event(process_instance: ProcessInstanceModel, body: dict) -> Resp
 def _get_process_instance(
     modified_process_model_identifier: str,
     process_instance: ProcessInstanceModel,
-    process_identifier: str | None = None,
 ) -> flask.wrappers.Response:
+    _raise_unless_process_instance_belongs_to_model(modified_process_model_identifier, process_instance)
+    return make_response(jsonify(process_instance.serialized_with_metadata()), 200)
+
+
+def _raise_unless_process_instance_belongs_to_model(
+    modified_process_model_identifier: str,
+    process_instance: ProcessInstanceModel,
+) -> None:
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     if process_model_identifier != process_instance.process_model_identifier:
         raise ApiError(
@@ -712,10 +728,6 @@ def _get_process_instance(
             "The instance does not belong to the requested model.",
             status_code=404,
         )
-
-    result = process_instance.serialized_with_metadata()
-    result.update(ModelSources.for_instance(process_instance).diagram_payload(process_instance, process_identifier))
-    return make_response(jsonify(result), 200)
 
 
 def _process_instance_run(

@@ -135,6 +135,23 @@ This permission is typically **restricted to administrators or support engineers
 | **ELEVATED**         | Users can define secrets, configure authentication, and manage external integrations. |
 | **SUPPORT**          | Users can **pause, modify, migrate, and debug** any process instance.                 |
 
+### Hiding Process Instance Diagrams
+
+Anyone who can view a process instance can see its BPMN diagram by default.
+To hide the diagram from a group, deny `read` on `/process-instance-diagrams/` for the process models in question.
+The group can still start instances, complete their tasks, and view the instance page, but the Diagram tab is disabled.
+
+```yaml
+permissions:
+  hide-diagrams-from-participants:
+    groups: [participants]
+    actions: ["DENY:read"]
+    uri: /process-instance-diagrams/my-group:my-model/*
+```
+
+Use `/process-instance-diagrams/my-group:*` to cover every model in a process group, or `/process-instance-diagrams/*` for all models.
+A denial always wins, so do not deny a group that also contains users who should keep seeing diagrams, such as `everybody` when admins are in it.
+
 ## Site Administration
 
 Setting up permissions in a YAML file may fit your needs.

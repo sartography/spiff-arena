@@ -22,6 +22,7 @@ import {
   PermissionsToCheck,
   ProcessData,
   ProcessInstance,
+  ProcessInstanceDiagram,
   ProcessModel,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
@@ -50,6 +51,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const [processInstance, setProcessInstance] =
     useState<ProcessInstance | null>(null);
+  const [diagram, setDiagram] = useState<ProcessInstanceDiagram | null>(null);
   const [tasks, setTasks] = useState<BasicTask[] | null>(null);
   const [tasksCallHadError, setTasksCallHadError] = useState<boolean>(false);
   const [taskToTimeTravelTo, setTaskToTimeTravelTo] =
@@ -92,6 +94,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     [targetUris.processInstanceResetPath]: ['POST'],
     [targetUris.messageInstanceListPath]: ['GET'],
     [targetUris.processInstanceActionPath]: ['DELETE', 'GET', 'POST'],
+    [targetUris.processInstanceDiagramPath]: ['GET'],
     [targetUris.processInstanceLogListPath]: ['GET'],
     [targetUris.processInstanceTaskAssignPath]: ['POST'],
     [targetUris.processInstanceTaskDataPath]: ['GET', 'PUT'],
@@ -232,26 +235,31 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   ]);
 
   const getProcessInstance = useCallback(() => {
-    let queryParams = '';
-    if (processIdentifier) {
-      queryParams = `?process_identifier=${processIdentifier}`;
-    }
     let apiPath = '/process-instances/for-me';
     if (variant === 'all') {
       apiPath = '/process-instances';
     }
     HttpService.makeCallToBackend({
-      path: `${apiPath}/${modifiedProcessModelId}/${params.process_instance_id}${queryParams}`,
+      path: `${apiPath}/${modifiedProcessModelId}/${params.process_instance_id}`,
       successCallback: (p: ProcessInstance) => {
         setProcessInstance(p);
       },
     });
-  }, [
-    params.process_instance_id,
-    modifiedProcessModelId,
-    variant,
-    processIdentifier,
-  ]);
+  }, [params.process_instance_id, modifiedProcessModelId, variant]);
+
+  const getDiagram = useCallback(() => {
+    if (!ability.can('GET', targetUris.processInstanceDiagramPath)) {
+      return;
+    }
+    let queryParams = '';
+    if (processIdentifier) {
+      queryParams = `?process_identifier=${processIdentifier}`;
+    }
+    HttpService.makeCallToBackend({
+      path: `${targetUris.processInstanceDiagramPath}${queryParams}`,
+      successCallback: setDiagram,
+    });
+  }, [ability, processIdentifier, targetUris.processInstanceDiagramPath]);
 
   useEffect(() => {
     if (processInstance) {
@@ -268,6 +276,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return undefined;
     }
     getProcessInstance();
+    getDiagram();
     getActionableTaskList();
 
     if (tab) {
@@ -280,17 +289,18 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   }, [
     permissionsLoaded,
     getActionableTaskList,
+    getDiagram,
     getProcessInstance,
     tab,
     taskSubTab,
   ]);
 
   useEffect(() => {
-    if (!processInstance) {
+    if (!processInstance || !diagram) {
       return;
     }
 
-    if (processInstance.bpmn_xml_file_contents) {
+    if (diagram.bpmn_xml_file_contents) {
       setDiagramFileName(null);
       setDiagramProcessModelId(null);
       setDiagramLoadError(null);
@@ -298,7 +308,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
 
     const diagramIdentifier =
-      processInstance.process_model_with_diagram_identifier ||
+      diagram.process_model_with_diagram_identifier ||
       processInstance.process_model_identifier;
     if (!diagramIdentifier) {
       return;
@@ -328,7 +338,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         }
       },
     });
-  }, [processInstance, t]);
+  }, [diagram, processInstance, t]);
 
   const updateSearchParams = (value: string, key: string) => {
     if (value !== undefined) {
@@ -553,7 +563,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           window.open(url);
         } else {
           setTasks(null);
-          setProcessInstance(null);
+          setDiagram(null);
           navigate(url);
         }
       }
@@ -616,6 +626,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       targetUris.processInstanceLogListPath,
     );
     const canViewMsgs = ability.can('GET', targetUris.messageInstanceListPath);
+    const canViewDiagram = ability.can(
+      'GET',
+      targetUris.processInstanceDiagramPath,
+    );
 
     return (
       <>
@@ -683,7 +697,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             onTerminate={terminateProcessInstance}
           />
         </Box>
-        <ProcessInstanceSummary processInstance={processInstance} />
+        <ProcessInstanceSummary
+          processInstance={processInstance}
+          processModelWithDiagramIdentifier={
+            diagram?.process_model_with_diagram_identifier
+          }
+        />
         <br />
         <ProcessInstanceCurrentTaskInfo processInstance={processInstance} />
         <br />
@@ -710,10 +729,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           modifiedProcessModelId={modifiedProcessModelId || ''}
           selectedTabIndex={selectedTabIndex}
           selectedTaskTabSubTab={selectedTaskTabSubTab}
+          canViewDiagram={canViewDiagram}
           canViewLogs={canViewLogs}
           canViewMsgs={canViewMsgs}
           tasks={tasks}
           tasksCallHadError={tasksCallHadError}
+          diagram={diagram}
           diagramFileName={diagramFileName}
           diagramProcessModelId={diagramProcessModelId}
           diagramLoadError={diagramLoadError}

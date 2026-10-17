@@ -106,10 +106,6 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     bpmn_version_control_identifier: str | None = db.Column(db.String(255))
     last_milestone_bpmn_name: str | None = db.Column(db.String(255), index=True)
 
-    bpmn_xml_file_contents: str | None = None
-    bpmn_xml_file_contents_retrieval_error: str | None = None
-    process_model_with_diagram_identifier: str | None = None
-
     # full, none
     persistence_level: str = "full"
 
@@ -144,8 +140,6 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             "actions": self.actions,
             "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
             "bpmn_version_control_type": self.bpmn_version_control_type,
-            "bpmn_xml_file_contents_retrieval_error": self.bpmn_xml_file_contents_retrieval_error,
-            "bpmn_xml_file_contents": self.bpmn_xml_file_contents,
             "created_at_in_seconds": self.created_at_in_seconds,
             "end_in_seconds": self.end_in_seconds,
             "last_milestone_bpmn_name": self.last_milestone_bpmn_name,
@@ -163,7 +157,6 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     def serialized_with_metadata(self) -> dict[str, Any]:
         process_instance_attributes = self.serialized()
         process_instance_attributes["process_metadata"] = self.process_metadata
-        process_instance_attributes["process_model_with_diagram_identifier"] = self.process_model_with_diagram_identifier
         return process_instance_attributes
 
     @validates("status")

@@ -1,6 +1,10 @@
 import { Box, Tab, Tabs } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { BasicTask, ProcessInstance } from '../../interfaces';
+import {
+  BasicTask,
+  ProcessInstance,
+  ProcessInstanceDiagram,
+} from '../../interfaces';
 import TaskListTable from '../TaskListTable';
 import ProcessInstanceLogList from '../ProcessInstanceLogList';
 import MessageInstanceList from '../messages/MessageInstanceList';
@@ -12,10 +16,12 @@ type ProcessInstanceTabsProps = {
   modifiedProcessModelId: string;
   selectedTabIndex: number;
   selectedTaskTabSubTab: number;
+  canViewDiagram: boolean;
   canViewLogs: boolean;
   canViewMsgs: boolean;
   tasks: BasicTask[] | null;
   tasksCallHadError: boolean;
+  diagram: ProcessInstanceDiagram | null;
   diagramFileName: string | null;
   diagramProcessModelId: string | null;
   diagramLoadError: string | null;
@@ -91,10 +97,12 @@ export default function ProcessInstanceTabs({
   modifiedProcessModelId,
   selectedTabIndex,
   selectedTaskTabSubTab,
+  canViewDiagram,
   canViewLogs,
   canViewMsgs,
   tasks,
   tasksCallHadError,
+  diagram,
   diagramFileName,
   diagramProcessModelId,
   diagramLoadError,
@@ -104,22 +112,22 @@ export default function ProcessInstanceTabs({
   onElementClick,
 }: ProcessInstanceTabsProps) {
   const { t } = useTranslation();
+  // fall back to the always-available tasks tab when the diagram is not viewable
+  const tabIndex =
+    selectedTabIndex === 0 && !canViewDiagram ? 4 : selectedTabIndex;
   return (
     <>
-      <Tabs
-        value={selectedTabIndex}
-        onChange={(_, newValue) => onSelectTab(newValue)}
-      >
-        <Tab label={t('diagram_tab')} />
+      <Tabs value={tabIndex} onChange={(_, newValue) => onSelectTab(newValue)}>
+        <Tab label={t('diagram_tab')} disabled={!canViewDiagram} />
         <Tab label={t('milestones_tab')} disabled={!canViewLogs} />
         <Tab label={t('events_tab')} disabled={!canViewLogs} />
         <Tab label={t('messages')} disabled={!canViewMsgs} />
         <Tab label={t('tasks_tab')} />
       </Tabs>
       <Box>
-        {selectedTabIndex === 0 ? (
+        {tabIndex === 0 ? (
           <ProcessInstanceDiagramPanel
-            processInstance={processInstance}
+            diagram={diagram}
             tasks={tasks}
             tasksCallHadError={tasksCallHadError}
             diagramFileName={diagramFileName}
@@ -130,7 +138,7 @@ export default function ProcessInstanceTabs({
             onElementClick={onElementClick}
           />
         ) : null}
-        {selectedTabIndex === 1 ? (
+        {tabIndex === 1 ? (
           <ProcessInstanceLogList
             variant={variant}
             isEventsView={false}
@@ -138,7 +146,7 @@ export default function ProcessInstanceTabs({
             processInstanceId={processInstance.id}
           />
         ) : null}
-        {selectedTabIndex === 2 ? (
+        {tabIndex === 2 ? (
           <ProcessInstanceLogList
             variant={variant}
             isEventsView
@@ -146,10 +154,10 @@ export default function ProcessInstanceTabs({
             processInstanceId={processInstance.id}
           />
         ) : null}
-        {selectedTabIndex === 3 && canViewMsgs ? (
+        {tabIndex === 3 && canViewMsgs ? (
           <MessageInstanceList processInstanceId={processInstance.id} />
         ) : null}
-        {selectedTabIndex === 4 ? (
+        {tabIndex === 4 ? (
           <CompletedTasksSubTabs
             processInstanceId={processInstance.id}
             selectedTaskTabSubTab={selectedTaskTabSubTab}

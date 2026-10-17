@@ -300,6 +300,10 @@ class TestAuthorizationService(BaseTest):
                     "delete",
                 ),
                 (
+                    "/process-instance-diagrams/some-process-group:some-process-model:*",
+                    "read",
+                ),
+                (
                     "/process-instance-events/some-process-group:some-process-model:*",
                     "read",
                 ),
@@ -370,6 +374,10 @@ class TestAuthorizationService(BaseTest):
                     "read",
                 ),
                 (
+                    "/process-instance-diagrams/some-process-group:some-process-model:*",
+                    "read",
+                ),
+                (
                     "/process-instance-events/some-process-group:some-process-model:*",
                     "read",
                 ),
@@ -434,6 +442,10 @@ class TestAuthorizationService(BaseTest):
                 (
                     "/process-instances/some-process-group:some-process-model/*",
                     "delete",
+                ),
+                (
+                    "/process-instance-diagrams/some-process-group:some-process-model/*",
+                    "read",
                 ),
                 (
                     "/process-instance-events/some-process-group:some-process-model/*",
@@ -503,6 +515,10 @@ class TestAuthorizationService(BaseTest):
                 ),
                 (
                     "/process-data-file-download/some-process-group:some-process-model/*",
+                    "read",
+                ),
+                (
+                    "/process-instance-diagrams/some-process-group:some-process-model/*",
                     "read",
                 ),
                 (
@@ -790,6 +806,7 @@ class TestAuthorizationService(BaseTest):
                 ("/frontend-access", "read"),
                 ("/onboarding", "read"),
                 ("/process-groups", "read"),
+                ("/process-instance-diagrams/*", "read"),
                 ("/process-instances/find-by-id/*", "read"),
                 ("/process-instances/for-me", "create"),
                 ("/process-instances/for-me/*", "read"),
@@ -842,6 +859,7 @@ class TestAuthorizationService(BaseTest):
                 ("/messages/*", "read"),
                 ("/process-data-file-download/*", "read"),
                 ("/process-data/*", "read"),
+                ("/process-instance-diagrams/*", "read"),
                 ("/process-instance-events/*", "read"),
                 ("/process-instance-run/*", "create"),
                 ("/process-instance-migrate/*", "create"),

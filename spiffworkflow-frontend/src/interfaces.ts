@@ -208,13 +208,17 @@ export interface ProcessInstanceMetadata {
   value: string;
 }
 
+export interface ProcessInstanceDiagram {
+  bpmn_xml_file_contents: string | null;
+  bpmn_xml_file_contents_retrieval_error: string | null;
+  process_model_with_diagram_identifier: string | null;
+}
+
 export interface ProcessInstance {
   id: number;
   actions?: ApiActions;
   bpmn_version_control_identifier: string;
   bpmn_version_control_type: string;
-  bpmn_xml_file_contents?: string;
-  bpmn_xml_file_contents_retrieval_error?: string;
   created_at_in_seconds: number;
   end_in_seconds: number | null;
   last_milestone_bpmn_name?: string;
@@ -222,7 +226,6 @@ export interface ProcessInstance {
   process_metadata?: ProcessInstanceMetadata[];
   process_model_display_name: string;
   process_model_identifier: string;
-  process_model_with_diagram_identifier?: string;
   start_in_seconds: number | null;
   status: string;
   summary?: string;

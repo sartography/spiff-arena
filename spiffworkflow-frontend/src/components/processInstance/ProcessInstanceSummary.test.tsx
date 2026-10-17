@@ -27,7 +27,6 @@ const baseInstance = {
   ],
   process_model_display_name: 'Test Model',
   process_model_identifier: 'test/model',
-  process_model_with_diagram_identifier: 'test:model',
   start_in_seconds: 100,
   status: 'suspended',
   updated_at_in_seconds: 200,
@@ -37,7 +36,10 @@ const baseInstance = {
 const renderSummary = (processInstance: ProcessInstance) =>
   render(
     <MemoryRouter basename="/workflow" initialEntries={['/workflow/']}>
-      <ProcessInstanceSummary processInstance={processInstance} />
+      <ProcessInstanceSummary
+        processInstance={processInstance}
+        processModelWithDiagramIdentifier="test:model"
+      />
     </MemoryRouter>,
   );
 

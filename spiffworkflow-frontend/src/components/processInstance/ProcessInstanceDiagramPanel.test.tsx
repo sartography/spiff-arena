@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { BasicTask, ProcessInstance } from '../../interfaces';
+import { BasicTask, ProcessInstanceDiagram } from '../../interfaces';
 import ProcessInstanceDiagramPanel from './ProcessInstanceDiagramPanel';
 
 vi.mock('react-i18next', () => {
@@ -34,25 +34,25 @@ const baseProps = {
   onElementClick: vi.fn(),
 };
 
-const testInstance = (overrides: Partial<ProcessInstance> = {}) =>
-  ({
-    id: 42,
-    status: 'waiting',
-    ...overrides,
-  }) as ProcessInstance;
+const testDiagram = (
+  overrides: Partial<ProcessInstanceDiagram> = {},
+): ProcessInstanceDiagram => ({
+  bpmn_xml_file_contents: null,
+  bpmn_xml_file_contents_retrieval_error: null,
+  process_model_with_diagram_identifier: null,
+  ...overrides,
+});
 
 describe('ProcessInstanceDiagramPanel', () => {
-  it('renders nothing without a process instance', () => {
-    const { container } = render(
-      <ProcessInstanceDiagramPanel processInstance={null} {...baseProps} />,
-    );
-    expect(container).toBeEmptyDOMElement();
+  it('shows a loading indicator while the diagram loads', () => {
+    render(<ProcessInstanceDiagramPanel diagram={null} {...baseProps} />);
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
 
-  it('shows a loading indicator while tasks and the diagram load', () => {
+  it('shows a loading indicator while tasks load', () => {
     render(
       <ProcessInstanceDiagramPanel
-        processInstance={testInstance()}
+        diagram={testDiagram()}
         {...baseProps}
         tasks={null}
       />,
@@ -63,7 +63,7 @@ describe('ProcessInstanceDiagramPanel', () => {
   it('shows an error when the diagram cannot be loaded', () => {
     render(
       <ProcessInstanceDiagramPanel
-        processInstance={testInstance()}
+        diagram={testDiagram()}
         {...baseProps}
         diagramLoadError="boom"
       />,
@@ -74,7 +74,7 @@ describe('ProcessInstanceDiagramPanel', () => {
   it('renders the diagram editor with inline xml', () => {
     render(
       <ProcessInstanceDiagramPanel
-        processInstance={testInstance({ bpmn_xml_file_contents: '<xml/>' })}
+        diagram={testDiagram({ bpmn_xml_file_contents: '<xml/>' })}
         {...baseProps}
       />,
     );

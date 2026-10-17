@@ -1086,22 +1086,68 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert show_response.json() is not None
         assert show_response.status_code == 200
-        assert show_response.json()["bpmn_xml_file_contents_retrieval_error"] is None
+        assert show_response.json()["id"] == process_instance_id
+        assert "bpmn_xml_file_contents" not in show_response.json()
+
+        diagram_response = client.get(
+            f"/v1.0/process-instance-diagrams/{modified_process_model_identifier}/{process_instance_id}",
+            headers=headers,
+        )
+        assert diagram_response.status_code == 200
+        assert diagram_response.json()["bpmn_xml_file_contents_retrieval_error"] is None
         file_system_root = FileSystemService.root_path()
         file_path = f"{file_system_root}/{process_model.id}/{process_model_id}.bpmn"
         with open(file_path) as f_open:
             xml_file_contents = f_open.read()
-            assert show_response.json()["bpmn_xml_file_contents"] == xml_file_contents
+            assert diagram_response.json()["bpmn_xml_file_contents"] == xml_file_contents
 
-        wrong_model_response = client.get(
-            f"/v1.0/process-instances/wrong:model/{process_instance_id}",
-            headers=headers,
+        for path_prefix in ["process-instances", "process-instance-diagrams"]:
+            wrong_model_response = client.get(
+                f"/v1.0/{path_prefix}/wrong:model/{process_instance_id}",
+                headers=headers,
+            )
+            assert wrong_model_response.status_code == 404
+
+    def test_process_instance_diagram_show_requires_access_to_instance_and_diagram(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = self.create_group_and_model_with_bpmn(
+            client,
+            with_super_admin_user,
+            process_group_id="simple_script",
+            process_model_id="simple_script",
         )
-        assert wrong_model_response.status_code == 404
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        modified_process_model_identifier = self.modify_process_identifier_for_path_param(process_model.id)
+        diagram_path = f"/v1.0/process-instance-diagrams/{modified_process_model_identifier}/{process_instance.id}"
+        user = self.find_or_create_user("diagram_viewer")
+        self.add_permissions_to_user(user, target_uri="/process-instance-diagrams/*", permission_names=["read"])
 
-    def test_process_instance_show_with_specified_process_identifier(
+        # the diagram permission alone does not expose instances that are not associated with the user
+        response = client.get(diagram_path, headers=self.logged_in_headers(user))
+        assert response.status_code == 400
+
+        process_instance.process_initiator_id = user.id
+        db.session.commit()
+        response = client.get(diagram_path, headers=self.logged_in_headers(user))
+        assert response.status_code == 200
+        assert response.json()["bpmn_xml_file_contents"] is not None
+
+        self.add_permissions_to_user(
+            user,
+            target_uri=f"/process-instance-diagrams/{modified_process_model_identifier}/*",
+            permission_names=["read"],
+            grant_type="deny",
+        )
+        response = client.get(diagram_path, headers=self.logged_in_headers(user))
+        assert response.status_code == 403
+
+    def test_process_instance_diagram_show_with_specified_process_identifier(
         self,
         app: Flask,
         client: TestClient,
@@ -1131,7 +1177,7 @@ class TestProcessApi(BaseTest):
         )
         assert run_response.status_code == 200
         show_response = client.get(
-            f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}?process_identifier={spec_reference.identifier}",
+            f"/v1.0/process-instance-diagrams/{modified_process_model_identifier}/{process_instance_id}?process_identifier={spec_reference.identifier}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert show_response.json() is not None

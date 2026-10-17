@@ -21,6 +21,7 @@ import FormattedDateTime from '../FormattedDateTime';
 
 type ProcessInstanceSummaryProps = {
   processInstance: ProcessInstance;
+  processModelWithDiagramIdentifier?: string | null;
 };
 
 function formatMetadataValue(key: string, value: string) {
@@ -36,6 +37,7 @@ function formatMetadataValue(key: string, value: string) {
 
 export default function ProcessInstanceSummary({
   processInstance,
+  processModelWithDiagramIdentifier,
 }: ProcessInstanceSummaryProps) {
   const { t } = useTranslation();
   let lastUpdatedTimeLabel = t('process_updated');
@@ -84,7 +86,7 @@ export default function ProcessInstanceSummary({
             {processInstance.process_initiator_username}
           </Typography>
         </dl>
-        {processInstance.process_model_with_diagram_identifier ? (
+        {processModelWithDiagramIdentifier ? (
           <dl>
             <Typography component="dt" variant="subtitle2">
               {t('current_diagram')}:{' '}
@@ -93,10 +95,10 @@ export default function ProcessInstanceSummary({
               <Link
                 data-testid="go-to-current-diagram-process-model"
                 to={`/process-models/${modifyProcessIdentifierForPathParam(
-                  processInstance.process_model_with_diagram_identifier,
+                  processModelWithDiagramIdentifier,
                 )}`}
               >
-                {processInstance.process_model_with_diagram_identifier}
+                {processModelWithDiagramIdentifier}
               </Link>
             </Typography>
           </dl>

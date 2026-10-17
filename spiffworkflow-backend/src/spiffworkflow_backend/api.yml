@@ -1525,12 +1525,6 @@ paths:
         description: The unique id of an existing process instance.
         schema:
           type: integer
-      - name: process_identifier
-        in: query
-        required: false
-        description: The identifier of the process to use for the diagram. Useful for displaying the diagram for a call activity.
-        schema:
-          type: string
     get:
       tags:
         - Process Instances
@@ -1579,12 +1573,6 @@ paths:
         description: The unique id of an existing process instance.
         schema:
           type: integer
-      - name: process_identifier
-        in: query
-        required: false
-        description: The identifier of the process to use for the diagram. Useful for displaying the diagram for a call activity.
-        schema:
-          type: string
     get:
       tags:
         - Process Instances
@@ -1609,6 +1597,49 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OkTrue"
+
+  /process-instance-diagrams/{modified_process_model_identifier}/{process_instance_id}:
+    parameters:
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: The unique id of an existing process model
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+      - name: process_identifier
+        in: query
+        required: false
+        description: The identifier of the process to use for the diagram. Useful for displaying the diagram for a call activity.
+        schema:
+          type: string
+    get:
+      tags:
+        - Process Instances
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_diagram_show
+      summary: Show the BPMN diagram of a process instance that I can read or that is associated with me
+      responses:
+        "200":
+          description: The BPMN XML of the diagram
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bpmn_xml_file_contents:
+                    type: string
+                    nullable: true
+                  bpmn_xml_file_contents_retrieval_error:
+                    type: string
+                    nullable: true
+                  process_model_with_diagram_identifier:
+                    type: string
+                    nullable: true
 
   /process-instances/{modified_process_model_identifier}/{process_instance_id}/check-can-migrate:
     parameters:
