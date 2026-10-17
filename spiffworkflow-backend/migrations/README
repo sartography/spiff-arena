@@ -1,1 +1,27 @@
 Single-database configuration for Flask.
+
+## PostgreSQL online migrations
+
+Alembic normally runs all pending revisions inside one PostgreSQL transaction.
+That is convenient for ordinary DDL, but it can accidentally retain a brief
+table lock while a later statement performs a long scan. Large production
+schema changes should separate those phases deliberately:
+
+1. Put `CREATE INDEX CONCURRENTLY` or `DROP INDEX CONCURRENTLY` in an Alembic
+   `autocommit_block()`. PostgreSQL rejects concurrent index operations inside
+   a transaction.
+2. Recreate foreign keys as `NOT VALID` in a short transaction. They enforce
+   new writes immediately without scanning historical rows.
+3. Use a following revision and enter an `autocommit_block()` before
+   `VALIDATE CONSTRAINT`. Entering the block commits and releases the previous
+   revision's metadata locks; validation then permits normal reads and writes.
+4. Give every affected constraint a stable explicit name in both the model and
+   migration.
+5. Give short metadata-only phases a small PostgreSQL `lock_timeout` so a busy
+   table causes a safe migration retry instead of a queued DDL lock blocking
+   application work.
+6. Test upgrades and downgrades from a populated copy of the preceding schema,
+   including constraint dependencies and delete behavior.
+
+Revisions `06c63b723d1e`, `7ae9aa325816`, and `da1b93ec3bc2` are the reference
+implementation for this pattern.
