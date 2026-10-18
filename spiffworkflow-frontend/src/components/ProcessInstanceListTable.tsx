@@ -21,7 +21,6 @@ import {
   getLastMilestoneFromProcessInstance,
   getPageInfoFromSearchParams,
   getProcessStatus,
-  modifyProcessIdentifierForPathParam,
   refreshAtInterval,
 } from '../helpers';
 
@@ -45,6 +44,10 @@ import {
   errorForDisplayFromString,
 } from './ErrorDisplay';
 import SpiffTooltip from './SpiffTooltip';
+import {
+  processInstanceShowPagePath,
+  useProcessInstancePageAccess,
+} from '../hooks/useProcessInstanceShowPageUrl';
 
 type OwnProps = {
   additionalReportFilters?: ReportFilter[];
@@ -114,8 +117,15 @@ export default function ProcessInstanceListTable({
   const [sortOrderBy, setSortOrderBy] = useState<string[]>([]);
   const preferredUsername = UserService.getPreferredUsername();
   const userEmail = UserService.getUserEmail();
-  const processInstanceShowPathPrefix =
-    variant === 'all' ? '/process-instances' : '/process-instances/for-me';
+  const instancePageUrl = (instance: ProcessInstance) =>
+    processInstanceShowPagePath(
+      variant,
+      instance.process_model_identifier,
+      instance.id,
+    );
+  const { canReadPage } = useProcessInstancePageAccess(
+    processInstances.map(instancePageUrl),
+  );
 
   let processInstanceApiSearchPath = '/process-instances/for-me';
   if (variant === 'all') {
@@ -257,13 +267,6 @@ export default function ProcessInstanceListTable({
   ) => {
     return <span>{identifier}</span>;
   };
-  const navigateToProcessInstance = (processInstance: ProcessInstance) => {
-    navigate(
-      `${processInstanceShowPathPrefix}/${modifyProcessIdentifierForPathParam(
-        processInstance.process_model_identifier,
-      )}/${processInstance.id}`,
-    );
-  };
 
   const getWaitingForTableCellComponent = (processInstanceTask: any) => {
     let fullUsernameString = '';
@@ -351,12 +354,14 @@ export default function ProcessInstanceListTable({
       ? displayTypeFormatters[column.display_type]
       : (reportColumnFormatters[columnAccessor] ?? defaultFormatter);
     const value = processInstance[columnAccessor];
+    const url = instancePageUrl(processInstance);
+    const openInstance = canReadPage(url) ? () => navigate(url) : undefined;
 
     if (columnAccessor === 'status') {
       return (
         <TableCell
-          onClick={() => navigateToProcessInstance(processInstance)}
-          onKeyDown={() => navigateToProcessInstance(processInstance)}
+          onClick={openInstance}
+          onKeyDown={openInstance}
           data-testid={`process-instance-status-${value}`}
         >
           {formatter(processInstance, value)}
@@ -367,8 +372,8 @@ export default function ProcessInstanceListTable({
       return (
         <TableCellWithTimeAgoInWords
           timeInSeconds={processInstance.updated_at_in_seconds}
-          onClick={() => navigateToProcessInstance(processInstance)}
-          onKeyDown={() => navigateToProcessInstance(processInstance)}
+          onClick={openInstance}
+          onKeyDown={openInstance}
         />
       );
     }
@@ -376,8 +381,8 @@ export default function ProcessInstanceListTable({
       return (
         <TableCellWithTimeAgoInWords
           timeInSeconds={processInstance.task_updated_at_in_seconds || 0}
-          onClick={() => navigateToProcessInstance(processInstance)}
-          onKeyDown={() => navigateToProcessInstance(processInstance)}
+          onClick={openInstance}
+          onKeyDown={openInstance}
         />
       );
     }
@@ -392,8 +397,8 @@ export default function ProcessInstanceListTable({
     return (
       <TableCell
         key={`td-${columnAccessor}-${processInstance.id}`}
-        onClick={() => navigateToProcessInstance(processInstance)}
-        onKeyDown={() => navigateToProcessInstance(processInstance)}
+        onClick={openInstance}
+        onKeyDown={openInstance}
         data-testid={`process-instance-show-link-${columnAccessor}`}
       >
         {cellContent}
@@ -552,10 +557,8 @@ export default function ProcessInstanceListTable({
             </Button>
           );
         }
-        const piLink = `${processInstanceShowPathPrefix}/${modifyProcessIdentifierForPathParam(
-          processInstance.process_model_identifier,
-        )}/${processInstance.id}`;
-        const piShowButtonElement = (
+        const piLink = instancePageUrl(processInstance);
+        const piShowButtonElement = canReadPage(piLink) ? (
           <IconButton
             component={Link}
             to={piLink}
@@ -566,7 +569,7 @@ export default function ProcessInstanceListTable({
           >
             <OpenInNew />
           </IconButton>
-        );
+        ) : null;
 
         const statusesToExcludeTaskButton = [
           'error',
@@ -585,7 +588,11 @@ export default function ProcessInstanceListTable({
         }
       }
 
-      const rowStyle = { cursor: 'pointer' };
+      const rowStyle = {
+        cursor: canReadPage(instancePageUrl(processInstance))
+          ? 'pointer'
+          : 'default',
+      };
       let variantFromMetadata = 'all';
       if (reportMetadataFromProcessInstances) {
         reportMetadataFromProcessInstances.filter_by.forEach((filter: any) => {

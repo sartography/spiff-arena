@@ -26,6 +26,10 @@ import CustomForm from './CustomForm';
 import InstructionsForEndUser from './InstructionsForEndUser';
 import DateAndTimeService from '../services/DateAndTimeService';
 import FormattedDateTime from './FormattedDateTime';
+import {
+  processInstanceShowPagePath,
+  useProcessInstancePageAccess,
+} from '../hooks/useProcessInstanceShowPageUrl';
 
 type OwnProps = {
   apiPath: string;
@@ -84,6 +88,16 @@ export default function TaskListTable({
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
   const [formSubmissionTask, setFormSubmissionTask] = useState<Task | null>(
     null,
+  );
+
+  const instancePageUrl = (task: ProcessInstanceTask) =>
+    processInstanceShowPagePath(
+      'for-me',
+      task.process_model_identifier,
+      task.process_instance_id,
+    );
+  const { canReadPage } = useProcessInstancePageAccess(
+    showProcessId ? (tasks ?? []).map(instancePageUrl) : [],
   );
 
   const preferredUsername = UserService.getPreferredUsername();
@@ -242,18 +256,20 @@ export default function TaskListTable({
   };
 
   const processIdRowElement = (processInstanceTask: ProcessInstanceTask) => {
-    const modifiedProcessModelIdentifier = modifyProcessIdentifierForPathParam(
-      processInstanceTask.process_model_identifier,
-    );
+    const url = instancePageUrl(processInstanceTask);
     return (
       <TableCell>
-        <Link
-          data-testid="process-instance-show-link-id"
-          to={`/process-instances/for-me/${modifiedProcessModelIdentifier}/${processInstanceTask.process_instance_id}`}
-          title={`View process instance ${processInstanceTask.process_instance_id}`}
-        >
-          {processInstanceTask.process_instance_id}
-        </Link>
+        {canReadPage(url) ? (
+          <Link
+            data-testid="process-instance-show-link-id"
+            to={url}
+            title={`View process instance ${processInstanceTask.process_instance_id}`}
+          >
+            {processInstanceTask.process_instance_id}
+          </Link>
+        ) : (
+          processInstanceTask.process_instance_id
+        )}
       </TableCell>
     );
   };

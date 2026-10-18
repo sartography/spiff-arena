@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Box } from '@mui/material';
 import ProcessInterstitial from '../../components/ProcessInterstitial';
 import ProcessBreadcrumb from '../../components/ProcessBreadcrumb';
+import useProcessInstanceShowPageUrl from '../../hooks/useProcessInstanceShowPageUrl';
 
 type OwnProps = {
   variant: string;
@@ -14,12 +15,8 @@ export default function ProcessInterstitialPage({ variant }: OwnProps) {
   const { t } = useTranslation();
   const params = useParams();
 
-  let processInstanceShowPageUrl = '/';
-  if (variant === 'all') {
-    processInstanceShowPageUrl = `/process-instances/${params.process_model_id}/${params.process_instance_id}`;
-  } else if (variant === 'for-me') {
-    processInstanceShowPageUrl = `/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
-  }
+  const { processInstanceShowPageUrl, permissionsLoaded } =
+    useProcessInstanceShowPageUrl(variant);
 
   return (
     <Box
@@ -41,15 +38,17 @@ export default function ProcessInterstitialPage({ variant }: OwnProps) {
           },
           [
             t('process_with_id', { id: params.process_instance_id }),
-            `${processInstanceShowPageUrl}`,
+            processInstanceShowPageUrl ?? undefined,
           ],
         ]}
       />
-      <ProcessInterstitial
-        processInstanceId={Number(params.process_instance_id)}
-        processInstanceShowPageUrl={processInstanceShowPageUrl}
-        allowRedirect
-      />
+      {permissionsLoaded ? (
+        <ProcessInterstitial
+          processInstanceId={Number(params.process_instance_id)}
+          processInstanceShowPageUrl={processInstanceShowPageUrl ?? '/'}
+          allowRedirect
+        />
+      ) : null}
     </Box>
   );
 }
