@@ -839,7 +839,7 @@ class TestTasksController(BaseTest):
         assert initiator_user.username in owners
         assert finance_user.username in owners
 
-    def test_participant_denied_the_process_instance_page_can_still_start_and_complete_tasks(
+    def test_participant_denied_the_process_instance_show_page_can_still_start_and_complete_tasks(
         self,
         app: Flask,
         client: TestClient,
