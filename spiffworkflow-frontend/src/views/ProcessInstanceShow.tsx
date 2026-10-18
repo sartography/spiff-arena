@@ -30,6 +30,7 @@ import useAPIError from '../hooks/UseApiError';
 import ProcessInstanceCurrentTaskInfo from '../components/ProcessInstanceCurrentTaskInfo';
 import useKeyboardShortcut from '../hooks/useKeyboardShortcut';
 import useProcessInstanceNavigate from '../hooks/useProcessInstanceNavigate';
+import useProcessInstanceShowPageUrl from '../hooks/useProcessInstanceShowPageUrl';
 import ProcessInstanceSummary from '../components/processInstance/ProcessInstanceSummary';
 import ProcessInstanceActionBar from '../components/processInstance/ProcessInstanceActionBar';
 import ProcessDataDialog from '../components/processInstance/ProcessDataDialog';
@@ -83,10 +84,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     variant === 'all'
       ? targetUris.processInstanceTaskListPath
       : targetUris.processInstanceTaskListForMePath;
-  const processInstanceShowPath =
-    variant === 'all'
-      ? targetUris.processInstanceActionPath
-      : targetUris.processInstanceForMePath;
+  const { processInstanceShowPageUrl, permissionsLoaded: pageAccessLoaded } =
+    useProcessInstanceShowPageUrl(variant);
 
   const permissionRequestData: PermissionsToCheck = {
     [`${targetUris.processInstanceMigratePath}`]: ['POST'],
@@ -96,7 +95,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     [targetUris.processInstanceResetPath]: ['POST'],
     [targetUris.messageInstanceListPath]: ['GET'],
     [targetUris.processInstanceActionPath]: ['DELETE', 'GET', 'POST'],
-    [targetUris.processInstanceForMePath]: ['GET'],
     [targetUris.processInstanceLogListPath]: ['GET'],
     [targetUris.processInstanceTaskAssignPath]: ['POST'],
     [targetUris.processInstanceTaskDataPath]: ['GET', 'PUT'],
@@ -269,7 +267,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   }, [processInstance]);
 
   useEffect(() => {
-    if (!permissionsLoaded || !ability.can('GET', processInstanceShowPath)) {
+    if (!permissionsLoaded || !processInstanceShowPageUrl) {
       return undefined;
     }
     getProcessInstance();
@@ -284,8 +282,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return undefined;
   }, [
     permissionsLoaded,
-    ability,
-    processInstanceShowPath,
+    processInstanceShowPageUrl,
     getActionableTaskList,
     getProcessInstance,
     tab,
@@ -617,7 +614,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     updateSearchParams(newTabIndex, 'taskSubTab');
   };
 
-  if (permissionsLoaded && !ability.can('GET', processInstanceShowPath)) {
+  if (pageAccessLoaded && !processInstanceShowPageUrl) {
     return (
       <Box data-testid="process-instance-access-denied">
         <Typography variant="h1" sx={{ mb: 2 }}>
@@ -630,7 +627,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   }
 
-  if (processInstance && permissionsLoaded) {
+  if (processInstance && permissionsLoaded && processInstanceShowPageUrl) {
     const canViewLogs = ability.can(
       'GET',
       targetUris.processInstanceLogListPath,

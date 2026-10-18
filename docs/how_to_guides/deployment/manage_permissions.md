@@ -139,7 +139,7 @@ This permission is typically **restricted to administrators or support engineers
 
 People who start a process instance or complete a task in it can open its process instance page, which includes the diagram, milestones, and events.
 To prevent this for a group, deny `read` on `/process-instances/for-me/` for the process models in question.
-The group can still start instances and complete their tasks. When their work is done they are sent to the home page instead of the process instance page, and opening the page directly shows an access denied message.
+The group can still start instances and complete their tasks. When their work is done they return to their starting location (or the home page) instead of the process instance page. Instance links in task breadcrumbs and task/instance tables are omitted when access is denied; opening the page directly shows an access denied message. List summaries remain visible.
 
 ```yaml
 permissions:
@@ -151,6 +151,8 @@ permissions:
 
 Use `/process-instances/for-me/my-group:*` to cover every model in a process group, or `/process-instances/for-me/*` for all models.
 A denial always wins, so do not deny a group that also contains users who should keep seeing these pages, such as `everybody` when admins are in it.
+
+This configuration targets participant access through `/process-instances/for-me/`. It does not revoke separately granted full instance access through `/process-instances/{model}/{id}`, or access to related APIs such as `/logs`, `/process-instance-events`, `/event-error-details`, and `/process-data-file-download`. Deny those separately if you need broader data restrictions, not just to hide the participant instance page.
 
 ## Site Administration
 

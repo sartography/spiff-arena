@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -31,11 +31,27 @@ import {
 import CustomForm from '../../components/CustomForm';
 import ProcessBreadcrumb from '../../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../../components/InstructionsForEndUser';
+import {
+  processInstanceShowPagePath,
+  useProcessInstancePageAccess,
+} from '../../hooks/useProcessInstanceShowPageUrl';
 
 export default function TaskShow() {
   const [basicTask, setBasicTask] = useState<BasicTask | null>(null);
   const [taskWithTaskData, setTaskWithTaskData] = useState<Task | null>(null);
-  const [hotCrumbs, setHotCrumbs] = useState<HotCrumbItem[]>([]);
+  const instancePageUrl = basicTask
+    ? processInstanceShowPagePath(
+        'for-me',
+        basicTask.process_model_identifier,
+        basicTask.process_instance_id,
+      )
+    : '';
+  const { canReadPage } = useProcessInstancePageAccess(
+    instancePageUrl ? [instancePageUrl] : [],
+  );
+  const instancePageLink = canReadPage(instancePageUrl)
+    ? instancePageUrl
+    : undefined;
 
   const params = useParams();
   const navigate = useNavigate();
@@ -83,26 +99,29 @@ export default function TaskShow() {
           navigateToInterstitial(result);
         }
       }
-      const hotCrumbList: HotCrumbItem[] = [
-        [t('process_groups'), '/process-groups'],
-        {
-          entityToExplode: result.process_model_identifier,
-          entityType: 'process-model-id',
-          linkLastItem: true,
-          checkPermission: true,
-        },
-        [
-          t('process_id_label', { id: result.process_instance_id }),
-          `/process-instances/for-me/${modifyProcessIdentifierForPathParam(
-            result.process_model_identifier,
-          )}/${result.process_instance_id}`,
-        ],
-        [`${t('task')}: ${result.name_for_display || result.id}`],
-      ];
-      setHotCrumbs(hotCrumbList);
     },
-    [navigateToInterstitial, navigate, t],
+    [navigateToInterstitial, navigate],
   );
+
+  const hotCrumbs = useMemo<HotCrumbItem[]>(() => {
+    if (!basicTask) {
+      return [];
+    }
+    return [
+      [t('process_groups'), '/process-groups'],
+      {
+        entityToExplode: basicTask.process_model_identifier,
+        entityType: 'process-model-id',
+        linkLastItem: true,
+        checkPermission: true,
+      },
+      [
+        t('process_id_label', { id: basicTask.process_instance_id }),
+        instancePageLink,
+      ],
+      [`${t('task')}: ${basicTask.name_for_display || basicTask.id}`],
+    ];
+  }, [basicTask, instancePageLink, t]);
 
   useEffect(() => {
     const processTaskWithDataResult = (result: Task) => {

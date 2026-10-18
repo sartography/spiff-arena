@@ -891,3 +891,11 @@ class TestTasksController(BaseTest):
                 headers=headers,
             )
             assert response.status_code == 403
+
+        # The participant has no alternative full-read grant; admins outside the
+        # denied group retain access to the same instance and its diagram.
+        full_path = f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}"
+        assert client.get(full_path, headers=headers).status_code == 403
+        response = client.get(full_path, headers=self.logged_in_headers(with_super_admin_user))
+        assert response.status_code == 200
+        assert response.json()["bpmn_xml_file_contents"]
