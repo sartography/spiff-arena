@@ -135,15 +135,15 @@ This permission is typically **restricted to administrators or support engineers
 | **ELEVATED**         | Users can define secrets, configure authentication, and manage external integrations. |
 | **SUPPORT**          | Users can **pause, modify, migrate, and debug** any process instance.                 |
 
-### Hiding the Process Instance Page from Participants
+### Hiding Process Instance Details from Participants
 
-People who start a process instance or complete a task in it can open its process instance page, which includes the diagram, milestones, and events.
+People who start a process instance or complete a task in it can open its process instance details page, which includes the diagram, milestones, and events.
 To prevent this for a group, deny `read` on `/process-instances/for-me/` for the process models in question.
-The group can still start instances and complete their tasks. When their work is done they return to their starting location (or the home page) instead of the process instance page. Instance links in task breadcrumbs and task/instance tables are omitted when access is denied; opening the page directly shows an access denied message. List summaries remain visible.
+The group can still start instances and complete their tasks. When their work is done they return to their starting location (or the home page) instead of the details page. Instance links in task breadcrumbs and task/instance tables are omitted when access is denied; opening the page directly shows an access denied message. List summaries remain visible.
 
 ```yaml
 permissions:
-  hide-instance-page-from-participants:
+  hide-instance-details-from-participants:
     groups: [participants]
     actions: ["DENY:read"]
     uri: /process-instances/for-me/my-group:my-model/*
@@ -152,7 +152,7 @@ permissions:
 Use `/process-instances/for-me/my-group:*` to cover every model in a process group, or `/process-instances/for-me/*` for all models.
 A denial always wins, so do not deny a group that also contains users who should keep seeing these pages, such as `everybody` when admins are in it.
 
-This configuration targets participant access through `/process-instances/for-me/`. It does not revoke separately granted full instance access through `/process-instances/{model}/{id}`, or access to related APIs such as `/logs`, `/process-instance-events`, `/event-error-details`, and `/process-data-file-download`. Deny those separately if you need broader data restrictions, not just to hide the participant instance page.
+This configuration targets participant access through `/process-instances/for-me/`. It does not revoke separately granted full instance access through `/process-instances/{model}/{id}`, or access to related APIs such as `/logs`, `/process-instance-events`, `/event-error-details`, and `/process-data-file-download`. Deny those separately if you need broader data restrictions, not just to hide the details page.
 
 ## Site Administration
 
