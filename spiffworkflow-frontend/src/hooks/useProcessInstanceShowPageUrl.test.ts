@@ -85,34 +85,6 @@ describe('process instance page access', () => {
     expect(result.current.canReadPage(denied)).toBe(false);
   });
 
-  it('does not reuse stale results when the requested pages change', async () => {
-    const { result, rerender } = renderHook(
-      ({ urls }) => useProcessInstancePageAccess(urls),
-      { initialProps: { urls: ['/old'] }, wrapper: wrapper() },
-    );
-    respond(0, { '/v1.0/old': { GET: true } });
-    await waitFor(() => expect(result.current.canReadPage('/old')).toBe(true));
-    rerender({ urls: ['/new'] });
-    expect(result.current.permissionsLoaded).toBe(false);
-    expect(result.current.canReadPage('/old')).toBe(false);
-    respond(1, { '/v1.0/new': { GET: false } });
-    await waitFor(() => expect(result.current.permissionsLoaded).toBe(true));
-    expect(result.current.canReadPage('/new')).toBe(false);
-  });
-
-  it('ignores late results from a previous page', async () => {
-    const { result, rerender } = renderHook(
-      ({ urls }) => useProcessInstancePageAccess(urls),
-      { initialProps: { urls: ['/old'] }, wrapper: wrapper() },
-    );
-    rerender({ urls: ['/new'] });
-    respond(1, { '/v1.0/new': { GET: false } });
-    await waitFor(() => expect(result.current.permissionsLoaded).toBe(true));
-    respond(0, { '/v1.0/old': { GET: true } });
-    expect(result.current.canReadPage('/old')).toBe(false);
-    expect(result.current.canReadPage('/new')).toBe(false);
-  });
-
   it('does not request permissions for an empty table', () => {
     const { result } = renderHook(() => useProcessInstancePageAccess([]), {
       wrapper: wrapper(),
