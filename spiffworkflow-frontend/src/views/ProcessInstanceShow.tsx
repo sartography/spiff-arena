@@ -83,6 +83,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     variant === 'all'
       ? targetUris.processInstanceTaskListPath
       : targetUris.processInstanceTaskListForMePath;
+  const processInstanceShowPath =
+    variant === 'all'
+      ? targetUris.processInstanceActionPath
+      : targetUris.processInstanceForMePath;
 
   const permissionRequestData: PermissionsToCheck = {
     [`${targetUris.processInstanceMigratePath}`]: ['POST'],
@@ -92,6 +96,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     [targetUris.processInstanceResetPath]: ['POST'],
     [targetUris.messageInstanceListPath]: ['GET'],
     [targetUris.processInstanceActionPath]: ['DELETE', 'GET', 'POST'],
+    [targetUris.processInstanceForMePath]: ['GET'],
     [targetUris.processInstanceLogListPath]: ['GET'],
     [targetUris.processInstanceTaskAssignPath]: ['POST'],
     [targetUris.processInstanceTaskDataPath]: ['GET', 'PUT'],
@@ -264,7 +269,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   }, [processInstance]);
 
   useEffect(() => {
-    if (!permissionsLoaded) {
+    if (!permissionsLoaded || !ability.can('GET', processInstanceShowPath)) {
       return undefined;
     }
     getProcessInstance();
@@ -279,6 +284,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return undefined;
   }, [
     permissionsLoaded,
+    ability,
+    processInstanceShowPath,
     getActionableTaskList,
     getProcessInstance,
     tab,
@@ -609,6 +616,19 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const updateSelectedTaskTabSubTab = (newTabIndex: any) => {
     updateSearchParams(newTabIndex, 'taskSubTab');
   };
+
+  if (permissionsLoaded && !ability.can('GET', processInstanceShowPath)) {
+    return (
+      <Box data-testid="process-instance-access-denied">
+        <Typography variant="h1" sx={{ mb: 2 }}>
+          {t('frontend_access_denied_title')}
+        </Typography>
+        <Typography variant="body1">
+          {t('process_instance_access_denied_message')}
+        </Typography>
+      </Box>
+    );
+  }
 
   if (processInstance && permissionsLoaded) {
     const canViewLogs = ability.can(

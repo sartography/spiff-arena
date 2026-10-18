@@ -135,6 +135,23 @@ This permission is typically **restricted to administrators or support engineers
 | **ELEVATED**         | Users can define secrets, configure authentication, and manage external integrations. |
 | **SUPPORT**          | Users can **pause, modify, migrate, and debug** any process instance.                 |
 
+### Hiding the Process Instance Page from Participants
+
+People who start a process instance or complete a task in it can open its process instance page, which includes the diagram, milestones, and events.
+To prevent this for a group, deny `read` on `/process-instances/for-me/` for the process models in question.
+The group can still start instances and complete their tasks. When their work is done they are sent to the home page instead of the process instance page, and opening the page directly shows an access denied message.
+
+```yaml
+permissions:
+  hide-instance-page-from-participants:
+    groups: [participants]
+    actions: ["DENY:read"]
+    uri: /process-instances/for-me/my-group:my-model/*
+```
+
+Use `/process-instances/for-me/my-group:*` to cover every model in a process group, or `/process-instances/for-me/*` for all models.
+A denial always wins, so do not deny a group that also contains users who should keep seeing these pages, such as `everybody` when admins are in it.
+
 ## Site Administration
 
 Setting up permissions in a YAML file may fit your needs.

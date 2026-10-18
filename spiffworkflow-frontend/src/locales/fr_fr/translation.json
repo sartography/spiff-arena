@@ -211,6 +211,7 @@
   "form_render_error_message": "Le formulaire n'a pas pu être construit avec le schéma, l'interface utilisateur et les données actuels. Veuillez essayer de corriger le problème et réessayer.",
   "form_render_error_title": "Échec du rendu du formulaire",
   "frontend_access_denied_message": "Vous n'avez pas la permission d'accéder à cette application. Veuillez contacter votre administrateur.",
+  "process_instance_access_denied_message": "Vous n'avez pas l'autorisation de consulter cette instance de processus.",
   "frontend_access_denied_title": "Accès refusé",
   "frontend_version_information": "Informations de version du frontend",
   "go": "Aller",

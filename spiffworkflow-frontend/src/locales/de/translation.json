@@ -211,6 +211,7 @@
   "form_render_error_message": "Das Formular konnte mit dem aktuellen Schema, der Benutzeroberfläche und den Daten nicht erstellt werden. Bitte beheben Sie das Problem und versuchen Sie es erneut.",
   "form_render_error_title": "Fehler beim Rendern des Formulars",
   "frontend_access_denied_message": "Sie haben keine Berechtigung, auf diese Anwendung zuzugreifen. Bitte kontaktieren Sie Ihren Administrator.",
+  "process_instance_access_denied_message": "Sie haben keine Berechtigung, diese Prozessinstanz anzuzeigen.",
   "frontend_access_denied_title": "Zugriff verweigert",
   "frontend_version_information": "Frontend-Versionsinformation",
   "go": "Los",

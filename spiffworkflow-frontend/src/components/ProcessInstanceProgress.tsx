@@ -21,7 +21,7 @@ import { getAndRemoveLastProcessInstanceRunLocation } from '../services/LocalSto
 
 type OwnProps = {
   processInstanceId: number;
-  processInstanceShowPageUrl: string;
+  processInstanceShowPageUrl: string | null;
   smallSpinner?: boolean;
 };
 
@@ -73,6 +73,7 @@ export default function ProcessInstanceProgress({
       } else if (result.process_instance) {
         // there is nothing super exciting happening right now. go to process instance.
         if (
+          processInstanceShowPageUrl &&
           result.process_instance.actions &&
           'read' in result.process_instance.actions
         ) {
@@ -140,9 +141,12 @@ export default function ProcessInstanceProgress({
       return (
         <>
           <ErrorDisplayStateless errorObject={currentPageError} />
-          <p>
-            Go to <Link to={processInstanceShowPageUrl}>Process Instance</Link>
-          </p>
+          {processInstanceShowPageUrl ? (
+            <p>
+              Go to{' '}
+              <Link to={processInstanceShowPageUrl}>Process Instance</Link>
+            </p>
+          ) : null}
         </>
       );
     }

@@ -226,6 +226,7 @@
   "frontend_version_information": "Frontend version information",
   "frontend_access_denied_title": "Access Denied",
   "frontend_access_denied_message": "You don't have permission to access this application. Please contact your administrator.",
+  "process_instance_access_denied_message": "You don't have permission to view this process instance.",
   "go": "Go",
   "group_by": "Group by",
   "group_by_none": "No grouping",
