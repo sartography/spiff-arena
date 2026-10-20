@@ -1,20 +1,20 @@
 # Build a purchase approval workflow
 
-Turn a purchase request into a working process: collect the details, review the request, and show the decision.
+Let's build a full workflow.
+Taking a standard purchase approval flow, we will create a working process.
+The runnable process will collect the purchase details, allow for review, and show the review decision.
 
 Allow about 30 minutes.
-No connector, email account, or external service is needed.
 
 ## Before you begin
 
 - Sign in to Spiff Arena and open a playground or process group where you can create and edit models.
   If you need a workspace, follow the {ref}`QuickStart Guide <quickstart-create-process>`.
 - You need permission to start processes and view your process instances.
-- Use sample data, not a real purchase request.
 
 You will play both requester and reviewer.
 Without lanes, Arena assigns human tasks to the person who starts the process.
-This does not enforce independent approval.
+This example will not enforce independent approval, so if you want to approve your pony request, you can go right ahead.
 
 ## What you will build
 
@@ -26,7 +26,7 @@ An exclusive gateway takes one path, and a manual task displays the result befor
 :alt: Start leads to Submit request, then Review request, then an exclusive gateway. The approve path leads to Show approval; the decline path leads to Show decline. Both paths end.
 :width: 720px
 
-This is a simplified SVG diagram. Open it to enlarge.
+This is a simplified SVG diagram.
 ```
 
 A user task collects form data.
@@ -40,7 +40,7 @@ The gateway reads the reviewer's choice.
 3. Submit the form, then open the model's **Files** tab.
 4. Open the generated BPMN file.
 
-You can [download the finished files](#finished-example-files).
+You can [download the finished files](#finished-example-files) for reference.
 
 ## 2. Draw the steps
 
