@@ -1,10 +1,8 @@
 # Build a purchase approval workflow
 
 Turn a purchase request into a working process: collect the details, review the request, and show the decision.
-Then run it twice to check both paths.
 
-**Allow about 30 minutes.**
-You will use two forms, an exclusive gateway, and two short Python assignments.
+Allow about 30 minutes.
 No connector, email account, or external service is needed.
 
 ## Before you begin
@@ -16,7 +14,7 @@ No connector, email account, or external service is needed.
 
 You will play both requester and reviewer.
 Without lanes, Arena assigns human tasks to the person who starts the process.
-This keeps the exercise runnable with one account; it does **not** enforce independent approval.
+This does not enforce independent approval.
 
 ## What you will build
 
@@ -28,12 +26,12 @@ An exclusive gateway takes one path, and a manual task displays the result befor
 :alt: Start leads to Submit request, then Review request, then an exclusive gateway. The approve path leads to Show approval; the decline path leads to Show decline. Both paths end.
 :width: 720px
 
-The finished workflow. This is a simplified SVG diagram, not an editor screenshot. Open it to enlarge.
+This is a simplified SVG diagram. Open it to enlarge.
 ```
 
-A **user task** collects form data.
-A **manual task** can display instructions and wait for someone to click **Continue**.
-The gateway reads the reviewer's choice; it does not make the business decision for them.
+A user task collects form data.
+A manual task can display instructions and wait for someone to click **Continue**.
+The gateway reads the reviewer's choice.
 
 ## 1. Create the model
 
@@ -41,11 +39,8 @@ The gateway reads the reviewer's choice; it does not make the business decision 
 2. Set **Display Name** to `Purchase approval` and **Identifier** to `purchase-approval`.
 3. Submit the form, then open the model's **Files** tab.
 4. Open the generated BPMN file.
-   For this tutorial, use the filename `purchase-approval.bpmn`.
-   If your generated file has another name, you can keep it.
 
-Keep this page open beside Arena.
-You will build the model below, or you can [download the finished files](#finished-example-files) and follow along by inspecting them.
+You can [download the finished files](#finished-example-files).
 
 ## 2. Draw the steps
 
@@ -70,8 +65,6 @@ Connect both manual tasks to the end event.
 Leave pools and lanes out of this first version.
 Select the canvas background and check that the process is **Executable**, then save the diagram.
 
-**Checkpoint:** Your diagram has two human-input steps followed by a fork with two outcomes.
-
 ## 3. Collect the request
 
 Select **Submit request**.
@@ -92,7 +85,7 @@ The titles are the labels people see.
 Leaving **Variable Name** empty keeps these keys at the top level, where the later instructions can read them.
 The editor also creates an example-data file for previews; its contents are not submitted to a running process.
 
-**Checkpoint:** The form preview shows an item, a positive amount, and a reason.
+The form preview shows an item, a positive amount, and a reason.
 The amount is a number, not text containing a currency symbol.
 
 ## 4. Review the request
@@ -120,14 +113,14 @@ Choose approve or decline and explain your decision.
 ```
 
 Arena renders these instructions with the data from **Submit request**.
-The review form adds `decision` and `review_note` without asking the reviewer to re-enter the request.
+The review form adds `decision` and `review_note`.
 Save the diagram.
 
 ```{figure} /images/tutorials/purchase-approval-review.svg
 :alt: Simplified review form. Instructions show a Keyboard request for 85 USD to replace a broken keyboard. Below are a Decision dropdown, a Review note field, and Submit.
 :width: 480px
 
-A sketch of the running task. Request details appear above the reviewer's inputs; the exact controls depend on your Arena version.
+A sketch of the running task.
 ```
 
 ```{note}
@@ -160,7 +153,7 @@ The required form choice supplies one of the two supported values.
 :alt: A sequence flow named approve is selected between the Decision gateway and Show approval. Its Conditions panel contains the expression decision == "approve".
 :width: 560px
 
-Configure the outgoing arrow, not the gateway. The name labels the path; the expression selects it.
+Configure the outgoing arrow, not the gateway.
 ```
 
 ## 6. Show and record the outcome
@@ -222,12 +215,6 @@ Start a **new instance** and repeat with `decline` and `Use the spare keyboard`.
 This time you should see **Purchase declined**.
 Click **Continue** and inspect that instance's diagram too.
 
-| Choice | Screen | `outcome` |
-| --- | --- | --- |
-| `approve` | Purchase approved | `approved` |
-| `decline` | Purchase declined | `declined` |
-
-You have now run two instances of one model.
 Each instance keeps its own request data and decision.
 
 ## If something differs
@@ -242,7 +229,6 @@ Each instance keeps its own request data and decision.
 
 ## Finished example files
 
-Use these as a reference or to try the completed model before building your own.
 Download each file and upload it **one at a time** through the model's **Upload File** control:
 
 - {download}`purchase-approval.bpmn <examples/purchase-approval/purchase-approval.bpmn>`
@@ -253,15 +239,11 @@ Download each file and upload it **one at a time** through the model's **Upload 
 
 Keep the downloaded filenames unchanged and set `purchase-approval.bpmn` as the primary file.
 The two UI schema files contain `{}`, which selects the default form controls.
-It has no external connections and places no orders.
 
 ## Next: give the review to someone else
 
-You have connected form data, human decisions, and branching in one process.
 A real approval workflow also needs a separate reviewer and appropriate permissions.
 
 Continue with [Assigning Tasks to People](/how_to_guides/building_diagrams/assigning_tasks_to_people): put **Review request** in a reviewer lane, and put the request and result tasks in a `process_initiator` lane.
 Configure the reviewer lane's owners and confirm that a second account can complete the review while the requester cannot.
 See [Manage Permissions](/how_to_guides/deployment/manage_permissions) for access configuration.
-
-For other extensions, see [dynamic form content](/how_to_guides/building_diagrams/use_user_tasks_and_forms) and [custom process metadata](/how_to_guides/use_custom_process_metadata).
