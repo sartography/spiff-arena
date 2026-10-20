@@ -4,10 +4,14 @@ import {
   getTemplate,
   getUiOptions,
 } from '@rjsf/utils';
-import { useState } from 'react';
-import { TextField } from '@mui/material';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getCommonAttributes } from '../../helpers';
-import { matchNumberRegex } from '../../../helpers';
+import { FormattedNumberWidget } from '../../formEnhancements';
+import {
+  formatLocalizedNumber,
+  resolveNumberLocale,
+} from '../../localizedNumbers';
 
 // Example jsonSchema - NOTE: the "min" and "max" properties are special names and must be used:
 //    "compensation":{
@@ -27,26 +31,37 @@ import { matchNumberRegex } from '../../../helpers';
 //
 //  Example uiSchema:
 //    "compensation": {
-//      "ui:field": "numeric-range"
+//      "ui:field": "numeric-range",
+//      "ui:options": { "decimals": 2, "currency": "EUR" }
 //    }
+//
+// Both inputs are formatted number widgets, so they follow the user's number
+// notation and accept the same ui:options (locale, decimals, currency,
+// allowNegative).
+
+type RangeEnd = 'min' | 'max';
 
 export default function NumericRangeField({
-  id,
   schema,
   uiSchema,
-  idSchema,
+  fieldPathId,
   disabled,
   readonly,
   onChange,
+  onBlur,
+  onFocus,
   autofocus,
-  label,
+  name,
   rawErrors = [],
+  errorSchema,
   formData,
   registry,
   required,
 }: FieldProps) {
+  // Subscribing re-renders the bounds text when the user switches language.
+  useTranslation();
   const commonAttributes = getCommonAttributes(
-    label,
+    name,
     schema,
     uiSchema,
     rawErrors,
@@ -60,76 +75,53 @@ export default function NumericRangeField({
     registry,
     uiOptions,
   );
-
-  const formatNumberString = (numberString: string): string => {
-    // this function will change the number string to a number with commas
-    // and a decimal point if needed. For example, 1000 will become 1,000
-    // or 1000.5 will become 1,000.5
-
-    // if it does not look like a number then just return it
-    if (!numberString.match(matchNumberRegex)) {
-      return numberString;
-    }
-
-    const numberStringNoCommas = numberString.replace(/,/g, '');
-
-    if (numberStringNoCommas) {
-      const parts = numberStringNoCommas.split('.');
-      const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      return parts.length > 1 ? `${integerPart}.${parts[1]}` : integerPart;
-    }
-    return '';
-  };
-
-  const parseNumberString = (numberString: string) => {
-    if (!numberString.match(matchNumberRegex)) {
-      return numberString;
-    }
-    if (
-      (numberString === '-' && numberString.length === 1) ||
-      numberString.endsWith('.')
-    ) {
-      return null;
-    }
-    return Number(numberString.replace(/,/g, ''));
-  };
+  const rawNumberOptions = uiSchema?.['ui:options'];
+  const numberOptions = useMemo(
+    () => rawNumberOptions ?? {},
+    [rawNumberOptions],
+  );
+  const locale = resolveNumberLocale(numberOptions.locale);
 
   const minNumber = schema.minimum;
   const maxNumber = schema.maximum;
-  const min = formData?.min;
-  const [minValue, setMinValue] = useState(min?.toString() || '');
-  const max = formData?.max;
-  const [maxValue, setMaxValue] = useState(max?.toString() || '');
+  const hasBounds = minNumber !== undefined || maxNumber !== undefined;
+  const formatBound = (bound: number | undefined, unbounded: string) =>
+    bound === undefined ? unbounded : formatLocalizedNumber(bound, locale);
 
-  // the text input eventually breaks when the number gets too big.
-  // we are not sure what the cut off really is but seems unlikely
-  // people will need to go this high.
-
-  const onChangeLocal = (nameToChange: any, event: any) => {
-    event.preventDefault();
-    const numberValue = parseNumberString(event.target.value);
-    // Validate and update the numeric range based on user input
-    if (nameToChange === 'min') {
-      setMinValue(formatNumberString(numberValue?.toString() || ''));
-    }
-    if (nameToChange === 'max') {
-      setMaxValue(formatNumberString(numberValue?.toString() || ''));
-    }
-    if (!disabled && !readonly) {
-      onChange(numberValue, [nameToChange]);
-    }
+  const renderEnd = (end: RangeEnd) => {
+    const endSchema = (schema as any).properties?.[end] ?? {};
+    const helpText =
+      end === 'min'
+        ? `Min: ${formatBound(minNumber, '-∞')}`
+        : `Max: ${formatBound(maxNumber, '∞')}`;
+    return (
+      <FormattedNumberWidget
+        id={`${fieldPathId.$id}_${end}`}
+        name={end}
+        label={end === 'min' ? 'Minimum' : 'Maximum'}
+        // The range bounds apply to both ends, which also lets a non-negative
+        // range reject a minus sign.
+        schema={{
+          type: 'number',
+          ...endSchema,
+          minimum: minNumber,
+          maximum: maxNumber,
+        }}
+        uiSchema={hasBounds ? { 'ui:help': helpText } : {}}
+        options={numberOptions}
+        value={formData?.[end]}
+        onChange={(value: any) => onChange(value, [...fieldPathId.path, end])}
+        onBlur={onBlur}
+        onFocus={onFocus}
+        disabled={disabled}
+        readonly={readonly}
+        autofocus={end === 'min' && autofocus}
+        required={false}
+        rawErrors={errorSchema?.[end]?.__errors ?? []}
+        registry={registry}
+      />
+    );
   };
-
-  let minHelperText = '';
-  let maxHelperText = '';
-  if (minNumber !== undefined || maxNumber !== undefined) {
-    minHelperText = `Min: ${
-      formatNumberString(minNumber?.toString() || '') || '-∞'
-    }`;
-    maxHelperText = `Max: ${
-      formatNumberString(maxNumber?.toString() || '') || '∞'
-    }`;
-  }
 
   return (
     <div className="numeric--range-field-wrapper">
@@ -142,7 +134,7 @@ export default function NumericRangeField({
         {description && (
           <div className="markdown-field-desc-text">
             <DescriptionFieldTemplate
-              id={descriptionId(idSchema)}
+              id={descriptionId(fieldPathId)}
               description={description}
               schema={schema}
               uiSchema={uiSchema}
@@ -152,37 +144,8 @@ export default function NumericRangeField({
         )}
       </div>
       <div className="numeric--range-field-inputs">
-        <TextField
-          id={`${id}-min`}
-          type="text"
-          label={(schema as any).properties?.min?.title || `Minimum`}
-          disabled={disabled}
-          slotProps={{ htmlInput: { readOnly: readonly } }}
-          value={formatNumberString(minValue)}
-          onChange={(event: any) => {
-            onChangeLocal('min', event);
-            setMinValue(event.target.value);
-          }}
-          error={commonAttributes.invalid}
-          helperText={minHelperText}
-          autoFocus={autofocus}
-          fullWidth
-        />
-        <TextField
-          id={`${id}-max`}
-          type="text"
-          label={(schema as any).properties?.max?.title || `Maximum`}
-          disabled={disabled}
-          slotProps={{ htmlInput: { readOnly: readonly } }}
-          value={formatNumberString(maxValue)}
-          onChange={(event: any) => {
-            onChangeLocal('max', event);
-            setMaxValue(event.target.value);
-          }}
-          error={commonAttributes.invalid}
-          helperText={maxHelperText}
-          fullWidth
-        />
+        {renderEnd('min')}
+        {renderEnd('max')}
       </div>
       {commonAttributes.errorMessageForField && (
         <div className="error-message">

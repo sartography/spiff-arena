@@ -25,9 +25,9 @@ import {
   CalculatedField,
   FormattedNumberFormContext,
   FormattedNumberWidget,
+  isInvalidNumberText,
 } from '../rjsf/formEnhancements';
 import ObjectFieldRestrictedGridTemplate from '../rjsf/custom_templates/ObjectFieldRestrictGridTemplate';
-import { matchNumberRegex } from '../helpers';
 import { Notification } from './Notification';
 
 ajvErrors(rjsfValidator.ajv);
@@ -332,61 +332,61 @@ export default function CustomForm({
     jsonSchema: any,
     _uiSchemaPassedIn?: any,
   ) => {
+    const range = formDataToCheck?.[propertyKey] ?? {};
+    const rangeEnd = (end: 'min' | 'max'): number | undefined => {
+      const value = range[end];
+      // Empty draft values have no bounds to check. Invalid text is reported
+      // by the formatted number widget, not by this range validation.
+      if (value === undefined || value === null || isInvalidNumberText(value)) {
+        return undefined;
+      }
+      // Form data is already locale-independent. String schemas store a
+      // dot-decimal string; compare those numerically, never lexicographically.
+      const number =
+        typeof value === 'string' && /^-?\d+(\.\d+)?$/.test(value)
+          ? Number(value)
+          : value;
+      if (typeof number !== 'number' || !Number.isFinite(number)) {
+        errors[propertyKey].addError('must have valid numbers');
+        return undefined;
+      }
+      return number;
+    };
+    const min = rangeEnd('min');
+    const max = rangeEnd('max');
+    const { minimum, maximum } = jsonSchema.properties[propertyKey];
     if (
       jsonSchema.required &&
       jsonSchema.required.includes(propertyKey) &&
-      (formDataToCheck[propertyKey].min === undefined ||
-        formDataToCheck[propertyKey].max === undefined)
+      (range.min == null || range.max == null)
     ) {
       errors[propertyKey].addError('must have valid Minimum and Maximum');
     }
-    if (formDataToCheck[propertyKey].min !== undefined) {
-      if (
-        !formDataToCheck[propertyKey].min.toString().match(matchNumberRegex)
-      ) {
-        errors[propertyKey].addError('must have valid numbers');
-      }
-      if (
-        formDataToCheck[propertyKey].min <
-        jsonSchema.properties[propertyKey].minimum
-      ) {
+    if (min !== undefined) {
+      if (min < minimum) {
         errors[propertyKey].addError(
-          `must have min greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`,
+          `must have min greater than or equal to ${minimum}`,
         );
       }
-      if (
-        formDataToCheck[propertyKey].min >
-        jsonSchema.properties[propertyKey].maximum
-      ) {
+      if (min > maximum) {
         errors[propertyKey].addError(
-          `must have min less than or equal to ${jsonSchema.properties[propertyKey].maximum}`,
+          `must have min less than or equal to ${maximum}`,
         );
       }
     }
-    if (formDataToCheck[propertyKey].max !== undefined) {
-      if (
-        !formDataToCheck[propertyKey].max.toString().match(matchNumberRegex)
-      ) {
-        errors[propertyKey].addError('must have valid numbers');
-      }
-      if (
-        formDataToCheck[propertyKey].max <
-        jsonSchema.properties[propertyKey].minimum
-      ) {
+    if (max !== undefined) {
+      if (max < minimum) {
         errors[propertyKey].addError(
-          `must have max greater than or equal to ${jsonSchema.properties[propertyKey].minimum}`,
+          `must have max greater than or equal to ${minimum}`,
         );
       }
-      if (
-        formDataToCheck[propertyKey].max >
-        jsonSchema.properties[propertyKey].maximum
-      ) {
+      if (max > maximum) {
         errors[propertyKey].addError(
-          `must have max less than or equal to ${jsonSchema.properties[propertyKey].maximum}`,
+          `must have max less than or equal to ${maximum}`,
         );
       }
     }
-    if (formDataToCheck[propertyKey].min > formDataToCheck[propertyKey].max) {
+    if (min !== undefined && max !== undefined && min > max) {
       errors[propertyKey].addError(`must have min less than or equal to max`);
     }
   };

@@ -808,8 +808,7 @@ If `category` is missing, the form displays an error for that field.
 
 #### Numeric Range Field
 
-The `NumericRangeField` component is a new feature in `spiffworkflow-frontend` that allows users to input numeric ranges.
-This component is designed to work with JSON schemas and provides two text inputs for users to enter minimum and maximum values for a given numeric range.
+The Numeric Range Field provides two inputs for the minimum and maximum values of a range.
 
 ##### JSON Schema Example
 
@@ -841,7 +840,7 @@ Below is an example JSON schema that includes the numeric range field:
 ```
 
 The object must use `min` and `max` property names.
-The top-level `minimum` and `maximum` values define the allowed bounds.
+The `minimum` and `maximum` values on the range object define the allowed bounds for both endpoints.
 
 ##### UI Schema Example
 
@@ -853,9 +852,27 @@ The top-level `minimum` and `maximum` values define the allowed bounds.
 }
 ```
 
+Both inputs work like the Formatted Number Widget described above: they use the number notation of the user's language and accept the same `ui:options`, such as `locale`, `decimals`, and `currency`.
+
+```json
+{
+  "compensation": {
+    "ui:field": "numeric-range",
+    "ui:options": {
+      "decimals": 2,
+      "currency": "EUR"
+    }
+  }
+}
+```
+
 ##### Validation
 
 This will automatically validate that the max value cannot be less than the min value.
+Both values must also be within the range object's `minimum` and `maximum`.
+Adding the range field (for example, `compensation`) to its parent's `required` list requires both endpoints; otherwise either endpoint can be left empty.
+Invalid number notation blocks submission and is preserved in saved drafts.
+Valid values are stored under the range object as JSON numbers, or as dot-decimal strings if the endpoint schema uses `type: "string"`.
 
 #### Repeating Sections in Forms
 
