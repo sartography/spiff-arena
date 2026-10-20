@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 490" role="img" aria-labelledby="title desc">
+  <title id="title">Review task sketch</title>
+  <desc id="desc">Request details appear as instructions above the form. The reviewer chooses approve or decline, enters a review note, and submits.</desc>
+  <rect x=".5" y=".5" width="479" height="489" rx="4" fill="#fff" stroke="#e8e8e8"/>
+  <text x="28" y="33" font-family="monospace" font-size="12" letter-spacing="1" fill="#666">TASK SKETCH / REVIEW REQUEST</text>
+  <path d="M0 52H480" stroke="#e8e8e8"/>
+  <text x="28" y="92" font-family="'Source Serif 4', Georgia, serif" font-size="25" fill="#000">Review this purchase</text>
+  <g font-family="system-ui, sans-serif" font-size="16" fill="#262626">
+    <text x="28" y="128">Item: Keyboard</text>
+    <text x="28" y="156">Amount (USD): 85</text>
+    <text x="28" y="184">Reason: Replace a broken keyboard</text>
+  </g>
+  <text x="28" y="220" font-family="monospace" font-size="12" fill="#666">↑ REQUEST DATA, RENDERED AS INSTRUCTIONS</text>
+  <path d="M28 241H452" stroke="#e8e8e8"/>
+  <g font-family="system-ui, sans-serif" font-size="16" fill="#000">
+    <text x="28" y="271" font-weight="600">Decision *</text>
+    <rect x="28" y="283" width="424" height="40" rx="4" fill="#fafafa" stroke="#a3a3a3"/>
+    <text x="40" y="309">approve</text>
+    <path d="m425 300 6 6 6-6" fill="none" stroke="#262626" stroke-width="1.5"/>
+    <text x="28" y="354" font-weight="600">Review note *</text>
+    <rect x="28" y="366" width="424" height="40" rx="4" fill="#fafafa" stroke="#a3a3a3"/>
+    <text x="40" y="392">Within budget</text>
+    <rect x="28" y="429" width="100" height="36" rx="4" fill="#000"/>
+    <text x="78" y="453" text-anchor="middle" fill="#fff">Submit</text>
+  </g>
+</svg>

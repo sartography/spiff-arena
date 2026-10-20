@@ -1,0 +1,46 @@
+{
+  "approve_request": {
+    "tasks": {
+      "submit_request": {
+        "data": [{
+          "item": "Keyboard",
+          "amount": 85,
+          "reason": "Replace a broken keyboard"
+        }]
+      },
+      "review_request": {
+        "data": [{"decision": "approve", "review_note": "Within budget"}]
+      }
+    },
+    "expected_output_json": {
+      "item": "Keyboard",
+      "amount": 85,
+      "reason": "Replace a broken keyboard",
+      "decision": "approve",
+      "review_note": "Within budget",
+      "outcome": "approved"
+    }
+  },
+  "decline_request": {
+    "tasks": {
+      "submit_request": {
+        "data": [{
+          "item": "Keyboard",
+          "amount": 85,
+          "reason": "Replace a broken keyboard"
+        }]
+      },
+      "review_request": {
+        "data": [{"decision": "decline", "review_note": "Use the spare keyboard"}]
+      }
+    },
+    "expected_output_json": {
+      "item": "Keyboard",
+      "amount": 85,
+      "reason": "Replace a broken keyboard",
+      "decision": "decline",
+      "review_note": "Use the spare keyboard",
+      "outcome": "declined"
+    }
+  }
+}

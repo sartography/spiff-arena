@@ -1,0 +1,17 @@
+{
+  "title": "Review decision",
+  "type": "object",
+  "required": ["decision", "review_note"],
+  "properties": {
+    "decision": {
+      "type": "string",
+      "title": "Decision",
+      "enum": ["approve", "decline"]
+    },
+    "review_note": {
+      "type": "string",
+      "title": "Review note",
+      "minLength": 1
+    }
+  }
+}

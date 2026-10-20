@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 370" role="img" aria-labelledby="title desc">
+  <title id="title">Purchase approval workflow</title>
+  <desc id="desc">Two user tasks collect a request and a review. An exclusive gateway routes approve to Show approval or decline to Show decline. Both manual tasks lead to the end.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 9 5 1 9" fill="none" stroke="#262626" stroke-width="1.4"/></marker>
+  </defs>
+  <rect x=".5" y=".5" width="779" height="369" rx="4" fill="#fff" stroke="#e8e8e8"/>
+  <text x="24" y="30" font-family="monospace" font-size="12" letter-spacing="1.2" fill="#666">ONE REQUEST · ONE DECISION · ONE OUTCOME</text>
+  <g fill="none" stroke="#262626" stroke-width="1.5" marker-end="url(#arrow)">
+    <path d="M68 180H110"/><path d="M220 180H270"/><path d="M380 180H420"/>
+    <path d="M445 155V100H530"/><path d="M445 205V260H530"/>
+    <path d="M650 100H718V162"/><path d="M650 260H718V198"/>
+  </g>
+  <g fill="#fff" stroke="#262626" stroke-width="1.5">
+    <circle cx="50" cy="180" r="18"/>
+    <rect x="110" y="140" width="110" height="80" rx="8"/>
+    <rect x="270" y="140" width="110" height="80" rx="8"/>
+    <path d="M445 155 470 180 445 205 420 180Z"/>
+    <rect x="530" y="60" width="120" height="80" rx="8"/>
+    <rect x="530" y="220" width="120" height="80" rx="8"/>
+    <circle cx="718" cy="180" r="18" stroke-width="3.5"/>
+    <path d="m438 173 14 14m0-14-14 14"/>
+  </g>
+  <g font-family="monospace" font-size="11" fill="#666" text-anchor="middle">
+    <text x="165" y="160">USER TASK</text><text x="325" y="160">USER TASK</text>
+    <text x="590" y="80">MANUAL TASK</text><text x="590" y="240">MANUAL TASK</text>
+  </g>
+  <g font-family="system-ui, sans-serif" font-size="16" fill="#000" text-anchor="middle">
+    <text x="50" y="222">Start</text>
+    <text x="165" y="184">Submit<tspan x="165" dy="20">request</tspan></text>
+    <text x="325" y="184">Review<tspan x="325" dy="20">request</tspan></text>
+    <text x="408" y="238" text-anchor="end">Decision?</text>
+    <text x="590" y="104">Show<tspan x="590" dy="20">approval</tspan></text>
+    <text x="590" y="264">Show<tspan x="590" dy="20">decline</tspan></text>
+    <text x="755" y="186">End</text>
+    <text x="486" y="89" font-size="14">approve</text>
+    <text x="486" y="284" font-size="14">decline</text>
+  </g>
+  <path d="M24 324H756" stroke="#e8e8e8"/>
+  <text x="24" y="349" font-family="system-ui, sans-serif" font-size="14" fill="#3f3f3f">For this exercise, you complete every human task using one account.</text>
+</svg>

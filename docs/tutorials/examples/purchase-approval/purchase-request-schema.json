@@ -1,0 +1,22 @@
+{
+  "title": "Purchase request",
+  "type": "object",
+  "required": ["item", "amount", "reason"],
+  "properties": {
+    "item": {
+      "type": "string",
+      "title": "Item",
+      "minLength": 1
+    },
+    "amount": {
+      "type": "number",
+      "title": "Amount (USD)",
+      "exclusiveMinimum": 0
+    },
+    "reason": {
+      "type": "string",
+      "title": "Reason",
+      "minLength": 1
+    }
+  }
+}
