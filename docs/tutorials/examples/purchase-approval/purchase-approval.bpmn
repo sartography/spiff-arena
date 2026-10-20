@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="PurchaseApprovalDefinitions" targetNamespace="https://spiff.works/tutorials/purchase-approval">
+  <bpmn:process id="PurchaseApproval" name="Purchase approval" isExecutable="true">
+    <bpmn:startEvent id="start">
+      <bpmn:outgoing>start_to_request</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="submit_request" name="Submit request">
+      <bpmn:extensionElements>
+        <spiffworkflow:properties>
+          <spiffworkflow:property name="formJsonSchemaFilename" value="purchase-request-schema.json" />
+          <spiffworkflow:property name="formUiSchemaFilename" value="purchase-request-uischema.json" />
+        </spiffworkflow:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>start_to_request</bpmn:incoming>
+      <bpmn:outgoing>request_to_review</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="review_request" name="Review request">
+      <bpmn:extensionElements>
+        <spiffworkflow:properties>
+          <spiffworkflow:property name="formJsonSchemaFilename" value="purchase-review-schema.json" />
+          <spiffworkflow:property name="formUiSchemaFilename" value="purchase-review-uischema.json" />
+        </spiffworkflow:properties>
+        <spiffworkflow:instructionsForEndUser>## Review this purchase
+
+- **Item:** {{ item }}
+- **Amount (USD):** {{ amount }}
+- **Reason:** {{ reason }}
+
+Choose approve or decline and explain your decision.</spiffworkflow:instructionsForEndUser>
+      </bpmn:extensionElements>
+      <bpmn:incoming>request_to_review</bpmn:incoming>
+      <bpmn:outgoing>review_to_decision</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="decision_gateway" name="Decision?">
+      <bpmn:incoming>review_to_decision</bpmn:incoming>
+      <bpmn:outgoing>approve_flow</bpmn:outgoing>
+      <bpmn:outgoing>decline_flow</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:manualTask id="show_approval" name="Show approval">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>## Purchase approved
+
+Your request for {{ item }} (USD {{ amount }}) was approved.
+
+Reviewer note: {{ review_note }}
+
+Click Continue to finish this practice request. No order will be placed.</spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:postScript>outcome = "approved"</spiffworkflow:postScript>
+      </bpmn:extensionElements>
+      <bpmn:incoming>approve_flow</bpmn:incoming>
+      <bpmn:outgoing>approval_to_end</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:manualTask id="show_decline" name="Show decline">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>## Purchase declined
+
+Your request for {{ item }} (USD {{ amount }}) was declined.
+
+Reviewer note: {{ review_note }}
+
+Click Continue to finish this practice request.</spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:postScript>outcome = "declined"</spiffworkflow:postScript>
+      </bpmn:extensionElements>
+      <bpmn:incoming>decline_flow</bpmn:incoming>
+      <bpmn:outgoing>decline_to_end</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:endEvent id="end">
+      <bpmn:incoming>approval_to_end</bpmn:incoming>
+      <bpmn:incoming>decline_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="start_to_request" sourceRef="start" targetRef="submit_request" />
+    <bpmn:sequenceFlow id="request_to_review" sourceRef="submit_request" targetRef="review_request" />
+    <bpmn:sequenceFlow id="review_to_decision" sourceRef="review_request" targetRef="decision_gateway" />
+    <bpmn:sequenceFlow id="approve_flow" name="approve" sourceRef="decision_gateway" targetRef="show_approval">
+      <bpmn:conditionExpression>decision == "approve"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="decline_flow" name="decline" sourceRef="decision_gateway" targetRef="show_decline">
+      <bpmn:conditionExpression>decision == "decline"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="approval_to_end" sourceRef="show_approval" targetRef="end" />
+    <bpmn:sequenceFlow id="decline_to_end" sourceRef="show_decline" targetRef="end" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="PurchaseApprovalDiagram">
+    <bpmndi:BPMNPlane id="PurchaseApprovalPlane" bpmnElement="PurchaseApproval">
+      <bpmndi:BPMNShape id="start_di" bpmnElement="start">
+        <dc:Bounds x="32" y="162" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="submit_request_di" bpmnElement="submit_request">
+        <dc:Bounds x="110" y="140" width="110" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="review_request_di" bpmnElement="review_request">
+        <dc:Bounds x="270" y="140" width="110" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="decision_gateway_di" bpmnElement="decision_gateway" isMarkerVisible="true">
+        <dc:Bounds x="420" y="155" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="345" y="225" width="70" height="20" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="show_approval_di" bpmnElement="show_approval">
+        <dc:Bounds x="530" y="60" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="show_decline_di" bpmnElement="show_decline">
+        <dc:Bounds x="530" y="220" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_di" bpmnElement="end">
+        <dc:Bounds x="700" y="162" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="start_to_request_di" bpmnElement="start_to_request">
+        <di:waypoint x="68" y="180" /><di:waypoint x="110" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="request_to_review_di" bpmnElement="request_to_review">
+        <di:waypoint x="220" y="180" /><di:waypoint x="270" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="review_to_decision_di" bpmnElement="review_to_decision">
+        <di:waypoint x="380" y="180" /><di:waypoint x="420" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="approve_flow_di" bpmnElement="approve_flow">
+        <di:waypoint x="445" y="155" /><di:waypoint x="445" y="100" /><di:waypoint x="530" y="100" />
+        <bpmndi:BPMNLabel><dc:Bounds x="456" y="77" width="60" height="20" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="decline_flow_di" bpmnElement="decline_flow">
+        <di:waypoint x="445" y="205" /><di:waypoint x="445" y="260" /><di:waypoint x="530" y="260" />
+        <bpmndi:BPMNLabel><dc:Bounds x="456" y="270" width="60" height="20" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="approval_to_end_di" bpmnElement="approval_to_end">
+        <di:waypoint x="650" y="100" /><di:waypoint x="718" y="100" /><di:waypoint x="718" y="162" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="decline_to_end_di" bpmnElement="decline_to_end">
+        <di:waypoint x="650" y="260" /><di:waypoint x="718" y="260" /><di:waypoint x="718" y="198" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
