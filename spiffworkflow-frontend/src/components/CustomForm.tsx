@@ -74,6 +74,29 @@ const withProps = <P extends object>(
     return <Component {...props} {...customProps} />;
   };
 
+// String endpoints can retain more precision than a JavaScript number. Compare
+// decimal coefficients at a common scale rather than rounding them via Number().
+// Numeric task data can use exponent notation (for example, 1e-7).
+const compareRangeValues = (left: number | string, right: number | string) => {
+  const decimalParts = (value: number | string) => {
+    const [coefficient, exponent = '0'] = String(value).split('e');
+    const [integer, fraction = ''] = coefficient.split('.');
+    return {
+      digits: BigInt(integer + fraction),
+      scale: fraction.length - Number(exponent),
+    };
+  };
+  const a = decimalParts(left);
+  const b = decimalParts(right);
+  const scale = Math.max(a.scale, b.scale);
+  const aDigits = a.digits * BigInt(10) ** BigInt(scale - a.scale);
+  const bDigits = b.digits * BigInt(10) ** BigInt(scale - b.scale);
+  if (aDigits === bDigits) {
+    return 0;
+  }
+  return aDigits < bDigits ? -1 : 1;
+};
+
 export default function CustomForm({
   id,
   key,
@@ -333,24 +356,23 @@ export default function CustomForm({
     _uiSchemaPassedIn?: any,
   ) => {
     const range = formDataToCheck?.[propertyKey] ?? {};
-    const rangeEnd = (end: 'min' | 'max'): number | undefined => {
+    const rangeEnd = (end: 'min' | 'max'): number | string | undefined => {
       const value = range[end];
       // Empty draft values have no bounds to check. Invalid text is reported
       // by the formatted number widget, not by this range validation.
       if (value === undefined || value === null || isInvalidNumberText(value)) {
         return undefined;
       }
-      // Form data is already locale-independent. String schemas store a
-      // dot-decimal string; compare those numerically, never lexicographically.
-      const number =
-        typeof value === 'string' && /^-?\d+(\.\d+)?$/.test(value)
-          ? Number(value)
-          : value;
-      if (typeof number !== 'number' || !Number.isFinite(number)) {
-        errors[propertyKey].addError('must have valid numbers');
-        return undefined;
+      // Form data is already locale-independent. Keep canonical strings intact
+      // so range comparisons do not lose their decimal precision.
+      if (
+        (typeof value === 'string' && /^-?\d+(\.\d+)?$/.test(value)) ||
+        (typeof value === 'number' && Number.isFinite(value))
+      ) {
+        return value;
       }
-      return number;
+      errors[propertyKey].addError('must have valid numbers');
+      return undefined;
     };
     const min = rangeEnd('min');
     const max = rangeEnd('max');
@@ -363,30 +385,34 @@ export default function CustomForm({
       errors[propertyKey].addError('must have valid Minimum and Maximum');
     }
     if (min !== undefined) {
-      if (min < minimum) {
+      if (minimum !== undefined && compareRangeValues(min, minimum) < 0) {
         errors[propertyKey].addError(
           `must have min greater than or equal to ${minimum}`,
         );
       }
-      if (min > maximum) {
+      if (maximum !== undefined && compareRangeValues(min, maximum) > 0) {
         errors[propertyKey].addError(
           `must have min less than or equal to ${maximum}`,
         );
       }
     }
     if (max !== undefined) {
-      if (max < minimum) {
+      if (minimum !== undefined && compareRangeValues(max, minimum) < 0) {
         errors[propertyKey].addError(
           `must have max greater than or equal to ${minimum}`,
         );
       }
-      if (max > maximum) {
+      if (maximum !== undefined && compareRangeValues(max, maximum) > 0) {
         errors[propertyKey].addError(
           `must have max less than or equal to ${maximum}`,
         );
       }
     }
-    if (min !== undefined && max !== undefined && min > max) {
+    if (
+      min !== undefined &&
+      max !== undefined &&
+      compareRangeValues(min, max) > 0
+    ) {
       errors[propertyKey].addError(`must have min less than or equal to max`);
     }
   };

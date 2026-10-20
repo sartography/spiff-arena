@@ -342,6 +342,8 @@ The symbol is not part of the submitted value.
 
 If a value doesn't match the field's notation, the field shows an example of the expected format and the form can't be submitted until it is corrected.
 Saved drafts keep the text as typed, so the user can correct it later.
+Notation that is valid in more than one locale is interpreted in the field's locale: `1.234` means `1234` in German but `1.234` in English.
+Pin `locale` when the form's instructions specify a particular notation.
 
 #### Calculated Fields
 
@@ -870,9 +872,10 @@ Both inputs work like the Formatted Number Widget described above: they use the 
 
 This will automatically validate that the max value cannot be less than the min value.
 Both values must also be within the range object's `minimum` and `maximum`.
-Adding the range field (for example, `compensation`) to its parent's `required` list requires both endpoints; otherwise either endpoint can be left empty.
+Adding the range field (for example, `compensation`) to its parent's `required` list requires both endpoints; otherwise either endpoint can be left empty unless its schema requires it.
 Invalid number notation blocks submission and is preserved in saved drafts.
 Valid values are stored under the range object as JSON numbers, or as dot-decimal strings if the endpoint schema uses `type: "string"`.
+String endpoints are compared numerically without losing decimal precision, including when checking the range object's bounds.
 
 #### Repeating Sections in Forms
 

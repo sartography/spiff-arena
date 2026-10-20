@@ -159,6 +159,34 @@ describe('NumericRangeField', () => {
     });
   });
 
+  it('stores both invalid endpoints when a language switch makes them valid', async () => {
+    await i18next.changeLanguage('de');
+    const { minInput, maxInput, onSubmit } = renderRangeForm({
+      formData: {
+        compensation: {
+          min: { invalidNumberText: '100.5' },
+          max: { invalidNumberText: '200.5' },
+        },
+      },
+    });
+    submit();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await i18next.changeLanguage('en-US');
+    });
+    expect(minInput).toHaveValue('100.5');
+    expect(maxInput).toHaveValue('200.5');
+    expect(minInput).toHaveAttribute('aria-invalid', 'false');
+    expect(maxInput).toHaveAttribute('aria-invalid', 'false');
+    submit();
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit.mock.calls[0][0].formData.compensation).toEqual({
+      min: 100.5,
+      max: 200.5,
+    });
+  });
+
   it.each(['number', 'string'])(
     'keeps invalid %s drafts through autosave and reload',
     (type) => {
@@ -282,6 +310,36 @@ describe('NumericRangeField', () => {
     expect(onSubmit.mock.calls[0][0].formData.compensation.min).toBe(1500);
   });
 
+  it.each(['string', 'integer'])(
+    'resolves referenced %s endpoint schemas',
+    (type) => {
+      const endpoint = { $ref: '#/properties/compensation/$defs/endpoint' };
+      const { minInput, maxInput, onSubmit } = renderRangeForm({
+        options: { locale: 'de-DE' },
+        rangeSchema: {
+          $defs: { endpoint: { type } },
+          properties: {
+            min: endpoint,
+            max: { ...endpoint, title: 'Highest' },
+          },
+        },
+      });
+      if (type === 'integer') {
+        expect(minInput).toHaveAttribute('inputmode', 'numeric');
+        enter(minInput, '1,5');
+        expect(minInput).toHaveAttribute('aria-invalid', 'true');
+      }
+      enter(minInput, '1.000');
+      enter(maxInput, '2.000');
+      submit();
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+      expect(onSubmit.mock.calls[0][0].formData.compensation).toEqual({
+        min: type === 'string' ? '1000' : 1000,
+        max: type === 'string' ? '2000' : 2000,
+      });
+    },
+  );
+
   it('validates null draft endpoints without crashing', () => {
     const { onSubmit } = renderRangeForm({
       formData: { compensation: { min: null, max: null } },
@@ -341,6 +399,79 @@ describe('NumericRangeField', () => {
   });
 
   it.each([
+    ['9007199254740993', '9007199254740992'],
+    ['0.10000000000000001', '0.1'],
+  ])(
+    'rejects reversed string ranges without losing precision (%s, %s)',
+    (min, max) => {
+      const { onSubmit } = renderRangeForm({
+        rangeSchema: {
+          maximum: undefined,
+          properties: {
+            min: { type: 'string' },
+            max: { title: 'Highest', type: 'string' },
+          },
+        },
+        formData: { compensation: { min, max } },
+      });
+      submit();
+      expect(onSubmit).not.toHaveBeenCalled();
+      expect(
+        screen.getAllByText(/must have min less than or equal to max/).length,
+      ).toBeGreaterThan(0);
+    },
+  );
+
+  it.each([
+    ['-10.01', '-10', true],
+    ['-10', '-10.01', false],
+    ['0.1000', '0.1', true],
+    ['-0', '0', true],
+    ['1' + '0'.repeat(309), '2' + '0'.repeat(309), true],
+  ])('compares canonical strings %s–%s (valid: %s)', (min, max, valid) => {
+    const { onSubmit } = renderRangeForm({
+      rangeSchema: {
+        minimum: undefined,
+        maximum: undefined,
+        properties: {
+          min: { type: 'string' },
+          max: { title: 'Highest', type: 'string' },
+        },
+      },
+      formData: { compensation: { min, max } },
+    });
+    submit();
+    expect(onSubmit).toHaveBeenCalledTimes(valid ? 1 : 0);
+  });
+
+  it.each([
+    ['min', '0.099999999999999999', { minimum: 0.1 }],
+    ['max', '0.100000000000000001', { maximum: 0.1 }],
+    ['min', '0.000000099999999999999999', { minimum: 1e-7 }],
+    ['max', '1000000000000000000001', { maximum: 1e21 }],
+  ])(
+    'checks precise string %s = %s against numeric bounds',
+    (end, value, bounds) => {
+      const { onSubmit } = renderRangeForm({
+        rangeSchema: {
+          ...bounds,
+          properties: {
+            min: { type: 'string' },
+            max: { title: 'Highest', type: 'string' },
+          },
+        },
+        formData: { compensation: { [end]: value } },
+      });
+      submit();
+      expect(onSubmit).not.toHaveBeenCalled();
+      expect(
+        screen.getAllByText(new RegExp(`must have ${end} (greater|less)`))
+          .length,
+      ).toBeGreaterThan(0);
+    },
+  );
+
+  it.each([
     ['min', '1'],
     ['min', '21'],
     ['max', '1'],
@@ -354,6 +485,18 @@ describe('NumericRangeField', () => {
     expect(onSubmit).not.toHaveBeenCalled();
     expect(
       screen.getAllByText(new RegExp(`must have ${end} (greater|less)`)).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it('shows range errors without a schema title', () => {
+    const { onSubmit } = renderRangeForm({
+      rangeSchema: { title: undefined },
+      formData: { compensation: { min: 10, max: 1 } },
+    });
+    submit();
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(
+      screen.getAllByText(/must have min less than or equal to max/).length,
     ).toBeGreaterThan(0);
   });
 
