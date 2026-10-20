@@ -17,6 +17,7 @@ from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.services.connector_proxy_response_validator import warn_on_invalid_connector_proxy_payload
 from spiffworkflow_backend.services.custom_service_task import CustomServiceTask
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
@@ -75,6 +76,11 @@ class ServiceTaskService:
                     )
                 elif spiff_task.state == TaskState.STARTED and isinstance(spiff_task.task_spec, ServiceTask):
                     callback_content = content or {}
+                    warn_on_invalid_connector_proxy_payload(
+                        callback_content,
+                        source="callback",
+                        operator_identifier=spiff_task.task_spec.operation_name,
+                    )
                     try:
                         cls._check_for_callback_errors(spiff_task, callback_content)
                     except WorkflowTaskException as exception:

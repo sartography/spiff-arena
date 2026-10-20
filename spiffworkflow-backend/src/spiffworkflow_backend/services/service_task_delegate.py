@@ -24,6 +24,7 @@ from spiffworkflow_backend.config import CONNECTOR_PROXY_COMMAND_TIMEOUT
 from spiffworkflow_backend.config import HTTP_REQUEST_TIMEOUT_SECONDS
 from spiffworkflow_backend.connectors import http_connector
 from spiffworkflow_backend.helpers.public_api_urls import build_public_api_v1_url
+from spiffworkflow_backend.services.connector_proxy_response_validator import warn_on_invalid_connector_proxy_payload
 from spiffworkflow_backend.services.connector_proxy_service import connector_proxy_request_proxies
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
@@ -435,6 +436,12 @@ class ServiceTaskDelegate:
                                 "message": response_text,
                             }
                         }
+
+                warn_on_invalid_connector_proxy_payload(
+                    parsed_response,
+                    source="execution",
+                    operator_identifier=operator_identifier,
+                )
 
                 if "spiff__logs" in parsed_response:
                     for log in parsed_response["spiff__logs"]:

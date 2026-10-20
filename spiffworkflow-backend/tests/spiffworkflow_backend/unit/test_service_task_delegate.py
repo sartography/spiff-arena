@@ -12,9 +12,11 @@ from spiffworkflow_connector_command.command_interface import ConnectorProxyResp
 from sqlalchemy import and_
 
 from spiffworkflow_backend.connectors import http_connector
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.connector_proxy_response_validator import logger as connector_proxy_validator_logger
 from spiffworkflow_backend.services.connector_proxy_service import connector_proxy_request_proxies
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -151,7 +153,11 @@ class TestServiceTaskDelegate(BaseTest):
                 ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task, process_instance.id)
             self._assert_error_with_code(str(connector_proxy_error.value), "OurTestError", "We errored", 500)
 
-    def test_call_connector_can_succeed(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
+    def test_call_connector_warns_on_malformed_version_2_and_still_succeeds(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
         process_model = load_test_spec(
             process_model_id="test_group/model_with_lanes",
             bpmn_file_name="lanes.bpmn",
@@ -172,16 +178,21 @@ class TestServiceTaskDelegate(BaseTest):
             "command_response_version": 2,
         }
 
-        with patch("requests.post") as mock_post:
+        with (
+            patch("requests.post") as mock_post,
+            patch.object(connector_proxy_validator_logger, "warning") as mock_validator_warning,
+        ):
             mock_post.return_value.status_code = 200
             mock_post.return_value.ok = True
             mock_post.return_value.text = json.dumps(connector_response)
             result = ServiceTaskDelegate.call_connector("my_operation", {}, spiff_task, process_instance.id)
-            assert result is not None
-            assert json.loads(result) == {
-                **connector_response["command_response"],
-                **{"operator_identifier": "my_operation"},
-            }
+
+        assert result is not None
+        assert json.loads(result) == {
+            **connector_response["command_response"],
+            **{"operator_identifier": "my_operation"},
+        }
+        mock_validator_warning.assert_called_once()
 
     def test_call_connector_does_not_log_http_by_default(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         process_model = load_test_spec(
@@ -623,6 +634,45 @@ class TestServiceTaskDelegate(BaseTest):
 
         process_instance = ProcessInstanceService().get_process_instance(process_instance.id)
         assert process_instance.status == "complete"
+
+    def test_malformed_version_2_callback_warns_and_keeps_existing_error(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/service_task",
+            process_model_source_directory="service_task",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model,
+            user=with_super_admin_user,
+        )
+        runtime = ProcessInstanceRuntime(process_instance)
+
+        with patch("requests.post") as mock_post:
+            mock_post.return_value.status_code = 202
+            mock_post.return_value.ok = True
+            mock_post.return_value.text = json.dumps({})
+            runtime.do_engine_steps(save=True)
+
+        task_guid = mock_post.call_args.kwargs["json"]["spiff__task_id"]
+        with (
+            patch.object(connector_proxy_validator_logger, "warning") as mock_validator_warning,
+            pytest.raises(ApiError, match="command_response.body"),
+        ):
+            ServiceTaskService.complete_waiting_callback(
+                process_instance_id=process_instance.id,
+                task_guid=task_guid,
+                content={
+                    "command_response": {},
+                    "command_response_version": 2,
+                },
+                user=with_super_admin_user,
+            )
+
+        mock_validator_warning.assert_called_once()
 
     def _assert_error_with_code(self, response_text: str, error_code: str, contains_message: str, status_code: int) -> None:
         assert f"'{error_code}'" in response_text
