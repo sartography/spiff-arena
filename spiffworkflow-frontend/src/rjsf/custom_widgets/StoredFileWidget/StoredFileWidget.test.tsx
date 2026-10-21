@@ -94,7 +94,8 @@ describe('stored file references', () => {
   it.each([{ readonly: true }, { disabled: true }])(
     'does not offer removal for a read-only/disabled stored file: %j',
     (options) => {
-      renderForm(options);
+      const { container } = renderForm(options);
+      expect(container.querySelector('input[type=file]')).toBeNull();
       expect(
         screen.queryByRole('button', { name: 'Remove' }),
       ).not.toBeInTheDocument();

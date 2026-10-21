@@ -60,6 +60,7 @@ Workflow Steps:
 - Users click "Choose File" and select a document to upload.
 - After selection, the file name, type, and size are shown.
 - On clicking "Submit", Arena stores the file and passes its internal reference to the next task.
+- In read-only or disabled views, saved files appear as a list with download links (when process instance context is available), without upload or removal controls.
 
 **File Upload Step**  
 The interface displays the uploaded filename, type, and size before submission.

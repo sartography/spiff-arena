@@ -66,12 +66,14 @@ export default function StoredFileWidget(props: WidgetProps) {
 
   return (
     <>
-      <DefaultFileWidget
-        {...props}
-        value={multiple ? rawValues : undefined}
-        required={false}
-        onChange={handleChange}
-      />
+      {!disabled && !readonly && (
+        <DefaultFileWidget
+          {...props}
+          value={multiple ? rawValues : undefined}
+          required={false}
+          onChange={handleChange}
+        />
+      )}
       <ul className="file-info">
         {stored.map((file) => {
           const href = context
