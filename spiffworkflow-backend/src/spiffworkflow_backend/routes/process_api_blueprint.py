@@ -278,7 +278,8 @@ def process_data_file_download(
     filename = file_data.filename
     file_contents = file_data.get_contents()
 
-    return send_file(
+    # types-flask stubs predate download_name; Flask 3 supports it.
+    return send_file(  # type: ignore[call-arg]
         BytesIO(file_contents),
         mimetype=mimetype,
         as_attachment=True,

@@ -15,22 +15,20 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial_stream
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
-FIXTURES = Path(__file__).parents[2] / "files" / "uploads"
+# The backend treats uploads as opaque bytes, so real file formats add nothing.
+# Every byte value catches base64/encoding corruption, including NUL and non-UTF-8.
+CONTENTS = bytes(range(256)) * 16
 
 
 class TestFileUploadReview(BaseTest):
     @pytest.mark.parametrize("filesystem", [False, True])
     @pytest.mark.parametrize(
-        ("fixture", "mimetype", "filename"),
+        ("mimetype", "filename"),
         [
-            ("image.png", "image/png", "image.png"),
-            ("sheet.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "sheet.xlsx"),
-            ("document.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "document.docx"),
-            (
-                "document.docx",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                "Provisions [draft]; coût=2.docx",
-            ),
+            ("image/png", "image.png"),
+            ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "sheet.xlsx"),
+            ("application/vnd.openxmlformats-officedocument.wordprocessingml.document", "document.docx"),
+            ("application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Provisions [draft]; coût=2.docx"),
         ],
     )
     def test_upload_survives_followup_reviews(
@@ -41,11 +39,10 @@ class TestFileUploadReview(BaseTest):
         with_super_admin_user: UserModel,
         tmp_path: Path,
         filesystem: bool,
-        fixture: str,
         mimetype: str,
         filename: str,
     ) -> None:
-        contents = (FIXTURES / fixture).read_bytes()
+        contents = CONTENTS
         digest = sha256(contents).hexdigest()
         reference = f"data:{mimetype};name={quote(filename, safe='')};base64,spifffiledatadigest+{digest}"
         payload = f"data:{mimetype};name={quote(filename, safe='')};base64,{base64.b64encode(contents).decode()}"
@@ -61,7 +58,7 @@ class TestFileUploadReview(BaseTest):
                 bpmn_file_location="file_upload_review",
             )
             _dequeued_interstitial_stream(instance_id)
-            instance = db.session.get(ProcessInstanceModel, instance_id)
+            instance = ProcessInstanceModel.query.filter_by(id=instance_id).first()
             assert instance is not None
             task_id = instance.active_human_tasks[0].task_id
             response = client.put(f"/v1.0/tasks/{instance_id}/{task_id}", headers=headers, json={"file": payload})
