@@ -21,7 +21,7 @@ import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/Mark
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
 import StoredFileWidget, {
   FileDownloadContext,
-} from '../rjsf/StoredFileWidget';
+} from '../rjsf/custom_widgets/StoredFileWidget/StoredFileWidget';
 import AutoSelectSingleOptionWidget from '../rjsf/custom_widgets/AutoSelectSingleOptionWidget';
 import {
   applyCalculatedFields,

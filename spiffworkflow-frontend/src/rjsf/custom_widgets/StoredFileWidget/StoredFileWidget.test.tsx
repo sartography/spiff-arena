@@ -6,8 +6,8 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import CustomForm from '../components/CustomForm';
-import { BACKEND_BASE_URL } from '../config';
+import CustomForm from '../../../components/CustomForm';
+import { BACKEND_BASE_URL } from '../../../config';
 
 const digest = 'a'.repeat(64);
 const stored = (name = 'sheet.xlsx', type = 'application/octet-stream') =>

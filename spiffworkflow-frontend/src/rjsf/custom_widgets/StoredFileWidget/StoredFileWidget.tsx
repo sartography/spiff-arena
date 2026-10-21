@@ -1,7 +1,7 @@
 import { getDefaultRegistry } from '@rjsf/core';
 import { getTemplate, WidgetProps } from '@rjsf/utils';
-import { BACKEND_BASE_URL } from '../config';
-import { modifyProcessIdentifierForPathParam } from '../helpers';
+import { BACKEND_BASE_URL } from '../../../config';
+import { modifyProcessIdentifierForPathParam } from '../../../helpers';
 
 export type FileDownloadContext = {
   process_model_identifier: string;
@@ -11,6 +11,8 @@ export type FileDownloadContext = {
 const DefaultFileWidget = getDefaultRegistry().widgets.FileWidget;
 
 // These look like data URLs, but contain a database reference, NOT base64.
+// Keep in sync with FILE_DATA_DIGEST_PREFIX and the reference format in the
+// backend's process_instance_service.py.
 // Passing them to RJSF produces corrupt previews and a fictitious file size.
 const storedFile = (value: string) => {
   const match =
