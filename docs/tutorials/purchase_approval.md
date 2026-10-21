@@ -48,15 +48,15 @@ Use the editor's palette and the append controls beside a selected shape.
 To change a task's type, select it and use the wrench menu.
 Remove the generated example task and any connections you no longer need; keep one start event and one end event.
 
-Add these elements and set their **Name** and **ID** in the properties panel:
+Add these elements and name them by double-clicking each shape, or with **Name** in the properties panel:
 
-| Type | Name | ID |
-| --- | --- | --- |
-| User Task | Submit request | `submit_request` |
-| User Task | Review request | `review_request` |
-| Exclusive Gateway | Decision? | `decision_gateway` |
-| Manual Task | Show approval | `show_approval` |
-| Manual Task | Show decline | `show_decline` |
+| Type | Name |
+| --- | --- |
+| User Task | Submit request |
+| User Task | Review request |
+| Exclusive Gateway | Decision? |
+| Manual Task | Show approval |
+| Manual Task | Show decline |
 
 Connect the start event to **Submit request**, then **Review request**, then **Decision?**.
 Draw two outgoing sequence flows from the gateway, one to each manual task.

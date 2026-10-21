@@ -1,23 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 305" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 285" role="img" aria-labelledby="title desc">
   <title id="title">Put the condition on the outgoing sequence flow</title>
   <desc id="desc">The approve arrow between the exclusive gateway and Show approval is selected. Its Condition Expression is decision equals approve. Labels alone do not select a path.</desc>
   <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1 1 9 5 1 9" fill="none" stroke="#2563eb" stroke-width="1.5"/></marker></defs>
-  <rect x=".5" y=".5" width="559" height="304" rx="4" fill="#fff" stroke="#e8e8e8"/>
-  <text x="24" y="30" font-family="monospace" font-size="12" letter-spacing="1" fill="#666">SELECT THE ARROW</text>
-  <g fill="#fff" stroke="#262626" stroke-width="1.5">
-    <path d="M64 59 89 84 64 109 39 84Z"/>
-    <path d="m57 77 14 14m0-14-14 14"/>
-    <rect x="342" y="54" width="174" height="60" rx="8"/>
+  <rect x=".5" y=".5" width="559" height="284" rx="4" fill="#fff" stroke="#e8e8e8"/>
+  <g transform="translate(0,-20)">
+    <g fill="#fff" stroke="#262626" stroke-width="1.5">
+      <path d="M64 59 89 84 64 109 39 84Z"/>
+      <path d="m57 77 14 14m0-14-14 14"/>
+      <rect x="342" y="54" width="174" height="60" rx="8"/>
+    </g>
+    <path d="M89 84H342" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
+    <circle cx="216" cy="84" r="4" fill="#fff" stroke="#2563eb" stroke-width="1.5"/>
+    <g font-family="system-ui, sans-serif" font-size="16" fill="#000" text-anchor="middle">
+      <text x="216" y="70">approve</text><text x="429" y="90">Show approval</text>
+    </g>
+    <path d="M216 96V140" stroke="#a3a3a3" stroke-dasharray="3 4"/>
+    <rect x="24" y="148" width="512" height="132" rx="4" fill="#fafafa" stroke="#e8e8e8"/>
+    <text x="44" y="177" font-family="system-ui, sans-serif" font-weight="600" font-size="17" fill="#000">Conditions</text>
+    <text x="44" y="205" font-family="system-ui, sans-serif" font-size="14" fill="#3f3f3f">Condition Expression</text>
+    <rect x="44" y="217" width="472" height="42" rx="4" fill="#fff" stroke="#a3a3a3"/>
+    <text x="56" y="244" font-family="monospace" font-size="17" fill="#000">decision == "approve"</text>
   </g>
-  <path d="M89 84H342" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
-  <circle cx="216" cy="84" r="4" fill="#fff" stroke="#2563eb" stroke-width="1.5"/>
-  <g font-family="system-ui, sans-serif" font-size="16" fill="#000" text-anchor="middle">
-    <text x="216" y="70">approve</text><text x="429" y="90">Show approval</text>
-  </g>
-  <path d="M216 96V140" stroke="#a3a3a3" stroke-dasharray="3 4"/>
-  <rect x="24" y="148" width="512" height="132" rx="4" fill="#fafafa" stroke="#e8e8e8"/>
-  <text x="44" y="177" font-family="system-ui, sans-serif" font-weight="600" font-size="17" fill="#000">Conditions</text>
-  <text x="44" y="205" font-family="system-ui, sans-serif" font-size="14" fill="#3f3f3f">Condition Expression</text>
-  <rect x="44" y="217" width="472" height="42" rx="4" fill="#fff" stroke="#a3a3a3"/>
-  <text x="56" y="244" font-family="monospace" font-size="17" fill="#000">decision == "approve"</text>
 </svg>
