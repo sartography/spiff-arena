@@ -412,6 +412,7 @@ export default function TaskShow() {
           id={`form-to-submit-${taskWithTaskData.guid}`}
           key={`form-to-submit-${taskWithTaskData.guid}`}
           disabled={formButtonsDisabled}
+          fileDownloadContext={taskWithTaskData}
           formData={taskData}
           onChange={(obj: any) => {
             setTaskData(obj.formData);
@@ -427,6 +428,7 @@ export default function TaskShow() {
           id={`hidden-form-for-autosave-${taskWithTaskData.guid}`}
           key={`hidden-form-for-autosave-${taskWithTaskData.guid}`}
           className="hidden-form-for-autosave"
+          fileDownloadContext={taskWithTaskData}
           formData={taskData}
           onSubmit={handleAutosaveFormSubmit}
           schema={jsonSchema}

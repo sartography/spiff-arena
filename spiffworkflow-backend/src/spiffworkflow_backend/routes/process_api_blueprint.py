@@ -1,3 +1,4 @@
+from io import BytesIO
 from typing import Any
 from typing import TypedDict
 
@@ -8,7 +9,7 @@ from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import make_response
-from flask.wrappers import Response
+from flask import send_file
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
 from sqlalchemy import or_
@@ -277,10 +278,11 @@ def process_data_file_download(
     filename = file_data.filename
     file_contents = file_data.get_contents()
 
-    return Response(
-        file_contents,
+    return send_file(
+        BytesIO(file_contents),
         mimetype=mimetype,
-        headers={"Content-disposition": f"attachment; filename={filename}"},
+        as_attachment=True,
+        download_name=filename,
     )
 
 

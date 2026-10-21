@@ -19,6 +19,9 @@ import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRa
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
+import StoredFileWidget, {
+  FileDownloadContext,
+} from '../rjsf/StoredFileWidget';
 import AutoSelectSingleOptionWidget from '../rjsf/custom_widgets/AutoSelectSingleOptionWidget';
 import {
   applyCalculatedFields,
@@ -64,6 +67,7 @@ type OwnProps = {
   reactJsonSchemaForm?: string;
   hideSubmitButton?: boolean;
   bpmnEvent?: any;
+  fileDownloadContext?: FileDownloadContext;
 };
 
 const withProps = <P extends object>(
@@ -91,6 +95,7 @@ export default function CustomForm({
   reactJsonSchemaForm = 'mui',
   hideSubmitButton = false,
   bpmnEvent,
+  fileDownloadContext,
 }: OwnProps) {
   const reactJsonSchemaFormTheme = reactJsonSchemaForm;
   if ('ui:theme' in uiSchema) {
@@ -107,6 +112,7 @@ export default function CustomForm({
 
   // set in uiSchema using the "ui:widget" key for a property
   const rjsfWidgets = {
+    FileWidget: StoredFileWidget,
     'date-range': DateRangePickerWidget,
     markdown: MarkDownFieldWidget,
     typeahead: customTypeaheadWidget,
@@ -647,7 +653,7 @@ export default function CustomForm({
     noValidate,
     fields: rjsfFields,
     templates: rjsfTemplates,
-    formContext,
+    formContext: { ...formContext, fileDownloadContext },
     omitExtraData: true,
   };
 

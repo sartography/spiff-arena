@@ -231,6 +231,7 @@ export default function TaskListTable({
               id={formSubmissionTask.guid}
               key={formSubmissionTask.guid}
               formData={formSubmissionTask.data}
+              fileDownloadContext={formSubmissionTask}
               schema={jsonSchema}
               uiSchema={formUiSchema}
               disabled
