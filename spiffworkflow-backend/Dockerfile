@@ -9,7 +9,9 @@ FROM python:3.13-alpine AS base
 
 ENV UV_NO_SYNC=true
 ENV VIRTUAL_ENV=/app/.venv
-RUN python3 -m venv $VIRTUAL_ENV
+# uv installs the dependencies, so neither the venv nor the system Python keeps a pip to patch.
+RUN python3 -m venv --without-pip $VIRTUAL_ENV \
+ && python3 -m pip uninstall --yes pip
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # set timezone to UTC
@@ -37,9 +39,6 @@ FROM base AS deployment
 RUN apk update \
  && apk add --no-cache git openssh-client curl procps mysql-client mariadb-connector-c vim jq libpq krb5-libs libexpat bash \
  && rm -rf /var/cache/apk/*
-
-# keep pip up to date
-RUN pip install --upgrade pip
 
 # use ghcr.io/astral-sh/uv and provide it in FINAL with copy from /usr/local
 

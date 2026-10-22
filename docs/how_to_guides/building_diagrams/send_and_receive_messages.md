@@ -22,9 +22,8 @@ Use a different ID for each order in a real process.
 ## 2. Define shared messages
 
 Select a Send Task or Message Event and open the **Message** section of the properties panel.
-Click **Open message editor** to open the Messages page in a new tab. For a selected message,
-the page opens its edit dialog. To create a definition from the Messages page, click
-**Add Message Model**, choose the process-group location, and click **Continue**.
+Click **Open message editor** to edit the selected message or create a new one in the
+diagram's process group.
 
 ![Opening the message editor from the Message section](/images/message_example1.png)
 
@@ -39,7 +38,8 @@ the page opens its edit dialog. To create a definition from the Messages page, c
 - **Correlation Properties**: define the values used to associate messages with process instances.
   Each property has a **Property Name** and a **Retrieval Expression**, evaluated against the message body.
 
-Save the definition.
+Save the definition and return to the diagram. Available messages refresh automatically;
+a message created from an unassigned task/event is selected for you.
 
 Create `order_dispatch` too. For the reply, add property `order_id`
 with retrieval expression `order_id`. The reply body will contain that key.
@@ -80,8 +80,13 @@ On the Waiter's Receive Task or Intermediate Message Catch Event:
 
 1. Select `order_dispatch`.
 2. Set **Variable Name** to `meal_ready`.
-3. Enable **Enable Condition Matching**.
-4. In **Matching Conditions**, set the `order_id` field to `order["id"]`.
+3. Enable **Enable Condition Matching**. Missing expressions are prefilled with their
+   correlation property identifiers (for example, `order_id`). This reads a same-named
+   variable from the receiver's task data, not from the incoming message.
+4. In **Matching Conditions**, change the `order_id` field to `order["id"]` for this example.
+
+Check each expression before saving: if the property identifier is not a valid Python variable name, or your data
+uses a different name or nested structure, replace it with an appropriate Python expression.
 
 ![Matching conditions on the receiver](/images/message_example4.png)
 

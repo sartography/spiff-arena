@@ -661,8 +661,15 @@ def _create_or_update_process_model_file(
     file.file_contents_hash = file_contents_hash
     GitService.commit_on_save(f"{message_for_git_commit} {process_model_identifier}/{file.name}")
 
-    if is_new_file and file.name.endswith(".bpmn"):
-        DataSetupService.refresh_single_process_model_cache(process_model_identifier)
+    if file.name.endswith(".bpmn"):
+        refresh_failures = DataSetupService.refresh_single_process_model_cache(process_model_identifier)
+        if refresh_failures:
+            details = "; ".join(f"{location}: {error}" for location, error in refresh_failures)
+            raise ApiError(
+                error_code="process_model_cache_refresh_failed",
+                message=(f"Saved {process_model_identifier}/{file.name} but could not refresh its cache: {details}"),
+                status_code=500,
+            )
 
     return make_response(jsonify(file), http_status_to_return)
 

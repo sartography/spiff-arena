@@ -13,6 +13,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial_stream
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.user_service import UserService
@@ -837,3 +838,64 @@ class TestTasksController(BaseTest):
 
         assert initiator_user.username in owners
         assert finance_user.username in owners
+
+    def test_participant_denied_the_process_instance_show_page_can_still_start_and_complete_tasks(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = self.create_group_and_model_with_bpmn(
+            client,
+            with_super_admin_user,
+            process_group_id="my_process_group",
+            process_model_id="interstitial",
+            bpmn_file_location="interstitial",
+        )
+        participant = self.find_or_create_user("participant")
+        UserService.add_user_to_group_by_group_identifier(participant, "participants")
+        for permission, target in [
+            ("all", "BASIC"),
+            ("start", "PG:my_process_group"),
+            ("DENY:read", "/process-instances/for-me/my_process_group:*"),
+        ]:
+            AuthorizationService.add_permission_from_uri_or_macro("participants", permission, target)
+        headers = self.logged_in_headers(participant)
+        modified_process_model_identifier = self.modify_process_identifier_for_path_param(process_model.id)
+
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        assert response.status_code == 201
+        process_instance_id = response.json()["id"]
+        response = client.post(
+            f"/v1.0/process-instance-run/{modified_process_model_identifier}/{process_instance_id}?execution_mode=synchronous",
+            headers=headers,
+        )
+        assert response.status_code == 200
+
+        human_task = HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False).first()
+        assert human_task is not None
+        response = client.get(f"/v1.0/tasks/{process_instance_id}/{human_task.task_guid}", headers=headers)
+        assert response.status_code == 200
+        response = client.put(f"/v1.0/tasks/{process_instance_id}/{human_task.task_guid}", headers=headers)
+        assert response.status_code == 200
+
+        # the progress endpoint tells the frontend not to redirect to the instance page
+        response = client.get(f"/v1.0/tasks/progress/{process_instance_id}", headers=headers)
+        assert response.status_code == 200
+        assert response.json()["process_instance"]["actions"] is None
+
+        for path_suffix in ["", "/task-info"]:
+            response = client.get(
+                f"/v1.0/process-instances/for-me/{modified_process_model_identifier}/{process_instance_id}{path_suffix}",
+                headers=headers,
+            )
+            assert response.status_code == 403
+
+        # The participant has no alternative full-read grant; admins outside the
+        # denied group retain access to the same instance and its diagram.
+        full_path = f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}"
+        assert client.get(full_path, headers=headers).status_code == 403
+        response = client.get(full_path, headers=self.logged_in_headers(with_super_admin_user))
+        assert response.status_code == 200
+        assert response.json()["bpmn_xml_file_contents"]

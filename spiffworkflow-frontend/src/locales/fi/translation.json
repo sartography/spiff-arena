@@ -211,6 +211,7 @@
   "form_render_error_message": "Lomaketta ei voitu rakentaa nykyisellä kaaviolla, käyttöliittymällä ja tiedoilla. Korjaa ongelma ja yritä uudelleen.",
   "form_render_error_title": "Lomakkeen renderöintivirhe",
   "frontend_access_denied_message": "Sinulla ei ole oikeutta käyttää tätä sovellusta. Ota yhteyttä järjestelmänvalvojaan.",
+  "process_instance_access_denied_message": "Sinulla ei ole oikeutta tarkastella tätä prosessi-instanssia.",
   "frontend_access_denied_title": "Pääsy estetty",
   "frontend_version_information": "Frontend-versiotiedot",
   "go": "Siirry",

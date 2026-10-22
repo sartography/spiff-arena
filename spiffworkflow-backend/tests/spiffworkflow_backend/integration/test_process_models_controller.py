@@ -3,12 +3,16 @@ from hashlib import sha256
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+import pytest
 from flask.app import Flask
 from starlette.testclient import TestClient
 
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.data_setup_service import DataSetupService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -65,6 +69,102 @@ class TestProcessModelsController(BaseTest):
         assert response.json()["message"].startswith(
             "NotAuthorizedError: You are not authorized to use one or more processes as a called element"
         )
+
+    @pytest.mark.parametrize("has_other_file", [False, True])
+    def test_saving_existing_bpmn_refreshes_message_usage(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+        has_other_file: bool,
+    ) -> None:
+        self.create_process_group("test_group")
+        file_name = "message_start_event.bpmn"
+        model = load_test_spec(
+            "test_group/receiver",
+            bpmn_file_name=file_name,
+            process_model_source_directory="simple-message-send-receive",
+        )
+        original = SpecFileService.get_data(model, file_name)
+        old_id = "Message_0rcwl5q"
+        new_id = "Message_reply"
+        group = ProcessModelService.get_process_group("test_group")
+        group.messages = {old_id: {"schema": {}}, new_id: {"schema": {}}}
+        ProcessModelService.update_process_group(group)
+        db.session.add_all(
+            [
+                MessageModel(identifier=old_id, location="test_group", schema={}),
+                MessageModel(identifier=new_id, location="test_group", schema={}),
+            ]
+        )
+        db.session.commit()
+        if has_other_file:
+            other = original.replace(b"Process_message_start", b"Other_process")
+            SpecFileService.update_file(model, "other.bpmn", other)
+        DataSetupService.refresh_single_process_model_cache(model.id)
+        assert MessageModel.query.filter_by(identifier=old_id).one().process_model_identifiers == [model.id]
+        assert not MessageModel.query.filter_by(identifier=new_id).one().process_model_identifiers
+
+        # Leave the old declaration in place, as the editor does when changing a selection.
+        updated = original.replace(f'messageRef="{old_id}"'.encode(), f'messageRef="{new_id}"'.encode())
+        updated = updated.replace(
+            b"</bpmn:definitions>", f'<bpmn:message id="{new_id}" name="reply" /></bpmn:definitions>'.encode()
+        )
+        response = client.put(
+            f"/v1.0/process-models/{model.modified_process_model_identifier()}/files/{file_name}",
+            params={"file_contents_hash": sha256(original).hexdigest()},
+            files=[("file", (file_name, updated))],
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        response = client.get("/v1.0/message-models/test_group", headers=self.logged_in_headers(with_super_admin_user))
+        assert response.status_code == 200
+        usage = {message["identifier"]: message["process_model_identifiers"] for message in response.json()["messages"]}
+        assert usage[new_id] == [model.id]
+        assert usage[old_id] == ([model.id] if has_other_file else [])
+        assert SpecFileService.get_data(model, file_name) == updated
+        # A full startup-style rebuild must agree with the incremental save path.
+        DataSetupService.refresh_process_model_caches()
+        assert MessageModel.query.filter_by(identifier=new_id).one().process_model_identifiers == [model.id]
+        assert MessageModel.query.filter_by(identifier=old_id).one().process_model_identifiers == (
+            [model.id] if has_other_file else []
+        )
+
+    def test_saving_bpmn_with_unparseable_sibling_preserves_usage_and_reports_refresh_failure(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group("test_group")
+        file_name = "message_start_event.bpmn"
+        model = load_test_spec(
+            "test_group/receiver",
+            bpmn_file_name=file_name,
+            process_model_source_directory="simple-message-send-receive",
+        )
+        old_id = "Message_0rcwl5q"
+        db.session.add(MessageModel(identifier=old_id, location="test_group", schema={}))
+        db.session.commit()
+        DataSetupService.refresh_single_process_model_cache(model.id)
+        assert MessageModel.query.filter_by(identifier=old_id).one().process_model_identifiers == [model.id]
+
+        SpecFileService.write_file_data_to_system(
+            SpecFileService.full_file_path(model, "broken.bpmn"),
+            b"<not xml",
+        )
+        original = SpecFileService.get_data(model, file_name)
+        response = client.put(
+            f"/v1.0/process-models/{model.modified_process_model_identifier()}/files/{file_name}",
+            params={"file_contents_hash": sha256(original).hexdigest()},
+            files=[("file", (file_name, original))],
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 500
+        assert response.json()["error_code"] == "process_model_cache_refresh_failed"
+        assert MessageModel.query.filter_by(identifier=old_id).one().process_model_identifiers == [model.id]
 
     def test_process_model_show(
         self,

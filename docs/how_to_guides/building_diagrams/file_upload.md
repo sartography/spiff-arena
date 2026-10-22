@@ -39,13 +39,13 @@ Workflow Steps:
 }
 ```
 
-- `file`: This property captures a file as a data URL string. The file is stored in a process variable named `file`.
+- `file`: This property captures a file as a data URL string. When the task is submitted, Arena stores the original bytes separately and replaces the value of `file` with an internal file reference. Keep that reference unchanged in later tasks; it is not a base64-encoded copy of the file.
 
 #### UI Schema
 
 ```json
 {
-  "filesAccept": {
+  "file": {
     "ui:options": {
       "accept": ".pdf"
     }
@@ -59,7 +59,8 @@ Workflow Steps:
 
 - Users click "Choose File" and select a document to upload.
 - After selection, the file name, type, and size are shown.
-- On clicking "Submit", the file is passed as a data URL to the next task.
+- On clicking "Submit", Arena stores the file and passes its internal reference to the next task.
+- In read-only or disabled views, saved files appear as a list with download links (when process instance context is available), without upload or removal controls.
 
 **File Upload Step**  
 The interface displays the uploaded filename, type, and size before submission.
@@ -76,7 +77,7 @@ The interface displays the uploaded filename, type, and size before submission.
 link = markdown_file_download_link(file)
 ```
 
-- `file`: This is the input variable from the previous task.
+- `file`: This is the stored file reference from the previous task. Generate the link in a script task after the upload task has been submitted.
 - `markdown_file_download_link()` is a built-in function that generates a string like:
 
   ```markdown
@@ -102,5 +103,23 @@ Here is a link: {{link}}
 This shows a text message with a link: [filename.ext]”  
 ![File Upload Process](/images/file_upload_process7.png)
 
+
+The same `{{link}}` can be reused in later tasks and after reloading the page. Downloads still require file-download permissions.
+
+Stored references are not base64 file contents. Use `markdown_file_download_link(file)` to generate a download link.
+
+### Showing the attachment in a follow-up form
+
+A later user task can reuse the `file` property from the JSON schema above and make it read-only:
+
+```json
+{
+  "file": {
+    "ui:readonly": true
+  }
+}
+```
+
+With `ui:options.filePreview` enabled, unsaved files use local previews; stored attachments use authenticated download links.
 
 You can modify the final message formatting to include file size or type if those details are captured.

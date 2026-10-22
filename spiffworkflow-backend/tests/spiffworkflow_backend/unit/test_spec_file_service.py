@@ -10,6 +10,7 @@ from spiffworkflow_backend.models.cache_generation import CacheGenerationModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_caller_relationship import ProcessCallerRelationshipModel
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.reference_cache_service import ReferenceCacheService
@@ -27,6 +28,38 @@ class TestSpecFileService(BaseTest):
     bpmn_file_name = "call_activity_nested.bpmn"
 
     call_activity_nested_relative_file_path = os.path.join(process_model_id, bpmn_file_name)
+
+    @pytest.mark.parametrize(
+        "element",
+        [
+            '<bpmn:sendTask id="Task" messageRef="Used" />',
+            '<bpmn:receiveTask id="Task" messageRef="Used" />',
+            '<bpmn:startEvent id="Start"><bpmn:messageEventDefinition messageRef="Used" /></bpmn:startEvent>',
+            '<bpmn:intermediateCatchEvent id="Catch">'
+            '<bpmn:messageEventDefinition messageRef="Used" /></bpmn:intermediateCatchEvent>',
+            '<bpmn:intermediateThrowEvent id="Throw">'
+            '<bpmn:messageEventDefinition messageRef="Used" /></bpmn:intermediateThrowEvent>',
+            '<bpmn:endEvent id="End"><bpmn:messageEventDefinition messageRef="Used" /></bpmn:endEvent>',
+            '<bpmn:subProcess id="Sub"><bpmn:receiveTask id="Nested" messageRef="Used" /></bpmn:subProcess>',
+        ],
+    )
+    def test_message_usage_excludes_unreferenced_declarations(self, app: Flask, element: str) -> None:
+        xml = f"""<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+            targetNamespace="test" id="Definitions">
+          <bpmn:message id="Used" name="Used" />
+          <bpmn:message id="Unused" name="Unused" />
+          <bpmn:correlationProperty id="prop" name="prop">
+            <bpmn:correlationPropertyRetrievalExpression messageRef="Unused">
+              <bpmn:formalExpression>id</bpmn:formalExpression>
+            </bpmn:correlationPropertyRetrievalExpression>
+          </bpmn:correlationProperty>
+          <bpmn:process id="Process" isExecutable="true">{element}</bpmn:process>
+        </bpmn:definitions>""".encode()
+        refs = SpecFileService.get_references_for_file_contents(
+            ProcessModelInfo(id="group/model", display_name="Model", description=""), "test.bpmn", xml
+        )
+        assert {name for ref in refs for name in ref.messages} == {"Used", "Unused"}
+        assert {name for ref in refs for name in ref.referenced_messages} == {"Used"}
 
     def test_can_store_process_ids_for_lookup(
         self,

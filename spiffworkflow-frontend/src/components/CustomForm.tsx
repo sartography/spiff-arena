@@ -1,5 +1,4 @@
-// eslint-disable-next-line import-x/no-rename-default
-import rjsfValidator from '@rjsf/validator-ajv8';
+import { customizeValidator } from '@rjsf/validator-ajv8';
 
 import ajvErrors from 'ajv-errors';
 
@@ -19,6 +18,9 @@ import DateRangePickerWidget from '../rjsf/custom_widgets/DateRangePicker/DateRa
 import TypeaheadWidget from '../rjsf/custom_widgets/TypeaheadWidget/TypeaheadWidget';
 import MarkDownFieldWidget from '../rjsf/custom_widgets/MarkDownFieldWidget/MarkDownFieldWidget';
 import NumericRangeField from '../rjsf/custom_widgets/NumericRangeField/NumericRangeField';
+import StoredFileWidget, {
+  FileDownloadContext,
+} from '../rjsf/custom_widgets/StoredFileWidget/StoredFileWidget';
 import AutoSelectSingleOptionWidget from '../rjsf/custom_widgets/AutoSelectSingleOptionWidget';
 import {
   applyCalculatedFields,
@@ -30,6 +32,13 @@ import ObjectFieldRestrictedGridTemplate from '../rjsf/custom_templates/ObjectFi
 import { matchNumberRegex } from '../helpers';
 import { Notification } from './Notification';
 
+const rjsfValidator = customizeValidator({
+  customFormats: {
+    // RJSF's default data-url format omits MIME parameters such as charset.
+    'data-url':
+      /^data:([a-z]+\/[a-z0-9-+.]+)?(?:;[^;=]+=[^;]*)*;(?:name=(.*);)?base64,(.*)$/,
+  },
+});
 ajvErrors(rjsfValidator.ajv);
 
 /**
@@ -64,6 +73,7 @@ type OwnProps = {
   reactJsonSchemaForm?: string;
   hideSubmitButton?: boolean;
   bpmnEvent?: any;
+  fileDownloadContext?: FileDownloadContext;
 };
 
 const withProps = <P extends object>(
@@ -91,6 +101,7 @@ export default function CustomForm({
   reactJsonSchemaForm = 'mui',
   hideSubmitButton = false,
   bpmnEvent,
+  fileDownloadContext,
 }: OwnProps) {
   const reactJsonSchemaFormTheme = reactJsonSchemaForm;
   if ('ui:theme' in uiSchema) {
@@ -107,6 +118,7 @@ export default function CustomForm({
 
   // set in uiSchema using the "ui:widget" key for a property
   const rjsfWidgets = {
+    FileWidget: StoredFileWidget,
     'date-range': DateRangePickerWidget,
     markdown: MarkDownFieldWidget,
     typeahead: customTypeaheadWidget,
@@ -647,7 +659,7 @@ export default function CustomForm({
     noValidate,
     fields: rjsfFields,
     templates: rjsfTemplates,
-    formContext,
+    formContext: { ...formContext, fileDownloadContext },
     omitExtraData: true,
   };
 

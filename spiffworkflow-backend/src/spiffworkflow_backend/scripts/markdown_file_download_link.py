@@ -1,4 +1,6 @@
+import re
 from typing import Any
+from urllib.parse import unquote
 
 from flask import current_app
 
@@ -26,9 +28,15 @@ class MarkdownFileDownloadLink(Script):
         # example input:
         #  "data:some/mimetype;name=testing.txt;base64,spifffiledatadigest+7a2051ffefd1eaf475dbef9fda019cb3d4a10eb8aea4c2c2a84a50a797a541bf"  # noqa: E501
         digest_reference = args[0]
-        parts = digest_reference.split(";")
-        digest = parts[2].split(",")[1][-64:]
-        label = parts[1].split("=")[1]
+        metadata, payload = digest_reference.rsplit(";base64,", 1)
+        match = re.fullmatch(r"spifffiledatadigest\+([0-9a-f]{64})", payload)
+        if match is None:
+            raise ValueError("Invalid file digest reference")
+        digest = match.group(1)
+        # Split at the delimiters, not every semicolon/equal sign: older
+        # references stored literal filenames while newer ones URI-encode them.
+        filename = unquote(metadata.split(";name=", 1)[1])
+        label = re.sub(r"([\\\\`*\[\]_<>&])", r"\\\1", filename)
         process_model_identifier = script_attributes_context.process_model_identifier
         if process_model_identifier is None:
             raise self.get_proces_model_identifier_is_missing_error("markdown_file_download_link")

@@ -211,6 +211,7 @@
   "form_render_error_message": "Não foi possível construir o formulário com o esquema, a interface e os dados atuais. Corrija o problema e tente novamente.",
   "form_render_error_title": "Falha ao renderizar formulário",
   "frontend_access_denied_message": "Você não tem permissão para acessar este aplicativo. Entre em contato com o administrador.",
+  "process_instance_access_denied_message": "Você não tem permissão para visualizar esta instância de processo.",
   "frontend_access_denied_title": "Acesso negado",
   "frontend_version_information": "Informações da versão do frontend",
   "go": "Ir",

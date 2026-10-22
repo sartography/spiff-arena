@@ -27,6 +27,10 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import HttpService from '../../services/HttpService';
+import {
+  MESSAGE_EDITOR_REQUEST_PARAM,
+  notifyMessageEditorSaved,
+} from '../../hooks/useDiagramMessageEditor';
 import { Notification } from '../Notification';
 import {
   getPageInfoFromSearchParams,
@@ -308,6 +312,12 @@ export default function MessageModelList({
             );
             if (initialMessageModel) {
               setEditorState(toEditorState(initialMessageModel));
+            } else if (!initialMessageId && initialSourceLocation) {
+              setEditorState({
+                messageId: '',
+                location: processGroupLocationForSource(initialSourceLocation),
+                correlationProperties: [],
+              });
             }
           }
         },
@@ -380,16 +390,17 @@ export default function MessageModelList({
     setEditorState(null);
     if (
       !searchParams.has('message_id') &&
-      !searchParams.has('source_location')
+      !searchParams.has('source_location') &&
+      !searchParams.has(MESSAGE_EDITOR_REQUEST_PARAM)
     ) {
       return;
     }
 
-    // Clear message_id and source_location params when the editor was opened
-    // from a URL that selected a specific message model.
+    // Clear launch context so closing either an edit or create dialog does not reopen it.
     const nextSearchParams = new URLSearchParams(searchParams);
     nextSearchParams.delete('message_id');
     nextSearchParams.delete('source_location');
+    nextSearchParams.delete(MESSAGE_EDITOR_REQUEST_PARAM);
     setSearchParams(nextSearchParams, { replace: true });
   }, [searchParams, setSearchParams]);
 
@@ -598,6 +609,11 @@ export default function MessageModelList({
                   hideSubmitButton={true}
                   managePageTitle={false}
                   onSave={(savedMessage) => {
+                    notifyMessageEditorSaved(
+                      searchParams.get(MESSAGE_EDITOR_REQUEST_PARAM),
+                      savedMessage.messageId,
+                      savedMessage.location,
+                    );
                     setEditorState(savedMessage);
                     loadMessageModels({
                       identifier: savedMessage.messageId,

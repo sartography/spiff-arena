@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="FileUploadDefinitions" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="FileUploadReview" name="File upload and reviews" isExecutable="true">
+    <bpmn:startEvent id="start" />
+    <bpmn:sequenceFlow id="to_upload" sourceRef="start" targetRef="upload" />
+    <bpmn:userTask id="upload" name="Upload attachment">
+      <bpmn:extensionElements>
+        <spiffworkflow:properties>
+          <spiffworkflow:property name="formJsonSchemaFilename" value="upload.json" />
+        </spiffworkflow:properties>
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="to_link" sourceRef="upload" targetRef="generate_link" />
+    <bpmn:scriptTask id="generate_link" name="Generate download link">
+      <bpmn:script>link = markdown_file_download_link(file)</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="to_review_one" sourceRef="generate_link" targetRef="review_one" />
+    <bpmn:manualTask id="review_one" name="First review">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>Review the attachment: {{link}}</spiffworkflow:instructionsForEndUser>
+      </bpmn:extensionElements>
+    </bpmn:manualTask>
+    <bpmn:sequenceFlow id="to_review_two" sourceRef="review_one" targetRef="review_two" />
+    <bpmn:userTask id="review_two" name="Second review">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser>Review the same attachment again: {{link}}</spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:properties>
+          <spiffworkflow:property name="formJsonSchemaFilename" value="upload.json" />
+          <spiffworkflow:property name="formUiSchemaFilename" value="review_ui.json" />
+        </spiffworkflow:properties>
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="to_end" sourceRef="review_two" targetRef="end" />
+    <bpmn:endEvent id="end" />
+  </bpmn:process>
+</bpmn:definitions>

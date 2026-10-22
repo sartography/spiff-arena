@@ -67,6 +67,7 @@ class TestDataSetupService(BaseTest):
                 relative_location="order/residential/residential",
                 type="process",
                 file_name="residential.bpmn",
+                referenced_messages=["request-for-information-received"],
                 messages={"request-for-information-received": {}},
                 correlations={},
                 start_messages=[],
@@ -79,6 +80,7 @@ class TestDataSetupService(BaseTest):
                 relative_location="order/request-for-information/request-for-information",
                 type="process",
                 file_name="request-for-information.bpmn",
+                referenced_messages=["request-for-information-received"],
                 messages={"request-for-information-received": {}},
                 correlations={},
                 start_messages=[],
@@ -131,6 +133,7 @@ class TestDataSetupService(BaseTest):
                 relative_location=process_model_id,
                 type="process",
                 file_name="request-for-information.bpmn",
+                referenced_messages=["request-for-information-received"],
                 messages={"request-for-information-received": {}},
                 correlations={},
                 start_messages=[],
@@ -171,7 +174,7 @@ class TestDataSetupService(BaseTest):
         def references(model: SimpleNamespace) -> list:
             if model.id.endswith("broken"):
                 raise ValueError("Invalid BPMN")
-            return [SimpleNamespace(relative_location=model.id, messages={"reply": {}})]
+            return [SimpleNamespace(relative_location=model.id, referenced_messages=["reply"])]
 
         monkeypatch.setattr(SpecFileService, "get_references_for_process", references)
         DataSetupService.refresh_message_usage_for_process_groups({"orders/child"}, {"reply"})
@@ -207,7 +210,7 @@ class TestDataSetupService(BaseTest):
         monkeypatch.setattr(
             SpecFileService,
             "get_references_for_process",
-            lambda model: [SimpleNamespace(relative_location=model.id, messages={"reply": {}})],
+            lambda model: [SimpleNamespace(relative_location=model.id, referenced_messages=["reply"])],
         )
         warning = Mock()
         monkeypatch.setattr(app.logger, "warning", warning)

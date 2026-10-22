@@ -8,7 +8,7 @@ This guide provides instructions for setting up PyCharm IDE for SpiffWorkflow ba
 * Checkout a git repository with sample process models such as our [Sample Process Models](https://github.com/sartography/sample-process-models)
 
 ## Step 1 - Python Interpreter
-In the settings, ensure that you have configured your Python interpreter to use the poetry environment you have created.
+Run `uv sync` in `spiffworkflow-backend/`, then configure PyCharm's Python interpreter to use `spiffworkflow-backend/.venv/bin/python`.
 
 ## Step 2 - Configuration Settings
 Create a config.py file in the src/instance directory, with the following base settings
@@ -48,11 +48,10 @@ Configure your Run configuration with the following settings:
 
 ## Step 4 - Code Formatting
 
-We are using [Black](https://black.readthedocs.io/en/stable/) for code formatting.
-To avoid the madness of having Black enforce one style, and your editor enforcing another, follow [the directions outlined here](https://black.readthedocs.io/en/stable/integrations/editors.html#pycharm-intellij-idea).
+We use [Ruff](https://docs.astral.sh/ruff/) for linting and formatting. Configure PyCharm's Ruff integration to use the repository's settings.
 
 Start the application using the play / debug buttons.
 
 ## IMPORTANT
 * Before committing changes to the repository, be sure to execute the `run_pyl` command in the top level spiff-arena directory and fix any issues it reports.
-* When doing so, be sure to have the poetry environment *AT THAT TOP LEVEL* activated NOT the one in the backend. Otherwise, you will get invalid information.
+* Run `uv sync` at the repository root as well; the top-level checks use a separate environment from the backend.
