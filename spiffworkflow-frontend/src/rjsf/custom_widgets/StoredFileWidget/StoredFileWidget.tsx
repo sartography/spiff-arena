@@ -40,7 +40,7 @@ export default function StoredFileWidget(props: WidgetProps) {
     return file ? [{ ...file, index }] : [];
   });
   if (!stored.length) {
-    return <DefaultFileWidget {...props} />;
+    return disabled || readonly ? null : <DefaultFileWidget {...props} />;
   }
 
   const rawValues = values.filter((item) => !storedFile(item));

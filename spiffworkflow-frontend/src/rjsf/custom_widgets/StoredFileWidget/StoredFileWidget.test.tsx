@@ -121,6 +121,20 @@ describe('stored file references', () => {
     },
   );
 
+  it.each([{ readonly: true }, { disabled: true }])(
+    'hides the fallback when no stored file exists: %j',
+    (options) => {
+      const { container } = renderForm({ ...options, value: '' });
+      expect(container.querySelector('input[type=file]')).toBeNull();
+      expect(container.querySelector('.file-info')).toBeNull();
+    },
+  );
+
+  it('offers an upload control for an empty editable field', () => {
+    const { container } = renderForm({ value: '' });
+    expect(container.querySelector('input[type=file]')).not.toBeNull();
+  });
+
   it('does not invent a download URL without instance context', () => {
     const { container } = renderForm({ context: false });
     expect(screen.getByText('sheet.xlsx')).toBeInTheDocument();
