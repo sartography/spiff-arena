@@ -73,7 +73,10 @@ class TestLoggingService(BaseTest):
         assert app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST"] is None
         for name in ("spiff.task", "spiff.workflow", "spiff.data"):
             assert logging.getLogger(name).level == logging.WARNING
-        assert logging.getLogger("spiff.event").level == logging.NOTSET
+        event_logger = logging.getLogger("spiff.event")
+        assert event_logger.level == logging.INFO
+        assert len(event_logger.handlers) == 1
+        assert event_logger.propagate is False
 
     def test_spiff_log_handler_formats_unix_timestamp(self, app: Flask) -> None:
         handler = SpiffLogHandler(app)

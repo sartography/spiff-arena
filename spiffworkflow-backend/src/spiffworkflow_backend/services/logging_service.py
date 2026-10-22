@@ -819,6 +819,21 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
         for noisy_logger in ("spiff.task", "spiff.workflow", "spiff.data"):
             logging.getLogger(noisy_logger).setLevel(logging.WARNING)
 
+    # spiff's analytics handler stops propagation before the root output handlers.
+    # Give only spiff.event an output handler, not the noisy engine task/data loggers.
+    event_logger = logging.getLogger("spiff.event")
+    event_output_handler = spiff_logger_filehandler
+    if event_output_handler is None:
+        # Celery redirects sys.stdout through its own logger; bypass that wrapper.
+        output_stream = (sys.__stdout__ or sys.stdout) if force_run_with_celery else sys.stdout
+        event_output_handler = logging.StreamHandler(output_stream)
+        event_output_handler.setLevel(log_level)
+        event_output_handler.setFormatter(log_formatter)
+    event_logger.handlers = [event_output_handler]
+    # Filter output at the handler, so WARNING output still permits INFO analytics events.
+    event_logger.setLevel(logging.INFO)
+    event_logger.propagate = app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST"] is not None
+
     # APScheduler owns these repetitive lifecycle lines. Keep warnings/errors and one successful-run heartbeat.
     logging.getLogger("apscheduler.scheduler").setLevel(logging.INFO)
     apscheduler_executor_logger = logging.getLogger("apscheduler.executors.default")
