@@ -1,0 +1,8 @@
+{
+  "file": {
+    "ui:readonly": true,
+    "ui:options": {
+      "filePreview": true
+    }
+  }
+}

@@ -1,15 +1,16 @@
 # Local Wheels
 
-If you have any wheels you wish to test locally, copy them into this folder then run:
+To test a local wheel, copy it into this folder and run from `spiffworkflow-backend/`:
 
 ```
-poetry add local_wheels/my.whl
+uv add local_wheels/my.whl
 ```
 
-Alternatively you can sideload it:
+For a temporary install without changing project dependencies:
 
 ```
-poetry run pip install local_wheels/*.whl
+uv sync
+uv pip install --python .venv/bin/python local_wheels/*.whl
 ```
 
-when you boot the backend.
+Start the backend with `uv run --no-sync` to preserve the temporary install.

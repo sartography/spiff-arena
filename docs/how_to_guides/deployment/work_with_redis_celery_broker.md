@@ -56,16 +56,18 @@ redis-cli LLEN celery # how many queued entries
 redis-cli LRANGE celery 0 -1 # get all queued entries. Be careful if you have a lot.
 ```
 
-If you want to purge all entries from the queue:
+Run these commands from `spiffworkflow-backend/` with the same broker configuration as the worker.
+
+To purge all entries from the queue:
 
 ```sh
-poetry run celery -A src.spiffworkflow_backend.background_processing.celery_worker purge
+uv run celery -A src.spiffworkflow_backend.background_processing.celery_worker purge
 ```
 
 If you want to inspect jobs that are currently being processed by workers:
 
 ```sh
-poetry run celery -A src.spiffworkflow_backend.background_processing.celery_worker inspect active
+uv run celery -A src.spiffworkflow_backend.background_processing.celery_worker inspect active
 ```
 
 When we publish a message to the queue, we log a message like this at the log level info:

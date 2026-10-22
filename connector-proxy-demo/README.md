@@ -7,11 +7,13 @@ A Spiff-Connector for demonstration purposes - shows how to build connectors to 
 Create a bare-bones Flask application that depends on the core spiffworkflow-proxy (a flask blueprint)
 and any connector dependencies you wish to use.
 We will hopefully be adding a number of available connectors in the future.  Please checkout the connector-aws repository for an example of how to create connections to new services.  
-``` python
-  python = "^3.11"
-  Flask = "^2.2.2"
-  spiffworkflow-proxy = {git = "https://github.com/sartography/spiffworkflow-proxy"}
-  connector-aws = { git = "https://github.com/sartography/connector-aws.git"}
+Use Python 3.11 or later and [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv init --app
+uv add 'Flask>=2.3.3,<3' \
+  'spiffworkflow-proxy @ git+https://github.com/sartography/spiffworkflow-proxy' \
+  'connector-aws @ git+https://github.com/sartography/connector-aws.git'
 ```
 
 ## Step 2.
@@ -31,8 +33,13 @@ if __name__ == "__main__":
 ## Step 3.
 Fire it up.  
 ```bash
-#> flask run
+uv run flask run
 ```
+
+For this repository's demo, run `uv sync --locked` and
+`./bin/run_server_locally` from `connector-proxy-demo/`. Run tests with
+`uv run --locked pytest`. The demo and `connector-example` share the root
+`uv.lock`; the example is installed as an editable workspace member.
 
 ## Optional API key protection
 

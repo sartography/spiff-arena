@@ -1,39 +1,40 @@
-[tool.poetry]
+[project]
 name = "connector-proxy-demo"
 version = "0.1.0"
 description = "An example showing how to use the Spiffworkflow-proxy's Flask Blueprint to make services available to Service Tasks."
-authors = ["Dan <dan@sartography.com>"]
+authors = [{ name = "Dan", email = "dan@sartography.com" }]
 license = "LGPL"
 readme = "README.md"
-package-mode = false
+requires-python = ">=3.11,<4"
+dependencies = [
+  "Flask>=2.3.3,<3",
+  "flask-cors>=6.0.5,<7",
+  "spiffworkflow-proxy",
+  "connector-aws",
+  "connector-http",
+  "connector-slack",
+  "connector-smtp",
+  "connector-example",
+  "xmltodict>=0.15.0,<0.16",
+  "gunicorn>=23.0.0,<24",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-Flask = "^2.3.3"
-flask-cors = "^6.0.5"
+[tool.uv]
+package = false
 
-spiffworkflow-proxy = {git = "https://github.com/sartography/spiffworkflow-proxy"}
+[tool.uv.workspace]
+members = ["connector-example"]
 
-connector-aws = {git = "https://github.com/sartography/connector-aws.git"}
-connector-http = {git = "https://github.com/sartography/connector-http.git"}
-connector-slack = {git = "https://github.com/sartography/connector-slack.git"}
-connector-smtp = {git = "https://github.com/sartography/connector-smtp.git"}
-connector-example = {develop = true, path = "./connector-example" }
-
-xmltodict = "^0.15.0"
-
-gunicorn = "^23.0.0"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.uv.sources]
+spiffworkflow-proxy = { git = "https://github.com/sartography/spiffworkflow-proxy", rev = "6485e06427debf1672143481b633c34370d0a892" }
+connector-aws = { git = "https://github.com/sartography/connector-aws.git", rev = "ad386286bcc72eeb000b9b053596dfee40f7c6b5" }
+connector-http = { git = "https://github.com/sartography/connector-http.git", rev = "cbb67cf2ecdec027b2e869a452e5244af7508f8d" }
+connector-slack = { git = "https://github.com/sartography/connector-slack.git", rev = "2df500f83ce8d91b15dd0f3d8a42e8695c0b57a8" }
+connector-smtp = { git = "https://github.com/sartography/connector-smtp.git", rev = "2535b6a7df1d20a94860ac3480db95f92c9ea88f" }
+connector-example = { workspace = true }
 
 [tool.pytest.ini_options]
-pythonpath = [
-  "."
-]
+pythonpath = ["."]
 
 [dependency-groups]
-dev = [
-  "pytest (>=9.0.3,<10.0.0)"
-]
+dev = ["pytest>=9.0.3,<10", "pytest-xdist==3.5.0"]

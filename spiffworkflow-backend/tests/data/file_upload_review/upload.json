@@ -1,0 +1,12 @@
+{
+  "title": "Attachment",
+  "type": "object",
+  "required": ["file"],
+  "properties": {
+    "file": {
+      "type": "string",
+      "format": "data-url",
+      "title": "File"
+    }
+  }
+}
