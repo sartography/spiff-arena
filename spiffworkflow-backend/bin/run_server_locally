@@ -11,9 +11,12 @@ script_dir="$(
   cd -- "$(dirname "$0")" >/dev/null 2>&1
   pwd -P
 )"
+server_type="api"
+if [[ "${1:-}" == "celery_worker" ]]; then
+  server_type="celery_worker"
+  shift
+fi
 . "${script_dir}/local_development_environment_setup"
-
-server_type="${1:-api}"
 
 if [[ "$server_type" == "celery_worker" ]]; then
   export SPIFFWORKFLOW_BACKEND_CELERY_WORKER_DIRECT_EXEC=true
