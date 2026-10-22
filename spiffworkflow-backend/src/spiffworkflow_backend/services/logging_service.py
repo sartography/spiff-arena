@@ -99,6 +99,7 @@ def event_stream_peer_has_closed(sock: socket.socket) -> bool:
 # %(threadname)s—The thread name as a string.
 # %(message)s—The log message.
 
+
 class InvalidLogLevelError(Exception):
     pass
 
