@@ -15,8 +15,7 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial_stream
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
-# The backend treats uploads as opaque bytes, so real file formats add nothing.
-# Every byte value catches base64/encoding corruption, including NUL and non-UTF-8.
+# Exercise all byte values, including NUL and non-UTF-8.
 CONTENTS = bytes(range(256)) * 16
 
 

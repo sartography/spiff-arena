@@ -104,9 +104,9 @@ This shows a text message with a link: [filename.ext]”
 ![File Upload Process](/images/file_upload_process7.png)
 
 
-Repeat `{{link}}` in the instructions of every follow-up review task. The same link remains usable after progressing to later tasks or reloading the page, subject to the reviewer's existing file-download permissions. It does not make the attachment public.
+The same `{{link}}` can be reused in later tasks and after reloading the page. Downloads still require file-download permissions.
 
-Do not use the stored `file` value directly as a Markdown or HTML link, image source, or base64 payload. It contains an internal digest marker rather than the original bytes. Decoding it as base64 can produce a corrupt, very small download even though the stored file is intact. Use `markdown_file_download_link(file)` instead.
+Stored references are not base64 file contents. Use `markdown_file_download_link(file)` to generate a download link.
 
 ### Showing the attachment in a follow-up form
 
@@ -120,8 +120,6 @@ A later user task can reuse the `file` property from the JSON schema above and m
 }
 ```
 
-Arena displays stored attachments as download links rather than interpreting their references as local file previews. This also applies when `ui:options.filePreview` is enabled: unsaved files use the normal local preview, while submitted files use the authenticated download endpoint. A stored reference does not contain the original byte count, so Arena does not display a size derived from the digest.
-
-Filenames containing spaces, brackets, semicolons, or non-ASCII characters are supported; the link helper escapes the filename for Markdown. Keep the generated link intact rather than constructing it by splitting the reference yourself.
+With `ui:options.filePreview` enabled, unsaved files use local previews; stored attachments use authenticated download links.
 
 You can modify the final message formatting to include file size or type if those details are captured.
