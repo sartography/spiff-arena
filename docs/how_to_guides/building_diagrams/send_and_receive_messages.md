@@ -110,6 +110,11 @@ property definition alone does not initialize the expected value. With no saved 
 values, a waiting receiver can accept a message by name alone. Configure matching explicitly
 when routing replies among concurrent instances; do not rely on a property name to do it.
 
+When parallel Call Activities invoke the same receiving process, give each invocation a distinct
+correlation value and enable condition matching inside the called process. If a receiver loops
+and replies must target a specific iteration, include an iteration number in both the expected
+matching value and the reply payload.
+
 ## 5. Save and test delivery
 
 Save both diagrams and run the Waiter. Verify that the Chef starts with the order payload,

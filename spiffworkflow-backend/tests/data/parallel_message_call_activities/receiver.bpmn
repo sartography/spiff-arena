@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="looping_message_receiver" isExecutable="true">
+    <bpmn:startEvent id="receiver_start">
+      <bpmn:outgoing>start_manual</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:manualTask id="manual">
+      <bpmn:extensionElements>
+        <spiffworkflow:preScript>iteration = 0</spiffworkflow:preScript>
+      </bpmn:extensionElements>
+      <bpmn:incoming>start_manual</bpmn:incoming>
+      <bpmn:outgoing>manual_receive</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:receiveTask id="receive" messageRef="reply" spiffworkflow:isMatchingCorrelation="true">
+      <bpmn:extensionElements>
+        <spiffworkflow:messageVariable>response</spiffworkflow:messageVariable>
+        <spiffworkflow:preScript>expected_reply = f"{branch}-{iteration}" if changing_correlation else branch</spiffworkflow:preScript>
+        <spiffworkflow:postScript>iteration += 1</spiffworkflow:postScript>
+        <spiffworkflow:processVariableCorrelation>
+          <spiffworkflow:propertyId>reply_key</spiffworkflow:propertyId>
+          <spiffworkflow:expression>expected_reply</spiffworkflow:expression>
+        </spiffworkflow:processVariableCorrelation>
+      </bpmn:extensionElements>
+      <bpmn:incoming>manual_receive</bpmn:incoming>
+      <bpmn:incoming>repeat_receive</bpmn:incoming>
+      <bpmn:outgoing>receive_decide</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:exclusiveGateway id="decide" default="decide_end">
+      <bpmn:incoming>receive_decide</bpmn:incoming>
+      <bpmn:outgoing>repeat_receive</bpmn:outgoing>
+      <bpmn:outgoing>decide_end</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="receiver_end">
+      <bpmn:incoming>decide_end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="start_manual" sourceRef="receiver_start" targetRef="manual" />
+    <bpmn:sequenceFlow id="manual_receive" sourceRef="manual" targetRef="receive" />
+    <bpmn:sequenceFlow id="receive_decide" sourceRef="receive" targetRef="decide" />
+    <bpmn:sequenceFlow id="repeat_receive" sourceRef="decide" targetRef="receive">
+      <bpmn:conditionExpression>iteration &lt; 3</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="decide_end" sourceRef="decide" targetRef="receiver_end" />
+  </bpmn:process>
+  <bpmn:message id="reply" name="reply" />
+  <bpmn:correlationProperty id="reply_key" name="reply_key">
+    <bpmn:correlationPropertyRetrievalExpression messageRef="reply">
+      <bpmn:formalExpression>reply_key</bpmn:formalExpression>
+    </bpmn:correlationPropertyRetrievalExpression>
+  </bpmn:correlationProperty>
+</bpmn:definitions>

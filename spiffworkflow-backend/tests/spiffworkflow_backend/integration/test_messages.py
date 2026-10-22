@@ -7,11 +7,13 @@ from starlette.testclient import TestClient
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.messages_controller import message_send
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
+from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -19,6 +21,101 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestMessages(BaseTest):
+    @pytest.mark.parametrize("separate_manual_completions", [False, True])
+    @pytest.mark.parametrize("changing_correlation", [False, True])
+    def test_parallel_call_activities_reregister_receivers_after_looping(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+        separate_manual_completions: bool,
+        changing_correlation: bool,
+    ) -> None:
+        def reply_key(branch: str, iteration: int) -> str:
+            return f"{branch}-{iteration}" if changing_correlation else branch
+
+        process_model = load_test_spec(
+            "test_group/parallel_message_calls",
+            process_model_source_directory="parallel_message_call_activities",
+            primary_file_name="main.bpmn",
+        )
+        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", False):
+            process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+            g.user = with_super_admin_user
+            runtime = ProcessInstanceRuntime(process_instance)
+            runtime.do_engine_steps(save=True)
+            assert len(runtime.get_ready_user_tasks()) == 2
+
+            if separate_manual_completions:
+                for _ in range(2):
+                    runtime = ProcessInstanceRuntime(process_instance)
+                    self.complete_next_manual_task(
+                        runtime,
+                        execution_mode=ProcessInstanceExecutionMode.synchronous.value,
+                        data={"changing_correlation": changing_correlation},
+                    )
+            else:
+                for task in runtime.get_ready_user_tasks():
+                    task.set_data(changing_correlation=changing_correlation)
+                    runtime.complete_task(task, with_super_admin_user)
+                runtime.do_engine_steps(save=True)
+
+            def assert_waiting(expected_keys: set[str]) -> dict[str, int]:
+                # Deserialize from persisted subprocess state, not the runtime that just executed.
+                db.session.expire_all()
+                reloaded_runtime = ProcessInstanceRuntime(process_instance)
+                events = reloaded_runtime.bpmn_process_instance.waiting_events()
+                assert {values["reply_key"] for event in events for values in event.correlations.values()} == expected_keys
+                receivers = MessageInstanceModel.query.filter_by(
+                    process_instance_id=process_instance.id, message_type="receive", status="ready"
+                ).all()
+                assert len(receivers) == len(expected_keys)
+                receiver_ids = {
+                    values["reply_key"]: receiver.id for receiver in receivers for values in receiver.correlation_keys.values()
+                }
+                assert set(receiver_ids) == expected_keys
+                return receiver_ids
+
+            favorite_initial = reply_key("favorite", 0)
+            other_initial = reply_key("other", 0)
+            initial_ids = assert_waiting({favorite_initial, other_initial})
+
+            # A stale subscription must be cancelled even when its message name is still waiting.
+            stale_receiver = MessageInstanceModel(
+                process_instance_id=process_instance.id,
+                message_type="receive",
+                name="reply",
+                correlation_keys={"MainCorrelationKey": {"reply_key": "stale"}},
+            )
+            db.session.add(stale_receiver)
+            db.session.commit()
+            ProcessInstanceRuntime(process_instance).do_engine_steps(save=True)
+            assert stale_receiver.status == "cancelled"
+            assert assert_waiting({favorite_initial, other_initial}) == initial_ids
+
+            # Finish one subprocess without sending anything to the other. Each loop must
+            # register its new correlation and preserve the untouched branch's subscription.
+            for branch in ("favorite", "other"):
+                for iteration in range(3):
+                    response = message_send(
+                        "reply",
+                        {"reply_key": reply_key(branch, iteration)},
+                        ProcessInstanceExecutionMode.synchronous.value,
+                    )
+                    assert response.status_code == 200
+                    expected = {reply_key(branch, iteration + 1)} if iteration < 2 else set()
+                    if branch == "favorite":
+                        expected.add(other_initial)
+                    receiver_ids = assert_waiting(expected)
+                    if branch == "favorite":
+                        assert receiver_ids[other_initial] == initial_ids[other_initial]
+
+            assert process_instance.status == "complete"
+            for message_type in ("send", "receive"):
+                assert (
+                    MessageInstanceModel.query.filter_by(name="reply", message_type=message_type, status="completed").count() == 6
+                )
+
     def test_asynchronous_message_start_returns_reserved_process_instance(
         self,
         app: Flask,

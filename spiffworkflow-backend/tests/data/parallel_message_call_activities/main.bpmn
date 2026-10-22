@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="parallel_message_calls" isExecutable="true">
+    <bpmn:startEvent id="start">
+      <bpmn:outgoing>start_split</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:parallelGateway id="split">
+      <bpmn:incoming>start_split</bpmn:incoming>
+      <bpmn:outgoing>split_favorite</bpmn:outgoing>
+      <bpmn:outgoing>split_other</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:callActivity id="favorite" calledElement="looping_message_receiver">
+      <bpmn:extensionElements>
+        <spiffworkflow:preScript>branch = "favorite"</spiffworkflow:preScript>
+      </bpmn:extensionElements>
+      <bpmn:incoming>split_favorite</bpmn:incoming>
+      <bpmn:outgoing>favorite_join</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:callActivity id="other" calledElement="looping_message_receiver">
+      <bpmn:extensionElements>
+        <spiffworkflow:preScript>branch = "other"</spiffworkflow:preScript>
+      </bpmn:extensionElements>
+      <bpmn:incoming>split_other</bpmn:incoming>
+      <bpmn:outgoing>other_join</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:parallelGateway id="join">
+      <bpmn:incoming>favorite_join</bpmn:incoming>
+      <bpmn:incoming>other_join</bpmn:incoming>
+      <bpmn:outgoing>join_end</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:endEvent id="end">
+      <bpmn:incoming>join_end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="start_split" sourceRef="start" targetRef="split" />
+    <bpmn:sequenceFlow id="split_favorite" sourceRef="split" targetRef="favorite" />
+    <bpmn:sequenceFlow id="split_other" sourceRef="split" targetRef="other" />
+    <bpmn:sequenceFlow id="favorite_join" sourceRef="favorite" targetRef="join" />
+    <bpmn:sequenceFlow id="other_join" sourceRef="other" targetRef="join" />
+    <bpmn:sequenceFlow id="join_end" sourceRef="join" targetRef="end" />
+  </bpmn:process>
+</bpmn:definitions>

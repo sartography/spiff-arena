@@ -405,6 +405,9 @@ class TaskService:
         new_properties_json = copy.copy(bpmn_process.properties_json)
         new_properties_json["last_task"] = str(spiff_workflow.last_task.id) if spiff_workflow.last_task else None
         new_properties_json["success"] = spiff_workflow.success
+        # Correlations belong to each workflow scope, including call activity subprocesses.
+        # Snapshot them so later engine updates cannot mutate the persisted JSON in place.
+        new_properties_json["correlations"] = copy.deepcopy(spiff_workflow.correlations)
         bpmn_process.properties_json = new_properties_json
 
         self.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_instance=spiff_workflow)
