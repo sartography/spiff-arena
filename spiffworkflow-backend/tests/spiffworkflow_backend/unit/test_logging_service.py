@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import select
@@ -9,8 +10,10 @@ from types import SimpleNamespace
 
 import pytest
 from flask import Flask
+from flask import g
 
 from spiffworkflow_backend.services.logging_service import JsonFormatter
+from spiffworkflow_backend.services.logging_service import LoggingService
 from spiffworkflow_backend.services.logging_service import event_stream_peer_has_closed
 from spiffworkflow_backend.services.logging_service import setup_logger_for_app
 from spiffworkflow_backend.services.logging_service import skip_successful_probe_access_record
@@ -193,3 +196,36 @@ def test_skip_successful_probe_access_record(method: str, path: str, status_code
 def test_skip_successful_probe_access_record_keeps_records_without_access_args() -> None:
     record = logging.LogRecord("uvicorn.access", logging.INFO, __file__, 0, "plain message", None, None)
     assert skip_successful_probe_access_record(record) is True
+
+
+class _RecordCollector(logging.Handler):
+    def __init__(self) -> None:
+        super().__init__()
+        self.records: list[logging.LogRecord] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.records.append(record)
+
+
+@pytest.mark.parametrize("has_user", [True, False])
+def test_log_event_writes_its_details_to_stdout_json(monkeypatch: pytest.MonkeyPatch, has_user: bool) -> None:
+    collector = _RecordCollector()
+    monkeypatch.setattr(LoggingService._spiff_logger, "handlers", [collector])
+    monkeypatch.setattr(LoggingService._spiff_logger, "level", logging.INFO)
+    monkeypatch.setattr(LoggingService._spiff_logger, "propagate", False)
+    log_extras = {"process_instance_id": 6635, "task_spec": "Activity_One", "error_info": {"line_number": 3}}
+
+    with Flask("log_event_test").app_context():
+        if has_user:
+            g.user = SimpleNamespace(username="kb")
+        LoggingService.log_event("task_completed", log_extras)
+
+    (record,) = collector.records
+    # SpiffLogHandler still reads the details as record attributes
+    assert record.__dict__["process_instance_id"] == 6635
+    logged = json.loads(JsonFormatter({"message": "message"}).format(record))
+    assert logged["message"] == "task_completed"
+    assert logged["process_instance_id"] == 6635
+    assert logged["task_spec"] == "Activity_One"
+    assert logged["error_info"] == {"line_number": 3}
+    assert logged.get("username") == ("kb" if has_user else None)

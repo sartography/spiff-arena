@@ -45,7 +45,7 @@ class ProcessInstanceEventService:
         if add_to_db_session:
             db.session.add(process_instance_event)
 
-        log_extras: dict[str, Any] = {"task_id": task_guid}
+        log_extras: dict[str, Any] = {"task_id": task_guid, "process_instance_id": process_instance.id}
 
         process_instance_error_detail = None
         if exception is not None:

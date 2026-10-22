@@ -868,4 +868,9 @@ class LoggingService:
 
     @classmethod
     def log_event(cls, message: str, log_extras: dict | None = None) -> None:
-        cls._spiff_logger.info(message, extra=log_extras)
+        log_extras = log_extras or {}
+        # SpiffLogHandler reads the extras as record attributes, but JsonFormatter only writes "extras" to stdout
+        stdout_extras = dict(log_extras)
+        with contextlib.suppress(Exception):
+            stdout_extras["username"] = g.user.username
+        cls._spiff_logger.info(message, extra={**log_extras, "extras": stdout_extras})
