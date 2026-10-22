@@ -758,6 +758,8 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
 
     # kombu logs every Celery remote-control broadcast at DEBUG, e.g. Flower's enable_events every few seconds
     loggers_to_exclude_from_debug.append("kombu")
+    # urllib3 logs every outbound connection at DEBUG, e.g. Sentry's session uploads every minute per process
+    loggers_to_exclude_from_debug.append("urllib3")
 
     # NOTE: celery sets up handlers for all loggers by default. so if we want to stop some weird logger firehosing our logging,
     # we need to remove its handler or set its log level to a high level like ERROR. For example, sql alchemy seems to log all
@@ -839,6 +841,9 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
     apscheduler_executor_logger.setLevel(logging.INFO)
     apscheduler_executor_logger.addFilter(skip_apscheduler_running_job_record)
     logging.getLogger("uvicorn.access").addFilter(skip_successful_probe_access_record)
+    # Flower's Tornado server is loopback-only, so its access log is the metrics proxy's scrape every 15s.
+    # Flower silences it itself, but our setup turns it back on. 4xx/5xx still log as WARNING/ERROR.
+    logging.getLogger("tornado.access").setLevel(logging.WARNING)
 
 
 def get_log_formatter(app: Flask) -> logging.Formatter:

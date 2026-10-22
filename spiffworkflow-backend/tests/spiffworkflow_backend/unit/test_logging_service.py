@@ -127,9 +127,12 @@ def test_setup_logger_obscures_preconfigured_sqlalchemy_handler_at_debug(monkeyp
         preconfigured_handler.setFormatter(previous_handler_formatter)
 
 
+@pytest.mark.parametrize("logger_name", ["kombu.pidbox", "urllib3.connectionpool"])
 @pytest.mark.parametrize("has_preconfigured_handler", [True, False])
-def test_setup_logger_keeps_kombu_at_info_at_debug(monkeypatch: pytest.MonkeyPatch, has_preconfigured_handler: bool) -> None:
-    app = Flask("kombu_logger_test")
+def test_setup_logger_keeps_chatty_library_at_info_at_debug(
+    monkeypatch: pytest.MonkeyPatch, logger_name: str, has_preconfigured_handler: bool
+) -> None:
+    app = Flask("chatty_library_logger_test")
     app.config.update(
         ENV_IDENTIFIER="non_local",
         SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST=None,
@@ -137,16 +140,38 @@ def test_setup_logger_keeps_kombu_at_info_at_debug(monkeypatch: pytest.MonkeyPat
         SPIFFWORKFLOW_BACKEND_LOG_TO_FILE=False,
         SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE="",
     )
-    kombu_logger = logging.getLogger("kombu.pidbox")
-    monkeypatch.setattr(kombu_logger, "handlers", [logging.StreamHandler()] if has_preconfigured_handler else [])
-    monkeypatch.setattr(kombu_logger, "level", kombu_logger.level)
-    monkeypatch.setattr(kombu_logger, "propagate", kombu_logger.propagate)
-    monkeypatch.setattr(logging.root.manager, "loggerDict", {kombu_logger.name: kombu_logger})
+    library_logger = logging.getLogger(logger_name)
+    monkeypatch.setattr(library_logger, "handlers", [logging.StreamHandler()] if has_preconfigured_handler else [])
+    monkeypatch.setattr(library_logger, "level", library_logger.level)
+    monkeypatch.setattr(library_logger, "propagate", library_logger.propagate)
+    monkeypatch.setattr(logging.root.manager, "loggerDict", {library_logger.name: library_logger})
 
     setup_logger_for_app(app, logging)
 
-    assert kombu_logger.level == logging.INFO
-    assert [handler.level for handler in kombu_logger.handlers] == [logging.INFO]
+    assert library_logger.level == logging.INFO
+    assert [handler.level for handler in library_logger.handlers] == [logging.INFO]
+
+
+def test_setup_logger_logs_only_failed_flower_requests(monkeypatch: pytest.MonkeyPatch) -> None:
+    app = Flask("flower_access_logger_test")
+    app.config.update(
+        ENV_IDENTIFIER="non_local",
+        SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST=None,
+        SPIFFWORKFLOW_BACKEND_LOG_LEVEL="debug",
+        SPIFFWORKFLOW_BACKEND_LOG_TO_FILE=False,
+        SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE="",
+    )
+    tornado_access_logger = logging.getLogger("tornado.access")
+    monkeypatch.setattr(tornado_access_logger, "handlers", [])
+    monkeypatch.setattr(tornado_access_logger, "level", tornado_access_logger.level)
+    monkeypatch.setattr(tornado_access_logger, "propagate", tornado_access_logger.propagate)
+    monkeypatch.setattr(logging.root.manager, "loggerDict", {tornado_access_logger.name: tornado_access_logger})
+
+    setup_logger_for_app(app, logging)
+
+    # tornado logs 2xx/3xx at INFO, 4xx at WARNING, and 5xx at ERROR
+    assert not tornado_access_logger.isEnabledFor(logging.INFO)
+    assert tornado_access_logger.isEnabledFor(logging.WARNING)
 
 
 def test_setup_logger_keeps_kombu_at_info_when_logging_to_file(monkeypatch: pytest.MonkeyPatch) -> None:
