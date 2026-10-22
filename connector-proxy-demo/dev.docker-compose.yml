@@ -7,7 +7,6 @@ services:
     user: "${RUN_AS}"
     environment:
       FLASK_DEBUG: "1"
-      POETRY_VIRTUALENVS_IN_PROJECT: "true"
       XDG_CACHE_HOME: "/app/.cache"
     env_file:
       - path: .env

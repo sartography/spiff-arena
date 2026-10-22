@@ -58,7 +58,7 @@ build-images:
 		--build-arg GROUP_NAME=$(GROUP_NAME) \
 		$(JUST)
 
-dev-env: stop-dev build-images uv-sync cp-poetry-i be-uv-sync be-db-clean fe-npm-i
+dev-env: stop-dev build-images uv-sync cp-uv-sync be-uv-sync be-db-clean fe-npm-i
 	@true
 
 start-dev: stop-dev
@@ -119,11 +119,11 @@ co-wheel:
 cp-sh:
 	$(IN_CONNECTOR_PROXY) /bin/bash
 
-cp-poetry-i:
-	$(IN_CONNECTOR_PROXY) poetry install
+cp-uv-sync:
+	$(IN_CONNECTOR_PROXY) uv sync --locked
 
-cp-poetry-lock:
-	$(IN_CONNECTOR_PROXY) poetry lock
+cp-uv-lock:
+	$(IN_CONNECTOR_PROXY) uv lock
 
 cp-logs:
 	docker logs -f $(CONNECTOR_PROXY_CONTAINER)
@@ -191,7 +191,7 @@ take-ownership:
 	be-ast-grep be-clear-log-file be-logs be-mypy be-uv-sync be-venv-rm \
 	be-db-clean be-db-migrate be-sh be-sqlite be-tests be-tests-par \
 	co-tests co-wheel \
-	cp-logs cp-poetry-i cp-poetry-lock cp-sh \
+	cp-logs cp-uv-sync cp-uv-lock cp-sh \
 	cpagg-logs cpagg-sh \
 	cpah-logs cpah-sh \
 	fe-lint-fix fe-logs fe-npm-clean fe-npm-i fe-npm-rm fe-sh fe-unimported  \

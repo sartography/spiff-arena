@@ -43,23 +43,22 @@ For a potentially faster setup:
 
 ### 4. Mac Install Issues
 
-First, follow the README.md at the root of the spiff-arena repo.
-If you're on a Mac and trying to run natively (this might also apply elsewhere) and get errors when running `poetry install`, many of these issues are related to relational database engine libraries.
-Many people have encountered these problems, so hopefully, the solution to your specific issue is easy to find, but this is not always the case.
-You may need to install additional system dependencies:
+Follow the README.md at the root of the repository. A plain `uv sync` uses SQLite and does not require MySQL or PostgreSQL client libraries.
 
-    brew install mysql-client pkg-config
-    export PKG_CONFIG_PATH="$(brew --prefix)/opt/mysql-client/lib/pkgconfig"
-    pip install mysqlclient
-    pip install psycopg2
+For MySQL, install the client libraries before syncing the optional driver from `spiffworkflow-backend/`:
 
-One person decided that mysqlclient and psycopg2 were more trouble than they were worth and removed them from the pyproject.toml, opting instead to run `poetry add pymysql`.
-If you are using mysql, psycopg2 is not necessary, and pymysql is a pure Python implementation of the MySQL client library.
-In that case, Python won't recognize MySQLdb as a module, so after the above installs (which you would do pre-Poetry), add these lines to `__init__.py` in the backend project:
+```bash
+brew install mysql-client pkg-config
+export PKG_CONFIG_PATH="$(brew --prefix mysql-client)/lib/pkgconfig"
+uv sync --extra mysql
+```
 
-```python
-import pymysql
-pymysql.install_as_MySQLdb()
+For PostgreSQL:
+
+```bash
+brew install libpq
+export PATH="$(brew --prefix libpq)/bin:$PATH"
+uv sync --extra postgres
 ```
 
 ### 5. Access Hosted Version of Spiff

@@ -1,24 +1,21 @@
-[tool.poetry]
+[project]
 name = "connector-example"
 version = "1.0.0"
 description = "Example Connector for SpiffWorkflow Service Tasks"
-authors = ["Jon Herron <jon.herron@yahoo.com>"]
+authors = [{ name = "Jon Herron", email = "jon.herron@yahoo.com" }]
 readme = "README.md"
-packages = [{include = "connector_example", from = "src" }]
+requires-python = ">=3.10,<4"
+dependencies = ["spiffworkflow-connector-command"]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-spiffworkflow-connector-command = {git = "https://github.com/sartography/spiffworkflow-connector-command.git", rev = "main"}
+[tool.uv.sources]
+spiffworkflow-connector-command = { git = "https://github.com/sartography/spiffworkflow-connector-command.git", rev = "7e20603849ee609267ddc97c8433077e09ccd124" }
 
-[tool.poetry.group.dev.dependencies]
-mypy = "^1.6.0"
-ruff = "^0.0.292"
-pytest = "^9.0.3"
-
+[dependency-groups]
+dev = ["mypy>=1.6.0,<2", "ruff>=0.0.292,<0.0.293", "pytest>=9.0.3,<10"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.ruff]
 select = [
