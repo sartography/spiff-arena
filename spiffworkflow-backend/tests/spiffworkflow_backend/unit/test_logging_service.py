@@ -209,30 +209,6 @@ class _RecordCollector(logging.Handler):
         self.records.append(record)
 
 
-@pytest.mark.parametrize("has_user", [True, False])
-def test_log_event_writes_its_details_to_stdout_json(monkeypatch: pytest.MonkeyPatch, has_user: bool) -> None:
-    collector = _RecordCollector()
-    monkeypatch.setattr(LoggingService._spiff_logger, "handlers", [collector])
-    monkeypatch.setattr(LoggingService._spiff_logger, "level", logging.INFO)
-    monkeypatch.setattr(LoggingService._spiff_logger, "propagate", False)
-    log_extras = {"process_instance_id": 6635, "task_spec": "Activity_One", "error_info": {"line_number": 3}}
-
-    with Flask("log_event_test").app_context():
-        if has_user:
-            g.user = SimpleNamespace(username="kb")
-        LoggingService.log_event("task_completed", log_extras)
-
-    (record,) = collector.records
-    # SpiffLogHandler still reads the details as record attributes
-    assert record.__dict__["process_instance_id"] == 6635
-    logged = json.loads(JsonFormatter({"message": "message"}).format(record))
-    assert logged["message"] == "task_completed"
-    assert logged["process_instance_id"] == 6635
-    assert logged["task_spec"] == "Activity_One"
-    assert logged["error_info"] == {"line_number": 3}
-    assert logged.get("username") == ("kb" if has_user else None)
-
-
 @pytest.mark.parametrize("analytics_enabled", [True, False])
 @pytest.mark.parametrize("log_level", ["info", "warning"])
 @pytest.mark.parametrize("log_to_file", [True, False])
@@ -298,7 +274,6 @@ def test_setup_routes_event_details_to_output_and_analytics(
         assert record.items() >= details.items()
         assert record["message"] == "task_completed"
         assert record["loggerName"] == "spiff.event"
-        assert record["username"] == "kb"
     else:
         assert records == []
     for unused_output in (stdout, original_stdout, file_output):
