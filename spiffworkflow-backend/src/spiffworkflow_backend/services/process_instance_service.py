@@ -10,6 +10,7 @@ from datetime import datetime
 from datetime import timezone
 from hashlib import sha256
 from typing import Any
+from urllib.parse import quote
 from urllib.parse import unquote
 from uuid import UUID
 
@@ -722,10 +723,10 @@ class ProcessInstanceService:
         process_instance_id: int,
     ) -> ProcessInstanceFileDataModel | None:
         with suppress(Exception):
-            parts = value.split(";")
-            mimetype = parts[0][5:]
-            filename = unquote(parts[1].split("=")[1])
-            base64_value = parts[2].split(",")[1]
+            metadata, base64_value = value.rsplit(";base64,", 1)
+            media_type, encoded_filename = metadata.split(";name=", 1)
+            mimetype = media_type[5:]
+            filename = unquote(encoded_filename)
             if not base64_value.startswith(cls.FILE_DATA_DIGEST_PREFIX):
                 contents = base64.b64decode(base64_value)
                 digest = hashlib.sha256(contents).hexdigest()
@@ -776,7 +777,8 @@ class ProcessInstanceService:
             if model is None:
                 continue
             models.append(model)
-            digest_reference = f"data:{model.mimetype};name={model.filename};base64,{cls.FILE_DATA_DIGEST_PREFIX}{model.digest}"
+            encoded_filename = quote(model.filename, safe="")
+            digest_reference = f"data:{model.mimetype};name={encoded_filename};base64,{cls.FILE_DATA_DIGEST_PREFIX}{model.digest}"
             collection[elem] = digest_reference  # type: ignore
 
         return models
