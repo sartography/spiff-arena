@@ -1,8 +1,9 @@
 # Base image to share ENV vars that activate VENV.
 FROM python:3.13.13-slim-trixie AS base
 
-ENV VIRTUAL_ENV=/app/venv
-RUN python3 -m venv --without-pip $VIRTUAL_ENV
+ENV VIRTUAL_ENV=/app/.venv
+RUN python3 -m venv --without-pip $VIRTUAL_ENV \
+  && python3 -m pip uninstall --yes pip
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 WORKDIR /app
@@ -13,9 +14,6 @@ WORKDIR /app
 # base plus packages needed for deployment. Could just install these in final, but then we can't cache as much.
 # vim is just for debugging
 FROM base AS deployment
-
-# Keep pip and its vendored dependencies out of the runtime image.
-RUN /usr/local/bin/python3 -m pip uninstall --yes pip
 
 # git-core because the app does "git commit", etc
 # curl because the docker health check uses it
@@ -34,18 +32,14 @@ RUN apt-get update \
 # Setup image for installing Python dependencies.
 FROM base AS setup
 
-RUN /usr/local/bin/python3 -m pip install poetry==2.4.1
+COPY --from=ghcr.io/astral-sh/uv:0.12.24 /uv /usr/local/bin/uv
 RUN useradd _gunicorn --no-create-home --user-group
 
 RUN apt-get update \
-  && DEBIAN_FRONTEND=noninteractive apt-get install -y -q gcc libssl-dev pkg-config
-
-# poetry install takes a long time and can be cached if dependencies don't change,
-# so that's why we tolerate running it twice.
-COPY pyproject.toml poetry.lock /app/
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y -q gcc git libssl-dev pkg-config
 
 COPY . /app
-RUN poetry install
+RUN uv sync --locked --no-dev
 
 
 ######################## - FINAL
