@@ -1,6 +1,14 @@
+# The container health check may request / from inside the container every few
+# seconds. Skip its successful requests; failures and real traffic still log.
+map "$remote_addr:$status" $spiff_frontend_loggable {
+    ~^127\.0\.0\.1:2 0;
+    default 1;
+}
+
 server {
     listen {{SPIFFWORKFLOW_FRONTEND_INTERNAL_PORT}};
     server_name localhost;
+    access_log /var/log/nginx/access.log main if=$spiff_frontend_loggable;
 
     # The default is 4 8k, which isn't quite enough for all openid tokens
     # nginx config docs: https://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers

@@ -111,6 +111,20 @@ def skip_apscheduler_running_job_record(record: logging.LogRecord) -> bool:
     return not record.getMessage().startswith("Running job ")
 
 
+# Container health checks and Prometheus may scrape these every few seconds. Failures still log.
+SUCCESSFUL_PROBE_PATHS = {"/api/v1.0/status", "/metrics"}
+
+
+def skip_successful_probe_access_record(record: logging.LogRecord) -> bool:
+    # uvicorn access records carry (client_addr, method, path_with_query, http_version, status_code)
+    if not isinstance(record.args, tuple) or len(record.args) != 5:
+        return True
+    _client_addr, method, path_with_query, _http_version, status_code = record.args
+    path = str(path_with_query).split("?", 1)[0]
+    is_success = isinstance(status_code, int) and 200 <= status_code < 300
+    return not (method == "GET" and path in SUCCESSFUL_PROBE_PATHS and is_success)
+
+
 EVENT_STREAM_HANDLERS: "weakref.WeakSet[SpiffLogHandler]" = weakref.WeakSet()
 
 
@@ -743,6 +757,9 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
     if "sqlalchemy" not in obscure_loggers_to_exclude_from_main_logging:
         loggers_to_exclude_from_debug.append("sqlalchemy")
 
+    # kombu logs every Celery remote-control broadcast at DEBUG, e.g. Flower's enable_events every few seconds
+    loggers_to_exclude_from_debug.append("kombu")
+
     # NOTE: celery sets up handlers for all loggers by default. so if we want to stop some weird logger firehosing our logging,
     # we need to remove its handler or set its log level to a high level like ERROR. For example, sql alchemy seems to log all
     # queries at the INFO level and frickin query RESULTS as well if level is DEBUG.
@@ -767,16 +784,16 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
                 if exclude_logger_name_from_logging:
                     log_level_to_use = "ERROR"
 
-                if len(logger_for_name.handlers) < 1:
-                    # only need to set the log level here if it is not already excluded from main logging
-                    if not exclude_logger_name_from_logging and upper_log_level_string == "DEBUG":
-                        exclude_logger_name_from_debug = False
-                        for logger_to_exclude_from_debug in loggers_to_exclude_from_debug:
-                            if name.startswith(logger_to_exclude_from_debug):
-                                exclude_logger_name_from_debug = True
-                        if exclude_logger_name_from_debug:
-                            log_level_to_use = "INFO"
+                # only need to set the log level here if it is not already excluded from main logging
+                if not exclude_logger_name_from_logging and upper_log_level_string == "DEBUG":
+                    exclude_logger_name_from_debug = False
+                    for logger_to_exclude_from_debug in loggers_to_exclude_from_debug:
+                        if name.startswith(logger_to_exclude_from_debug):
+                            exclude_logger_name_from_debug = True
+                    if exclude_logger_name_from_debug:
+                        log_level_to_use = "INFO"
 
+                if len(logger_for_name.handlers) < 1:
                     logger_for_name.addHandler(logging.StreamHandler(sys.stdout))
 
                 for the_handler in logger_for_name.handlers:
@@ -804,6 +821,7 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
     apscheduler_executor_logger = logging.getLogger("apscheduler.executors.default")
     apscheduler_executor_logger.setLevel(logging.INFO)
     apscheduler_executor_logger.addFilter(skip_apscheduler_running_job_record)
+    logging.getLogger("uvicorn.access").addFilter(skip_successful_probe_access_record)
 
 
 def get_log_formatter(app: Flask) -> logging.Formatter:

@@ -68,6 +68,32 @@ class TestMessageService(BaseTest):
             assert MessageService._claim_ready_message_instance(message_instance) is False
             assert message_instance.status == MessageStatuses.running.value
 
+    def test_correlate_all_logs_each_waiting_send_message_once(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        message_instance = MessageInstanceModel(
+            message_type=MessageTypes.send.value,
+            name="waiting_message",
+            payload={},
+            status=MessageStatuses.ready.value,
+        )
+        db.session.add(message_instance)
+        db.session.commit()
+
+        with (
+            patch.object(MessageService, "_waiting_send_message_ids_logged", set()),
+            patch.object(MessageService, "correlate_send_message"),
+            patch.object(app.logger, "info") as log_info,
+        ):
+            MessageService.correlate_all_message_instances()
+            MessageService.correlate_all_message_instances()
+
+        waiting_logs = [call for call in log_info.call_args_list if "Runtime waiting send messages" in call.args[0]]
+        assert len(waiting_logs) == 1
+        assert f"message id {message_instance.id}." in waiting_logs[0].args[0]
+
     def test_correlate_send_message_does_not_requeue_already_claimed_send(
         self,
         app: Flask,

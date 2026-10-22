@@ -12,6 +12,7 @@ from flask import Flask
 from spiffworkflow_backend.services.logging_service import JsonFormatter
 from spiffworkflow_backend.services.logging_service import event_stream_peer_has_closed
 from spiffworkflow_backend.services.logging_service import setup_logger_for_app
+from spiffworkflow_backend.services.logging_service import skip_successful_probe_access_record
 
 
 def test_import_creates_missing_prometheus_multiproc_dir(tmp_path: Path) -> None:
@@ -118,3 +119,50 @@ def test_setup_logger_obscures_preconfigured_sqlalchemy_handler_at_debug(monkeyp
         sqlalchemy_logger.propagate = previous_logger_propagate
         preconfigured_handler.setLevel(previous_handler_level)
         preconfigured_handler.setFormatter(previous_handler_formatter)
+
+
+@pytest.mark.parametrize("has_preconfigured_handler", [True, False])
+def test_setup_logger_keeps_kombu_at_info_at_debug(monkeypatch: pytest.MonkeyPatch, has_preconfigured_handler: bool) -> None:
+    app = Flask("kombu_logger_test")
+    app.config.update(
+        ENV_IDENTIFIER="non_local",
+        SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST=None,
+        SPIFFWORKFLOW_BACKEND_LOG_LEVEL="debug",
+        SPIFFWORKFLOW_BACKEND_LOG_TO_FILE=False,
+        SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE="",
+    )
+    kombu_logger = logging.getLogger("kombu.pidbox")
+    monkeypatch.setattr(kombu_logger, "handlers", [logging.StreamHandler()] if has_preconfigured_handler else [])
+    monkeypatch.setattr(kombu_logger, "level", kombu_logger.level)
+    monkeypatch.setattr(kombu_logger, "propagate", kombu_logger.propagate)
+    monkeypatch.setattr(logging.root.manager, "loggerDict", {kombu_logger.name: kombu_logger})
+
+    setup_logger_for_app(app, logging)
+
+    assert kombu_logger.level == logging.INFO
+    assert [handler.level for handler in kombu_logger.handlers] == [logging.INFO]
+
+
+def _uvicorn_access_record(method: str, path: str, status_code: int) -> logging.LogRecord:
+    access_args = ("127.0.0.1:5000", method, path, "1.1", status_code)
+    return logging.LogRecord("uvicorn.access", logging.INFO, __file__, 0, '%s - "%s %s HTTP/%s" %d', access_args, None)
+
+
+@pytest.mark.parametrize(
+    ("method", "path", "status_code", "logged"),
+    [
+        ("GET", "/api/v1.0/status", 200, False),
+        ("GET", "/metrics", 200, False),
+        ("GET", "/metrics?name[]=x", 200, False),
+        ("GET", "/api/v1.0/status", 503, True),
+        ("POST", "/api/v1.0/status", 200, True),
+        ("GET", "/api/v1.0/tasks", 200, True),
+    ],
+)
+def test_skip_successful_probe_access_record(method: str, path: str, status_code: int, logged: bool) -> None:
+    assert skip_successful_probe_access_record(_uvicorn_access_record(method, path, status_code)) is logged
+
+
+def test_skip_successful_probe_access_record_keeps_records_without_access_args() -> None:
+    record = logging.LogRecord("uvicorn.access", logging.INFO, __file__, 0, "plain message", None, None)
+    assert skip_successful_probe_access_record(record) is True
