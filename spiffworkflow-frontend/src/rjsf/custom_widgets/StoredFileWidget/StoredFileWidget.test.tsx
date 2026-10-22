@@ -93,19 +93,27 @@ describe('stored file references', () => {
   });
 
   it.each([
-    ['notes.txt', 'text/plain;charset=utf-8'],
-    ['notes; version=2.txt', 'text/plain;charset=utf-8;format=flowed'],
-  ])('downloads %s with MIME parameters', (name, type) => {
-    const { container } = renderForm({ value: stored(name, type) });
-    expect(screen.getByRole('link', { name })).toHaveAttribute(
-      'href',
-      `${BACKEND_BASE_URL}/process-data-file-download/group:model/42/${digest}`,
-    );
-    expect(screen.getByText(`(${type})`)).toBeInTheDocument();
-    expect(
-      container.querySelector('[src^="data:"], a[href^="data:"]'),
-    ).toBeNull();
-  });
+    ['notes.txt', 'text/plain;charset=utf-8', false],
+    ['notes; version=2.txt', 'text/plain;charset=utf-8;format=flowed', false],
+    ['notes.txt', 'text/plain;charset=utf-8', true],
+    ['notes; version=2.txt', 'text/plain;charset=utf-8;format=flowed', true],
+  ] as const)(
+    'downloads and submits %s (%s, readonly=%s)',
+    (name, type, readonly) => {
+      const value = stored(name, type);
+      const { container, onSubmit } = renderForm({ value, readonly });
+      expect(screen.getByRole('link', { name })).toHaveAttribute(
+        'href',
+        `${BACKEND_BASE_URL}/process-data-file-download/group:model/42/${digest}`,
+      );
+      expect(screen.getByText(`(${type})`)).toBeInTheDocument();
+      expect(
+        container.querySelector('[src^="data:"], a[href^="data:"]'),
+      ).toBeNull();
+      fireEvent.click(screen.getByText('Submit'));
+      expect(onSubmit.mock.calls[0][0].formData).toEqual({ file: value });
+    },
+  );
 
   it.each([{ readonly: true }, { disabled: true }])(
     'does not offer removal for a read-only/disabled stored file: %j',
@@ -178,6 +186,14 @@ describe('stored file references', () => {
       );
     },
   );
+
+  it('submits a newly selected file with MIME parameters', () => {
+    const value =
+      'data:text/plain;charset=utf-8;name=notes.txt;base64,aGVsbG8=';
+    const { onSubmit } = renderForm({ value });
+    fireEvent.click(screen.getByText('Submit'));
+    expect(onSubmit.mock.calls[0][0].formData).toEqual({ file: value });
+  });
 
   it('retains normal previews before submission', () => {
     renderForm({ value: raw });

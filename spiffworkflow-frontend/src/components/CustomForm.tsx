@@ -1,5 +1,4 @@
-// eslint-disable-next-line import-x/no-rename-default
-import rjsfValidator from '@rjsf/validator-ajv8';
+import { customizeValidator } from '@rjsf/validator-ajv8';
 
 import ajvErrors from 'ajv-errors';
 
@@ -33,6 +32,13 @@ import ObjectFieldRestrictedGridTemplate from '../rjsf/custom_templates/ObjectFi
 import { matchNumberRegex } from '../helpers';
 import { Notification } from './Notification';
 
+const rjsfValidator = customizeValidator({
+  customFormats: {
+    // RJSF's default data-url format omits MIME parameters such as charset.
+    'data-url':
+      /^data:([a-z]+\/[a-z0-9-+.]+)?(?:;[^;=]+=[^;]*)*;(?:name=(.*);)?base64,(.*)$/,
+  },
+});
 ajvErrors(rjsfValidator.ajv);
 
 /**
