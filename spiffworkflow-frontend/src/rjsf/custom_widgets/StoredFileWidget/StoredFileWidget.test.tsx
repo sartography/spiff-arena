@@ -85,10 +85,26 @@ describe('stored file references', () => {
     expect(
       container.querySelector('[src^="data:"], a[href^="data:"]'),
     ).toBeNull();
+    expect(screen.getByText(`(${type})`)).toBeInTheDocument();
     expect(screen.queryByText(/63 bytes/)).not.toBeInTheDocument();
     expect(container.querySelector('input[type=file]')).not.toBeRequired();
     fireEvent.click(screen.getByText('Submit'));
     expect(onSubmit.mock.calls[0][0].formData).toEqual({ file: value });
+  });
+
+  it.each([
+    ['notes.txt', 'text/plain;charset=utf-8'],
+    ['notes; version=2.txt', 'text/plain;charset=utf-8;format=flowed'],
+  ])('downloads %s with MIME parameters', (name, type) => {
+    const { container } = renderForm({ value: stored(name, type) });
+    expect(screen.getByRole('link', { name })).toHaveAttribute(
+      'href',
+      `${BACKEND_BASE_URL}/process-data-file-download/group:model/42/${digest}`,
+    );
+    expect(screen.getByText(`(${type})`)).toBeInTheDocument();
+    expect(
+      container.querySelector('[src^="data:"], a[href^="data:"]'),
+    ).toBeNull();
   });
 
   it.each([{ readonly: true }, { disabled: true }])(

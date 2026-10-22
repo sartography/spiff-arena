@@ -16,7 +16,7 @@ const DefaultFileWidget = getDefaultRegistry().widgets.FileWidget;
 // Passing them to RJSF produces corrupt previews and a fictitious file size.
 const storedFile = (value: string) => {
   const match =
-    /^data:([^;]*);name=(.*);base64,spifffiledatadigest\+([a-f0-9]{64})$/.exec(
+    /^data:([^;]*(?:;(?!name=)[^;]*)*);name=(.*);base64,spifffiledatadigest\+([a-f0-9]{64})$/.exec(
       value,
     );
   if (!match) {
