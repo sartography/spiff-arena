@@ -1,7 +1,7 @@
 # The container health check may request / from inside the container every few
 # seconds. Skip its successful requests; failures and real traffic still log.
-map "$remote_addr:$status" $spiff_frontend_loggable {
-    ~^127\.0\.0\.1:2 0;
+map "$remote_addr:$status:$request_uri" $spiff_frontend_loggable {
+    ~^127\.0\.0\.1:2\d\d:/$ 0;
     default 1;
 }
 

@@ -5,6 +5,7 @@ import socket
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from flask import Flask
@@ -141,6 +142,32 @@ def test_setup_logger_keeps_kombu_at_info_at_debug(monkeypatch: pytest.MonkeyPat
 
     assert kombu_logger.level == logging.INFO
     assert [handler.level for handler in kombu_logger.handlers] == [logging.INFO]
+
+
+def test_setup_logger_keeps_kombu_at_info_when_logging_to_file(monkeypatch: pytest.MonkeyPatch) -> None:
+    app = Flask("kombu_file_logger_test")
+    app.config.update(
+        ENV_IDENTIFIER="non_local",
+        SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST=None,
+        SPIFFWORKFLOW_BACKEND_LOG_LEVEL="debug",
+        SPIFFWORKFLOW_BACKEND_LOG_TO_FILE=True,
+        SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE="",
+    )
+    kombu_logger = logging.getLogger("kombu.pidbox")
+    other_logger = logging.getLogger("some.library")
+    for logger in (kombu_logger, other_logger):
+        monkeypatch.setattr(logger, "handlers", [])
+        monkeypatch.setattr(logger, "level", logger.level)
+        monkeypatch.setattr(logger, "propagate", logger.propagate)
+    monkeypatch.setattr(logging.root.manager, "loggerDict", {kombu_logger.name: kombu_logger, other_logger.name: other_logger})
+    file_handler = logging.StreamHandler()
+    primary_logger = SimpleNamespace(FileHandler=lambda _path: file_handler, root=logging.root)
+
+    setup_logger_for_app(app, primary_logger)
+
+    assert kombu_logger.level == logging.INFO
+    assert other_logger.level == logging.DEBUG
+    assert file_handler.level == logging.DEBUG
 
 
 def _uvicorn_access_record(method: str, path: str, status_code: int) -> logging.LogRecord:

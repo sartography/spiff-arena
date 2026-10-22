@@ -774,6 +774,9 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
                 logger_for_name.handlers = []
                 logger_for_name.propagate = False
                 logger_for_name.addHandler(spiff_logger_filehandler)
+                # the file handler is shared by every logger, so cap only the logger's own level
+                if upper_log_level_string == "DEBUG" and name.startswith(tuple(loggers_to_exclude_from_debug)):
+                    log_level_to_use = "INFO"
             else:
                 exclude_logger_name_from_logging = False
                 for logger_to_exclude in obscure_loggers_to_exclude_from_main_logging:

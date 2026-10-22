@@ -94,6 +94,39 @@ class TestMessageService(BaseTest):
         assert len(waiting_logs) == 1
         assert f"message id {message_instance.id}." in waiting_logs[0].args[0]
 
+    def test_correlate_all_does_not_mark_unreached_waiting_messages_as_logged(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        message_instances = []
+        for name in ("first_waiting_message", "second_waiting_message"):
+            message_instance = MessageInstanceModel(
+                message_type=MessageTypes.send.value,
+                name=name,
+                payload={},
+                status=MessageStatuses.ready.value,
+            )
+            db.session.add(message_instance)
+            message_instances.append(message_instance)
+        db.session.commit()
+        first_id, second_id = sorted(message_instance.id for message_instance in message_instances)
+
+        with (
+            patch.object(MessageService, "_waiting_send_message_ids_logged", set()),
+            patch.object(app.logger, "info") as log_info,
+        ):
+            with patch.object(MessageService, "correlate_send_message", side_effect=RuntimeError("correlation failed")):
+                with pytest.raises(RuntimeError):
+                    MessageService.correlate_all_message_instances()
+            with patch.object(MessageService, "correlate_send_message"):
+                MessageService.correlate_all_message_instances()
+
+        waiting_logs = [call.args[0] for call in log_info.call_args_list if "Runtime waiting send messages" in call.args[0]]
+        assert len(waiting_logs) == 2
+        assert f"message id {first_id}." in waiting_logs[0]
+        assert f"message id {second_id}." in waiting_logs[1]
+
     def test_correlate_send_message_does_not_requeue_already_claimed_send(
         self,
         app: Flask,
