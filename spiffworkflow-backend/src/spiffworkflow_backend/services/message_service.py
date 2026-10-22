@@ -54,6 +54,7 @@ class MessageServiceError(Exception):
 
 class MessageService:
     MAX_TIME_TO_LIVE_SECONDS = 300
+    _waiting_send_message_ids_logged: set[int] = set()
 
     @classmethod
     def current_time_in_seconds(cls) -> int:
@@ -737,11 +738,16 @@ class MessageService:
             status=MessageStatuses.ready.value,
         ).all()
 
+        # This runs every few seconds, so log each waiting message once rather than on every pass.
+        ready_ids = {message_instance_send.id for message_instance_send in message_instances_send}
+        cls._waiting_send_message_ids_logged = cls._waiting_send_message_ids_logged & ready_ids
         for message_instance_send in message_instances_send:
-            current_app.logger.info(
-                f"Runtime waiting send messages: Processing message id {message_instance_send.id}. "
-                f"Name: '{message_instance_send.name}'"
-            )
+            if message_instance_send.id not in cls._waiting_send_message_ids_logged:
+                current_app.logger.info(
+                    f"Runtime waiting send messages: Processing message id {message_instance_send.id}. "
+                    f"Name: '{message_instance_send.name}'"
+                )
+                cls._waiting_send_message_ids_logged.add(message_instance_send.id)
             cls.correlate_send_message(message_instance_send, execution_mode=execution_mode, sweep_expired_messages=False)
 
     @classmethod
