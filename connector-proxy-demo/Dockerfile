@@ -2,7 +2,7 @@
 FROM python:3.13.13-slim-trixie AS base
 
 ENV VIRTUAL_ENV=/app/venv
-RUN python3 -m venv $VIRTUAL_ENV
+RUN python3 -m venv --without-pip $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 WORKDIR /app
@@ -13,6 +13,9 @@ WORKDIR /app
 # base plus packages needed for deployment. Could just install these in final, but then we can't cache as much.
 # vim is just for debugging
 FROM base AS deployment
+
+# Keep pip and its vendored dependencies out of the runtime image.
+RUN /usr/local/bin/python3 -m pip uninstall --yes pip
 
 # git-core because the app does "git commit", etc
 # curl because the docker health check uses it
@@ -31,7 +34,7 @@ RUN apt-get update \
 # Setup image for installing Python dependencies.
 FROM base AS setup
 
-RUN pip install poetry==2.4.1
+RUN /usr/local/bin/python3 -m pip install poetry==2.4.1
 RUN useradd _gunicorn --no-create-home --user-group
 
 RUN apt-get update \
