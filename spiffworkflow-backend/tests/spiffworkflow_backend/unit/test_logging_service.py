@@ -1,3 +1,5 @@
+import io
+import json
 import logging
 import os
 import select
@@ -9,8 +11,11 @@ from types import SimpleNamespace
 
 import pytest
 from flask import Flask
+from flask import g
 
 from spiffworkflow_backend.services.logging_service import JsonFormatter
+from spiffworkflow_backend.services.logging_service import LoggingService
+from spiffworkflow_backend.services.logging_service import SpiffLogHandler
 from spiffworkflow_backend.services.logging_service import event_stream_peer_has_closed
 from spiffworkflow_backend.services.logging_service import setup_logger_for_app
 from spiffworkflow_backend.services.logging_service import skip_successful_probe_access_record
@@ -193,3 +198,98 @@ def test_skip_successful_probe_access_record(method: str, path: str, status_code
 def test_skip_successful_probe_access_record_keeps_records_without_access_args() -> None:
     record = logging.LogRecord("uvicorn.access", logging.INFO, __file__, 0, "plain message", None, None)
     assert skip_successful_probe_access_record(record) is True
+
+
+class _RecordCollector(logging.Handler):
+    def __init__(self) -> None:
+        super().__init__()
+        self.records: list[logging.LogRecord] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.records.append(record)
+
+
+@pytest.mark.parametrize("analytics_enabled", [True, False])
+@pytest.mark.parametrize("log_level", ["info", "warning"])
+@pytest.mark.parametrize("log_to_file", [True, False])
+@pytest.mark.parametrize("celery_worker", [True, False])
+@pytest.mark.parametrize("flask_debug", [True, False])
+def test_setup_routes_event_details_to_output_and_analytics(
+    monkeypatch: pytest.MonkeyPatch,
+    analytics_enabled: bool,
+    log_level: str,
+    log_to_file: bool,
+    celery_worker: bool,
+    flask_debug: bool,
+) -> None:
+    # Exercise real logger routing, not a replacement handler on spiff.event.
+    monkeypatch.setattr(logging.root.manager, "loggerDict", {})
+    root_collector = _RecordCollector()
+    monkeypatch.setattr(logging.root, "handlers", [root_collector])
+    monkeypatch.setattr(logging.root, "level", logging.WARNING)
+    monkeypatch.setattr(LoggingService, "_spiff_logger", logging.getLogger("spiff.event"))
+    if celery_worker:
+        monkeypatch.setenv("SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER", "true")
+    else:
+        monkeypatch.delenv("SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER", raising=False)
+
+    stdout, original_stdout, file_output = io.StringIO(), io.StringIO(), io.StringIO()
+    monkeypatch.setattr(sys, "stdout", stdout)
+    monkeypatch.setattr(sys, "__stdout__", original_stdout)
+    monkeypatch.setattr(logging, "FileHandler", lambda _path: logging.StreamHandler(file_output))
+    analytics_events: list[dict] = []
+
+    def collect_analytics(handler: SpiffLogHandler, record: logging.LogRecord) -> None:
+        # Keep the real filter and wire format; replace only delivery to the socket.
+        analytics_events.append(json.loads(handler.format(record)))
+
+    monkeypatch.setattr(SpiffLogHandler, "emit", collect_analytics)
+    app = Flask("event_output_test")
+    app.config.update(
+        # Debug mode enables Flask's logger before Arena configures its routing.
+        DEBUG=flask_debug,
+        ENV_IDENTIFIER="non_local",
+        SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST="unused.invalid" if analytics_enabled else None,
+        SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT=1234,
+        SPIFFWORKFLOW_BACKEND_EVENT_STREAM_SOURCE="test",
+        SPIFFWORKFLOW_BACKEND_LOG_LEVEL=log_level,
+        SPIFFWORKFLOW_BACKEND_LOG_TO_FILE=log_to_file,
+        SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE="",
+    )
+    setup_logger_for_app(app, logging, force_run_with_celery=celery_worker)
+    if not analytics_enabled:
+        # Reconfiguration must not duplicate the output handler.
+        setup_logger_for_app(app, logging, force_run_with_celery=celery_worker)
+
+    details = {
+        "process_instance_id": 6635,
+        "task_spec": "Activity_One",
+        "metadata": {"color": "blue"},
+        "error_info": {"line_number": 3},
+    }
+    with app.app_context():
+        g.user = SimpleNamespace(id=7, username="kb")
+        LoggingService.log_event("task_completed", details)
+
+    output = file_output if log_to_file else original_stdout if celery_worker else stdout
+    records = [json.loads(line) for line in output.getvalue().splitlines()]
+    if log_level == "info":
+        (record,) = records
+        assert record.items() >= details.items()
+        assert record["message"] == "task_completed"
+        assert record["loggerName"] == "spiff.event"
+    else:
+        assert records == []
+    for unused_output in (stdout, original_stdout, file_output):
+        if unused_output is not output:
+            assert unused_output.getvalue() == ""
+    assert root_collector.records == []
+    if analytics_enabled:
+        (event,) = analytics_events
+        assert event["type"] == "spiff.event"
+        assert event["data"].items() >= details.items()
+        assert event["data"]["username"] == "kb"
+    else:
+        assert analytics_events == []
+    for handler in logging.getLogger("spiff").handlers:
+        handler.close()
