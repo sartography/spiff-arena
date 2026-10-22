@@ -29,7 +29,10 @@ class MarkdownFileDownloadLink(Script):
         #  "data:some/mimetype;name=testing.txt;base64,spifffiledatadigest+7a2051ffefd1eaf475dbef9fda019cb3d4a10eb8aea4c2c2a84a50a797a541bf"  # noqa: E501
         digest_reference = args[0]
         metadata, payload = digest_reference.rsplit(";base64,", 1)
-        digest = payload[-64:]
+        match = re.fullmatch(r"spifffiledatadigest\+([0-9a-f]{64})", payload)
+        if match is None:
+            raise ValueError("Invalid file digest reference")
+        digest = match.group(1)
         # Split at the delimiters, not every semicolon/equal sign: older
         # references stored literal filenames while newer ones URI-encode them.
         filename = unquote(metadata.split(";name=", 1)[1])
