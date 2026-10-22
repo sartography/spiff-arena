@@ -875,7 +875,9 @@ class WorkflowExecutionService:
         waiting_message_events = list(filter(lambda e: e.event_type == "MessageEventDefinition", waiting_events))
         new_waiting_message_names: set[str] = set()
 
-        waiting_message_names = {event.name for event in waiting_message_events}
+        # Parallel call activities can wait for the same message with different
+        # correlations. Compare both; a name alone does not identify a subscription.
+        waiting_message_subscriptions = [(event.name, event.correlations) for event in waiting_message_events]
 
         # Cancel any ready message instances that no longer have corresponding waiting events
         existing_ready_messages = MessageInstanceModel.query.filter_by(
@@ -883,20 +885,23 @@ class WorkflowExecutionService:
             message_type="receive",
             status="ready",
         ).all()
-        existing_ready_message_names = set()
+        existing_ready_message_subscriptions = []
         for message_instance in existing_ready_messages:
-            if message_instance.name not in waiting_message_names:
+            subscription = (message_instance.name, message_instance.correlation_keys)
+            if subscription not in waiting_message_subscriptions:
                 message_instance.status = MessageStatuses.cancelled.value
                 db.session.add(message_instance)
             else:
-                existing_ready_message_names.add(message_instance.name)
+                existing_ready_message_subscriptions.append(subscription)
 
         for event in waiting_message_events:
-            # Ensure we are only creating one active message instance for each waiting message
-            if event.name in existing_ready_message_names:
+            # Reuse a ready subscription only when its correlation values also match.
+            subscription = (event.name, event.correlations)
+            if subscription in existing_ready_message_subscriptions:
                 continue
 
             # Create a new Message Instance
+            existing_ready_message_subscriptions.append(subscription)
             new_waiting_message_names.add(event.name)
             message_instance = MessageInstanceModel(
                 process_instance_id=self.process_instance_model.id,

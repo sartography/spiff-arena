@@ -123,6 +123,25 @@ For external senders, see the [Messages API](/reference/api/messages). The paylo
 complete JSON body posted to `/v1.0/messages/{modified_message_name}`; do not wrap it in the
 receiver's Variable Name.
 
+## Parallel call activities and looping receivers
+
+Parallel Call Activities can invoke the same receiver process and wait for the same message
+name. Give each invocation a distinct correlation value, such as an order ID or branch ID,
+and enable condition matching on the receiving task/event inside the called process.
+Arena keeps separate ready receive subscriptions for the different correlation values.
+
+A receiver can also loop back through a gateway to wait again. After each delivery, that
+branch registers a new ready receive subscription without waiting for the other branches
+to receive their messages. If replies must target a particular iteration, include an iteration
+number in the matching value and update it before reaching the receiver again. For example,
+branches `favorite` and `other` could expect `favorite-0` and `other-0`, then `favorite-1`
+and `other-1` on their next iterations. The sender must include the corresponding value
+in the message body.
+
+Test by sending several replies to just one branch while the other remains waiting, then
+send replies to the other branch. Check that each reply advances only its intended branch
+and that a ready receive subscription exists for each branch still waiting.
+
 ## Troubleshooting
 
 - **Message absent from the selector**: check its Location and whether the model is in that
