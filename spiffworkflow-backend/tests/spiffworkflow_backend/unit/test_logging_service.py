@@ -213,12 +213,14 @@ class _RecordCollector(logging.Handler):
 @pytest.mark.parametrize("log_level", ["info", "warning"])
 @pytest.mark.parametrize("log_to_file", [True, False])
 @pytest.mark.parametrize("celery_worker", [True, False])
+@pytest.mark.parametrize("flask_debug", [True, False])
 def test_setup_routes_event_details_to_output_and_analytics(
     monkeypatch: pytest.MonkeyPatch,
     analytics_enabled: bool,
     log_level: str,
     log_to_file: bool,
     celery_worker: bool,
+    flask_debug: bool,
 ) -> None:
     # Exercise real logger routing, not a replacement handler on spiff.event.
     monkeypatch.setattr(logging.root.manager, "loggerDict", {})
@@ -244,6 +246,8 @@ def test_setup_routes_event_details_to_output_and_analytics(
     monkeypatch.setattr(SpiffLogHandler, "emit", collect_analytics)
     app = Flask("event_output_test")
     app.config.update(
+        # Debug mode enables Flask's logger before Arena configures its routing.
+        DEBUG=flask_debug,
         ENV_IDENTIFIER="non_local",
         SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST="unused.invalid" if analytics_enabled else None,
         SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT=1234,

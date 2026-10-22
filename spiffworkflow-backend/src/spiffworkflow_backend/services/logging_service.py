@@ -716,7 +716,9 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
 
     log_level = logging.getLevelName(upper_log_level_string)
     log_formatter = get_log_formatter(app)
-    app.logger.debug(f"Printing log to create app logger with level: {upper_log_level_string}")
+    # Initialize Flask's lazy logger before configuring registered loggers, without
+    # emitting a record through its still-unconfigured handlers.
+    app_logger = app.logger
 
     spiff_logger_filehandler = None
     if app.config["SPIFFWORKFLOW_BACKEND_LOG_TO_FILE"]:
@@ -743,7 +745,7 @@ def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery:
         if logger_to_use in obscure_loggers_to_exclude_from_main_logging:
             obscure_loggers_to_exclude_from_main_logging.remove(logger_to_use)
         else:
-            app.logger.warning(
+            app_logger.warning(
                 f"Logger '{logger_to_use}' not found in obscure_loggers_to_exclude_from_main_logging. "
                 "You do not need to add it to SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE."
             )
