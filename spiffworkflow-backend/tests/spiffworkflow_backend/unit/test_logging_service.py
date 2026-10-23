@@ -133,10 +133,6 @@ def setup_isolated_logging(
     monkeypatch.setattr(logging.root, "handlers", [])
     monkeypatch.setattr(logging.root, "level", logging.WARNING)
     monkeypatch.setattr(LoggingService, "_spiff_logger", logging.getLogger("spiff.event"))
-    if celery_worker:
-        monkeypatch.setenv("SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER", "true")
-    else:
-        monkeypatch.delenv("SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER", raising=False)
 
     output = LoggingOutput()
     monkeypatch.setattr(sys, "stdout", output.stdout)
@@ -162,7 +158,7 @@ def setup_isolated_logging(
     )
     if before_setup is not None:
         before_setup()
-    setup_logger_for_app(output.app, force_run_with_celery=celery_worker)
+    setup_logger_for_app(output.app, celery_worker=celery_worker)
     return output
 
 
@@ -195,7 +191,13 @@ def test_setup_routes_every_logger_through_one_root_handler(monkeypatch: pytest.
 
 def test_setup_quiets_chatty_libraries_and_their_children(monkeypatch: pytest.MonkeyPatch) -> None:
     output = setup_isolated_logging(monkeypatch)
-    for name in ("kombu.pidbox", "urllib3.connectionpool", "apscheduler.scheduler", "celery.bootsteps"):
+    for name in (
+        "kombu.pidbox",
+        "urllib3.connectionpool",
+        "apscheduler.scheduler",
+        "celery.bootsteps",
+        "celery.utils.functional",
+    ):
         logging.getLogger(name).debug(f"{name} debug")
         logging.getLogger(name).info(f"{name} info")
     logging.getLogger("sqlalchemy.engine.Engine").warning("sqlalchemy warning")
@@ -207,8 +209,24 @@ def test_setup_quiets_chatty_libraries_and_their_children(monkeypatch: pytest.Mo
         "urllib3.connectionpool info",
         "apscheduler.scheduler info",
         "celery.bootsteps info",
+        "celery.utils.functional info",
         "sqlalchemy error",
         "app debug",
+    ]
+
+
+def test_setup_skips_routine_apscheduler_job_records(monkeypatch: pytest.MonkeyPatch) -> None:
+    output = setup_isolated_logging(monkeypatch)
+    executor_logger = logging.getLogger("apscheduler.executors.default")
+    job = "correlate message instances (trigger: interval[0:00:10], next run at: 2026-10-23 14:58:05 UTC)"
+    executor_logger.info(f'Running job "{job}"')
+    executor_logger.info(f'Job "{job}" executed successfully')
+    executor_logger.warning(f'Run time of job "{job}" was missed by 0:00:03')
+    executor_logger.error(f'Job "{job}" raised an exception')
+
+    assert output.messages(output.stdout) == [
+        f'Run time of job "{job}" was missed by 0:00:03',
+        f'Job "{job}" raised an exception',
     ]
 
 

@@ -103,8 +103,10 @@ class InvalidLogLevelError(Exception):
     pass
 
 
-def skip_apscheduler_running_job_record(record: logging.LogRecord) -> bool:
-    return not record.getMessage().startswith("Running job ")
+def skip_apscheduler_routine_job_record(record: logging.LogRecord) -> bool:
+    # Every job run logs when it starts and when it succeeds. Missed, skipped, and failed runs still log.
+    message = record.getMessage()
+    return not (message.startswith("Running job ") or message.endswith(" executed successfully"))
 
 
 # Container health checks and Prometheus may scrape these every few seconds. Failures still log.
@@ -722,6 +724,8 @@ QUIET_LOGGERS = {
     "apscheduler": logging.INFO,
     # dozens of lines on every worker start
     "celery.bootsteps": logging.INFO,
+    # the source code of every task signature on worker start
+    "celery.utils.functional": logging.INFO,
     # every Celery remote-control broadcast, e.g. Flower's enable_events every few seconds
     "kombu": logging.INFO,
     # every outbound connection, e.g. Sentry's session uploads every minute per process
@@ -735,13 +739,8 @@ def skip_spiff_engine_record(record: logging.LogRecord) -> bool:
     return not (is_spiff_engine and record.levelno < logging.WARNING)
 
 
-def setup_logger_for_app(app: Flask, force_run_with_celery: bool = False) -> None:
+def setup_logger_for_app(app: Flask, celery_worker: bool = False) -> None:
     """Send every logger through one root handler, and SpiffWorkflow records to analytics when configured."""
-    # Celery workers set up logging from Celery's after_setup_logger signal instead (see celery_worker.py),
-    # so that it runs after Celery configures its own logging.
-    if os.environ.get("SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER") and not force_run_with_celery:
-        return
-
     log_level_name = app.config["SPIFFWORKFLOW_BACKEND_LOG_LEVEL"].upper()
     log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     if log_level_name not in log_levels:
@@ -752,7 +751,7 @@ def setup_logger_for_app(app: Flask, force_run_with_celery: bool = False) -> Non
         output_handler: logging.Handler = logging.FileHandler(f"{app.instance_path}/../../log/{app.config['ENV_IDENTIFIER']}.log")
     else:
         # Celery replaces sys.stdout with a proxy that logs prints; write to the real stdout.
-        output_handler = logging.StreamHandler((sys.__stdout__ or sys.stdout) if force_run_with_celery else sys.stdout)
+        output_handler = logging.StreamHandler((sys.__stdout__ or sys.stdout) if celery_worker else sys.stdout)
     output_handler.setFormatter(get_log_formatter(app))
     # A handler level as well as the root level, because spiff.event stays at INFO for analytics.
     output_handler.setLevel(log_level)
@@ -792,7 +791,7 @@ def setup_logger_for_app(app: Flask, force_run_with_celery: bool = False) -> Non
     for logger_name, quiet_level in quiet_loggers.items():
         logging.getLogger(logger_name).setLevel(max(log_level, quiet_level))
 
-    logging.getLogger("apscheduler.executors.default").addFilter(skip_apscheduler_running_job_record)
+    logging.getLogger("apscheduler.executors.default").addFilter(skip_apscheduler_routine_job_record)
     logging.getLogger("uvicorn.access").addFilter(skip_successful_probe_access_record)
 
     # SpiffWorkflow logs under "spiff", and LoggingService.log_event under spiff.event.

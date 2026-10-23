@@ -7,17 +7,22 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
+# app logs also go to stdout, so keep only the lines that start with a revision id
+function revisions() {
+  uv run flask db "$1" | awk '$1 ~ /^[0-9a-f]+$/ {print $1}'
+}
+
 while true; do
-  current_db_migration_revision=$(uv run flask db current | awk '{print $1}')
-  current_db_migration_head=$(uv run flask db heads | awk '{print $1}')
+  current_db_migration_revision=$(revisions current)
+  current_db_migration_head=$(revisions heads)
 
   if [[ "$current_db_migration_revision" == "$current_db_migration_head" ]]; then
     echo "DB migrations are complete."
     break
   else
     echo "Waiting for db migrations to finish"
-    echo "current revision: ${current_db_migration_head}"
-    echo "head revision: ${current_db_migration_revision}"
+    echo "current revision: ${current_db_migration_revision}"
+    echo "head revision: ${current_db_migration_head}"
     sleep 2
   fi
 done
