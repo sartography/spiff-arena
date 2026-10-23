@@ -707,12 +707,17 @@ class MessageService:
                 exception.add_note("The process instance encountered an error and failed after starting.")
 
     @classmethod
-    def _mark_send_message_not_accepted(cls, message_instance_send: MessageInstanceModel, failure_cause: str) -> bool:
+    def _mark_send_message_not_accepted(
+        cls,
+        message_instance_send: MessageInstanceModel,
+        failure_cause: str,
+        from_status: str = MessageStatuses.ready.value,
+    ) -> bool:
         rows_updated = (
             db.session.query(MessageInstanceModel)
             .filter(
                 MessageInstanceModel.id == message_instance_send.id,
-                MessageInstanceModel.status == MessageStatuses.ready.value,
+                MessageInstanceModel.status == from_status,
             )
             .update(
                 {
@@ -1094,38 +1099,18 @@ class MessageService:
     def _validate_external_message_for_receiver(
         cls, message_instance_send: MessageInstanceModel, process_model_identifier: str
     ) -> bool:
-        # Internal BPMN sends have an originating process; this switch governs external posts.
-        if message_instance_send.process_instance_id is not None:
+        # Only external posts are validated. Internal BPMN sends carry their sending process's id; an
+        # external send only gains one when an async start reserves its receiver, after validation.
+        if cast(int | None, message_instance_send.process_instance_id) is not None:
             return True
         try:
             cls.validate_message_body(message_instance_send.name, message_instance_send.payload, process_model_identifier)
         except ApiError as error:
             # Keep the diagnostic, but do not consume the receiver or error its process. Returning
             # normally also lets buffered-message sweeps continue with other sends/receivers.
-            message_instance_send.status = MessageStatuses.not_accepted.value
-            message_instance_send.failure_cause = error.message
-            db.session.add(message_instance_send)
-            db.session.commit()
+            cls._mark_send_message_not_accepted(message_instance_send, error.message, from_status=MessageStatuses.running.value)
             return False
         return True
-
-    @classmethod
-    def _validate_message_replay(cls, message_instance_send: MessageInstanceModel) -> None:
-        if not current_app.config.get("SPIFFWORKFLOW_BACKEND_VALIDATE_MESSAGE_BODY_AGAINST_SCHEMA", False):
-            return
-        # A replay can be checked against a known past/reserved recipient, but an unmatched
-        # buffered message still has no scope. Its first delivery attempt will validate it.
-        process_instance_id = message_instance_send.process_instance_id
-        if message_instance_send.counterpart_id is not None:
-            counterpart = db.session.get(MessageInstanceModel, message_instance_send.counterpart_id)
-            if counterpart is not None:
-                process_instance_id = counterpart.process_instance_id
-        if process_instance_id is not None:
-            process_instance = db.session.get(ProcessInstanceModel, process_instance_id)
-            if process_instance is not None:
-                cls.validate_message_body(
-                    message_instance_send.name, message_instance_send.payload, process_instance.process_model_identifier
-                )
 
     @classmethod
     def run_process_model_from_message(
@@ -1182,7 +1167,6 @@ class MessageService:
                     cls._raise_message_not_accepted(
                         existing_message_instance.failure_cause or cls._message_not_accepted_message(modified_message_name)
                     )
-                cls._validate_message_replay(existing_message_instance)
                 instrumentation.finish("idempotent_replay", message_instance_id=existing_message_instance.id)
                 return existing_message_instance
 
@@ -1210,6 +1194,11 @@ class MessageService:
             )
             if receiver_message is None:
                 if message_instance.status == MessageStatuses.not_accepted.value:
+                    instrumentation.finish(
+                        "message_data_validation_error",
+                        message_instance_id=message_instance.id,
+                        error_code="message_data_validation_error",
+                    )
                     raise ApiError(
                         error_code="message_data_validation_error",
                         message=message_instance.failure_cause,

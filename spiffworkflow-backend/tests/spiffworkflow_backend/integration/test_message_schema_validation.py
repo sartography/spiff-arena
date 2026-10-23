@@ -11,7 +11,9 @@ from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.message_service import MessageService
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 AMOUNT_SCHEMA = {
     "type": "object",
@@ -190,7 +192,7 @@ class TestMessageSchemaValidation(BaseTest):
         assert MessageInstanceModel.query.one().status == "not_accepted"
         assert ProcessInstanceModel.query.count() == 0
 
-    def test_replay_is_validated_against_known_recipient_current_schema(
+    def test_replay_of_delivered_message_is_not_revalidated(
         self,
         app: Flask,
         client: TestClient,
@@ -205,9 +207,7 @@ class TestMessageSchemaValidation(BaseTest):
             assert client.post(url, headers=headers, json={}).status_code == 200
             assert client.post(url, headers=headers, json={}).status_code == 200
             self._set_schema(client, with_super_admin_user, "test_group", "message_one", AMOUNT_SCHEMA)
-            response = client.post(url, headers=headers, json={})
-            assert response.status_code == 400
-            assert response.json()["error_code"] == "message_data_validation_error"
+            assert client.post(url, headers=headers, json={}).status_code == 200
         assert ProcessInstanceModel.query.count() == 1
         assert {message.status for message in MessageInstanceModel.query.all()} == {"completed"}
 
@@ -290,14 +290,28 @@ class TestMessageSchemaValidation(BaseTest):
             db.session.refresh(process_instance)
             assert process_instance.status == "complete"
 
-    def test_internal_message_validation_is_unchanged(self, app: Flask) -> None:
-        message = MessageInstanceModel(process_instance_id=123, name="internal", message_type="send", payload={})
-        with (
-            self.app_config_mock(app, VALIDATE_MESSAGES, True),
-            patch.object(MessageService, "validate_message_body") as validate,
-        ):
-            assert MessageService._validate_external_message_for_receiver(message, "test_group/model")
-        validate.assert_not_called()
+    def test_internal_message_is_not_validated(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self._create_message_start(client, with_super_admin_user)
+        process_model_sender = load_test_spec(
+            "test_group/simple-message-send",
+            process_model_source_directory="simple-message-send-receive",
+            bpmn_file_name="simple-message-send-receive.bpmn",
+        )
+        self._set_schema(client, with_super_admin_user, "test_group", "message_one", False)
+        with self.app_config_mock(app, VALIDATE_MESSAGES, True):
+            ProcessInstanceService.create_and_run_process_instance(
+                process_model_sender, persistence_level="full", user=with_super_admin_user
+            )
+            MessageService.correlate_all_message_instances()
+        assert {message.status for message in MessageInstanceModel.query.all()} == {"completed"}
+        receiver = ProcessInstanceModel.query.filter_by(process_model_identifier="test_group/simple-message-receive").one()
+        assert receiver.status == "complete"
 
     def test_buffered_message_uses_schema_current_when_receiver_appears(
         self,

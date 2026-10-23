@@ -16,12 +16,14 @@ def validate_instance_against_schema(
     if schema is None:
         return
 
+    # Parsed editor JSON may be any value; jsonschema rejects non-schemas such as null or [] below.
+    parsed_schema: Any = schema
     if isinstance(schema, str):
         # An empty editor value means no schema. Non-empty invalid JSON must fail closed.
         if schema == "":
             return
         try:
-            schema = json.loads(schema)
+            parsed_schema = json.loads(schema)
         except json.JSONDecodeError as error:
             raise ApiError(
                 error_code=error_code,
@@ -34,7 +36,7 @@ def validate_instance_against_schema(
     try:
         jsonschema.validate(
             instance=instance,
-            schema=schema,
+            schema=parsed_schema,
             format_checker=jsonschema.FormatChecker(),
         )
     except jsonschema.exceptions.ValidationError as validation_error:
