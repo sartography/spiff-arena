@@ -1,13 +1,25 @@
 import { ProcessGroup } from '../../interfaces';
 
+export const trimLocationSlashes = (location: string) => {
+  let start = 0;
+  let end = location.length;
+  while (start < end && location[start] === '/') {
+    start += 1;
+  }
+  while (end > start && location[end - 1] === '/') {
+    end -= 1;
+  }
+  return location.slice(start, end);
+};
+
 export const findNearestAncestorLocation = (
   currentLocation: string,
   candidateLocations: string[],
 ) => {
-  const normalizedCurrentLocation = currentLocation.replace(/(^\/+|\/+$)/g, '');
+  const normalizedCurrentLocation = trimLocationSlashes(currentLocation);
 
   const matchingLocations = candidateLocations.filter((candidateLocation) => {
-    const normalizedCandidate = candidateLocation.replace(/(^\/+|\/+$)/g, '');
+    const normalizedCandidate = trimLocationSlashes(candidateLocation);
     return (
       normalizedCurrentLocation === normalizedCandidate ||
       normalizedCurrentLocation.startsWith(`${normalizedCandidate}/`)

@@ -802,7 +802,8 @@ UI Schema example:
 ```
 
 The `category` option selects the typeahead data source.
-The `itemFormat` option controls display text using keys from returned records.
+The `itemFormat` option controls display text using `{key}` placeholders from returned records; a key can appear more than once.
+If `itemFormat` is omitted or contains no placeholders, the display text is the record serialized as JSON.
 The stored value is the selected record serialized as JSON.
 If `category` is missing, the form displays an error for that field.
 
@@ -841,7 +842,9 @@ Below is an example JSON schema that includes the numeric range field:
 ```
 
 The object must use `min` and `max` property names.
-The top-level `minimum` and `maximum` values define the allowed bounds.
+Numbers display comma grouping in the integer part while preserving decimal digits.
+The top-level `minimum` and `maximum` values are displayed as helper text.
+To enforce bounds, set `minimum` and `maximum` on the individual `min` and `max` property schemas.
 
 ##### UI Schema Example
 
@@ -855,7 +858,8 @@ The top-level `minimum` and `maximum` values define the allowed bounds.
 
 ##### Validation
 
-This will automatically validate that the max value cannot be less than the min value.
+The field does not automatically validate that `max` is greater than or equal to `min`.
+If this comparison is required, add validation in your process before using the submitted range.
 
 #### Repeating Sections in Forms
 

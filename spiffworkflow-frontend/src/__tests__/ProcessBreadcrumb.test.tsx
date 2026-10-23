@@ -2,14 +2,13 @@ import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 
-test('renders home link', () => {
-  // render(
-  //   <BrowserRouter>
-  //     <ProcessBreadcrumb />
-  //   </BrowserRouter>
-  // );
-  // const homeElement = screen.getByText(/Process Groups/);
-  // expect(homeElement).toBeInTheDocument();
+test('renders no breadcrumbs when hotCrumbs are omitted', () => {
+  const { container } = render(
+    <BrowserRouter>
+      <ProcessBreadcrumb />
+    </BrowserRouter>,
+  );
+  expect(container).toBeEmptyDOMElement();
 });
 
 test('renders hotCrumbs', () => {

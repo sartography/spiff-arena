@@ -35,7 +35,7 @@ export default function TypeaheadWidget({
   const lastSearchTerm = useRef('');
   const [items, setItems] = useState<any[]>([]);
   const [selectedItem, setSelectedItem] = useState<any>(null);
-  const itemFormatRegex = /[^{}]+(?=})/g;
+  const itemFormatRegex = /\{([^{}]+)\}/g;
 
   let itemFormatSubstitutions: string[] | null = null;
 
@@ -48,7 +48,11 @@ export default function TypeaheadWidget({
 
   if (itemFormat) {
     try {
-      itemFormatSubstitutions = itemFormat.match(itemFormatRegex);
+      const keys = Array.from(
+        (itemFormat as string).matchAll(itemFormatRegex),
+        (match) => match[1],
+      );
+      itemFormatSubstitutions = keys.length > 0 ? keys : null;
     } catch (e) {
       commonAttributes.errorMessageForField = `itemFormat does not contain replacement keys in curly braces. It should be like: "{key1} ({key2} - {key3})"`;
       commonAttributes.invalid = true;

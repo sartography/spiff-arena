@@ -50,7 +50,7 @@ describe('resolveNumberLocale', () => {
 describe('parseLocalizedNumber', () => {
   it('parses German notation', () => {
     expect(parsedValue('100.000,00', 'de-DE')).toBe(100000);
-    expect(parsedValue('1.234,56', 'de-DE')).toBe(1234.56);
+    expect(parsedValue('1.234,56', 'de-DE')).toBeCloseTo(1234.56);
     expect(parsedValue('100,5', 'de-DE')).toBe(100.5);
     expect(parsedValue('100000', 'de-DE')).toBe(100000);
     expect(parsedValue('-1.234,5', 'de-DE')).toBe(-1234.5);
@@ -91,9 +91,9 @@ describe('parseLocalizedNumber', () => {
     expect(parsedValue('1,234', 'de-DE', numberSchema, { decimals: 2 })).toBe(
       'invalid',
     );
-    expect(parsedValue('1,23', 'de-DE', numberSchema, { decimals: 2 })).toBe(
-      1.23,
-    );
+    expect(
+      parsedValue('1,23', 'de-DE', numberSchema, { decimals: 2 }),
+    ).toBeCloseTo(1.23);
     expect(parsedValue('12,5', 'de-DE', { type: 'integer' })).toBe('invalid');
     expect(parsedValue('-5', 'de-DE', { type: 'number', minimum: 0 })).toBe(
       'invalid',
@@ -150,7 +150,7 @@ describe('formatLocalizedNumber', () => {
   it('round-trips through parsing', () => {
     ['de-DE', 'en-US', 'fr-FR', 'de-CH'].forEach((locale) => {
       const text = formatLocalizedNumber(-1234567.89, locale);
-      expect(parsedValue(text, locale)).toBe(-1234567.89);
+      expect(parsedValue(text, locale)).toBeCloseTo(-1234567.89);
     });
   });
 

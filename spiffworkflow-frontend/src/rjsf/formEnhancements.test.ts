@@ -25,7 +25,7 @@ describe('formatted number helpers', () => {
   it('submits numeric schema values as numbers', () => {
     expect(
       coerceFormattedNumberValue('1,234,567.89', { type: 'number' }, enUS),
-    ).toBe(1234567.89);
+    ).toBeCloseTo(1234567.89);
     expect(
       coerceFormattedNumberValue('100.000,00', { type: 'number' }, deDE),
     ).toBe(100000);

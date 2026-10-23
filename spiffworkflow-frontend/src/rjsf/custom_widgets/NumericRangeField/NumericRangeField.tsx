@@ -75,7 +75,16 @@ export default function NumericRangeField({
 
     if (numberStringNoCommas) {
       const parts = numberStringNoCommas.split('.');
-      const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      const integerPart = parts[0].replace(/\d+/g, (digits) =>
+        digits
+          .split('')
+          .map((digit, index) =>
+            index > 0 && (digits.length - index) % 3 === 0
+              ? `,${digit}`
+              : digit,
+          )
+          .join(''),
+      );
       return parts.length > 1 ? `${integerPart}.${parts[1]}` : integerPart;
     }
     return '';
