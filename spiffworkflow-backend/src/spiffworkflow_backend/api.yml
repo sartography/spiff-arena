@@ -3377,7 +3377,17 @@ paths:
         - Messages
       operationId: spiffworkflow_backend.routes.messages_controller.message_send
       summary: Instantiate and run a given process model with a message start event matching given name
-      description: Send the JSON body as the message payload to a matching waiting receiver or message start event. The body is not validated against the shared message model's JSON schema. Correlation retrieval expressions are evaluated against the complete body.
+      description: >-
+        Send the JSON body as the message payload to a matching waiting receiver or message start event.
+        Schema validation is disabled by default. When SPIFFWORKFLOW_BACKEND_VALIDATE_MESSAGE_BODY_AGAINST_SCHEMA
+        is true, external messages are validated after selecting a recipient, using the nearest shared message
+        definition found by upsearch from that recipient's process-model location, not the caller's group prefix.
+        Missing definitions and unset/empty schemas impose no restrictions; boolean false rejects every payload.
+        Invalid payloads or malformed schemas return 400 with error_code message_data_validation_error before
+        consuming a waiting receiver or starting/reserving a process. The send record is retained as not_accepted
+        with a failure_cause. A buffered 202 response does not imply schema validation: validation is deferred
+        until a recipient is selected, and rejection is recorded without failing the waiting process.
+        Correlation retrieval expressions are evaluated against the complete body.
       requestBody:
         required: true
         content:

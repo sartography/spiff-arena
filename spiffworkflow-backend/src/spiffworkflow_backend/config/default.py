@@ -333,3 +333,6 @@ config_from_env("SPIFFWORKFLOW_BACKEND_USE_AUTH_FOR_METRICS", default=False)
 
 ### task validation
 config_from_env("SPIFFWORKFLOW_BACKEND_VALIDATE_USER_TASK_DATA_AGAINST_SCHEMA", default=False)
+
+### message validation
+config_from_env("SPIFFWORKFLOW_BACKEND_VALIDATE_MESSAGE_BODY_AGAINST_SCHEMA", default=False)

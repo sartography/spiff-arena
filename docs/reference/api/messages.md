@@ -26,10 +26,26 @@ Do not add a `payload` wrapper unless your message's retrieval expressions expli
 
 ## JSON Schema Validation
 
-The endpoint requires a JSON object, but currently does **not** validate it against the JSON schema
-stored on the shared message model. A schema in the Message Editor does not make required fields,
-field types, or `additionalProperties` restrictions enforceable at `/messages`.
-Validate incoming data explicitly in your process or integration when those checks are required.
+The endpoint requires a JSON object. Schema validation is **off by default**. Set
+`SPIFFWORKFLOW_BACKEND_VALIDATE_MESSAGE_BODY_AGAINST_SCHEMA=true` to validate external message bodies
+once a recipient is selected. This does not change internally generated BPMN messages.
+
+For a waiting process, lookup starts at the selected instance's process-model location. For a
+Message Start Event, it starts at the selected triggerable process model. Upsearch takes the
+nearest shared definition with that message name; definitions in other groups are not combined.
+The caller's optional group prefix does not choose the schema or restrict message delivery.
+
+Validation runs before consuming a waiting receiver or starting/reserving a process. Required fields,
+field types, formats, and `additionalProperties` restrictions are enforced. A missing definition,
+unset/empty schema, `{}`, or boolean `true` imposes no restrictions. Boolean `false` rejects every
+payload. Invalid payloads and malformed schemas return `400` with `error_code: message_data_validation_error`.
+The send record is retained as `not_accepted` with a diagnostic `failure_cause`; the receiver is left
+waiting and its process is not failed. A corrected submission must use a new UUID if one was supplied.
+
+**Buffering defers validation until a recipient is selected.** A `202` response means queued, not
+schema-validated. At delivery time, the current schema applies. An invalid buffered message becomes
+`not_accepted` with a `failure_cause`, visible in the messages list, without failing the waiting process.
+Retrying that rejected message's UUID returns `400` with `message_not_accepted` and the diagnostic.
 
 ## Correlating With a Running Process
 
