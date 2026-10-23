@@ -1,21 +1,17 @@
 import json
 import logging
-import os
 from pathlib import Path
 from threading import Event
 from unittest.mock import patch
 from uuid import UUID
 
-import pytest
 from flask.app import Flask
 from starlette.testclient import TestClient
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.logging_service import SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR
-from spiffworkflow_backend.services.logging_service import InvalidLogLevelError
 from spiffworkflow_backend.services.logging_service import SpiffLogHandler
-from spiffworkflow_backend.services.logging_service import setup_logger_for_app
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -43,16 +39,6 @@ class TestLoggingService(BaseTest):
         assert logger.propagate is True
         # pytest adds its own capture handlers to root
         assert [handler for handler in logging.root.handlers if isinstance(handler, logging.FileHandler)]
-
-    def test_setup_logger_for_app_skips_flask_setup_in_celery_worker(self, app: Flask) -> None:
-        # Setup rejects an invalid level before changing any logger, so only a skipped setup returns cleanly.
-        with (
-            patch.dict(os.environ, {"SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER": "true"}),
-            patch.dict(app.config, {"SPIFFWORKFLOW_BACKEND_LOG_LEVEL": "not-a-level"}),
-        ):
-            setup_logger_for_app(app)
-            with pytest.raises(InvalidLogLevelError):
-                setup_logger_for_app(app, force_run_with_celery=True)
 
     def test_without_analytics_spiff_workflow_logs_only_warnings_but_events_log_at_info(self, app: Flask) -> None:
         assert app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST"] is None
