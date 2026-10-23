@@ -3,7 +3,6 @@ import json
 import logging
 import os
 import random
-import re
 import select
 import socket
 import sys
@@ -223,7 +222,7 @@ class SpiffLogHandler(SocketHandler):
             if data["process_model_identifier"] is None:
                 data["process_model_identifier"] = process_model_identifier
 
-            if record.name in "spiff.task":
+            if record.name == "spiff.task":
                 properties = [
                     "workflow_spec",
                     "task_spec",
@@ -248,7 +247,7 @@ class SpiffLogHandler(SocketHandler):
                     data[attr] = getattr(record, attr)
                     if not (data[attr] is None or isinstance(data[attr], dict)):
                         data[attr] = str(data[attr])
-                record._spiff_data = data
+            record._spiff_data = data
 
             return True
         else:
@@ -700,150 +699,99 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(message_dict, default=str)
 
 
-def setup_logger_for_app(app: Flask, primary_logger: Any, force_run_with_celery: bool = False) -> None:
-    # In a celery worker it runs this code twice: once for the flask app and once again for the celery worker.
-    # The flask app adds a bunch of handlers that the celery worker's root.manager.loggerDict does not return
-    # however the handlers are still there with the wrong log level so this avoids running the logging
-    # code completely when flask runs it so the celery worker will run it only once.
+# Libraries too chatty for our logs, held at no lower than this level. Their child loggers inherit it.
+# SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE turns the ERROR ones back on.
+QUIET_LOGGERS = {
+    "celery.redirected": logging.ERROR,
+    "connexion": logging.ERROR,
+    "flask_cors.core": logging.ERROR,
+    "flask_cors.extension": logging.ERROR,
+    "sqlalchemy": logging.ERROR,
+    # every job run
+    "apscheduler": logging.INFO,
+    # dozens of lines on every worker start
+    "celery.bootsteps": logging.INFO,
+    # every Celery remote-control broadcast, e.g. Flower's enable_events every few seconds
+    "kombu": logging.INFO,
+    # every outbound connection, e.g. Sentry's session uploads every minute per process
+    "urllib3": logging.INFO,
+}
+
+
+def skip_spiff_engine_record(record: logging.LogRecord) -> bool:
+    # SpiffWorkflow logs every task state change for analytics. Only its warnings and errors belong in our logs.
+    is_spiff_engine = record.name.split(".", 1)[0] == "spiff" and record.name != "spiff.event"
+    return not (is_spiff_engine and record.levelno < logging.WARNING)
+
+
+def setup_logger_for_app(app: Flask, force_run_with_celery: bool = False) -> None:
+    """Send every logger through one root handler, and SpiffWorkflow records to analytics when configured."""
+    # Celery workers set up logging from Celery's after_setup_logger signal instead (see celery_worker.py),
+    # so that it runs after Celery configures its own logging.
     if os.environ.get("SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER") and not force_run_with_celery:
         return
 
-    upper_log_level_string = app.config["SPIFFWORKFLOW_BACKEND_LOG_LEVEL"].upper()
+    log_level_name = app.config["SPIFFWORKFLOW_BACKEND_LOG_LEVEL"].upper()
     log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+    if log_level_name not in log_levels:
+        raise InvalidLogLevelError(f"Log level given is invalid: '{log_level_name}'. Valid options are {log_levels}")
+    log_level: int = getattr(logging, log_level_name)
 
-    if upper_log_level_string not in log_levels:
-        raise InvalidLogLevelError(f"Log level given is invalid: '{upper_log_level_string}'. Valid options are {log_levels}")
-
-    log_level = logging.getLevelName(upper_log_level_string)
-    log_formatter = get_log_formatter(app)
-    # Initialize Flask's lazy logger before configuring registered loggers, without
-    # emitting a record through its still-unconfigured handlers.
-    app_logger = app.logger
-
-    spiff_logger_filehandler = None
     if app.config["SPIFFWORKFLOW_BACKEND_LOG_TO_FILE"]:
-        spiff_logger_filehandler = primary_logger.FileHandler(f"{app.instance_path}/../../log/{app.config['ENV_IDENTIFIER']}.log")
-        spiff_logger_filehandler.setLevel(log_level)
-        spiff_logger_filehandler.setFormatter(log_formatter)
-
-    # these loggers have been deemed too verbose to be useful
-    obscure_loggers_to_exclude_from_main_logging = [
-        "celery.redirected",
-        "connexion",
-        "flask_cors.core",
-        "flask_cors.extension",
-        "sqlalchemy",
-    ]
-
-    # if you actually want one of these excluded loggers, there is a config option to turn it on
-    loggers_to_use = app.config.get("SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE", [])
-    if loggers_to_use is None or loggers_to_use == "":
-        loggers_to_use = []
+        output_handler: logging.Handler = logging.FileHandler(f"{app.instance_path}/../../log/{app.config['ENV_IDENTIFIER']}.log")
     else:
-        loggers_to_use = loggers_to_use.split(",")
-    for logger_to_use in loggers_to_use:
-        if logger_to_use in obscure_loggers_to_exclude_from_main_logging:
-            obscure_loggers_to_exclude_from_main_logging.remove(logger_to_use)
+        # Celery replaces sys.stdout with a proxy that logs prints; write to the real stdout.
+        output_handler = logging.StreamHandler((sys.__stdout__ or sys.stdout) if force_run_with_celery else sys.stdout)
+    output_handler.setFormatter(get_log_formatter(app))
+    # A handler level as well as the root level, because spiff.event stays at INFO for analytics.
+    output_handler.setLevel(log_level)
+    output_handler.addFilter(skip_spiff_engine_record)
+
+    spiff_logger = logging.getLogger("spiff")
+    analytics_handler = next((handler for handler in spiff_logger.handlers if isinstance(handler, SpiffLogHandler)), None)
+
+    # Flask creates app.logger on first use, and in debug mode it gets its own level and stderr handler.
+    # Create it now so the reset below covers it.
+    app.logger  # noqa: B018
+
+    # Flask, gunicorn, uvicorn, Celery, and some libraries attach their own handlers.
+    # Route every logger through the root handler instead, at the root level unless set below.
+    for logger in list(logging.root.manager.loggerDict.values()):
+        if isinstance(logger, logging.Logger):
+            logger.handlers = []
+            logger.propagate = True
+            logger.setLevel(logging.NOTSET)
+    for handler in logging.root.handlers:
+        handler.close()
+    logging.root.handlers = [output_handler]
+    logging.root.setLevel(log_level)
+
+    quiet_loggers = dict(QUIET_LOGGERS)
+    loggers_to_use = app.config.get("SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE") or ""
+    for logger_name in filter(None, loggers_to_use.split(",")):
+        if quiet_loggers.get(logger_name) == logging.ERROR:
+            del quiet_loggers[logger_name]
         else:
-            app_logger.warning(
-                f"Logger '{logger_to_use}' not found in obscure_loggers_to_exclude_from_main_logging. "
+            app.logger.warning(
+                f"Logger '{logger_name}' is not one of the quiet loggers that SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE turns on. "
                 "You do not need to add it to SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE."
             )
+    # even when turned on, sqlalchemy logs query results at DEBUG
+    quiet_loggers.setdefault("sqlalchemy", logging.INFO)
+    for logger_name, quiet_level in quiet_loggers.items():
+        logging.getLogger(logger_name).setLevel(max(log_level, quiet_level))
 
-    loggers_to_exclude_from_debug = []
-
-    # even if we say SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE=sqlalchemy, we still don't want it in DEBUG mode, just INFO
-    if "sqlalchemy" not in obscure_loggers_to_exclude_from_main_logging:
-        loggers_to_exclude_from_debug.append("sqlalchemy")
-
-    # kombu logs every Celery remote-control broadcast at DEBUG, e.g. Flower's enable_events every few seconds
-    loggers_to_exclude_from_debug.append("kombu")
-    # urllib3 logs every outbound connection at DEBUG, e.g. Sentry's session uploads every minute per process
-    loggers_to_exclude_from_debug.append("urllib3")
-
-    # NOTE: celery sets up handlers for all loggers by default. so if we want to stop some weird logger firehosing our logging,
-    # we need to remove its handler or set its log level to a high level like ERROR. For example, sql alchemy seems to log all
-    # queries at the INFO level and frickin query RESULTS as well if level is DEBUG.
-    #
-    # make all loggers act the same
-    for name in primary_logger.root.manager.loggerDict:
-        # use a regex so spiffworkflow_backend isn't filtered out
-        if not re.match(r"^spiff\b", name):
-            logger_for_name = logging.getLogger(name)
-            log_level_to_use = log_level
-            if spiff_logger_filehandler:
-                logger_for_name.handlers = []
-                logger_for_name.propagate = False
-                logger_for_name.addHandler(spiff_logger_filehandler)
-                # the file handler is shared by every logger, so cap only the logger's own level
-                if upper_log_level_string == "DEBUG" and name.startswith(tuple(loggers_to_exclude_from_debug)):
-                    log_level_to_use = "INFO"
-            else:
-                exclude_logger_name_from_logging = False
-                for logger_to_exclude in obscure_loggers_to_exclude_from_main_logging:
-                    if name.startswith(logger_to_exclude):
-                        exclude_logger_name_from_logging = True
-
-                # Obscure loggers stay quiet unless explicitly enabled.
-                if exclude_logger_name_from_logging:
-                    log_level_to_use = "ERROR"
-
-                # only need to set the log level here if it is not already excluded from main logging
-                if not exclude_logger_name_from_logging and upper_log_level_string == "DEBUG":
-                    exclude_logger_name_from_debug = False
-                    for logger_to_exclude_from_debug in loggers_to_exclude_from_debug:
-                        if name.startswith(logger_to_exclude_from_debug):
-                            exclude_logger_name_from_debug = True
-                    if exclude_logger_name_from_debug:
-                        log_level_to_use = "INFO"
-
-                if len(logger_for_name.handlers) < 1:
-                    logger_for_name.addHandler(logging.StreamHandler(sys.stdout))
-
-                for the_handler in logger_for_name.handlers:
-                    the_handler.setFormatter(log_formatter)
-                    level_number = logging.getLevelName(log_level_to_use)
-                    the_handler.setLevel(level_number)
-                logger_for_name.propagate = False
-            level_number = logging.getLevelName(log_level_to_use)
-            logger_for_name.setLevel(level_number)
-
-    if app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST"] is not None:
-        spiff_logger = logging.getLogger("spiff")
-        spiff_logger.setLevel(logging.INFO)
-        spiff_logger.propagate = False
-        handler = SpiffLogHandler(app)
-        spiff_logger.addHandler(handler)
-    else:
-        # local development: quiet the noisy SpiffWorkflow task/workflow loggers
-        # since there is no event stream handler to consume them
-        for noisy_logger in ("spiff.task", "spiff.workflow", "spiff.data"):
-            logging.getLogger(noisy_logger).setLevel(logging.WARNING)
-
-    # spiff's analytics handler stops propagation before the root output handlers.
-    # Give only spiff.event an output handler, not the noisy engine task/data loggers.
-    event_logger = logging.getLogger("spiff.event")
-    event_output_handler = spiff_logger_filehandler
-    if event_output_handler is None:
-        # Celery redirects sys.stdout through its own logger; bypass that wrapper.
-        output_stream = (sys.__stdout__ or sys.stdout) if force_run_with_celery else sys.stdout
-        event_output_handler = logging.StreamHandler(output_stream)
-        event_output_handler.setLevel(log_level)
-        event_output_handler.setFormatter(log_formatter)
-    event_logger.handlers = [event_output_handler]
-    # Filter output at the handler, so WARNING output still permits INFO analytics events.
-    event_logger.setLevel(logging.INFO)
-    event_logger.propagate = app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST"] is not None
-
-    # APScheduler owns these repetitive lifecycle lines. Keep warnings/errors and one successful-run heartbeat.
-    logging.getLogger("apscheduler.scheduler").setLevel(logging.INFO)
-    apscheduler_executor_logger = logging.getLogger("apscheduler.executors.default")
-    apscheduler_executor_logger.setLevel(logging.INFO)
-    apscheduler_executor_logger.addFilter(skip_apscheduler_running_job_record)
+    logging.getLogger("apscheduler.executors.default").addFilter(skip_apscheduler_running_job_record)
     logging.getLogger("uvicorn.access").addFilter(skip_successful_probe_access_record)
-    # Flower's Tornado server is loopback-only, so its access log is the metrics proxy's scrape every 15s.
-    # Flower silences it itself, but our setup turns it back on. 4xx/5xx still log as WARNING/ERROR.
-    logging.getLogger("tornado.access").setLevel(logging.WARNING)
+
+    # SpiffWorkflow logs under "spiff", and LoggingService.log_event under spiff.event.
+    if app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST"] is not None:
+        spiff_logger.handlers = [analytics_handler or SpiffLogHandler(app)]
+        spiff_logger.setLevel(logging.INFO)
+    else:
+        # Without analytics, skip building engine records that the output handler would drop.
+        spiff_logger.setLevel(logging.WARNING)
+    logging.getLogger("spiff.event").setLevel(logging.INFO)
 
 
 def get_log_formatter(app: Flask) -> logging.Formatter:
@@ -866,20 +814,6 @@ def get_log_formatter(app: Flask) -> logging.Formatter:
         )
         log_formatter = json_formatter
     return log_formatter
-
-
-def configure_celery_stdout_logger(
-    logger: logging.Logger,
-    log_formatter: logging.Formatter,
-    log_level: int,
-) -> None:
-    """Send worker logs directly to stdout instead of Celery's redirected streams."""
-    stdout_handler = logging.StreamHandler(sys.__stdout__ or sys.stdout)
-    stdout_handler.setFormatter(log_formatter)
-    stdout_handler.setLevel(log_level)
-    logger.handlers = [stdout_handler]
-    logger.setLevel(log_level)
-    logger.propagate = False
 
 
 class LoggingService:

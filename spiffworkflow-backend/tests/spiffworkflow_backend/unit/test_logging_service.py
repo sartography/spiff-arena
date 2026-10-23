@@ -8,12 +8,12 @@ import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 from flask import Flask
 from flask import g
 
-from spiffworkflow_backend.services.logging_service import JsonFormatter
 from spiffworkflow_backend.services.logging_service import LoggingService
 from spiffworkflow_backend.services.logging_service import SpiffLogHandler
 from spiffworkflow_backend.services.logging_service import event_stream_peer_has_closed
@@ -76,130 +76,6 @@ def test_event_stream_peer_has_closed_with_high_descriptor() -> None:
             assert event_stream_peer_has_closed(high_sock)
 
 
-def test_setup_logger_keeps_configured_level_for_handlerless_app_logger(monkeypatch: pytest.MonkeyPatch) -> None:
-    app = Flask("handlerless_logger_test")
-    app.logger.handlers = []
-    app.logger.propagate = True
-    app.config.update(
-        ENV_IDENTIFIER="non_local",
-        SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST=None,
-        SPIFFWORKFLOW_BACKEND_LOG_LEVEL="info",
-        SPIFFWORKFLOW_BACKEND_LOG_TO_FILE=False,
-        SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE="",
-    )
-    monkeypatch.setattr(logging.root.manager, "loggerDict", {app.logger.name: app.logger})
-
-    setup_logger_for_app(app, logging)
-
-    assert app.logger.level == logging.INFO
-    assert len(app.logger.handlers) == 1
-    assert app.logger.handlers[0].level == logging.INFO
-    assert isinstance(app.logger.handlers[0].formatter, JsonFormatter)
-
-
-def test_setup_logger_obscures_preconfigured_sqlalchemy_handler_at_debug(monkeypatch: pytest.MonkeyPatch) -> None:
-    app = Flask("preconfigured_sqlalchemy_logger_test")
-    app.config.update(
-        ENV_IDENTIFIER="non_local",
-        SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST=None,
-        SPIFFWORKFLOW_BACKEND_LOG_LEVEL="debug",
-        SPIFFWORKFLOW_BACKEND_LOG_TO_FILE=False,
-        SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE="",
-    )
-    sqlalchemy_logger = logging.getLogger("sqlalchemy.engine.Engine")
-    preconfigured_handler = logging.StreamHandler()
-    monkeypatch.setattr(sqlalchemy_logger, "handlers", [preconfigured_handler])
-    monkeypatch.setattr(logging.root.manager, "loggerDict", {sqlalchemy_logger.name: sqlalchemy_logger})
-    previous_logger_level = sqlalchemy_logger.level
-    previous_logger_propagate = sqlalchemy_logger.propagate
-    previous_handler_level = preconfigured_handler.level
-    previous_handler_formatter = preconfigured_handler.formatter
-
-    try:
-        setup_logger_for_app(app, logging)
-
-        assert sqlalchemy_logger.level == logging.ERROR
-        assert preconfigured_handler.level == logging.ERROR
-    finally:
-        sqlalchemy_logger.setLevel(previous_logger_level)
-        sqlalchemy_logger.propagate = previous_logger_propagate
-        preconfigured_handler.setLevel(previous_handler_level)
-        preconfigured_handler.setFormatter(previous_handler_formatter)
-
-
-@pytest.mark.parametrize("logger_name", ["kombu.pidbox", "urllib3.connectionpool"])
-@pytest.mark.parametrize("has_preconfigured_handler", [True, False])
-def test_setup_logger_keeps_chatty_library_at_info_at_debug(
-    monkeypatch: pytest.MonkeyPatch, logger_name: str, has_preconfigured_handler: bool
-) -> None:
-    app = Flask("chatty_library_logger_test")
-    app.config.update(
-        ENV_IDENTIFIER="non_local",
-        SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST=None,
-        SPIFFWORKFLOW_BACKEND_LOG_LEVEL="debug",
-        SPIFFWORKFLOW_BACKEND_LOG_TO_FILE=False,
-        SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE="",
-    )
-    library_logger = logging.getLogger(logger_name)
-    monkeypatch.setattr(library_logger, "handlers", [logging.StreamHandler()] if has_preconfigured_handler else [])
-    monkeypatch.setattr(library_logger, "level", library_logger.level)
-    monkeypatch.setattr(library_logger, "propagate", library_logger.propagate)
-    monkeypatch.setattr(logging.root.manager, "loggerDict", {library_logger.name: library_logger})
-
-    setup_logger_for_app(app, logging)
-
-    assert library_logger.level == logging.INFO
-    assert [handler.level for handler in library_logger.handlers] == [logging.INFO]
-
-
-def test_setup_logger_logs_only_failed_flower_requests(monkeypatch: pytest.MonkeyPatch) -> None:
-    app = Flask("flower_access_logger_test")
-    app.config.update(
-        ENV_IDENTIFIER="non_local",
-        SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST=None,
-        SPIFFWORKFLOW_BACKEND_LOG_LEVEL="debug",
-        SPIFFWORKFLOW_BACKEND_LOG_TO_FILE=False,
-        SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE="",
-    )
-    tornado_access_logger = logging.getLogger("tornado.access")
-    monkeypatch.setattr(tornado_access_logger, "handlers", [])
-    monkeypatch.setattr(tornado_access_logger, "level", tornado_access_logger.level)
-    monkeypatch.setattr(tornado_access_logger, "propagate", tornado_access_logger.propagate)
-    monkeypatch.setattr(logging.root.manager, "loggerDict", {tornado_access_logger.name: tornado_access_logger})
-
-    setup_logger_for_app(app, logging)
-
-    # tornado logs 2xx/3xx at INFO, 4xx at WARNING, and 5xx at ERROR
-    assert not tornado_access_logger.isEnabledFor(logging.INFO)
-    assert tornado_access_logger.isEnabledFor(logging.WARNING)
-
-
-def test_setup_logger_keeps_kombu_at_info_when_logging_to_file(monkeypatch: pytest.MonkeyPatch) -> None:
-    app = Flask("kombu_file_logger_test")
-    app.config.update(
-        ENV_IDENTIFIER="non_local",
-        SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST=None,
-        SPIFFWORKFLOW_BACKEND_LOG_LEVEL="debug",
-        SPIFFWORKFLOW_BACKEND_LOG_TO_FILE=True,
-        SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE="",
-    )
-    kombu_logger = logging.getLogger("kombu.pidbox")
-    other_logger = logging.getLogger("some.library")
-    for logger in (kombu_logger, other_logger):
-        monkeypatch.setattr(logger, "handlers", [])
-        monkeypatch.setattr(logger, "level", logger.level)
-        monkeypatch.setattr(logger, "propagate", logger.propagate)
-    monkeypatch.setattr(logging.root.manager, "loggerDict", {kombu_logger.name: kombu_logger, other_logger.name: other_logger})
-    file_handler = logging.StreamHandler()
-    primary_logger = SimpleNamespace(FileHandler=lambda _path: file_handler, root=logging.root)
-
-    setup_logger_for_app(app, primary_logger)
-
-    assert kombu_logger.level == logging.INFO
-    assert other_logger.level == logging.DEBUG
-    assert file_handler.level == logging.DEBUG
-
-
 def _uvicorn_access_record(method: str, path: str, status_code: int) -> logging.LogRecord:
     access_args = ("127.0.0.1:5000", method, path, "1.1", status_code)
     return logging.LogRecord("uvicorn.access", logging.INFO, __file__, 0, '%s - "%s %s HTTP/%s" %d', access_args, None)
@@ -225,32 +101,35 @@ def test_skip_successful_probe_access_record_keeps_records_without_access_args()
     assert skip_successful_probe_access_record(record) is True
 
 
-class _RecordCollector(logging.Handler):
+class LoggingOutput:
     def __init__(self) -> None:
-        super().__init__()
-        self.records: list[logging.LogRecord] = []
+        self.stdout = io.StringIO()
+        self.stderr = io.StringIO()
+        self.celery_stdout = io.StringIO()
+        self.file = io.StringIO()
+        self.analytics: list[dict] = []
+        self.app = Flask("isolated_logging_test")
 
-    def emit(self, record: logging.LogRecord) -> None:
-        self.records.append(record)
+    def lines(self, stream: io.StringIO) -> list[str]:
+        return stream.getvalue().splitlines()
+
+    def messages(self, stream: io.StringIO) -> list[str]:
+        return [json.loads(line)["message"] for line in self.lines(stream)]
 
 
-@pytest.mark.parametrize("analytics_enabled", [True, False])
-@pytest.mark.parametrize("log_level", ["info", "warning"])
-@pytest.mark.parametrize("log_to_file", [True, False])
-@pytest.mark.parametrize("celery_worker", [True, False])
-@pytest.mark.parametrize("flask_debug", [True, False])
-def test_setup_routes_event_details_to_output_and_analytics(
+def setup_isolated_logging(
     monkeypatch: pytest.MonkeyPatch,
-    analytics_enabled: bool,
-    log_level: str,
-    log_to_file: bool,
-    celery_worker: bool,
-    flask_debug: bool,
-) -> None:
-    # Exercise real logger routing, not a replacement handler on spiff.event.
+    log_level: str = "debug",
+    analytics_enabled: bool = False,
+    log_to_file: bool = False,
+    celery_worker: bool = False,
+    loggers_to_use: str = "",
+    flask_debug: bool = False,
+    before_setup: Any = None,
+) -> LoggingOutput:
+    # A fresh logger hierarchy under the real root, so setup sees only the loggers a test creates.
     monkeypatch.setattr(logging.root.manager, "loggerDict", {})
-    root_collector = _RecordCollector()
-    monkeypatch.setattr(logging.root, "handlers", [root_collector])
+    monkeypatch.setattr(logging.root, "handlers", [])
     monkeypatch.setattr(logging.root, "level", logging.WARNING)
     monkeypatch.setattr(LoggingService, "_spiff_logger", logging.getLogger("spiff.event"))
     if celery_worker:
@@ -258,20 +137,18 @@ def test_setup_routes_event_details_to_output_and_analytics(
     else:
         monkeypatch.delenv("SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER", raising=False)
 
-    stdout, original_stdout, file_output = io.StringIO(), io.StringIO(), io.StringIO()
-    monkeypatch.setattr(sys, "stdout", stdout)
-    monkeypatch.setattr(sys, "__stdout__", original_stdout)
-    monkeypatch.setattr(logging, "FileHandler", lambda _path: logging.StreamHandler(file_output))
-    analytics_events: list[dict] = []
+    output = LoggingOutput()
+    monkeypatch.setattr(sys, "stdout", output.stdout)
+    monkeypatch.setattr(sys, "stderr", output.stderr)
+    monkeypatch.setattr(sys, "__stdout__", output.celery_stdout)
+    monkeypatch.setattr(logging, "FileHandler", lambda _path: logging.StreamHandler(output.file))
 
     def collect_analytics(handler: SpiffLogHandler, record: logging.LogRecord) -> None:
         # Keep the real filter and wire format; replace only delivery to the socket.
-        analytics_events.append(json.loads(handler.format(record)))
+        output.analytics.append(json.loads(handler.format(record)))
 
     monkeypatch.setattr(SpiffLogHandler, "emit", collect_analytics)
-    app = Flask("event_output_test")
-    app.config.update(
-        # Debug mode enables Flask's logger before Arena configures its routing.
+    output.app.config.update(
         DEBUG=flask_debug,
         ENV_IDENTIFIER="non_local",
         SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST="unused.invalid" if analytics_enabled else None,
@@ -279,25 +156,140 @@ def test_setup_routes_event_details_to_output_and_analytics(
         SPIFFWORKFLOW_BACKEND_EVENT_STREAM_SOURCE="test",
         SPIFFWORKFLOW_BACKEND_LOG_LEVEL=log_level,
         SPIFFWORKFLOW_BACKEND_LOG_TO_FILE=log_to_file,
-        SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE="",
+        SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE=loggers_to_use,
     )
-    setup_logger_for_app(app, logging, force_run_with_celery=celery_worker)
-    if not analytics_enabled:
-        # Reconfiguration must not duplicate the output handler.
-        setup_logger_for_app(app, logging, force_run_with_celery=celery_worker)
+    if before_setup is not None:
+        before_setup()
+    setup_logger_for_app(output.app, force_run_with_celery=celery_worker)
+    return output
 
+
+@pytest.fixture(autouse=True)
+def close_analytics_handlers() -> Any:
+    yield
+    for handler in logging.getLogger("spiff").handlers:
+        handler.close()
+
+
+def test_setup_routes_every_logger_through_one_root_handler(monkeypatch: pytest.MonkeyPatch) -> None:
+    library_handler_output = io.StringIO()
+
+    def add_library_logger() -> None:
+        # e.g. gunicorn, uvicorn, and Celery give their loggers their own handlers and stop propagation
+        library_logger = logging.getLogger("library.with.handler")
+        library_logger.addHandler(logging.StreamHandler(library_handler_output))
+        library_logger.propagate = False
+        library_logger.setLevel(logging.ERROR)
+
+    output = setup_isolated_logging(monkeypatch, log_level="info", before_setup=add_library_logger)
+    logging.getLogger("library.with.handler").info("from a library")
+    logging.getLogger("created.after.setup").info("from a later logger")
+    logging.getLogger("created.after.setup").debug("below the configured level")
+
+    assert output.messages(output.stdout) == ["from a library", "from a later logger"]
+    assert library_handler_output.getvalue() == ""
+
+
+def test_setup_quiets_chatty_libraries_and_their_children(monkeypatch: pytest.MonkeyPatch) -> None:
+    output = setup_isolated_logging(monkeypatch)
+    for name in ("kombu.pidbox", "urllib3.connectionpool", "apscheduler.scheduler", "celery.bootsteps"):
+        logging.getLogger(name).debug(f"{name} debug")
+        logging.getLogger(name).info(f"{name} info")
+    logging.getLogger("sqlalchemy.engine.Engine").warning("sqlalchemy warning")
+    logging.getLogger("sqlalchemy.engine.Engine").error("sqlalchemy error")
+    logging.getLogger("spiffworkflow_backend").debug("app debug")
+
+    assert output.messages(output.stdout) == [
+        "kombu.pidbox info",
+        "urllib3.connectionpool info",
+        "apscheduler.scheduler info",
+        "celery.bootsteps info",
+        "sqlalchemy error",
+        "app debug",
+    ]
+
+
+def test_loggers_to_use_turns_quiet_loggers_back_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    output = setup_isolated_logging(monkeypatch, loggers_to_use="sqlalchemy,connexion")
+    logging.getLogger("connexion.operations").debug("connexion debug")
+    # sqlalchemy logs query results at DEBUG, so it stays at INFO even when turned on
+    logging.getLogger("sqlalchemy.engine.Engine").debug("sqlalchemy debug")
+    logging.getLogger("sqlalchemy.engine.Engine").info("sqlalchemy info")
+
+    assert output.messages(output.stdout) == ["connexion debug", "sqlalchemy info"]
+
+
+def test_setup_applies_the_same_rules_to_the_log_file(monkeypatch: pytest.MonkeyPatch) -> None:
+    output = setup_isolated_logging(monkeypatch, log_to_file=True)
+    logging.getLogger("sqlalchemy.engine.Engine").info("sqlalchemy info")
+    logging.getLogger("spiffworkflow_backend").debug("app debug")
+
+    assert output.messages(output.file) == ["app debug"]
+    assert output.stdout.getvalue() == ""
+
+
+def test_setup_can_run_again_without_duplicating_output(monkeypatch: pytest.MonkeyPatch) -> None:
+    # e.g. Celery sets up logging again in each pool process
+    output = setup_isolated_logging(monkeypatch, analytics_enabled=True)
+    analytics_handler = logging.getLogger("spiff").handlers[0]
+    setup_logger_for_app(output.app)
+    LoggingService.log_event("task_completed", {"process_instance_id": 1})
+
+    assert logging.getLogger("spiff").handlers == [analytics_handler]
+    assert output.messages(output.stdout) == ["task_completed"]
+    assert len(output.analytics) == 1
+
+
+@pytest.mark.parametrize("analytics_enabled", [True, False])
+@pytest.mark.parametrize("log_level", ["info", "warning"])
+@pytest.mark.parametrize("log_to_file", [True, False])
+def test_flask_debug_mode_follows_the_configured_log_level(
+    monkeypatch: pytest.MonkeyPatch, analytics_enabled: bool, log_level: str, log_to_file: bool
+) -> None:
+    # In debug mode, Flask adds its own stderr handler if app.logger is first used after setup.
+    output = setup_isolated_logging(
+        monkeypatch, log_level=log_level, analytics_enabled=analytics_enabled, log_to_file=log_to_file, flask_debug=True
+    )
+    output.app.logger.debug("app debug")
+    output.app.logger.info("app info")
+    output.app.logger.warning("app warning")
+
+    destination = output.file if log_to_file else output.stdout
+    expected = ["app info", "app warning"] if log_level == "info" else ["app warning"]
+    assert output.messages(destination) == expected
+    assert output.stderr.getvalue() == ""
+
+
+@pytest.mark.parametrize("analytics_enabled", [True, False])
+@pytest.mark.parametrize("log_level", ["info", "warning"])
+@pytest.mark.parametrize("log_to_file", [True, False])
+@pytest.mark.parametrize("celery_worker", [True, False])
+def test_setup_routes_event_details_to_output_and_analytics(
+    monkeypatch: pytest.MonkeyPatch,
+    analytics_enabled: bool,
+    log_level: str,
+    log_to_file: bool,
+    celery_worker: bool,
+) -> None:
+    output = setup_isolated_logging(
+        monkeypatch,
+        log_level=log_level,
+        analytics_enabled=analytics_enabled,
+        log_to_file=log_to_file,
+        celery_worker=celery_worker,
+    )
     details = {
         "process_instance_id": 6635,
         "task_spec": "Activity_One",
         "metadata": {"color": "blue"},
         "error_info": {"line_number": 3},
     }
-    with app.app_context():
+    with Flask("isolated_logging_test").app_context():
         g.user = SimpleNamespace(id=7, username="kb")
         LoggingService.log_event("task_completed", details)
 
-    output = file_output if log_to_file else original_stdout if celery_worker else stdout
-    records = [json.loads(line) for line in output.getvalue().splitlines()]
+    destination = output.file if log_to_file else output.celery_stdout if celery_worker else output.stdout
+    records = [json.loads(line) for line in output.lines(destination)]
     if log_level == "info":
         (record,) = records
         assert record.items() >= details.items()
@@ -305,16 +297,45 @@ def test_setup_routes_event_details_to_output_and_analytics(
         assert record["loggerName"] == "spiff.event"
     else:
         assert records == []
-    for unused_output in (stdout, original_stdout, file_output):
-        if unused_output is not output:
+    for unused_output in (output.stdout, output.celery_stdout, output.file):
+        if unused_output is not destination:
             assert unused_output.getvalue() == ""
-    assert root_collector.records == []
     if analytics_enabled:
-        (event,) = analytics_events
+        (event,) = output.analytics
         assert event["type"] == "spiff.event"
         assert event["data"].items() >= details.items()
         assert event["data"]["username"] == "kb"
     else:
-        assert analytics_events == []
-    for handler in logging.getLogger("spiff").handlers:
-        handler.close()
+        assert output.analytics == []
+
+
+@pytest.mark.parametrize("analytics_enabled", [True, False])
+def test_spiff_engine_records_go_to_analytics_and_only_their_warnings_to_output(
+    monkeypatch: pytest.MonkeyPatch, analytics_enabled: bool
+) -> None:
+    output = setup_isolated_logging(monkeypatch, analytics_enabled=analytics_enabled)
+    task_extras = {"task_type": "UserTask", "state": "COMPLETED", "task_spec": "Activity_One"}
+    logging.getLogger("spiff.task").debug("State set to COMPLETED", extra=task_extras)
+    logging.getLogger("spiff.task").info("State changed to COMPLETED", extra=task_extras)
+    logging.getLogger("spiff.workflow").warning("engine warning")
+
+    assert output.messages(output.stdout) == ["engine warning"]
+    if analytics_enabled:
+        assert [(event["type"], event["data"]["message"]) for event in output.analytics] == [
+            ("spiff.task", "State changed to COMPLETED"),
+            ("spiff.workflow", "engine warning"),
+        ]
+        assert output.analytics[0]["data"]["task_spec"] == "Activity_One"
+    else:
+        assert output.analytics == []
+
+
+def test_spiff_log_handler_sends_records_from_any_spiff_logger(monkeypatch: pytest.MonkeyPatch) -> None:
+    output = setup_isolated_logging(monkeypatch, analytics_enabled=True)
+    logging.getLogger("spiff.dmn").info("decision evaluated")
+    logging.getLogger("spiff").info("from the parent logger")
+
+    assert [(event["type"], sorted(event["data"])) for event in output.analytics] == [
+        ("spiff.dmn", ["message", "process_instance_id", "process_model_identifier", "userid", "username"]),
+        ("spiff", ["message", "process_instance_id", "process_model_identifier", "userid", "username"]),
+    ]
