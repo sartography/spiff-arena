@@ -26,10 +26,18 @@ Do not add a `payload` wrapper unless your message's retrieval expressions expli
 
 ## JSON Schema Validation
 
-The endpoint requires a JSON object, but currently does **not** validate it against the JSON schema
-stored on the shared message model. A schema in the Message Editor does not make required fields,
-field types, or `additionalProperties` restrictions enforceable at `/messages`.
-Validate incoming data explicitly in your process or integration when those checks are required.
+Schema validation is **off by default**. Set
+`SPIFFWORKFLOW_BACKEND_VALIDATE_MESSAGE_BODY_AGAINST_SCHEMA=true` to validate external message bodies
+against the nearest shared definition found by upsearch from the receiving process model—not the
+URL's group prefix. Missing or empty schemas impose no restrictions.
+
+Invalid payloads or malformed schemas return `400` with `message_data_validation_error` before
+delivery or process creation. The send remains `not_accepted` with a `failure_cause`; the receiver
+is unaffected. Corrected submissions need a new UUID if one was supplied.
+
+**Buffered `202` responses mean queued, not validated.** Validation uses the current schema when a
+recipient is selected. Deferred rejections appear in the messages list as `not_accepted` with a
+`failure_cause`.
 
 ## Correlating With a Running Process
 

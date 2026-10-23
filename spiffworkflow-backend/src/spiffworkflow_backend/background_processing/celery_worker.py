@@ -14,7 +14,8 @@ setting_variable_to_make_celery_happy_no_idea_how_this_works = the_flask_app.cel
 
 @celery.signals.after_setup_logger.connect  # type: ignore
 def setup_loggers(*args: Any, **kwargs: Any) -> None:
-    setup_logger_for_app(the_flask_app, force_run_with_celery=True)
+    # Celery replaces the root handler with its own, so set up our logging again.
+    setup_logger_for_app(the_flask_app, celery_worker=True)
 
 
 @celery.signals.after_setup_task_logger.connect  # type: ignore

@@ -26,11 +26,13 @@ from spiffworkflow_backend.background_processing.celery_tasks.process_instance_t
 )
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task_producer import should_queue_process_instance
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.helpers.schema_validation_helper import validate_instance_against_schema
 from spiffworkflow_backend.helpers.spiff_enum import ProcessInstanceExecutionMode
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance import MessageStatuses
 from spiffworkflow_backend.models.message_instance import MessageTypes
+from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
@@ -44,6 +46,7 @@ from spiffworkflow_backend.services.process_instance_queue_service import Proces
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_script_engine import CustomBpmnScriptEngine
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.upsearch_service import UpsearchService
 from spiffworkflow_backend.services.user_service import UserService
 from spiffworkflow_backend.services.workflow_execution_service import TaskRunnability
 
@@ -302,6 +305,9 @@ class MessageService:
                 instrumentation.set_correlation_result("existing_receive")
             return message_instance_receive
 
+        if message_instance_send.status == MessageStatuses.not_accepted.value:
+            return None
+
         # No existing receiver found, try to start a new process
         with instrumentation.phase("correlate_message_start") if instrumentation is not None else contextlib.nullcontext():
             message_instance_receive = cls._try_start_new_process_for_message(
@@ -313,6 +319,9 @@ class MessageService:
             if instrumentation is not None:
                 instrumentation.set_correlation_result("message_start")
             return message_instance_receive
+
+        if message_instance_send.status == MessageStatuses.not_accepted.value:
+            return None
 
         # No match found - reset send message to ready so it can be tried again later
         with instrumentation.phase("reset_unmatched_send_message") if instrumentation is not None else contextlib.nullcontext():
@@ -391,6 +400,13 @@ class MessageService:
                     with ProcessInstanceQueueService.dequeued(receiving_process_instance, max_attempts=1):
                         if not receiving_process_instance.can_receive_message():
                             continue
+
+                        # Reject only the send, before claiming the receiver. Do not raise inside
+                        # dequeued(): that context treats exceptions as process execution failures.
+                        if not cls._validate_external_message_for_receiver(
+                            message_instance_send, receiving_process_instance.process_model_identifier
+                        ):
+                            return None
 
                         if not cls._claim_ready_message_instance(message_instance_receive):
                             continue
@@ -496,6 +512,12 @@ class MessageService:
             )
 
             if message_triggerable_process_model is None:
+                return None
+
+            # Validate before creating/reserving a process, including asynchronous starts.
+            if not cls._validate_external_message_for_receiver(
+                message_instance_send, message_triggerable_process_model.process_model_identifier
+            ):
                 return None
 
             user: UserModel = (
@@ -685,12 +707,17 @@ class MessageService:
                 exception.add_note("The process instance encountered an error and failed after starting.")
 
     @classmethod
-    def _mark_send_message_not_accepted(cls, message_instance_send: MessageInstanceModel, failure_cause: str) -> bool:
+    def _mark_send_message_not_accepted(
+        cls,
+        message_instance_send: MessageInstanceModel,
+        failure_cause: str,
+        from_status: str = MessageStatuses.ready.value,
+    ) -> bool:
         rows_updated = (
             db.session.query(MessageInstanceModel)
             .filter(
                 MessageInstanceModel.id == message_instance_send.id,
-                MessageInstanceModel.status == MessageStatuses.ready.value,
+                MessageInstanceModel.status == from_status,
             )
             .update(
                 {
@@ -1048,6 +1075,44 @@ class MessageService:
         return mtp
 
     @classmethod
+    def validate_message_body(cls, message_name: str, body: dict[str, Any], process_model_identifier: str) -> None:
+        if not current_app.config.get("SPIFFWORKFLOW_BACKEND_VALIDATE_MESSAGE_BODY_AGAINST_SCHEMA", False):
+            return
+
+        # The selected receiver supplies the scope, never the caller's optional URL prefix.
+        locations = UpsearchService.upsearch_locations(process_model_identifier)
+        messages = MessageModel.query.filter(
+            MessageModel.identifier == message_name,
+            MessageModel.location.in_(locations),  # type: ignore
+        ).all()
+        if not messages:
+            return
+        message = min(messages, key=lambda model: locations.index(model.location))
+        validate_instance_against_schema(
+            instance=body,
+            schema=message.schema,
+            error_code="message_data_validation_error",
+            error_prefix=f"Message data validation failed for '{message_name}' at '{message.location or '/'}'",
+        )
+
+    @classmethod
+    def _validate_external_message_for_receiver(
+        cls, message_instance_send: MessageInstanceModel, process_model_identifier: str
+    ) -> bool:
+        # Only external posts are validated. Internal BPMN sends carry their sending process's id; an
+        # external send only gains one when an async start reserves its receiver, after validation.
+        if cast(int | None, message_instance_send.process_instance_id) is not None:
+            return True
+        try:
+            cls.validate_message_body(message_instance_send.name, message_instance_send.payload, process_model_identifier)
+        except ApiError as error:
+            # Keep the diagnostic, but do not consume the receiver or error its process. Returning
+            # normally also lets buffered-message sweeps continue with other sends/receivers.
+            cls._mark_send_message_not_accepted(message_instance_send, error.message, from_status=MessageStatuses.running.value)
+            return False
+        return True
+
+    @classmethod
     def run_process_model_from_message(
         cls,
         modified_message_name: str,
@@ -1128,6 +1193,17 @@ class MessageService:
                 sweep_expired_messages=False,
             )
             if receiver_message is None:
+                if message_instance.status == MessageStatuses.not_accepted.value:
+                    instrumentation.finish(
+                        "message_data_validation_error",
+                        message_instance_id=message_instance.id,
+                        error_code="message_data_validation_error",
+                    )
+                    raise ApiError(
+                        error_code="message_data_validation_error",
+                        message=message_instance.failure_cause,
+                        status_code=400,
+                    )
                 if ttl > 0:
                     instrumentation.finish("buffered", message_instance_id=message_instance.id)
                     return message_instance
