@@ -125,6 +125,7 @@ def setup_isolated_logging(
     celery_worker: bool = False,
     loggers_to_use: str = "",
     flask_debug: bool = False,
+    log_format: str = "json",
     before_setup: Any = None,
 ) -> LoggingOutput:
     # A fresh logger hierarchy under the real root, so setup sees only the loggers a test creates.
@@ -154,6 +155,7 @@ def setup_isolated_logging(
         SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST="unused.invalid" if analytics_enabled else None,
         SPIFFWORKFLOW_BACKEND_EVENT_STREAM_PORT=1234,
         SPIFFWORKFLOW_BACKEND_EVENT_STREAM_SOURCE="test",
+        SPIFFWORKFLOW_BACKEND_LOG_FORMAT=log_format,
         SPIFFWORKFLOW_BACKEND_LOG_LEVEL=log_level,
         SPIFFWORKFLOW_BACKEND_LOG_TO_FILE=log_to_file,
         SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE=loggers_to_use,
@@ -238,6 +240,28 @@ def test_setup_can_run_again_without_duplicating_output(monkeypatch: pytest.Monk
     assert logging.getLogger("spiff").handlers == [analytics_handler]
     assert output.messages(output.stdout) == ["task_completed"]
     assert len(output.analytics) == 1
+
+
+def test_text_format_adds_extras_before_the_traceback(monkeypatch: pytest.MonkeyPatch) -> None:
+    output = setup_isolated_logging(monkeypatch, log_format="text")
+    try:
+        raise ValueError("bad value")
+    except ValueError:
+        extras = {"process_instance_id": 6635, "task_spec": "Activity_One", "metadata": {"color": "blue"}}
+        logging.getLogger("spiffworkflow_backend").exception("Task failed", extra={"extras": extras})
+
+    first_line, *traceback_lines = output.lines(output.stdout)
+    assert first_line.endswith(
+        ' - spiffworkflow_backend - ERROR - Task failed process_instance_id=6635 task_spec="Activity_One" '
+        'metadata={"color": "blue"}'
+    )
+    assert traceback_lines[0] == "Traceback (most recent call last):"
+    assert traceback_lines[-1] == "ValueError: bad value"
+
+
+def test_invalid_log_format_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    with pytest.raises(ValueError, match="Log format given is invalid: 'xml'"):
+        setup_isolated_logging(monkeypatch, log_format="xml")
 
 
 @pytest.mark.parametrize("analytics_enabled", [True, False])

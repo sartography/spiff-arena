@@ -635,6 +635,17 @@ class SpiffLogHandler(SocketHandler):
         )
 
 
+class TextFormatter(logging.Formatter):
+    """Formatter for reading logs in a terminal, with the extras that JsonFormatter adds as fields at the end."""
+
+    def formatMessage(self, record: logging.LogRecord) -> str:  # noqa: N802, this is overriding a method from python's stdlib
+        message = super().formatMessage(record)
+        extras = record.__dict__.get("extras")
+        if extras:
+            message += " " + " ".join(f"{key}={json.dumps(value, default=str)}" for key, value in extras.items())
+        return message
+
+
 # originally from https://stackoverflow.com/a/70223539/6090676
 
 
@@ -795,12 +806,11 @@ def setup_logger_for_app(app: Flask, force_run_with_celery: bool = False) -> Non
 
 
 def get_log_formatter(app: Flask) -> logging.Formatter:
-    log_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-
-    # the json formatter is nice for real environments but makes
-    # debugging locally a little more difficult
-    if app.config["ENV_IDENTIFIER"] != "local_development":
-        json_formatter = JsonFormatter(
+    log_format = app.config["SPIFFWORKFLOW_BACKEND_LOG_FORMAT"]
+    if log_format == "text":
+        return TextFormatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    if log_format == "json":
+        return JsonFormatter(
             {
                 "level": "levelname",
                 "message": "message",
@@ -812,8 +822,7 @@ def get_log_formatter(app: Flask) -> logging.Formatter:
                 "timestamp": "asctime",
             }
         )
-        log_formatter = json_formatter
-    return log_formatter
+    raise ValueError(f"Log format given is invalid: '{log_format}'. Valid options are ['json', 'text']")
 
 
 class LoggingService:
