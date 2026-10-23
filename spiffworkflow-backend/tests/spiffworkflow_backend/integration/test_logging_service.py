@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import sys
 from pathlib import Path
 from threading import Event
 from unittest.mock import patch
@@ -16,7 +15,6 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.logging_service import SPIFF_LOG_HANDLER_SKIP_RECORD_ATTR
 from spiffworkflow_backend.services.logging_service import InvalidLogLevelError
 from spiffworkflow_backend.services.logging_service import SpiffLogHandler
-from spiffworkflow_backend.services.logging_service import configure_celery_stdout_logger
 from spiffworkflow_backend.services.logging_service import setup_logger_for_app
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -39,25 +37,12 @@ class TestLoggingService(BaseTest):
         record.__dict__["_spiff_data"] = {"process_instance_id": 123}
         return record
 
-    def test_configure_celery_stdout_logger_bypasses_redirected_streams(self) -> None:
-        logger = logging.Logger("celery-test")
-        logger.addHandler(logging.NullHandler())
-        formatter = logging.Formatter("%(message)s")
-
-        configure_celery_stdout_logger(logger, formatter, logging.INFO)
-
-        assert len(logger.handlers) == 1
-        assert isinstance(logger.handlers[0], logging.StreamHandler)
-        assert logger.handlers[0].stream is (sys.__stdout__ or sys.stdout)
-        assert logger.handlers[0].formatter is formatter
-        assert logger.handlers[0].level == logging.INFO
-        assert logger.level == logging.INFO
-        assert logger.propagate is False
-
-    def test_logger_setup_disables_propagation(self, app: Flask) -> None:
+    def test_app_loggers_propagate_to_the_root_handler(self, app: Flask) -> None:
         logger = logging.getLogger("spiffworkflow_backend.services.service_task_delegate")
-        assert logger.handlers
-        assert logger.propagate is False
+        assert logger.handlers == []
+        assert logger.propagate is True
+        # pytest adds its own capture handlers to root
+        assert [handler for handler in logging.root.handlers if isinstance(handler, logging.FileHandler)]
 
     def test_setup_logger_for_app_skips_flask_setup_in_celery_worker(self, app: Flask) -> None:
         # Setup rejects an invalid level before changing any logger, so only a skipped setup returns cleanly.
@@ -65,18 +50,15 @@ class TestLoggingService(BaseTest):
             patch.dict(os.environ, {"SPIFFWORKFLOW_BACKEND_RUNNING_IN_CELERY_WORKER": "true"}),
             patch.dict(app.config, {"SPIFFWORKFLOW_BACKEND_LOG_LEVEL": "not-a-level"}),
         ):
-            setup_logger_for_app(app, logging)
+            setup_logger_for_app(app)
             with pytest.raises(InvalidLogLevelError):
-                setup_logger_for_app(app, logging, force_run_with_celery=True)
+                setup_logger_for_app(app, force_run_with_celery=True)
 
-    def test_local_development_quiets_spiff_workflow_loggers_but_not_events(self, app: Flask) -> None:
+    def test_without_analytics_spiff_workflow_logs_only_warnings_but_events_log_at_info(self, app: Flask) -> None:
         assert app.config["SPIFFWORKFLOW_BACKEND_EVENT_STREAM_HOST"] is None
         for name in ("spiff.task", "spiff.workflow", "spiff.data"):
-            assert logging.getLogger(name).level == logging.WARNING
-        event_logger = logging.getLogger("spiff.event")
-        assert event_logger.level == logging.INFO
-        assert len(event_logger.handlers) == 1
-        assert event_logger.propagate is False
+            assert logging.getLogger(name).getEffectiveLevel() == logging.WARNING
+        assert logging.getLogger("spiff.event").getEffectiveLevel() == logging.INFO
 
     def test_spiff_log_handler_formats_unix_timestamp(self, app: Flask) -> None:
         handler = SpiffLogHandler(app)
