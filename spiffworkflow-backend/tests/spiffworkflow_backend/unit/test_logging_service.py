@@ -166,8 +166,9 @@ def setup_isolated_logging(
     return output
 
 
+# Depends on monkeypatch so this runs before monkeypatch restores the real logger hierarchy.
 @pytest.fixture(autouse=True)
-def close_analytics_handlers() -> Any:
+def close_analytics_handlers(monkeypatch: pytest.MonkeyPatch) -> Any:
     yield
     for handler in logging.getLogger("spiff").handlers:
         handler.close()
