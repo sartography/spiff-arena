@@ -39,7 +39,10 @@ import {
 import { PaginationObject, ProcessGroup } from '../../interfaces';
 import PaginationForTable from '../PaginationForTable';
 import { MessageEditor } from './MessageEditor';
-import { findNearestAncestorLocation } from './MessageHelper';
+import {
+  findNearestAncestorLocation,
+  trimLocationSlashes,
+} from './MessageHelper';
 import ConfirmButton from '../ConfirmButton';
 import useProcessGroups from '../../hooks/useProcessGroups';
 import { usePermissionFetcher } from '../../hooks/PermissionService';
@@ -148,7 +151,7 @@ const messageModelExists = (
 };
 
 const processGroupLocationForSource = (sourceLocation: string) => {
-  const normalizedSourceLocation = sourceLocation.replace(/(^\/+|\/+$)/g, '');
+  const normalizedSourceLocation = trimLocationSlashes(sourceLocation);
   const pathParts = normalizedSourceLocation.split('/');
   if (pathParts.length <= 1) {
     return normalizedSourceLocation;

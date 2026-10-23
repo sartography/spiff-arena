@@ -24,7 +24,7 @@ export const slugifyString = (str: string) => {
     .replace(/[^\w\s.-]/g, '')
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+/g, '')
-    .replace(/-+$/g, '');
+    .replace(/-$/, '');
 };
 
 export const HUMAN_TASK_TYPES = [

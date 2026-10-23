@@ -14,6 +14,16 @@ test('it can slugify a string', () => {
   );
 });
 
+test.each([
+  ['', ''],
+  ['---', ''],
+  ['__Hello---', 'hello'],
+  ['---Hello...world___', 'hello...world'],
+  [`${'-'.repeat(10000)}hello${'-'.repeat(10000)}`, 'hello'],
+])('slugifies without surrounding separators', (input, expected) => {
+  expect(slugifyString(input)).toBe(expected);
+});
+
 test('it can underscorize a string', () => {
   expect(underscorizeString('hello---world_ and then Some such-')).toEqual(
     'hello_world_and_then_some_such',
@@ -55,11 +65,11 @@ test('it can replace undefined values in object with null', () => {
     undefined,
   };
 
-  expect((sampleData.items[1] as any).contacts.zoom).toEqual(undefined);
+  expect((sampleData.items[1] as any).contacts.zoom).toBeUndefined();
 
   const result = recursivelyChangeNullAndUndefined(sampleData, null);
   expect(result).toEqual(sampleData);
-  expect(result.items[1].contacts.zoom).toEqual(null);
+  expect(result.items[1].contacts.zoom).toBeNull();
   expect(result.items[2]).toEqual('HEY');
   expect(result.contacts.awesome).toEqual(false);
   expect(result.contacts.info).toEqual('');
@@ -89,11 +99,11 @@ test('it can replace null values in object with undefined', () => {
     ],
   };
 
-  expect((sampleData.items[1] as any).contacts.zoom).toEqual(null);
+  expect((sampleData.items[1] as any).contacts.zoom).toBeNull();
 
   const result = recursivelyChangeNullAndUndefined(sampleData, undefined);
   expect(result).toEqual(sampleData);
-  expect(result.items[1].contacts.zoom).toEqual(undefined);
+  expect(result.items[1].contacts.zoom).toBeUndefined();
   expect(result.items[2]).toEqual('HEY');
   expect(result.contacts.awesome).toEqual(false);
   expect(result.contacts.info).toEqual('');

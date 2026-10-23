@@ -142,8 +142,7 @@ export default function DataStoreForm({
       .trim()
       .replace(/[^\w\s-]/g, '')
       .replace(/[\s-]+/g, '_')
-      .replace(/^[-\d]+/g, '')
-      .replace(/-+$/g, '');
+      .replace(/^[-\d]+/g, '');
   };
 
   const onNameChanged = (newName: any) => {

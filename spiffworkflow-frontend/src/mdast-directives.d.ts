@@ -8,25 +8,25 @@ import type {
 
 interface DirectiveFields {
   name: string;
-  attributes?: Record<string, string | null | undefined> | null | undefined;
+  attributes?: Record<string, string | null | undefined> | null;
 }
 
 interface ContainerDirective extends DirectiveFields, Parent {
   type: 'containerDirective';
   children: Array<BlockContent | DefinitionContent>;
-  data?: Data | undefined;
+  data?: Data;
 }
 
 interface LeafDirective extends DirectiveFields, Parent {
   type: 'leafDirective';
   children: PhrasingContent[];
-  data?: Data | undefined;
+  data?: Data;
 }
 
 interface TextDirective extends DirectiveFields, Parent {
   type: 'textDirective';
   children: PhrasingContent[];
-  data?: Data | undefined;
+  data?: Data;
 }
 
 declare module 'mdast' {
@@ -36,7 +36,7 @@ declare module 'mdast' {
   }
 
   interface ParagraphData {
-    directiveLabel?: boolean | null | undefined;
+    directiveLabel?: boolean | null;
   }
 
   interface PhrasingContentMap {
