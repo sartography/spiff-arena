@@ -44,7 +44,7 @@ sphinxcontrib-jquery==4.1
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==2.0.0
 sphinxcontrib-serializinghtml==2.0.0
-sphinxcontrib-mermaid==0.9.2
+sphinxcontrib-mermaid==2.1.1
 sphinx-tags==0.4
 tornado==6.5.10
 typeguard==4.3.0
