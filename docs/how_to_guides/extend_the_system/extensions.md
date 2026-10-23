@@ -23,6 +23,11 @@ This variable activates the extensions feature in the SpiffWorkflow backend:
 
 By default, Spiff Arena will look for extensions in `[SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR]/extensions`, but that can be configured using `SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX`.
 
+[Python app extensions](/explanation/dev/app_extensions) use the same configured
+directory prefix, but are enabled separately with
+`SPIFFWORKFLOW_BACKEND_APP_EXTENSIONS`. They run trusted Python initialization
+code at application boot, rather than BPMN workflows through the extensions API.
+
 ### Creating an Extension
 
 After enabling extensions from the backend, you can create extensions in the Spiff Arena frontend.

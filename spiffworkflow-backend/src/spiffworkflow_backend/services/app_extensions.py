@@ -24,10 +24,16 @@ def init_app_extensions(app: Flask) -> None:
     if not names:
         return
     root = Path(app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]).resolve()
+    prefix = app.config.get("SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX", "extensions")
+    if not isinstance(prefix, str) or not prefix.strip() or Path(prefix).is_absolute() or ".." in Path(prefix).parts:
+        raise ValueError("SPIFFWORKFLOW_BACKEND_EXTENSIONS_PROCESS_MODEL_PREFIX must be a repository-relative directory")
+    extensions_root = (root / prefix).resolve()
+    if extensions_root == root or not extensions_root.is_relative_to(root):
+        raise ValueError("Application extension directory escapes its repository or is the repository root")
     for name in names:
-        package = (root / "extensions" / name).resolve()
+        package = (extensions_root / name).resolve()
         source = (package / "__init__.py").resolve()
-        if not package.is_relative_to(root / "extensions") or not source.is_relative_to(package):
+        if not package.is_relative_to(extensions_root) or not source.is_relative_to(package):
             raise ValueError(f"Application extension escapes its repository package: {name!r}")
         if not source.is_file():
             raise FileNotFoundError(f"Application extension initializer not found: {source}")

@@ -42,6 +42,13 @@ You do not need container-specific Celery env var differences for this split; `.
 
 ## Configuration
 
-The app uses sqlalchemy and supports mysql, postgres, or sqlite.
-You must set `SPIFFWORKFLOW_BACKEND_DATABASE_TYPE` to one of these three values as well as setting `SPIFFWORKFLOW_BACKEND_DATABASE_URI`.
+The app uses SQLAlchemy and supports MySQL, PostgreSQL, or SQLite.
+Set `SPIFFWORKFLOW_BACKEND_DATABASE_URI` to the SQLAlchemy connection URL; Arena
+infers the database type from that URL. `SPIFFWORKFLOW_BACKEND_DATABASE_TYPE`
+selects the default connection configuration when no URI is supplied.
 Check the `default.py` config file in the `spiffworkflow-backend/src/spiffworkflow_backend/config` directory for more env vars.
+
+For trusted Python initialization code, see
+[Python app extensions](/explanation/dev/app_extensions). Configuration and
+operational instructions for individual extensions belong with their packages
+in the process-model repository.
