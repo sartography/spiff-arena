@@ -9,8 +9,7 @@ SPIFFWORKFLOW_BACKEND_APP_EXTENSIONS='["example"]'
 
 Arena loads `extensions/<name>/__init__.py` beneath
 `SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR` and calls `init_app(app)` after
-initializing the database integration. Packages support relative imports. Install
-any additional dependencies in the deployment environment.
+initializing the database integration. Packages support relative imports.
 
 ```python
 # extensions/example/__init__.py
