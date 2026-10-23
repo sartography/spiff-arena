@@ -26,26 +26,18 @@ Do not add a `payload` wrapper unless your message's retrieval expressions expli
 
 ## JSON Schema Validation
 
-The endpoint requires a JSON object. Schema validation is **off by default**. Set
+Schema validation is **off by default**. Set
 `SPIFFWORKFLOW_BACKEND_VALIDATE_MESSAGE_BODY_AGAINST_SCHEMA=true` to validate external message bodies
-once a recipient is selected. This does not change internally generated BPMN messages.
+against the nearest shared definition found by upsearch from the receiving process model—not the
+URL's group prefix. Missing or empty schemas impose no restrictions.
 
-For a waiting process, lookup starts at the selected instance's process-model location. For a
-Message Start Event, it starts at the selected triggerable process model. Upsearch takes the
-nearest shared definition with that message name; definitions in other groups are not combined.
-The caller's optional group prefix does not choose the schema or restrict message delivery.
+Invalid payloads or malformed schemas return `400` with `message_data_validation_error` before
+delivery or process creation. The send remains `not_accepted` with a `failure_cause`; the receiver
+is unaffected. Corrected submissions need a new UUID if one was supplied.
 
-Validation runs before consuming a waiting receiver or starting/reserving a process. Required fields,
-field types, formats, and `additionalProperties` restrictions are enforced. A missing definition,
-unset/empty schema, `{}`, or boolean `true` imposes no restrictions. Boolean `false` rejects every
-payload. Invalid payloads and malformed schemas return `400` with `error_code: message_data_validation_error`.
-The send record is retained as `not_accepted` with a diagnostic `failure_cause`; the receiver is left
-waiting and its process is not failed. A corrected submission must use a new UUID if one was supplied.
-
-**Buffering defers validation until a recipient is selected.** A `202` response means queued, not
-schema-validated. At delivery time, the current schema applies. An invalid buffered message becomes
-`not_accepted` with a `failure_cause`, visible in the messages list, without failing the waiting process.
-Retrying that rejected message's UUID returns `400` with `message_not_accepted` and the diagnostic.
+**Buffered `202` responses mean queued, not validated.** Validation uses the current schema when a
+recipient is selected. Deferred rejections appear in the messages list as `not_accepted` with a
+`failure_cause`.
 
 ## Correlating With a Running Process
 
