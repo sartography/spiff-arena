@@ -1122,5 +1122,5 @@ def test_custom_environment_markdown_file_download_link_handles_inline_file_data
     )
 
     assert result is True
-    digest = hashlib.sha256(b"ZHVtbXk=").hexdigest()
+    digest = hashlib.sha256(b"dummy").hexdigest()
     assert context["links"] == [f"[notes.txt](http://local.spiff/process-data-file-download/local/0/{digest})"]

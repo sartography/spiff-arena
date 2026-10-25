@@ -270,7 +270,7 @@ def _markdown_file_download_link(file_reference):
     # Ed's forms keep the file contents inline instead of a digest.
     metadata, payload = file_reference.rsplit(";base64,", 1)
     match = re.fullmatch(r"spifffiledatadigest\+([0-9a-f]{64})", payload)
-    digest = match.group(1) if match else hashlib.sha256(payload.encode()).hexdigest()
+    digest = match.group(1) if match else hashlib.sha256(base64.b64decode(payload)).hexdigest()
     filename = unquote(metadata.split(";name=", 1)[1]) if ";name=" in metadata else digest
     label = re.sub(r"([\\\\`*\[\]_<>&])", r"\\\1", filename)
     return f"[{label}](http://local.spiff/process-data-file-download/local/0/{digest})"
