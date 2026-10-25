@@ -1,14 +1,20 @@
 import base64
 import calendar
 import datetime
+import decimal
 import gzip
+import hashlib
 import json
 import logging
+import random
+import re
 import time
 import uuid
 from types import ModuleType
+from urllib.parse import unquote
 
 import jsonschema
+import pytz
 
 
 # This encoder/decoder replicates the type conversion behavior of
@@ -259,16 +265,32 @@ del SPIFF_CONFIG[ReceiveTask]
 del SPIFF_CONFIG[SendTask]
 del SPIFF_CONFIG[StartEvent]
 
+def _markdown_file_download_link(file_reference):
+    # Arena passes "data:<mimetype>;name=<name>;base64,spifffiledatadigest+<sha256>";
+    # Ed's forms keep the file contents inline instead of a digest.
+    metadata, payload = file_reference.rsplit(";base64,", 1)
+    match = re.fullmatch(r"spifffiledatadigest\+([0-9a-f]{64})", payload)
+    digest = match.group(1) if match else hashlib.sha256(payload.encode()).hexdigest()
+    filename = unquote(metadata.split(";name=", 1)[1]) if ";name=" in metadata else digest
+    label = re.sub(r"([\\\\`*\[\]_<>&])", r"\\\1", filename)
+    return f"[{label}](http://local.spiff/process-data-file-download/local/0/{digest})"
+
+
 class CustomEnvironment(TaskDataEnvironment):
     def __init__(self):
         # TODO: would be nice to get these from the client so we don't have to code change for globals
         super().__init__(environment_globals={
             "calendar": calendar,
             "datetime": datetime.datetime,
+            "decimal": decimal,
             "json": json,
             "jsonschema": jsonschema,
+            "pytz": pytz,
+            "random": random,
+            "re": re,
             "time": time,
             "timedelta": datetime.timedelta,
+            "uuid": uuid,
         })
 
     def _build_external_context(self, context, external_context=None):
@@ -301,6 +323,8 @@ class CustomEnvironment(TaskDataEnvironment):
         external_context["get_process_initiator_user"] = lambda: {
             key: value for key, value in process_initiator_user.items()
         }
+        external_context["markdown_file_download_link"] = _markdown_file_download_link
+        external_context["get_markdown_file_download_link"] = _markdown_file_download_link
         external_context["get_group_members"] = lambda group_name: [
             "group_member_1@example.com",
             "group_member_2@example.com",
