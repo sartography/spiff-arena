@@ -1,3 +1,4 @@
+import hashlib
 import json
 from types import SimpleNamespace
 
@@ -1074,3 +1075,52 @@ def test_service_task_http_status_response_follows_matching_error_boundary_event
     assert result["status"] == "ok"
     assert result["completed"] is True
     assert result["result"]["route"] == "handled"
+
+
+def test_custom_environment_provides_arena_script_modules():
+    context = {}
+
+    result = runner.CustomEnvironment().execute(
+        'tz = pytz.timezone("US/Central").zone\n'
+        'amount = str(decimal.Decimal("1.10") + decimal.Decimal("2.20"))\n'
+        'matched = re.match(r"\\d+", "42abc").group(0)\n'
+        'picked = random.choice(["only"])\n'
+        'is_uuid = isinstance(uuid.uuid4(), uuid.UUID)',
+        context,
+    )
+
+    assert result is True
+    assert context["tz"] == "US/Central"
+    assert context["amount"] == "3.30"
+    assert context["matched"] == "42"
+    assert context["picked"] == "only"
+    assert context["is_uuid"] is True
+
+
+def test_custom_environment_markdown_file_download_link_handles_arena_digest_references():
+    digest = "7a2051ffefd1eaf475dbef9fda019cb3d4a10eb8aea4c2c2a84a50a797a541bf"
+    context = {"file": f"data:text/plain;name=my%20report_v1.txt;base64,spifffiledatadigest+{digest}"}
+
+    result = runner.CustomEnvironment().execute(
+        "link = markdown_file_download_link(file)\n"
+        "legacy_link = get_markdown_file_download_link(file)",
+        context,
+    )
+
+    assert result is True
+    expected = f"[my report\\_v1.txt](http://local.spiff/process-data-file-download/local/0/{digest})"
+    assert context["link"] == expected
+    assert context["legacy_link"] == expected
+
+
+def test_custom_environment_markdown_file_download_link_handles_inline_file_data():
+    context = {"files": ["data:text/plain;name=notes.txt;base64,ZHVtbXk="]}
+
+    result = runner.CustomEnvironment().execute(
+        "links = [markdown_file_download_link(f) for f in files]",
+        context,
+    )
+
+    assert result is True
+    digest = hashlib.sha256(b"dummy").hexdigest()
+    assert context["links"] == [f"[notes.txt](http://local.spiff/process-data-file-download/local/0/{digest})"]
