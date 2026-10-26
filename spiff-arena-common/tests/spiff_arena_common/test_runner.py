@@ -74,6 +74,70 @@ def test_custom_environment_get_current_task_data_filters_internal_keys():
     assert context["result"] == {"visible": 1}
 
 
+class ShadowingBox(dict):
+    """Mimics the engine's dot-access Box: a dict whose data keys shadow dict methods."""
+
+    def __getattribute__(self, name):
+        if name not in (
+            "__class__",
+            "__dict__",
+            "__getattribute__",
+            "__setattr__",
+            "__delattr__",
+            "__getitem__",
+            "__setitem__",
+            "__contains__",
+            "__iter__",
+            "__len__",
+            "__init__",
+            "__repr__",
+        ):
+            try:
+                return dict.__getitem__(self, name)
+            except KeyError:
+                pass
+        return dict.__getattribute__(self, name)
+
+
+def test_custom_environment_get_current_task_data_handles_items_key_shadowing_method():
+    # Regression for issue #478: a service-task response containing an "items"
+    # key (a list) made the registry conversion call obj.items() as a method,
+    # raising TypeError: 'list' object is not callable on the next task.
+    context = ShadowingBox({"items": [1, 2, 3], "case_id": "case-1"})
+
+    result = runner.CustomEnvironment().execute(
+        "result = get_current_task_data()",
+        context,
+    )
+
+    assert result is True
+    assert context["result"] == {"items": [1, 2, 3], "case_id": "case-1"}
+
+
+def test_custom_environment_get_current_task_data_handles_keys_shadowing_multiple_dict_methods():
+    context = ShadowingBox(
+        {
+            "items": [1],
+            "keys": {"nested": True},
+            "values": "some value",
+            "get": 42,
+        }
+    )
+
+    result = runner.CustomEnvironment().execute(
+        "result = get_current_task_data()",
+        context,
+    )
+
+    assert result is True
+    assert context["result"] == {
+        "items": [1],
+        "keys": {"nested": True},
+        "values": "some value",
+        "get": 42,
+    }
+
+
 def test_custom_environment_get_toplevel_process_info_returns_local_stub():
     context = {}
 

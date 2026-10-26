@@ -265,6 +265,13 @@ del SPIFF_CONFIG[ReceiveTask]
 del SPIFF_CONFIG[SendTask]
 del SPIFF_CONFIG[StartEvent]
 
+def _plain_dict(value):
+    # Task data can be a dict subclass (e.g. the engine's dot-access Box) whose
+    # data keys shadow dict methods such as items(). Copy through dict() so the
+    # registry converter calls the real methods instead of a data value.
+    return dict(value) if isinstance(value, dict) else value
+
+
 def _markdown_file_download_link(file_reference):
     # Arena passes "data:<mimetype>;name=<name>;base64,spifffiledatadigest+<sha256>";
     # Ed's forms keep the file contents inline instead of a digest.
@@ -333,7 +340,7 @@ class CustomEnvironment(TaskDataEnvironment):
         hidden_keys = _INTERNAL_KEYS | set(self.globals.keys()) | set(external_context.keys())
         external_context["get_current_task_data"] = lambda: {
             k: v
-            for k, v in DefaultRegistry().convert(context).items()
+            for k, v in DefaultRegistry().convert(_plain_dict(context)).items()
             if k not in hidden_keys and not callable(v) and not isinstance(v, ModuleType)
         }
         return external_context
