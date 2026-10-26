@@ -21,9 +21,12 @@ FROM base AS deployment
 # gunicorn3 for web server
 # default-mysql-client for convenience accessing mysql docker container
 # vim ftw
+# ca-certificates is upgraded explicitly because the pinned base image can lag Debian's trust store fixes
+# (20250419+deb13u1 drops the compromised eMudhra emSign G3 roots)
 RUN apt-get update \
   && apt-get clean -y \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny libkrb5support0 libexpat1 \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --only-upgrade ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
 
