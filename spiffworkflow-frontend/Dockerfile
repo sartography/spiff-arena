@@ -45,7 +45,9 @@ RUN ./bin/build
 FROM nginx:1.29-alpine
 
 # we sort of love bash too much to use sh
-RUN apk add --no-cache bash
+# ca-certificates is upgraded because nginx:1.29-alpine is no longer rebuilt and still trusts the distrusted eMudhra emSign G3 roots
+RUN apk upgrade --no-cache ca-certificates ca-certificates-bundle \
+  && apk add --no-cache bash
 
 # Remove default nginx configuration
 RUN rm -rf /etc/nginx/conf.d/*
