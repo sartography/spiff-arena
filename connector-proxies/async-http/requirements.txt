@@ -1,3 +1,4 @@
+certifi==2026.10.19
 falcon==4.0.2
 granian[reload]==2.7.4
 httpx==0.28.1

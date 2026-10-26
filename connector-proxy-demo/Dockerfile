@@ -1,5 +1,5 @@
 # Base image to share ENV vars that activate VENV.
-FROM python:3.13.13-slim-trixie AS base
+FROM python:3.13.17-slim-trixie AS base
 
 ENV VIRTUAL_ENV=/app/.venv
 RUN python3 -m venv --without-pip $VIRTUAL_ENV \
