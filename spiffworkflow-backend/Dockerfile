@@ -35,11 +35,8 @@ FROM base AS deployment
 # libpq in order to be able to use postgres at runtime
 # mariadb-connector-c provides libmariadb and its authentication plugins at runtime
 # bash is needed from backend
-# ca-certificates is upgraded explicitly so a stale base image or build cache can't ship a trust store that still
-# trusts distrusted CAs (e.g. the compromised eMudhra emSign G3 roots)
 
 RUN apk update \
- && apk upgrade --no-cache ca-certificates ca-certificates-bundle \
  && apk add --no-cache git openssh-client curl procps mysql-client mariadb-connector-c vim jq libpq krb5-libs libexpat bash \
  && rm -rf /var/cache/apk/*
 
