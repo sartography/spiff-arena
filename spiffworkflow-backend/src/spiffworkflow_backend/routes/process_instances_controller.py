@@ -107,7 +107,8 @@ def process_instance_terminate(
     try:
         with ProcessInstanceQueueService.dequeued(process_instance):
             ProcessInstanceMigrator.run(process_instance)
-            if process_instance.spiffworkflow_fully_initialized():
+            has_tasks = TaskModel.query.filter_by(process_instance_id=process_instance.id).first() is not None
+            if process_instance.spiffworkflow_fully_initialized() or has_tasks:
                 ProcessInstanceRuntime(process_instance).terminate()
             else:
                 # it never ran, so there are no tasks to cancel, and building a runtime would load the
