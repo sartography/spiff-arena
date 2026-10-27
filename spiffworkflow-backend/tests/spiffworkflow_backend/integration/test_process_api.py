@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+import shutil
 import time
 import uuid
 from hashlib import sha256
@@ -1805,6 +1806,66 @@ class TestProcessApi(BaseTest):
 
         remaining_tasks = TaskModel.query.filter_by(process_instance_id=process_instance_id).all()
         assert len(remaining_tasks) == 3
+
+    def test_process_instance_can_be_terminated_when_process_model_no_longer_exists(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        # this task will wait on a catch event
+        process_model = self.create_group_and_model_with_bpmn(
+            client,
+            with_super_admin_user,
+            process_group_id="test_message_send",
+            process_model_id="message_sender",
+            bpmn_file_name="message_sender.bpmn",
+            bpmn_file_location="message_send_one_conversation",
+        )
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
+
+        modified_process_model_identifier = self.modify_process_identifier_for_path_param(process_model.id)
+        response = client.post(
+            f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}/run",
+            headers=headers,
+            json={},
+        )
+        assert response.status_code == 200
+
+        ready_tasks = TaskModel.query.filter_by(process_instance_id=process_instance_id, state="READY").all()
+        assert len(ready_tasks) == 1
+        ready_task = ready_tasks[0]
+
+        # simulate the process model having been removed from the models repo after the instance was created
+        shutil.rmtree(ProcessModelService.process_model_full_path(process_model))
+        with pytest.raises(ProcessEntityNotFoundError):
+            ProcessModelService.get_process_model(process_model.id)
+
+        response = client.post(
+            f"/v1.0/process-instance-terminate/{modified_process_model_identifier}/{process_instance_id}",
+            headers=headers,
+            json={},
+        )
+        assert response.status_code == 200
+
+        db.session.expire_all()
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        assert process_instance is not None
+        assert process_instance.status == ProcessInstanceStatus.terminated.value
+
+        terminated_event_count = ProcessInstanceEventModel.query.filter_by(
+            process_instance_id=process_instance_id,
+            event_type=ProcessInstanceEventType.process_instance_terminated.value,
+        ).count()
+        assert terminated_event_count == 1
+
+        ready_task_that_is_now_cancelled = TaskModel.query.filter_by(guid=ready_task.guid).first()
+        assert ready_task_that_is_now_cancelled is not None
+        assert ready_task_that_is_now_cancelled.state == "CANCELLED"
 
     def test_process_instance_delete(
         self,

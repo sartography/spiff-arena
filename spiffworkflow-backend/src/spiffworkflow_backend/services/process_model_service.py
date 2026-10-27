@@ -136,11 +136,22 @@ class ProcessModelService(FileSystemService):
         current_data: dict[str, Any],
         process_instance: ProcessInstanceModel | None = None,
     ) -> dict[str, Any]:
-        process_model_info = (
-            cls.get_process_model_for_instance(process_instance)
-            if process_instance is not None
-            else cls.get_process_model(process_model_identifier)
-        )
+        try:
+            process_model_info = (
+                cls.get_process_model_for_instance(process_instance)
+                if process_instance is not None
+                else cls.get_process_model(process_model_identifier)
+            )
+        except ProcessEntityNotFoundError:
+            # the model may have been deleted from the models repo after the instance was created.
+            # metadata extraction is best-effort, so do not let it block saving the instance,
+            # e.g. when an admin terminates an instance whose model no longer exists.
+            process_instance_id = process_instance.id if process_instance is not None else None
+            current_app.logger.warning(
+                f"Process model '{process_model_identifier}' could not be found while extracting metadata for "
+                f"process instance {process_instance_id}. Skipping metadata extraction."
+            )
+            return {}
         return ProcessModelInfo.extract_metadata(current_data, process_model_info.metadata_extraction_paths or [])
 
     @classmethod
