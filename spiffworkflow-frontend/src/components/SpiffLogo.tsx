@@ -9,12 +9,16 @@ import SpiffLogoMark from '../assets/icons/spiffworks_arena.svg';
  * light-on-dark asset, so we invert it in dark mode -- since the source is
  * effectively pure black-on-transparent, this cleanly produces near-white
  * on transparent rather than a color shift.
+ *
+ * The mark is decorative: callers wrap it in a link that carries the
+ * accessible name, so it's hidden from assistive tech here.
  */
 export default function SpiffLogo() {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   return (
     <Box
+      aria-hidden="true"
       sx={{
         display: 'inline-flex',
         alignItems: 'center',
