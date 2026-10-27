@@ -1867,6 +1867,41 @@ class TestProcessApi(BaseTest):
         assert ready_task_that_is_now_cancelled is not None
         assert ready_task_that_is_now_cancelled.state == "CANCELLED"
 
+    def test_process_instance_that_never_ran_can_be_terminated_when_process_model_no_longer_exists(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = self.create_group_and_model_with_bpmn(
+            client,
+            with_super_admin_user,
+            process_group_id="test_message_send",
+            process_model_id="message_sender",
+            bpmn_file_name="message_sender.bpmn",
+            bpmn_file_location="message_send_one_conversation",
+        )
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        assert response.json() is not None
+        process_instance_id = response.json()["id"]
+
+        shutil.rmtree(ProcessModelService.process_model_full_path(process_model))
+
+        modified_process_model_identifier = self.modify_process_identifier_for_path_param(process_model.id)
+        response = client.post(
+            f"/v1.0/process-instance-terminate/{modified_process_model_identifier}/{process_instance_id}",
+            headers=headers,
+            json={},
+        )
+        assert response.status_code == 200
+
+        db.session.expire_all()
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        assert process_instance is not None
+        assert process_instance.status == ProcessInstanceStatus.terminated.value
+
     def test_process_instance_delete(
         self,
         app: Flask,
