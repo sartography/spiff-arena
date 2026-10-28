@@ -496,7 +496,7 @@ class AuthorizationService:
         if user_model is None and user_attributes.get("email"):
             user_model = UserModel.query.filter(UserModel.email == user_attributes["email"]).order_by(UserModel.id).first()
         if user_model is None:
-            current_app.logger.debug("create_user in login_return")
+            current_app.logger.info(f"Creating user {user_attributes['username']} on first login")
             user_model = UserService().create_user(**user_attributes)
         else:
             # Update with the latest information
@@ -1041,8 +1041,10 @@ class AuthorizationService:
 
         num_permissions = len(permission_assignments)
         num_groups = len(unique_user_group_identifiers)
-        current_app.logger.debug(
-            f"ADD PERMISSIONS - COMPLETED: Added {num_permissions} permission assignments, {num_groups} unique group identifiers"
+        for_user = f" for user {user_model.username}" if user_model else ""
+        current_app.logger.info(
+            f"ADD PERMISSIONS - COMPLETED{for_user}: Added {num_permissions} permission assignments,"
+            f" {num_groups} unique group identifiers"
         )
         return result
 

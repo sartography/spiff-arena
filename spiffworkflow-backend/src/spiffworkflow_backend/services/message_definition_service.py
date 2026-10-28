@@ -64,7 +64,7 @@ class MessageDefinitionService:
             retrieval_expression = definition.get("retrieval_expression")
 
             if not retrieval_expression:
-                current_app.logger.debug(f"Malformed correlation property: '{identifier}' in file @ '{location}'")
+                current_app.logger.warning(f"Malformed correlation property: '{identifier}' in file @ '{location}'")
                 continue
 
             models.append(MessageCorrelationPropertyModel(identifier=identifier, retrieval_expression=retrieval_expression))
