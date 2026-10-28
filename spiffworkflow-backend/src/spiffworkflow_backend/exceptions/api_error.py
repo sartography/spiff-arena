@@ -303,11 +303,8 @@ def handle_exception(app: Flask, request: ConnexionRequest, exception: Exception
             error_code_message = f" with error code {exception.error_code}" if isinstance(exception, ApiError) else ""
             current_app.logger.info(f"Captured exception in Sentry{error_code_message}: {sentry_link or id}")
         else:
-            current_app.logger.warning(
-                f"Received exception: {exception}. Since we do not want this particular"
-                " exception in sentry, we cannot use logger.exception or logger.error, so"
-                " there will be no backtrace. see api_error.py"
-            )
+            # Sentry's logging integration sends error logs to Sentry, so log these expected errors as warnings.
+            current_app.logger.warning(f"Not sending to Sentry: {str(exception).rstrip()}")
 
         error_code = exception.error_code if hasattr(exception, "error_code") else "internal_server_error"
         status_code = 500

@@ -35,11 +35,9 @@ if [[ "${SPIFFWORKFLOW_BACKEND_UPGRADE_DB:-}" == "true" ]]; then
   uv run flask db upgrade
 fi
 
-if [[ -z "${UVICORN_LOG_LEVEL:-}" ]]; then
-  UVICORN_LOG_LEVEL=debug
-fi
+# debug prints gunicorn's whole configuration on every boot
 if [[ -z "${GUNICORN_LOG_LEVEL:-}" ]]; then
-  GUNICORN_LOG_LEVEL=debug
+  GUNICORN_LOG_LEVEL=info
 fi
 
 if [[ -z "${GUNICORN_TIMEOUT_SECONDS:-}" ]]; then

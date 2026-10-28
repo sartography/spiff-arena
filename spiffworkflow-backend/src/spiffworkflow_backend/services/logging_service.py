@@ -720,10 +720,14 @@ QUIET_LOGGERS = {
     "flask_cors.core": logging.ERROR,
     "flask_cors.extension": logging.ERROR,
     "sqlalchemy": logging.ERROR,
+    # a second line for every migration it runs
+    "alembic": logging.INFO,
     # every job run
     "apscheduler": logging.INFO,
     # dozens of lines on every worker start
     "celery.bootsteps": logging.INFO,
+    # the whole request of every task it runs
+    "celery.pool": logging.INFO,
     # the source code of every task signature on worker start
     "celery.utils.functional": logging.INFO,
     # every Celery remote-control broadcast, e.g. Flower's enable_events every few seconds
