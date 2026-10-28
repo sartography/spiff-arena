@@ -194,8 +194,10 @@ def test_setup_quiets_chatty_libraries_and_their_children(monkeypatch: pytest.Mo
     for name in (
         "kombu.pidbox",
         "urllib3.connectionpool",
+        "alembic.runtime.migration",
         "apscheduler.scheduler",
         "celery.bootsteps",
+        "celery.pool",
         "celery.utils.functional",
     ):
         logging.getLogger(name).debug(f"{name} debug")
@@ -207,8 +209,10 @@ def test_setup_quiets_chatty_libraries_and_their_children(monkeypatch: pytest.Mo
     assert output.messages(output.stdout) == [
         "kombu.pidbox info",
         "urllib3.connectionpool info",
+        "alembic.runtime.migration info",
         "apscheduler.scheduler info",
         "celery.bootsteps info",
+        "celery.pool info",
         "celery.utils.functional info",
         "sqlalchemy error",
         "app debug",
