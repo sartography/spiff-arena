@@ -136,11 +136,25 @@ class ProcessModelService(FileSystemService):
         current_data: dict[str, Any],
         process_instance: ProcessInstanceModel | None = None,
     ) -> dict[str, Any]:
-        process_model_info = (
-            cls.get_process_model_for_instance(process_instance)
-            if process_instance is not None
-            else cls.get_process_model(process_model_identifier)
-        )
+        try:
+            process_model_info = (
+                cls.get_process_model_for_instance(process_instance)
+                if process_instance is not None
+                else cls.get_process_model(process_model_identifier)
+            )
+        except ProcessEntityNotFoundError as exception:
+            # the model may have been deleted from the models repo after the instance was created.
+            # metadata extraction is best-effort, so do not let it block saving the instance,
+            # e.g. when an admin terminates an instance whose model no longer exists.
+            # a missing models root is a deployment problem, so let that surface.
+            if exception.args[:1] != ("process_model_not_found",):
+                raise
+            process_instance_id = process_instance.id if process_instance is not None else None
+            current_app.logger.warning(
+                f"Process model '{process_model_identifier}' could not be found while extracting metadata for "
+                f"process instance {process_instance_id}. Skipping metadata extraction."
+            )
+            return {}
         return ProcessModelInfo.extract_metadata(current_data, process_model_info.metadata_extraction_paths or [])
 
     @classmethod
@@ -153,7 +167,12 @@ class ProcessModelService(FileSystemService):
         provider = current_app.extensions.get("model_sources")
         files = provider.open(db.session, process_instance) if provider is not None and process_instance.id is not None else None
         if files is not None:
-            config = json.loads(files.read(f"{process_instance.process_model_identifier}/process_model.json"))
+            try:
+                config_json = files.read(f"{process_instance.process_model_identifier}/process_model.json")
+            except FileNotFoundError as exception:
+                # match the repository lookup so callers handle a missing model the same way for every source
+                raise ProcessEntityNotFoundError("process_model_not_found") from exception
+            config = json.loads(config_json)
             return ProcessModelInfo.from_dict({**config, "id": process_instance.process_model_identifier})
         return cls.get_process_model(process_instance.process_model_identifier)
 

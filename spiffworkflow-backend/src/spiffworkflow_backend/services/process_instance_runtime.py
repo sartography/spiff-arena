@@ -1310,10 +1310,14 @@ class ProcessInstanceRuntime:
     def terminate(self) -> None:
         with suppress(KeyError):
             self.remove_spiff_tasks_for_termination()
-        self.process_instance_model.status = "terminated"
-        db.session.add(self.process_instance_model)
+        self.mark_terminated(self.process_instance_model)
+
+    @classmethod
+    def mark_terminated(cls, process_instance: ProcessInstanceModel) -> None:
+        process_instance.status = "terminated"
+        db.session.add(process_instance)
         ProcessInstanceEventService.add_event_to_process_instance(
-            self.process_instance_model, ProcessInstanceEventType.process_instance_terminated.value
+            process_instance, ProcessInstanceEventType.process_instance_terminated.value
         )
         db.session.commit()
 

@@ -1,15 +1,21 @@
 """Process Model."""
 
 import re
+import shutil
+from unittest.mock import Mock
 
+import pytest
 from flask.app import Flask
 
+from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_caller_relationship import ProcessCallerRelationshipModel
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.reference_cache import ReferenceCacheModel
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -130,3 +136,40 @@ class TestProcessModel(BaseTest):
             display_name=display_name,
             description=display_name,
         )
+
+    def test_extract_metadata_is_empty_when_process_model_no_longer_exists(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec("test_group/hello_world", process_model_source_directory="hello_world")
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        shutil.rmtree(ProcessModelService.process_model_full_path(process_model))
+
+        assert ProcessModelService.extract_metadata(process_model.id, {}, process_instance=process_instance) == {}
+
+    def test_extract_metadata_raises_when_process_model_root_is_missing(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(FileSystemService, "root_path", Mock(return_value="/nonexistent/spiff-models-root"))
+
+        with pytest.raises(ProcessEntityNotFoundError, match="process_model_root_not_found"):
+            ProcessModelService.extract_metadata("test_group/hello_world", {})
+
+    def test_provider_missing_process_model_is_reported_as_not_found(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        process_model = load_test_spec("test_group/hello_world", process_model_source_directory="hello_world")
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        files = Mock(read=Mock(side_effect=FileNotFoundError("process_model.json")))
+        monkeypatch.setitem(app.extensions, "model_sources", Mock(open=Mock(return_value=files)))
+
+        with pytest.raises(ProcessEntityNotFoundError, match="process_model_not_found"):
+            ProcessModelService.get_process_model_for_instance(process_instance)
+        assert ProcessModelService.extract_metadata(process_model.id, {}, process_instance=process_instance) == {}
