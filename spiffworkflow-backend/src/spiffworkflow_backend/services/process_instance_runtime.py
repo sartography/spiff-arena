@@ -891,15 +891,10 @@ class ProcessInstanceRuntime:
         should_schedule_waiting_timer_events: bool = True,
         needs_dequeue: bool = True,
     ) -> TaskRunnability:
-        # Debug logs for engine steps execution
-        process_id = self.process_instance_model.id
+        started_at = time.perf_counter()
         current_status = self.process_instance_model.status
         ready_tasks = [t.task_spec.name for t in self.bpmn_process_instance.get_tasks(state=TaskState.READY)]
         waiting_tasks = [t.task_spec.name for t in self.get_all_waiting_tasks()]
-
-        current_app.logger.debug(f"ENGINE STEPS - START: Process {process_id}, Status: {current_status}")
-        current_app.logger.debug(f"ENGINE STEPS - Ready tasks: {ready_tasks}")
-        current_app.logger.debug(f"ENGINE STEPS - Waiting tasks: {waiting_tasks}")
 
         self.raise_on_high_process_instance_count()
 
@@ -952,15 +947,23 @@ class ProcessInstanceRuntime:
             )
         self.check_all_tasks()
 
-        # Debug logs for engine steps completion
+        process_instance_id = self.process_instance_model.id
         new_status = self.get_status().value
-        after_ready_tasks = [t.task_spec.name for t in self.bpmn_process_instance.get_tasks(state=TaskState.READY)]
-        after_waiting_tasks = [t.task_spec.name for t in self.get_all_waiting_tasks()]
-
-        current_app.logger.debug(f"ENGINE STEPS - FINISH: Process {process_id}, New Status: {new_status}")
-        current_app.logger.debug(f"ENGINE STEPS - New Ready tasks: {after_ready_tasks}")
-        current_app.logger.debug(f"ENGINE STEPS - New Waiting tasks: {after_waiting_tasks}")
-        current_app.logger.debug(f"ENGINE STEPS - Task Runnability: {task_runnability}")
+        task_names = {
+            "ready_tasks_before": ready_tasks,
+            "waiting_tasks_before": waiting_tasks,
+            "ready_tasks_after": [t.task_spec.name for t in self.bpmn_process_instance.get_tasks(state=TaskState.READY)],
+            "waiting_tasks_after": [t.task_spec.name for t in self.get_all_waiting_tasks()],
+        }
+        # leave out empty task lists, since this logs on every engine run
+        extras = {
+            "process_instance_id": process_instance_id,
+            "duration_ms": round((time.perf_counter() - started_at) * 1000, 3),
+        } | {key: names for key, names in task_names.items() if names}
+        current_app.logger.info(
+            f"ENGINE STEPS - Process {process_instance_id}: {current_status} -> {new_status}, {task_runnability.value}",
+            extra={"extras": extras},
+        )
 
         return task_runnability
 

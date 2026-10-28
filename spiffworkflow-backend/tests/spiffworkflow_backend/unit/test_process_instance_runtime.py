@@ -126,6 +126,42 @@ class TestProcessInstanceRuntime(BaseTest):
 
         assert {key: user_task.data[key] for key in submitted_data} == submitted_data
 
+    def test_engine_steps_log_one_info_summary(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="test_group/simple_form",
+            bpmn_file_name="simple_form.bpmn",
+            process_model_source_directory="simple_form",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
+        app_logger = logging.getLogger("spiffworkflow_backend")
+        collector = _RecordCollector()
+        saved_level = app_logger.level
+        app_logger.setLevel(logging.INFO)
+        app_logger.addHandler(collector)
+        try:
+            ProcessInstanceRuntime(process_instance).do_engine_steps(save=True)
+        finally:
+            app_logger.removeHandler(collector)
+            app_logger.setLevel(saved_level)
+
+        engine_records = [record for record in collector.records if record.getMessage().startswith("ENGINE STEPS")]
+        assert len(engine_records) == 1
+        assert engine_records[0].levelno == logging.INFO
+        assert engine_records[0].getMessage() == (
+            f"ENGINE STEPS - Process {process_instance.id}: not_started -> user_input_required, no_ready_tasks"
+        )
+        extras = dict(engine_records[0].__dict__["extras"])
+        assert extras.pop("duration_ms") > 0
+        assert extras == {
+            "process_instance_id": process_instance.id,
+            "ready_tasks_before": ["Start"],
+            "ready_tasks_after": ["Activity_SimpleForm"],
+        }
+
     def test_user_task_form_submission_uses_configured_variable(
         self,
         app: Flask,

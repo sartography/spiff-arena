@@ -495,7 +495,7 @@ class AuthenticationService:
             ".spiffworkflow_backend_routes_authentication_controller_login_return"
         )
         redirect_url_to_use = f"{host_url}{login_return_path}"
-        current_app.logger.debug(f"Redirect URL requested of open ID provider is '{redirect_url_to_use}' ")
+        current_app.logger.info(f"Redirect URL requested of open ID provider is '{redirect_url_to_use}' ")
         return redirect_url_to_use
 
     def get_login_redirect_url(self, authentication_identifier: str, final_url: str | None = None) -> str:

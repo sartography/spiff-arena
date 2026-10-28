@@ -34,5 +34,6 @@ def _get_current_user_from_request() -> UserModel | None:
             user = _get_user_model_from_token(decoded_token)
             return user
     except Exception as e:
-        current_app.logger.warning(f"Error getting current user from request: {str(e)}")
+        # An expired or invalid token is expected here; the status check then treats the request as anonymous.
+        current_app.logger.debug(f"Error getting current user from request: {str(e)}")
     return None

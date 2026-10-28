@@ -1,4 +1,5 @@
 import os
+import time
 from typing import Any
 
 from flask import current_app
@@ -32,8 +33,8 @@ class DataSetupService:
         These all exist within processes located on the file system, so we can quickly reference them
         from the database.
         """
-        current_app.logger.debug("DataSetupService.refresh_process_model_caches() start")
-
+        started_at = time.monotonic()
+        process_model_count = 0
         failing_process_models = []
         files = FileSystemService.walk_files_from_root_path(True, None)
         reference_objects: dict[str, ReferenceCacheModel] = {}
@@ -44,6 +45,7 @@ class DataSetupService:
         for file in files:
             if FileSystemService.is_process_model_json_file(file):
                 process_model = ProcessModelService.get_process_model_from_path(file)
+                process_model_count += 1
                 # Use the common processing logic
                 model_refs, model_failures = cls._extract_process_model_references(process_model, reference_objects)
                 references.extend(model_refs)
@@ -68,10 +70,9 @@ class DataSetupService:
                     cls._collect_data_store_specifications(process_group, file, all_data_store_specifications)
                     MessageDefinitionService.collect_message_models(process_group, process_group.id, all_message_models)
                 except Exception:
-                    current_app.logger.debug(f"Failed to load process group from file @ '{file}'")
+                    current_app.logger.warning(f"Failed to load process group from file @ '{file}'", exc_info=True)
                     continue
 
-        current_app.logger.debug("DataSetupService.refresh_process_model_caches() end")
         ReferenceCacheService.add_new_generation(reference_objects)
         cls._sync_data_store_models_with_specifications(all_data_store_specifications)
 
@@ -82,6 +83,10 @@ class DataSetupService:
         db.session.commit()
 
         cls._update_process_model_caches_for_references(references, failing_process_models)
+        current_app.logger.info(
+            f"Refreshed process model caches: {process_model_count} process models, {len(references)} references,"
+            f" {len(failing_process_models)} failures, in {time.monotonic() - started_at:.1f}s"
+        )
         return failing_process_models
 
     @classmethod
@@ -220,13 +225,13 @@ class DataSetupService:
     ) -> None:
         for data_store_type, specs_by_id in process_group.data_store_specifications.items():
             if not isinstance(specs_by_id, dict):
-                current_app.logger.debug(f"Expected dictionary as value for key '{data_store_type}' in file @ '{file_name}'")
+                current_app.logger.warning(f"Expected dictionary as value for key '{data_store_type}' in file @ '{file_name}'")
                 continue
 
             for identifier, specification in specs_by_id.items():
                 location = specification.get("location")
                 if location is None:
-                    current_app.logger.debug(
+                    current_app.logger.warning(
                         f"Location missing from data store specification '{identifier}' in file @ '{file_name}'"
                     )
                     continue
@@ -287,7 +292,7 @@ class DataSetupService:
             schema = specification.get("schema")
 
             if name is None or schema is None:
-                current_app.logger.debug(
+                current_app.logger.warning(
                     f"DataSetupService: was expecting key '{key}' to point to a valid data store specification for model"
                     " updating."
                 )
@@ -301,7 +306,7 @@ class DataSetupService:
             data_store_type, location, identifier = key
 
             if data_store_type not in model_creators:
-                current_app.logger.debug(f"DataSetupService: cannot create model for type '{data_store_type}'.")
+                current_app.logger.warning(f"DataSetupService: cannot create model for type '{data_store_type}'.")
                 continue
 
             model = model_creators[data_store_type](identifier, location)

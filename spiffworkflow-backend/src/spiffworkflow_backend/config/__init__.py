@@ -294,9 +294,7 @@ def setup_config(app: Flask) -> None:
 
     setup_database_configs(app)
     setup_logger_for_app(app)
-    app.logger.debug(
-        f"SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR: {app.config['SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR']}"
-    )
+    app.logger.info(f"SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR: {app.config['SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR']}")
 
     # if git username is defined, default git user email to [username]@users.noreply.github.com
     # that way, you may not have to define both variables in your environment

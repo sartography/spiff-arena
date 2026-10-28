@@ -24,13 +24,3 @@ def setup_task_logger(logger: Any, *args: Any, **kwargs: Any) -> None:
     logger.handlers = []
     logger.propagate = True
     logger.setLevel(logging.NOTSET)
-
-
-@celery.signals.task_prerun.connect  # type: ignore
-def log_task_started(task_id: str, task: Any, *args: Any, **kwargs: Any) -> None:
-    the_flask_app.logger.info(f"Celery task started: {task.name}[{task_id}]")
-
-
-@celery.signals.task_postrun.connect  # type: ignore
-def log_task_finished(task_id: str, task: Any, state: str, *args: Any, **kwargs: Any) -> None:
-    the_flask_app.logger.info(f"Celery task finished: {task.name}[{task_id}] state={state}")
