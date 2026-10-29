@@ -16,6 +16,7 @@ import { TimeAgo } from '../helpers/timeago';
 import UserService from '../services/UserService';
 import PaginationForTable from './PaginationForTable';
 import {
+  formDataForTask,
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
@@ -205,6 +206,8 @@ export default function TaskListTable({
             sx={{
               width: '80%',
               maxWidth: 800,
+              maxHeight: '90vh',
+              overflowY: 'auto',
               bgcolor: 'background.paper',
               border: '2px solid',
               borderColor: 'divider',
@@ -230,7 +233,7 @@ export default function TaskListTable({
             <CustomForm
               id={formSubmissionTask.guid}
               key={formSubmissionTask.guid}
-              formData={formSubmissionTask.data}
+              formData={formDataForTask(formSubmissionTask)}
               fileDownloadContext={formSubmissionTask}
               schema={jsonSchema}
               uiSchema={formUiSchema}

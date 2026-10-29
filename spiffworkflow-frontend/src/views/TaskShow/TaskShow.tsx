@@ -15,6 +15,7 @@ import HttpService from '../../services/HttpService';
 import useAPIError from '../../hooks/UseApiError';
 import {
   doNothing,
+  formDataForTask,
   modifyProcessIdentifierForPathParam,
   recursivelyChangeNullAndUndefined,
   renderElementsForArray,
@@ -127,19 +128,7 @@ export default function TaskShow() {
     const processTaskWithDataResult = (result: Task) => {
       setTaskWithTaskData(result);
 
-      const variableName = result.extensions.variableName;
-      let taskDataToUse;
-      if (result.saved_form_data) {
-        taskDataToUse = result.saved_form_data;
-      } else if (
-        typeof variableName !== 'undefined' &&
-        variableName != null &&
-        typeof result.data[variableName] !== 'undefined'
-      ) {
-        taskDataToUse = result.data[variableName];
-      } else {
-        taskDataToUse = result.data;
-      }
+      const taskDataToUse = result.saved_form_data || formDataForTask(result);
       setTaskData(recursivelyChangeNullAndUndefined(taskDataToUse, undefined));
       setFormButtonsDisabled(false);
     };
