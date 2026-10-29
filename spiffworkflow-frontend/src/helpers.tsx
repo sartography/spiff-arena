@@ -5,6 +5,7 @@ import {
   ElementForArray,
   MessageInstance,
   ProcessInstance,
+  Task,
 } from './interfaces';
 export const DEFAULT_PER_PAGE = 50;
 export const DEFAULT_PAGE = 1;
@@ -78,6 +79,15 @@ export const recursivelyChangeNullAndUndefined = (obj: any, newValue: any) => {
     });
   }
   return obj;
+};
+
+// a user task with a variableName stores its form data under that variable
+export const formDataForTask = (task: Task) => {
+  const variableName = task.extensions?.variableName;
+  if (variableName && typeof task.data[variableName] !== 'undefined') {
+    return task.data[variableName];
+  }
+  return task.data;
 };
 
 export const selectKeysFromSearchParams = (obj: any, keys: string[]) => {
