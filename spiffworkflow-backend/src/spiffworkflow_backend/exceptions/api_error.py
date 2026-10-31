@@ -269,6 +269,9 @@ def should_notify_sentry(exception: Exception) -> bool:
         "process_instance_validation_error",
         "invalid_login",
         "missing_token",
+        # A late or repeated connector callback for a task that already moved on.
+        "callback_not_found",
+        "not_waiting_for_callback",
     }:
         return False
     # A rejection caused by lock contention is not a caller error.
