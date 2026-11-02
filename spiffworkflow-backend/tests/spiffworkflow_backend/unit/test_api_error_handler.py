@@ -1,11 +1,13 @@
 from unittest.mock import Mock
 
+import pytest
 from flask import Flask
 from lxml.etree import XMLSyntaxError  # type: ignore
 from pytest_mock import MockerFixture
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.api_error import handle_exception
+from spiffworkflow_backend.exceptions.api_error import should_notify_sentry
 
 
 def test_from_invalid_xml_includes_file_and_parse_details() -> None:
@@ -18,6 +20,11 @@ def test_from_invalid_xml_includes_file_and_parse_details() -> None:
     assert "Extra content at the end of the document" in error.message
     assert error.file_name == "broken.bpmn"
     assert error.status_code == 400
+
+
+@pytest.mark.parametrize("error_code", ["callback_not_found", "not_waiting_for_callback"])
+def test_should_notify_sentry_skips_stale_callback_errors(error_code: str) -> None:
+    assert not should_notify_sentry(ApiError(error_code=error_code, message="Stale callback.", status_code=400))
 
 
 def test_handle_exception_captures_exception_without_duplicate_error_log(
