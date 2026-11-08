@@ -10,6 +10,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from flask import current_app
+from flask import has_app_context
 
 try:
     # fcntl is not available on Windows. With multiple workers, file locking is required
@@ -60,7 +61,10 @@ class OpenIdConfigsForDevOnly:
 
     @classmethod
     def _expected_worker_count(cls) -> int:
-        configured_count = current_app.config.get("SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT", 1)
+        if has_app_context():
+            configured_count = current_app.config.get("SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT", 1)
+        else:
+            configured_count = os.getenv("SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT", "1")
         try:
             return int(configured_count)
         except ValueError:

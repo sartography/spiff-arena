@@ -161,7 +161,15 @@ config_from_env(
 # use "http://localhost:7000/openid" for running with simple openid
 # server hosted by spiffworkflow-backend
 if "SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS" in configs_with_structures:
-    SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS = configs_with_structures["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"]
+    # Windows uppercases environment variable names, including nested config keys.
+    def lowercase_config_keys(value: Any) -> Any:
+        if isinstance(value, dict):
+            return {key.lower(): lowercase_config_keys(item) for key, item in value.items()}
+        if isinstance(value, list):
+            return [lowercase_config_keys(item) for item in value]
+        return value
+
+    SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS = lowercase_config_keys(configs_with_structures["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"])
 else:
     # do this for now for backwards compatibility
     url_config = config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL")

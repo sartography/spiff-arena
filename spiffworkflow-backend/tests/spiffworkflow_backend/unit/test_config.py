@@ -1,4 +1,29 @@
+import importlib
+
+import pytest
+
 from spiffworkflow_backend.config import detect_database_type_from_uri
+
+
+def test_uppercase_auth_config_environment_keys_are_normalized(monkeypatch: pytest.MonkeyPatch) -> None:
+    from spiffworkflow_backend.config import default
+
+    try:
+        with monkeypatch.context() as patched:
+            patched.setenv("SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__IDENTIFIER", "windows-test")
+            patched.setenv("SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__URI", "http://localhost:7000/openid")
+            patched.setenv("SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__CLIENT_ID", "spiffworkflow-backend")
+            importlib.reload(default)
+
+            assert default.SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS == [
+                {
+                    "identifier": "windows-test",
+                    "uri": "http://localhost:7000/openid",
+                    "client_id": "spiffworkflow-backend",
+                }
+            ]
+    finally:
+        importlib.reload(default)
 
 
 def test_mysql_database_type_is_inferred_from_uri() -> None:

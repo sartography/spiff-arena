@@ -1,8 +1,24 @@
 from pathlib import Path
 
 import pytest
+from flask import Flask
 
 from spiffworkflow_backend.config.openid import rsa_keys
+
+
+def test_worker_count_uses_environment_before_app_context(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT", "2")
+
+    assert rsa_keys.OpenIdConfigsForDevOnly._expected_worker_count() == 2
+
+
+def test_worker_count_uses_app_config_when_available(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT", "2")
+    app = Flask(__name__)
+    app.config["SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT"] = 3
+
+    with app.app_context():
+        assert rsa_keys.OpenIdConfigsForDevOnly._expected_worker_count() == 3
 
 
 def test_read_key_pair_from_files_returns_none_for_truncated_pems(tmp_path: Path) -> None:
