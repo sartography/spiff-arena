@@ -64,6 +64,20 @@ updates:
       - dependency-name: "connexion"
         versions: ["3.2.0"]
 
+  # UV (isolated backend security tooling)
+  - package-ecosystem: uv
+    directory: "/spiffworkflow-backend/tools/security"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    cooldown:
+      default-days: 60
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+      include:
+        - "*"
+
   # NPM
   - package-ecosystem: npm
     directory: "/.github/workflows"
