@@ -9,17 +9,11 @@ from cryptography.exceptions import UnsupportedAlgorithm
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from flask import current_app
-from flask import has_app_context
 
-try:
-    # fcntl is not available on Windows. With multiple workers, file locking is required
-    # to prevent race conditions when generating keys. For single worker, locking is unnecessary.
+if os.name == "nt":
+    import msvcrt
+else:
     import fcntl
-
-    HAS_FCNTL = True
-except ImportError:
-    HAS_FCNTL = False
 
 
 class OpenIdConfigsForDevOnly:
@@ -60,18 +54,6 @@ class OpenIdConfigsForDevOnly:
             raise
 
     @classmethod
-    def _expected_worker_count(cls) -> int:
-        """Read worker count before or after Flask app initialization."""
-        if has_app_context():
-            configured_count = current_app.config.get("SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT", 1)
-        else:
-            configured_count = os.getenv("SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT", "1")
-        try:
-            return int(configured_count)
-        except (TypeError, ValueError):
-            return 1
-
-    @classmethod
     def _key_cache_dir(cls) -> Path:
         configured_dir = os.getenv("SPIFFWORKFLOW_BACKEND_OPEN_ID_CACHE_DIR")
         if configured_dir:
@@ -95,20 +77,23 @@ class OpenIdConfigsForDevOnly:
 
     @classmethod
     def _load_or_create_file_backed_keys_with_lock(cls) -> tuple[str, str]:
+        """Share one cached key pair across processes on Windows and POSIX."""
         private_key_path, public_key_path, lock_path = cls._key_paths()
         private_key_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with lock_path.open("w") as lock_file:
-            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        with lock_path.open("a+b") as lock_file:
+            if os.name == "nt":
+                lock_file.seek(0)
+                msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
+            else:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
 
-            existing_keys = cls._read_key_pair_from_files(private_key_path, public_key_path)
-            if existing_keys is not None:
-                return existing_keys
-
-            private_key, public_key = cls._generate_keys()
-            cls._write_validated_pem_atomically(private_key_path, private_key, 0o600, cls._validate_private_key_pem)
-            cls._write_validated_pem_atomically(public_key_path, public_key, 0o644, cls._validate_public_key_pem)
-            return (private_key, public_key)
+            try:
+                return cls._load_or_create_file_backed_keys_without_lock()
+            finally:
+                if os.name == "nt":
+                    lock_file.seek(0)
+                    msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
 
     @classmethod
     def _load_or_create_file_backed_keys_without_lock(cls) -> tuple[str, str]:
@@ -126,15 +111,6 @@ class OpenIdConfigsForDevOnly:
 
     @classmethod
     def _load_or_create_file_backed_keys(cls) -> tuple[str, str]:
-        if not HAS_FCNTL:
-            if cls._expected_worker_count() > 1:
-                raise RuntimeError(
-                    "Built-in OpenID dev keys require SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_KEY "
-                    "and SPIFFWORKFLOW_BACKEND_OPEN_ID_PUBLIC_KEY when running with multiple workers "
-                    "on platforms without fcntl-based file locking."
-                )
-            return cls._load_or_create_file_backed_keys_without_lock()
-
         return cls._load_or_create_file_backed_keys_with_lock()
 
     @classmethod

@@ -1,32 +1,51 @@
+import hashlib
+import multiprocessing
+import os
+import time
 from pathlib import Path
 
 import pytest
-from flask import Flask
 
 from spiffworkflow_backend.config.openid import rsa_keys
 
 
-def test_worker_count_uses_environment_before_app_context(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT", "2")
+def _load_keys_in_parallel(cache_dir: str, barrier, results) -> None:
+    os.environ["SPIFFWORKFLOW_BACKEND_OPEN_ID_CACHE_DIR"] = cache_dir
+    original_generate = rsa_keys.OpenIdConfigsForDevOnly._generate_keys
 
-    assert rsa_keys.OpenIdConfigsForDevOnly._expected_worker_count() == 2
+    def slow_generate(cls):
+        time.sleep(0.5)
+        return original_generate()
+
+    rsa_keys.OpenIdConfigsForDevOnly._generate_keys = classmethod(slow_generate)
+    barrier.wait(timeout=20)
+    _, public_key = rsa_keys.OpenIdConfigsForDevOnly._load_or_create_file_backed_keys()
+    results.put(hashlib.sha256(public_key.encode()).hexdigest())
 
 
-def test_worker_count_uses_app_config_when_available(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT", "2")
-    app = Flask(__name__)
-    app.config["SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT"] = 3
+def test_parallel_workers_reuse_same_generated_keys(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("SPIFFWORKFLOW_BACKEND_OPEN_ID_CACHE_DIR", str(tmp_path / "bootstrap"))
+    monkeypatch.delenv("SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_KEY", raising=False)
+    monkeypatch.delenv("SPIFFWORKFLOW_BACKEND_OPEN_ID_PUBLIC_KEY", raising=False)
+    monkeypatch.delenv("SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT", raising=False)
+    context = multiprocessing.get_context("spawn")
+    barrier = context.Barrier(2)
+    results = context.Queue()
+    processes = [
+        context.Process(target=_load_keys_in_parallel, args=(str(tmp_path / "shared"), barrier, results)) for _ in range(2)
+    ]
 
-    with app.app_context():
-        assert rsa_keys.OpenIdConfigsForDevOnly._expected_worker_count() == 3
+    for process in processes:
+        process.start()
+    for process in processes:
+        process.join(timeout=30)
+        if process.is_alive():
+            process.terminate()
+            process.join()
 
-
-def test_worker_count_defaults_when_app_config_is_none() -> None:
-    app = Flask(__name__)
-    app.config["SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT"] = None
-
-    with app.app_context():
-        assert rsa_keys.OpenIdConfigsForDevOnly._expected_worker_count() == 1
+    assert [process.exitcode for process in processes] == [0, 0]
+    fingerprints = [results.get(timeout=5) for _ in processes]
+    assert fingerprints[0] == fingerprints[1]
 
 
 def test_read_key_pair_from_files_returns_none_for_truncated_pems(tmp_path: Path) -> None:
