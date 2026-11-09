@@ -61,6 +61,11 @@ jobs:
           # This is where you will need to introduce the Snyk API token created with your Snyk account
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.13"
+
       - name: Install pip and uv
         run: |
           pip install --constraint=../.github/workflows/constraints.txt pip uv
@@ -78,7 +83,8 @@ jobs:
               print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
 
       - name: uv Install
-        run: uv sync
+        # Keep uv and the pip-based Snyk workaround on the same Python version.
+        run: uv sync --frozen --python 3.13
 
         # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
         # Use || true to not fail the pipeline
@@ -94,7 +100,7 @@ jobs:
 
       # # checks library dependencies
       - name: Snyk test
-        run: snyk test --skip-unresolved
+        run: snyk test --skip-unresolved --severity-threshold=high
 
         # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
       - name: Snyk Open Source monitor

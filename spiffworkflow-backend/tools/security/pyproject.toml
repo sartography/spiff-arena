@@ -1,0 +1,15 @@
+[project]
+name = "spiff-arena-security-tools"
+version = "0.0.0"
+requires-python = ">=3.11"
+dependencies = [
+    "safety==3.8.1",
+]
+
+[tool.uv]
+package = false
+constraint-dependencies = [
+    "authlib>=1.9.1",
+    "joserfc>=1.7.6",
+    "nltk>=3.10.4",
+]
