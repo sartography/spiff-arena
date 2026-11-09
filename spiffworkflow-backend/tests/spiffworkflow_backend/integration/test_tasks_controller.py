@@ -1,6 +1,8 @@
+import html
 import json
 from uuid import UUID
 
+import pytest
 from flask.app import Flask
 from starlette.testclient import TestClient
 
@@ -16,6 +18,7 @@ from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
@@ -90,6 +93,55 @@ class TestTasksController(BaseTest):
             "building": {"floor": {"ui:widget": "hidden"}},
             "veryImportantFieldButOnlySometimes": {"ui:widget": "hidden"},
         }
+
+    @pytest.mark.parametrize(
+        "pre_script_value,expected_form_data",
+        [
+            ("None", {}),
+            ("''", {}),
+            ("0", {}),
+            ("'text'", {}),
+            ("[]", []),
+            ("{'firstName': 'Ann'}", {"firstName": "Ann"}),
+        ],
+    )
+    def test_task_show_gives_form_data_only_from_dicts_and_lists(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+        pre_script_value: str,
+        expected_form_data: dict | list,
+    ) -> None:
+        process_model = self.create_group_and_model_with_bpmn(
+            client,
+            with_super_admin_user,
+            process_group_id="my_process_group",
+            process_model_id="user_task_with_variable_name",
+        )
+        bpmn_file_name = "user_task_with_variable_name.bpmn"
+        bpmn = SpecFileService.get_data(process_model, bpmn_file_name).decode()
+        bpmn = bpmn.replace("FormData = None", f"FormData = {html.escape(pre_script_value)}")
+        SpecFileService.update_file(process_model, bpmn_file_name, bpmn.encode())
+
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model.id, headers)
+        process_instance_id = response.json()["id"]
+        response = client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_id}/run",
+            headers=headers,
+        )
+        assert response.status_code == 200
+        _dequeued_interstitial_stream(process_instance_id)
+
+        human_task = db.session.query(HumanTaskModel).filter(HumanTaskModel.process_instance_id == process_instance_id).one()
+        response = client.get(
+            f"/v1.0/tasks/{process_instance_id}/{human_task.task_id}?with_form_data=true",
+            headers=headers,
+        )
+        assert response.status_code == 200
+        assert response.json()["data"] == {"FormData": expected_form_data}
 
     def test_prepare_schema(
         self,
