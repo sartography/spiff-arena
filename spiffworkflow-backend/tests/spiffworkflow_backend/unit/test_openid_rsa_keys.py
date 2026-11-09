@@ -21,6 +21,14 @@ def test_worker_count_uses_app_config_when_available(monkeypatch: pytest.MonkeyP
         assert rsa_keys.OpenIdConfigsForDevOnly._expected_worker_count() == 3
 
 
+def test_worker_count_defaults_when_app_config_is_none() -> None:
+    app = Flask(__name__)
+    app.config["SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT"] = None
+
+    with app.app_context():
+        assert rsa_keys.OpenIdConfigsForDevOnly._expected_worker_count() == 1
+
+
 def test_read_key_pair_from_files_returns_none_for_truncated_pems(tmp_path: Path) -> None:
     private_key_path = tmp_path / "openid-private.pem"
     public_key_path = tmp_path / "openid-public.pem"

@@ -61,13 +61,14 @@ class OpenIdConfigsForDevOnly:
 
     @classmethod
     def _expected_worker_count(cls) -> int:
+        """Read worker count before or after Flask app initialization."""
         if has_app_context():
             configured_count = current_app.config.get("SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT", 1)
         else:
             configured_count = os.getenv("SPIFFWORKFLOW_BACKEND_SERVER_WORKER_COUNT", "1")
         try:
             return int(configured_count)
-        except ValueError:
+        except (TypeError, ValueError):
             return 1
 
     @classmethod
