@@ -80,7 +80,8 @@ elif [[ "${session_type}" == "safety" ]]; then
   # Arena uses only the default MemoryJobStore, which does not pickle job state. Revisit if persistent job stores are added.
   backend_python="$(uv run --frozen python -c 'import sys; print(sys.executable)')"
   security_tools_dir="${script_dir}/../tools/security"
-  uv pip freeze --python "$backend_python" |
+  # Include installed versions for Git, URL and editable distributions too.
+  "$backend_python" -c 'from importlib.metadata import distributions; print("\n".join(sorted({f"{dist.name}=={dist.version}" for dist in distributions()})))' |
     UV_PROJECT_ENVIRONMENT="${security_tools_dir}/.venv" uv run \
       --project "$security_tools_dir" --frozen --python "$backend_python" \
       safety check --stdin --full-report --ignore=SFTY-20261008-90293
