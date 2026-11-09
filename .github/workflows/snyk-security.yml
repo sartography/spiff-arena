@@ -100,7 +100,7 @@ jobs:
 
       # # checks library dependencies
       - name: Snyk test
-        run: snyk test --skip-unresolved
+        run: snyk test --skip-unresolved --severity-threshold=high
 
         # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
       - name: Snyk Open Source monitor

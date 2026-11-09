@@ -74,11 +74,14 @@ elif [[ "${session_type}" == "mypy" ]]; then
   uv run mypy src tests
 
 elif [[ "${session_type}" == "safety" ]]; then
-  # 72731 because flask-cors 5 actually fixes but safety just doesn't know: allows the Access-Control-Allow-Private-Network CORS header to be set to true by default
-  ##  --ignore=72731 # is the syntax if you want to ignore these
+  # Safety requires filelock<4. Run it separately so backend tooling can use patched filelock 4.
+  # Scan the backend's installed dependencies (including dev), not Safety's isolated environment.
   # SFTY-20261008-90293: APScheduler unpickles untrusted state in persistent MongoDB, Redis and SQLAlchemy job stores.
   # Arena uses only the default MemoryJobStore, which does not pickle job state. Revisit if persistent job stores are added.
-  uv run safety check --full-report --ignore=SFTY-20261008-90293
+  backend_python="$(uv run --frozen python -c 'import sys; print(sys.executable)')"
+  uv pip freeze --python "$backend_python" | uv tool run --python "$backend_python" --from safety==3.8.1 \
+    --with 'authlib>=1.9.1' --with 'joserfc>=1.7.6' --with 'nltk>=3.10.4' \
+    safety check --stdin --full-report --ignore=SFTY-20261008-90293
 
 elif [[ "${session_type}" == "coverage" ]]; then
   if ls .coverage.* 1>/dev/null 2>&1; then
