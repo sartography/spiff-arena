@@ -61,6 +61,7 @@ dependencies = [
     "starlette>=0.47.2",
     "uvicorn-worker>=0.3.0",
     "httpx2>=2.7.0",
+    'APScheduler < 4.0',
 ]
 
 [project.optional-dependencies]

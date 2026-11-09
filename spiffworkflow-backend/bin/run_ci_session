@@ -78,7 +78,9 @@ elif [[ "${session_type}" == "safety" ]]; then
   ##  --ignore=72731 # is the syntax if you want to ignore these
   # SFTY-20260902-58666 (CVE-2026-81726): nltk path traversal in model save/load helpers. nltk is only pulled in by
   # safety itself, the backend never imports it, and no fixed nltk release exists yet (3.10.3 is affected).
-  uv run safety check --full-report --ignore=SFTY-20260902-58666
+  # SFTY-20261008-90293: APScheduler unpickles untrusted state in persistent MongoDB, Redis and SQLAlchemy job stores.
+  # Arena uses only the default MemoryJobStore, which does not pickle job state. Revisit if persistent job stores are added.
+  uv run safety check --full-report --ignore=SFTY-20260902-58666 --ignore=SFTY-20261008-90293
 
 elif [[ "${session_type}" == "coverage" ]]; then
   if ls .coverage.* 1>/dev/null 2>&1; then
