@@ -64,7 +64,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install pip and uv
         run: |
@@ -84,7 +84,7 @@ jobs:
 
       - name: uv Install
         # Keep uv and the pip-based Snyk workaround on the same Python version.
-        run: uv sync --frozen --python 3.12
+        run: uv sync --frozen --python 3.13
 
         # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
         # Use || true to not fail the pipeline

@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -2972,11 +2972,11 @@ wheels = [
 
 [[package]]
 name = "spiff-arena-common"
-version = "0.1.33"
+version = "0.1.38"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/41/6d/20dc2baea94c7f8b5890090bc6b086371b424adba21513cc908ffed8bbb1/spiff_arena_common-0.1.33.tar.gz", hash = "sha256:01581cdfb66cd1499309c4c8ea819cfe1d307fb9bc984557317a398b7e3fd0f1", size = 17825, upload-time = "2026-05-11T13:06:36.59Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/11/e3/2919bd60af62b3e65c0225490fe80497540dfe667e5a3809df6f3fecb5b3/spiff_arena_common-0.1.38.tar.gz", hash = "sha256:ca693f81373009e1ccb205468eac2e0cfa6c6c27dc1bdd0c14a805e951db924f", size = 21985, upload-time = "2026-06-18T14:10:51.405Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a9/3f/e6da5e6da3e1df6634ed0bf72b9ed0a4040669a88c3fce476989fd8068ea/spiff_arena_common-0.1.33-py3-none-any.whl", hash = "sha256:35ac4a670c2e69351084eba9a18677db498ff376e35f553cd48b08e680368e0a", size = 12885, upload-time = "2026-05-11T13:06:35.543Z" },
+    { url = "https://files.pythonhosted.org/packages/ba/77/90644c08d591875ceab4c221dec4bc12194da1183c4a6eb3b36a9fe75608/spiff_arena_common-0.1.38-py3-none-any.whl", hash = "sha256:6f40feb3b6e649bde10a72f7643890bc921e4996de2605cf59db03642dd68a7d", size = 14678, upload-time = "2026-06-18T14:10:50.433Z" },
 ]
 
 [[package]]
@@ -3099,7 +3099,7 @@ requires-dist = [
     { name = "restrictedpython", specifier = ">=8.5" },
     { name = "security", specifier = ">=1.3.1" },
     { name = "sentry-sdk", extras = ["flask"], specifier = ">=2.26" },
-    { name = "spiff-arena-common", specifier = ">=0.1.0" },
+    { name = "spiff-arena-common", specifier = ">=0.1.37" },
     { name = "spiffworkflow", git = "https://github.com/sartography/SpiffWorkflow?branch=reset-into-loop-pass" },
     { name = "spiffworkflow-connector-command", git = "https://github.com/sartography/spiffworkflow-connector-command.git?branch=main" },
     { name = "sqlalchemy", specifier = ">=2.0.31" },
