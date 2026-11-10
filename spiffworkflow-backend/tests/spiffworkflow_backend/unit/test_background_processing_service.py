@@ -4,7 +4,6 @@ from typing import Protocol
 from typing import cast
 
 import pytest
-from celery.exceptions import SoftTimeLimitExceeded
 from flask import Flask
 from pytest_mock.plugin import MockerFixture
 
@@ -15,15 +14,12 @@ from spiffworkflow_backend.background_processing.celery_tasks.process_instance_t
 from spiffworkflow_backend.background_processing.celery_tasks.process_instance_task import (
     celery_task_process_instance_start_from_model,
 )
-from spiffworkflow_backend.background_processing.process_instance_operations import ProcessInstanceOperationError
-from spiffworkflow_backend.background_processing.process_instance_operations import run_queued_process_instance
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import ProcessEntityNotFoundError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
-from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
@@ -135,32 +131,6 @@ class TestBackgroundProcessingService(BaseTest):
             db.session.expire_all()
             assert ProcessInstanceQueueModel.query.filter_by(process_instance_id=process_instance.id).one().locked_by is None
             assert mock.call_count == 1
-
-    def test_a_run_stopped_at_the_time_limit_records_a_readable_error(
-        self,
-        app: Flask,
-        mocker: MockerFixture,
-        with_db_and_bpmn_file_cleanup: None,
-    ) -> None:
-        with self.app_config_mock(app, "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED", True):
-            mocker.patch("celery.current_app.send_task")
-            process_instance = self._load_up_a_future_task_and_return_instance()
-            mocker.patch.object(ProcessInstanceService, "run_process_instance_with_runtime", side_effect=SoftTimeLimitExceeded())
-
-            with pytest.raises(ProcessInstanceOperationError, match="took longer than 240 seconds"):
-                run_queued_process_instance(process_instance.id)
-
-            db.session.expire_all()
-            assert ProcessInstanceModel.query.filter_by(id=process_instance.id).one().status == "error"
-            error_messages = [
-                error_detail.message
-                for error_detail in ProcessInstanceErrorDetailModel.query.join(ProcessInstanceEventModel)
-                .filter(ProcessInstanceEventModel.process_instance_id == process_instance.id)
-                .all()
-            ]
-            assert error_messages == ["This run was stopped because it took longer than 240 seconds."]
-            queue_entry = ProcessInstanceQueueModel.query.filter_by(process_instance_id=process_instance.id).one()
-            assert queue_entry.locked_by is None
 
     def test_do_process_future_tasks_with_processable_future_task(
         self,

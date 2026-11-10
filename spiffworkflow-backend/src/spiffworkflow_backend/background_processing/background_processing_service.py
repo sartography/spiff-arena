@@ -78,8 +78,8 @@ class BackgroundProcessingService:
     def do_remove_stale_locks(cls) -> None:
         """Remove stale locks, and queue their process instances again since the run that held the lock is gone.
 
-        A lock goes stale when its holder dies or cannot reach the database to release it. Background jobs are stopped
-        before their lock can go stale (see the time limits in process_instance_task.py), so the holder is not running.
+        A lock goes stale when its holder dies or cannot reach the database to release it. Background jobs are killed
+        before their lock can go stale (see CELERY_TASK_TIME_LIMIT_IN_SECONDS), so the holder is not running.
         A process instance that keeps losing its run this way is put into error instead of being run forever.
         """
         for stale_lock in ProcessInstanceLockService.stale_locks():

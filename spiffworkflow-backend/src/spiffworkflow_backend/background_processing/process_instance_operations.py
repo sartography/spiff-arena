@@ -1,15 +1,11 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Generator
-from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
 
-from celery.exceptions import SoftTimeLimitExceeded
 from flask import current_app
 
-from spiffworkflow_backend.background_processing import CELERY_TASK_SOFT_TIME_LIMIT_IN_SECONDS
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
@@ -36,21 +32,6 @@ class BackgroundOperationOutcome(str, Enum):
 
 class ProcessInstanceOperationError(Exception):
     pass
-
-
-class BackgroundJobTimeLimitExceededError(Exception):
-    pass
-
-
-@contextmanager
-def _readable_time_limit_error() -> Generator[None, None, None]:
-    """So the error recorded on the process instance says what happened instead of naming a celery exception."""
-    try:
-        yield
-    except SoftTimeLimitExceeded as exception:
-        raise BackgroundJobTimeLimitExceededError(
-            f"This run was stopped because it took longer than {CELERY_TASK_SOFT_TIME_LIMIT_IN_SECONDS} seconds."
-        ) from exception
 
 
 @dataclass(frozen=True)
@@ -165,11 +146,7 @@ def run_queued_process_instance(
         task_guid_for_requeueing = task_guid
         future_task_was_rescheduled = False
         task_runnability = TaskRunnability.unknown_if_ready_tasks
-        with (
-            instrumentation.phase("lock"),
-            ProcessInstanceQueueService.dequeued(process_instance),
-            _readable_time_limit_error(),
-        ):
+        with instrumentation.phase("lock"), ProcessInstanceQueueService.dequeued(process_instance):
             with instrumentation.phase("engine_run"):
                 ProcessInstanceService.run_process_instance_with_runtime(
                     process_instance,
