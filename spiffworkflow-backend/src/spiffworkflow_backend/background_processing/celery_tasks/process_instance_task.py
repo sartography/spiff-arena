@@ -6,6 +6,7 @@ from spiffworkflow_backend.background_processing import CELERY_TASK_EVENT_NOTIFI
 from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_RUN
 from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_START_FROM_MESSAGE
 from spiffworkflow_backend.background_processing import CELERY_TASK_PROCESS_INSTANCE_START_FROM_MODEL
+from spiffworkflow_backend.background_processing import CELERY_TASK_TIME_LIMIT_IN_SECONDS
 from spiffworkflow_backend.background_processing.background_job import BackgroundJobEnvelope
 from spiffworkflow_backend.background_processing.background_job import JobArgument
 from spiffworkflow_backend.background_processing.background_job_executor import execute_background_job
@@ -47,7 +48,7 @@ def celery_task_event_notifier_run(
     )
 
 
-@shared_task(ignore_result=False, time_limit=TEN_MINUTES, bind=True)
+@shared_task(ignore_result=False, time_limit=CELERY_TASK_TIME_LIMIT_IN_SECONDS, bind=True)
 def celery_task_process_instance_run(
     self: Any,
     process_instance_id: int,
@@ -66,7 +67,7 @@ def celery_task_process_instance_run(
     )
 
 
-@shared_task(ignore_result=False, time_limit=TEN_MINUTES, bind=True)
+@shared_task(ignore_result=False, time_limit=CELERY_TASK_TIME_LIMIT_IN_SECONDS, bind=True)
 def celery_task_process_instance_start_from_model(
     self: Any,
     process_model_identifier: str,
@@ -89,7 +90,7 @@ def celery_task_process_instance_start_from_model(
     )
 
 
-@shared_task(ignore_result=False, time_limit=TEN_MINUTES, bind=True)
+@shared_task(ignore_result=False, time_limit=CELERY_TASK_TIME_LIMIT_IN_SECONDS, bind=True)
 def celery_task_process_instance_start_from_message(
     self: Any,
     process_instance_id: int,
