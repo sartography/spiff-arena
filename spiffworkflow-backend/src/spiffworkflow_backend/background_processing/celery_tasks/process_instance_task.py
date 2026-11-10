@@ -11,6 +11,8 @@ from spiffworkflow_backend.background_processing.background_job import Backgroun
 from spiffworkflow_backend.background_processing.background_job import JobArgument
 from spiffworkflow_backend.background_processing.background_job_executor import execute_background_job
 
+TEN_MINUTES = 60 * 10
+
 
 class SpiffCeleryWorkerError(Exception):
     pass
@@ -23,7 +25,7 @@ def _execute(envelope: BackgroundJobEnvelope) -> dict[str, object]:
         raise SpiffCeleryWorkerError(f"Error executing background job {envelope.job_name}. {str(exception)}") from exception
 
 
-@shared_task(ignore_result=False, time_limit=CELERY_TASK_TIME_LIMIT_IN_SECONDS, bind=True)
+@shared_task(ignore_result=False, time_limit=TEN_MINUTES, bind=True)
 def celery_task_event_notifier_run(
     self: Any,
     updated_process_instance_id: int,
