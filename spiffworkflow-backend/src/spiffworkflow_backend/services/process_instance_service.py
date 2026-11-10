@@ -938,9 +938,11 @@ class ProcessInstanceService:
 
                 if group_identifiers:
                     assigned_user_group_identifier = ",".join(group_identifiers)
-                elif len(human_task.potential_owners) > 0:
+                else:
                     user_list = [u.email for u in human_task.potential_owners]
-                    potential_owner_usernames = ",".join(user_list)
+                    user_list += [w.username for w in human_task.human_task_users_waiting]
+                    if user_list:
+                        potential_owner_usernames = ",".join(user_list)
 
         parent_id = None
         if spiff_task.parent:
