@@ -130,8 +130,8 @@ config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_POOL_SIZE")
 # check sqlalchemy's doc for more info about pool_pre_ping:
 # https://docs.sqlalchemy.org/en/20/core/pooling.html#disconnect-handling-pessimistic
 config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_POOL_PRE_PING", default=True)
-# Bound parameters in SQL error messages can contain process instance and task data.
-# Set to true to keep them out of exception messages, logs, and Sentry.
+# SQLAlchemy adds bound parameters to SQL error messages, and they can contain process instance and task data.
+# Set to true to hide them. Error text from the database itself, such as a duplicate key value, is not changed.
 config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_HIDE_PARAMETERS", default=False)
 
 ### open id

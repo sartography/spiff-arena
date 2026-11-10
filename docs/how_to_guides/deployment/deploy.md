@@ -65,7 +65,7 @@ Set `SPIFFWORKFLOW_BACKEND_SENTRY_DSN` to send backend errors to Sentry. Without
 Errors from Celery background jobs are tagged with `process_instance_id` and `task_guid` when the job has them, so you can search for and alert on a single process instance.
 
 Local variables and request bodies often contain process instance and task data, such as form submissions and service task responses.
-If your processes handle regulated or sensitive data, such as health information, keep that data out of Sentry with:
+If your processes handle regulated or sensitive data, such as health information, stop sending those fields with:
 
 ```sh
 SPIFFWORKFLOW_BACKEND_SENTRY_INCLUDE_LOCAL_VARIABLES=false
@@ -73,8 +73,13 @@ SPIFFWORKFLOW_BACKEND_SENTRY_MAX_REQUEST_BODY_SIZE=never
 SPIFFWORKFLOW_BACKEND_DATABASE_HIDE_PARAMETERS=true
 ```
 
-`SPIFFWORKFLOW_BACKEND_DATABASE_HIDE_PARAMETERS` removes bound values from SQL error messages, which otherwise include the data being written.
+`SPIFFWORKFLOW_BACKEND_DATABASE_HIDE_PARAMETERS` removes the parameter list that SQLAlchemy adds to SQL error messages, which otherwise includes the data being written.
 It applies wherever those messages go, including logs, not only Sentry.
+It does not change the error text from the database itself, which can quote a value, for example the duplicate key in a unique constraint error.
+
+These settings cover only the fields above.
+Events still include the request URL and query string, exception messages, and log records captured as breadcrumbs.
+Keep sensitive values out of URLs and log messages, or configure data scrubbing in your Sentry project.
 
 For trusted Python initialization code, see
 [Python app extensions](/explanation/dev/app_extensions). Configuration and
