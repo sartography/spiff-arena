@@ -78,32 +78,48 @@ class ProcessInstanceLockService:
         return process_instance_id in ctx["locks"]
 
     @classmethod
-    def remove_stale_locks(cls) -> None:
+    def stale_locks(cls) -> list[Any]:
+        """Locks that have been held for longer than the max lock duration, as plain rows."""
         max_duration = current_app.config["MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"]
-        current_time = round(time.time())
-        five_min_ago = current_time - max_duration
+        five_min_ago = round(time.time()) - max_duration
 
         # TODO: remove check for NULL locked_at_in_seconds and fallback to updated_at_in_seconds
         #   once we can confirm that old entries have been taken care of on current envs.
         # New code should not allow rows where locked_by has a value but locked_at_in_seconds is null.
-        entries_with_stale_locks = ProcessInstanceQueueModel.query.filter(
-            ProcessInstanceQueueModel.locked_by != None,  # noqa: E711
-            or_(
-                ProcessInstanceQueueModel.locked_at_in_seconds <= five_min_ago,
-                and_(
-                    ProcessInstanceQueueModel.updated_at_in_seconds <= five_min_ago,
-                    ProcessInstanceQueueModel.locked_at_in_seconds == None,  # noqa: E711
-                ),
-            ),
-        ).all()
-
-        for entry in entries_with_stale_locks:
-            locked_duration = current_time - (entry.locked_at_in_seconds or entry.updated_at_in_seconds)
-            current_app.logger.info(
-                f"Removing stale lock for process instance: {entry.process_instance_id} with locked_by:"
-                f" '{entry.locked_by}' because it has been locked for seconds: {locked_duration}"
+        return (
+            db.session.query(
+                ProcessInstanceQueueModel.id,
+                ProcessInstanceQueueModel.process_instance_id,
+                ProcessInstanceQueueModel.locked_by,
+                ProcessInstanceQueueModel.locked_at_in_seconds,
+                ProcessInstanceQueueModel.updated_at_in_seconds,
             )
-            entry.locked_by = None
-            entry.locked_at_in_seconds = None
-            db.session.add(entry)
-            db.session.commit()
+            .filter(
+                ProcessInstanceQueueModel.locked_by != None,  # noqa: E711
+                or_(
+                    ProcessInstanceQueueModel.locked_at_in_seconds <= five_min_ago,
+                    and_(
+                        ProcessInstanceQueueModel.updated_at_in_seconds <= five_min_ago,
+                        ProcessInstanceQueueModel.locked_at_in_seconds == None,  # noqa: E711
+                    ),
+                ),
+            )
+            .all()
+        )
+
+    @classmethod
+    def remove_stale_lock(cls, stale_lock: Any) -> bool:
+        """Remove a lock found by stale_locks, unless it has been released since. Does not commit."""
+        current_time = round(time.time())
+        locked_duration = current_time - (stale_lock.locked_at_in_seconds or stale_lock.updated_at_in_seconds)
+        current_app.logger.info(
+            f"Removing stale lock for process instance: {stale_lock.process_instance_id} with locked_by:"
+            f" '{stale_lock.locked_by}' because it has been locked for seconds: {locked_duration}"
+        )
+        lock_removed = ProcessInstanceQueueModel.query.filter_by(
+            id=stale_lock.id, locked_by=stale_lock.locked_by, locked_at_in_seconds=stale_lock.locked_at_in_seconds
+        ).update(
+            {"locked_by": None, "locked_at_in_seconds": None, "updated_at_in_seconds": current_time},
+            synchronize_session=False,
+        )
+        return bool(lock_removed)
