@@ -6,6 +6,22 @@ from flask import current_app
 
 from spiffworkflow_backend.config.normalized_environment import normalized_environment
 
+
+def lowercase_config_keys(value: Any) -> Any:
+    """Normalize structured auth keys and reject ambiguous case variants."""
+    if isinstance(value, dict):
+        normalized = {}
+        for key, item in value.items():
+            normalized_key = key.lower()
+            if normalized_key in normalized:
+                raise ValueError(f"Duplicate authentication config key: {key}")
+            normalized[normalized_key] = lowercase_config_keys(item)
+        return normalized
+    if isinstance(value, list):
+        return [lowercase_config_keys(item) for item in value]
+    return value
+
+
 # Consider: https://flask.palletsprojects.com/en/2.2.x/config/#configuring-from-environment-variables
 #   and from_prefixed_env(), though we want to ensure that these variables are all documented, so that
 #   is a benefit of the status quo and having them all in this file explicitly.
@@ -161,7 +177,8 @@ config_from_env(
 # use "http://localhost:7000/openid" for running with simple openid
 # server hosted by spiffworkflow-backend
 if "SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS" in configs_with_structures:
-    SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS = configs_with_structures["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"]
+    # Windows uppercases environment variable names, including nested config keys.
+    SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS = lowercase_config_keys(configs_with_structures["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"])
 else:
     # do this for now for backwards compatibility
     url_config = config_from_env("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL")
