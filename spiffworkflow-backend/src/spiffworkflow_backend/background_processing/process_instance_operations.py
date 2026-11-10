@@ -1,18 +1,21 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Generator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
 
+from celery.exceptions import SoftTimeLimitExceeded
 from flask import current_app
 
+from spiffworkflow_backend.background_processing import CELERY_TASK_SOFT_TIME_LIMIT_IN_SECONDS
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_triggerable_process_model import MessageTriggerableProcessModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.message_service import MessageService
@@ -35,6 +38,21 @@ class ProcessInstanceOperationError(Exception):
     pass
 
 
+class BackgroundJobTimeLimitExceededError(Exception):
+    pass
+
+
+@contextmanager
+def _readable_time_limit_error() -> Generator[None, None, None]:
+    """So the error recorded on the process instance says what happened instead of naming a celery exception."""
+    try:
+        yield
+    except SoftTimeLimitExceeded as exception:
+        raise BackgroundJobTimeLimitExceededError(
+            f"This run was stopped because it took longer than {CELERY_TASK_SOFT_TIME_LIMIT_IN_SECONDS} seconds."
+        ) from exception
+
+
 @dataclass(frozen=True)
 class RunQueuedProcessInstanceResult:
     outcome: BackgroundOperationOutcome
@@ -44,8 +62,6 @@ class RunQueuedProcessInstanceResult:
     exception: str | None = None
     should_requeue: bool = False
     requeue_task_guid: str | None = None
-    # When the run found the instance locked: when the holder took the lock, if it still holds it.
-    locked_at_in_seconds: int | None = None
 
     def result(self) -> dict[str, object]:
         result: dict[str, object] = {
@@ -149,7 +165,11 @@ def run_queued_process_instance(
         task_guid_for_requeueing = task_guid
         future_task_was_rescheduled = False
         task_runnability = TaskRunnability.unknown_if_ready_tasks
-        with instrumentation.phase("lock"), ProcessInstanceQueueService.dequeued(process_instance):
+        with (
+            instrumentation.phase("lock"),
+            ProcessInstanceQueueService.dequeued(process_instance),
+            _readable_time_limit_error(),
+        ):
             with instrumentation.phase("engine_run"):
                 ProcessInstanceService.run_process_instance_with_runtime(
                     process_instance,
@@ -194,7 +214,6 @@ def run_queued_process_instance(
             exception=str(exception),
             should_requeue=True,
             requeue_task_guid=task_guid,
-            locked_at_in_seconds=_current_lock_acquired_at(process_instance_id),
         )
     except ProcessInstanceCannotBeRunError as exception:
         return RunQueuedProcessInstanceResult(
@@ -257,12 +276,3 @@ def start_reserved_process_from_message(
             f"Error starting reserved process instance {process_instance_id} from message instance {message_instance_id}. "
             f"{str(exception)}"
         ) from exception
-
-
-def _current_lock_acquired_at(process_instance_id: int) -> int | None:
-    queue_entry = ProcessInstanceQueueModel.query.filter_by(process_instance_id=process_instance_id).first()
-    if queue_entry is None or queue_entry.locked_by is None:
-        return None
-    # remove_stale_locks falls back to updated_at_in_seconds the same way.
-    locked_at: int | None = queue_entry.locked_at_in_seconds or queue_entry.updated_at_in_seconds
-    return locked_at

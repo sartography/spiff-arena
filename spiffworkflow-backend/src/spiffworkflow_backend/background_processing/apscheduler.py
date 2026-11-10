@@ -113,5 +113,5 @@ def _add_jobs_that_should_run_regardless_of_celery_config(app: flask.app.Flask, 
         "interval",
         id="remove_stale_locks",
         name="remove stale process instance locks",
-        seconds=app.config["MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"],
+        seconds=30,
     )
