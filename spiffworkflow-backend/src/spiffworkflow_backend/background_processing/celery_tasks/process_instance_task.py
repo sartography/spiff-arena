@@ -1,5 +1,6 @@
 from typing import Any
 
+import sentry_sdk
 from celery import shared_task
 
 from spiffworkflow_backend.background_processing import CELERY_TASK_EVENT_NOTIFIER
@@ -18,7 +19,20 @@ class SpiffCeleryWorkerError(Exception):
     pass
 
 
+def _set_sentry_tags(envelope: BackgroundJobEnvelope) -> None:
+    # Sentry's Celery integration gives each task its own isolation scope, which is where set_tag writes.
+    # Tags must be set on that scope, not a nested one, because the error is captured after _execute exits.
+    isolation_scope = sentry_sdk.get_isolation_scope()
+    tags = {"process_instance_id": envelope.process_instance_id, "task_guid": envelope.task_guid}
+    for key, value in tags.items():
+        if value is None:
+            isolation_scope.remove_tag(key)
+        else:
+            isolation_scope.set_tag(key, str(value))
+
+
 def _execute(envelope: BackgroundJobEnvelope) -> dict[str, object]:
+    _set_sentry_tags(envelope)
     try:
         return execute_background_job(envelope)
     except Exception as exception:

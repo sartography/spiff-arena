@@ -130,6 +130,9 @@ config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_POOL_SIZE")
 # check sqlalchemy's doc for more info about pool_pre_ping:
 # https://docs.sqlalchemy.org/en/20/core/pooling.html#disconnect-handling-pessimistic
 config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_POOL_PRE_PING", default=True)
+# Bound parameters in SQL error messages can contain process instance and task data.
+# Set to true to keep them out of exception messages, logs, and Sentry.
+config_from_env("SPIFFWORKFLOW_BACKEND_DATABASE_HIDE_PARAMETERS", default=False)
 
 ### open id
 config_from_env("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED", default=False)
@@ -244,6 +247,10 @@ config_from_env("SPIFFWORKFLOW_BACKEND_SENTRY_ORGANIZATION_SLUG")
 config_from_env("SPIFFWORKFLOW_BACKEND_SENTRY_PROJECT_SLUG")
 config_from_env("SPIFFWORKFLOW_BACKEND_SENTRY_ENV_IDENTIFIER")
 config_from_env("SPIFFWORKFLOW_BACKEND_SENTRY_PROFILING_ENABLED", default=False)
+# Frame locals can include process instance and task data. Set to false to keep them out of Sentry.
+config_from_env("SPIFFWORKFLOW_BACKEND_SENTRY_INCLUDE_LOCAL_VARIABLES", default=True)
+# One of: never, small, medium, always. "never" keeps form submissions and other request bodies out of Sentry.
+config_from_env("SPIFFWORKFLOW_BACKEND_SENTRY_MAX_REQUEST_BODY_SIZE", default="medium")
 
 ### git and publish
 # When a user clicks on the `Publish` button, this is the default branch this server merges into.

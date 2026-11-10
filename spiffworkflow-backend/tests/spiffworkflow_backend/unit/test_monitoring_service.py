@@ -160,6 +160,50 @@ def test_configure_sentry_registers_event_filters(mocker: MockerFixture) -> None
     assert mock_sentry_init.call_args.kwargs["before_send_transaction"] is scrub_transaction_event
 
 
+def _sentry_app(**config_overrides: Any) -> Flask:
+    app = Flask(__name__)
+    app.config.update(
+        SPIFFWORKFLOW_BACKEND_SENTRY_DSN="https://public@example.com/1",
+        SPIFFWORKFLOW_BACKEND_SENTRY_ERRORS_SAMPLE_RATE=1,
+        SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE=0.01,
+        SPIFFWORKFLOW_BACKEND_SENTRY_PROFILING_ENABLED=False,
+        ENV_IDENTIFIER="unit_testing",
+    )
+    app.config.update(config_overrides)
+    return app
+
+
+def test_configure_sentry_defaults_keep_sdk_privacy_behavior(mocker: MockerFixture) -> None:
+    mock_sentry_init = mocker.patch("spiffworkflow_backend.services.monitoring_service.sentry_sdk.init")
+
+    configure_sentry(_sentry_app())
+
+    assert mock_sentry_init.call_args.kwargs["include_local_variables"] is True
+    assert mock_sentry_init.call_args.kwargs["max_request_body_size"] == "medium"
+
+
+def test_configure_sentry_passes_privacy_settings(mocker: MockerFixture) -> None:
+    mock_sentry_init = mocker.patch("spiffworkflow_backend.services.monitoring_service.sentry_sdk.init")
+    app = _sentry_app(
+        SPIFFWORKFLOW_BACKEND_SENTRY_INCLUDE_LOCAL_VARIABLES=False,
+        SPIFFWORKFLOW_BACKEND_SENTRY_MAX_REQUEST_BODY_SIZE="never",
+    )
+
+    configure_sentry(app)
+
+    assert mock_sentry_init.call_args.kwargs["include_local_variables"] is False
+    assert mock_sentry_init.call_args.kwargs["max_request_body_size"] == "never"
+
+
+def test_configure_sentry_rejects_invalid_max_request_body_size(mocker: MockerFixture) -> None:
+    mock_sentry_init = mocker.patch("spiffworkflow_backend.services.monitoring_service.sentry_sdk.init")
+
+    with pytest.raises(Exception, match="SPIFFWORKFLOW_BACKEND_SENTRY_MAX_REQUEST_BODY_SIZE"):
+        configure_sentry(_sentry_app(SPIFFWORKFLOW_BACKEND_SENTRY_MAX_REQUEST_BODY_SIZE="nope"))
+
+    mock_sentry_init.assert_not_called()
+
+
 def test_not_found_is_not_captured() -> None:
     assert not should_capture_exception_in_sentry(NotFound())
 

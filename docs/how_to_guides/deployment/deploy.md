@@ -48,6 +48,34 @@ infers the database type from that URL. `SPIFFWORKFLOW_BACKEND_DATABASE_TYPE`
 selects the default connection configuration when no URI is supplied.
 Check the `default.py` config file in the `spiffworkflow-backend/src/spiffworkflow_backend/config` directory for more env vars.
 
+### Sentry
+
+Set `SPIFFWORKFLOW_BACKEND_SENTRY_DSN` to send backend errors to Sentry. Without a DSN, Sentry is not initialized.
+
+| Env var | Default | Purpose |
+| --- | --- | --- |
+| `SPIFFWORKFLOW_BACKEND_SENTRY_DSN` | empty | Sentry project DSN. |
+| `SPIFFWORKFLOW_BACKEND_SENTRY_ENV_IDENTIFIER` | `SPIFFWORKFLOW_BACKEND_ENV` | Sentry environment name. |
+| `SPIFFWORKFLOW_BACKEND_SENTRY_ERRORS_SAMPLE_RATE` | `1` | Fraction of errors to send. |
+| `SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE` | `0.01` | Fraction of transactions to trace. |
+| `SPIFFWORKFLOW_BACKEND_SENTRY_ORGANIZATION_SLUG`, `SPIFFWORKFLOW_BACKEND_SENTRY_PROJECT_SLUG` | empty | Used to log a link to each captured API error in Sentry. |
+| `SPIFFWORKFLOW_BACKEND_SENTRY_INCLUDE_LOCAL_VARIABLES` | `true` | Send the local variables of each stack frame with errors. |
+| `SPIFFWORKFLOW_BACKEND_SENTRY_MAX_REQUEST_BODY_SIZE` | `medium` | How much of each request body to send: `never`, `small`, `medium`, or `always`. |
+
+Errors from Celery background jobs are tagged with `process_instance_id` and `task_guid` when the job has them, so you can search for and alert on a single process instance.
+
+Local variables and request bodies often contain process instance and task data, such as form submissions and service task responses.
+If your processes handle regulated or sensitive data, such as health information, keep that data out of Sentry with:
+
+```sh
+SPIFFWORKFLOW_BACKEND_SENTRY_INCLUDE_LOCAL_VARIABLES=false
+SPIFFWORKFLOW_BACKEND_SENTRY_MAX_REQUEST_BODY_SIZE=never
+SPIFFWORKFLOW_BACKEND_DATABASE_HIDE_PARAMETERS=true
+```
+
+`SPIFFWORKFLOW_BACKEND_DATABASE_HIDE_PARAMETERS` removes bound values from SQL error messages, which otherwise include the data being written.
+It applies wherever those messages go, including logs, not only Sentry.
+
 For trusted Python initialization code, see
 [Python app extensions](/explanation/dev/app_extensions). Configuration and
 operational instructions for individual extensions belong with their packages

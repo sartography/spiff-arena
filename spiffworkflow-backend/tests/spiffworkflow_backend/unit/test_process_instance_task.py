@@ -41,6 +41,49 @@ def test_run_adapter_maps_delivery_to_shared_executor(app: Flask, mocker: Mocker
     assert envelope.task_guid == "task-1"
 
 
+def test_run_adapter_tags_sentry_scope_with_process_instance_and_task(app: Flask, mocker: MockerFixture) -> None:
+    mocker.patch(
+        "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.execute_background_job",
+        return_value={"ok": True},
+    )
+    isolation_scope = mocker.patch(
+        "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.sentry_sdk.get_isolation_scope"
+    ).return_value
+    task: Any = celery_task_process_instance_run
+
+    with app.app_context():
+        task.push_request(id="delivery-1", headers={})
+        try:
+            task.run(42, "task-1")
+        finally:
+            task.pop_request()
+
+    isolation_scope.set_tag.assert_any_call("process_instance_id", "42")
+    isolation_scope.set_tag.assert_any_call("task_guid", "task-1")
+    isolation_scope.remove_tag.assert_not_called()
+
+
+def test_run_adapter_removes_sentry_tag_for_missing_task_guid(app: Flask, mocker: MockerFixture) -> None:
+    mocker.patch(
+        "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.execute_background_job",
+        return_value={"ok": True},
+    )
+    isolation_scope = mocker.patch(
+        "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.sentry_sdk.get_isolation_scope"
+    ).return_value
+    task: Any = celery_task_process_instance_run
+
+    with app.app_context():
+        task.push_request(id="delivery-1", headers={})
+        try:
+            task.run(42)
+        finally:
+            task.pop_request()
+
+    isolation_scope.set_tag.assert_called_once_with("process_instance_id", "42")
+    isolation_scope.remove_tag.assert_called_once_with("task_guid")
+
+
 def test_run_adapter_maps_operation_error_to_celery_error(app: Flask, mocker: MockerFixture) -> None:
     mocker.patch(
         "spiffworkflow_backend.background_processing.celery_tasks.process_instance_task.execute_background_job",
