@@ -48,6 +48,11 @@ infers the database type from that URL. `SPIFFWORKFLOW_BACKEND_DATABASE_TYPE`
 selects the default connection configuration when no URI is supplied.
 Check the `default.py` config file in the `spiffworkflow-backend/src/spiffworkflow_backend/config` directory for more env vars.
 
+For trusted Python initialization code, see
+[Python app extensions](/explanation/dev/app_extensions). Configuration and
+operational instructions for individual extensions belong with their packages
+in the process-model repository.
+
 ### Sentry
 
 Set `SPIFFWORKFLOW_BACKEND_SENTRY_DSN` to send backend errors to Sentry. Without a DSN, Sentry is not initialized.
@@ -78,10 +83,5 @@ It applies wherever those messages go, including logs, not only Sentry.
 It does not change the error text from the database itself, which can quote a value, for example the duplicate key in a unique constraint error.
 
 These settings cover only the fields above.
-Events still include the request URL and query string, exception messages, and log records captured as breadcrumbs.
+Events still include the request URL and query string, the username, exception messages, and log records captured as breadcrumbs.
 Keep sensitive values out of URLs and log messages, or configure data scrubbing in your Sentry project.
-
-For trusted Python initialization code, see
-[Python app extensions](/explanation/dev/app_extensions). Configuration and
-operational instructions for individual extensions belong with their packages
-in the process-model repository.
