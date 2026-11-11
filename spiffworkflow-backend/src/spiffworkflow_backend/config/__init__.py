@@ -105,6 +105,9 @@ def setup_database_configs(app: Flask) -> None:
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {}
     app.config["SQLALCHEMY_ENGINE_OPTIONS"]["pool_size"] = pool_size
     app.config["SQLALCHEMY_ENGINE_OPTIONS"]["pool_pre_ping"] = pool_pre_ping
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"]["hide_parameters"] = bool(
+        app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_HIDE_PARAMETERS")
+    )
 
 
 def load_config_file(app: Flask, env_config_module: str) -> None:
