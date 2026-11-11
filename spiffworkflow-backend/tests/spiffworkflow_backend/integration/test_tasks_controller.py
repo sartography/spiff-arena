@@ -3,6 +3,7 @@ import json
 from uuid import UUID
 
 import pytest
+from flask import g
 from flask.app import Flask
 from starlette.testclient import TestClient
 
@@ -16,6 +17,7 @@ from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial_stream
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -890,6 +892,63 @@ class TestTasksController(BaseTest):
 
         assert initiator_user.username in owners
         assert finance_user.username in owners
+
+    def test_potential_owner_usernames_include_lane_owners_who_have_not_signed_in(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        initiator_user = self.find_or_create_user("initiator_user")
+        other_user = self.find_or_create_user("other_user")
+        self.add_task_api_permissions(initiator_user)
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=initiator_user)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True)
+        first_task = process_instance.active_human_tasks[0]
+        spiff_task = runtime.__class__.get_task_by_bpmn_identifier(first_task.task_name, runtime.bpmn_process_instance)
+        ProcessInstanceService.complete_form_task(
+            runtime,
+            spiff_task,
+            {"lane_owners": {"Finance Team": ["initiator_user", "not_signed_in_yet"]}},
+            initiator_user,
+            first_task,
+        )
+        runtime.do_engine_steps(save=True)
+        expected_owners = {"initiator_user", "not_signed_in_yet"}
+
+        def owners(row: dict) -> set[str]:
+            assert row["assigned_user_group_identifier"] is None
+            return {owner.strip() for owner in row["potential_owner_usernames"].split(",")}
+
+        headers = self.logged_in_headers(initiator_user)
+        for path in [f"/v1.0/tasks?process_instance_id={process_instance.id}", "/v1.0/tasks/for-my-open-processes"]:
+            response = client.get(path, headers=headers)
+            assert response.status_code == 200
+            assert owners(response.json()["results"][0]) == expected_owners
+
+        report_rows = ProcessInstanceReportService.add_human_task_fields([{"id": process_instance.id}])
+        assert owners(report_rows[0]) == expected_owners
+
+        finance_spiff_task = runtime.get_all_ready_or_waiting_tasks()[0]
+        with app.test_request_context():
+            g.user = other_user
+            api_task = ProcessInstanceService.spiff_task_to_api_task(runtime, finance_spiff_task)
+        assert api_task.potential_owner_usernames is not None
+        assert set(api_task.potential_owner_usernames.split(",")) == {initiator_user.email, "not_signed_in_yet"}
+
+        # signing in turns the waiting username into a real assignment
+        waiting_user = self.find_or_create_user("not_signed_in_yet")
+        self.add_task_api_permissions(waiting_user)
+        response = client.get("/v1.0/tasks/for-me", headers=self.logged_in_headers(waiting_user))
+        assert response.status_code == 200
+        assert len(response.json()["results"]) == 1
+        assert owners(response.json()["results"][0]) == expected_owners
 
     def test_participant_denied_the_process_instance_show_page_can_still_start_and_complete_tasks(
         self,

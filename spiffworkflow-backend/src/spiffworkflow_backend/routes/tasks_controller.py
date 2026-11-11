@@ -17,14 +17,12 @@ from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 from sqlalchemy import and_
-from sqlalchemy import case
 from sqlalchemy import desc
 from sqlalchemy import exists
 from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import aliased
-from sqlalchemy.orm.util import AliasedClass
 
 from spiffworkflow_backend.constants import SPIFFWORKFLOW_BACKEND_SERIALIZER_VERSION
 from spiffworkflow_backend.data_migrations.process_instance_migrator import ProcessInstanceMigrator
@@ -37,6 +35,7 @@ from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserAddedBy
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+from spiffworkflow_backend.models.human_task_user_waiting import HumanTaskUserWaitingModel
 from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -66,6 +65,7 @@ from spiffworkflow_backend.services.jinja_service import JinjaService
 from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
+from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
@@ -116,6 +116,7 @@ def task_list_my_tasks(
         )
         .outerjoin(htum_all, htum_all.human_task_id == HumanTaskModel.id)
         .outerjoin(assigned_user_all, assigned_user_all.id == htum_all.user_id)
+        .outerjoin(HumanTaskUserWaitingModel, HumanTaskUserWaitingModel.human_task_id == HumanTaskModel.id)
         .outerjoin(lane_group, lane_group.id == HumanTaskModel.lane_assignment_id)
         .outerjoin(HumanTaskGroupModel, HumanTaskGroupModel.human_task_id == HumanTaskModel.id)
         .outerjoin(human_task_group, human_task_group.id == HumanTaskGroupModel.group_id)
@@ -127,8 +128,8 @@ def task_list_my_tasks(
             ProcessInstanceModel.status != ProcessInstanceStatus.error.value,
         )
 
-    potential_owner_usernames = _get_potential_owner_usernames(assigned_user_all)
-    assigned_group_identifiers = _get_assigned_group_identifiers(lane_group, human_task_group)
+    potential_owner_usernames = ProcessInstanceReportService.potential_owner_usernames_column(assigned_user_all)
+    assigned_group_identifiers = ProcessInstanceReportService.assigned_group_identifiers_column(lane_group, human_task_group)
 
     # FIXME: this breaks postgres. Look at commit c147cdb47b1481f094b8c3d82dc502fe961f4977 for
     # UPDATE: maybe fixed in postgres and mysql. remove comment if so.
@@ -899,6 +900,7 @@ def _get_tasks(
         .outerjoin(lane_group, lane_group.id == HumanTaskModel.lane_assignment_id)
         .outerjoin(HumanTaskGroupModel, HumanTaskGroupModel.human_task_id == HumanTaskModel.id)
         .outerjoin(human_task_group, human_task_group.id == HumanTaskGroupModel.group_id)
+        .outerjoin(HumanTaskUserWaitingModel, HumanTaskUserWaitingModel.human_task_id == HumanTaskModel.id)
         .join(ProcessInstanceModel)
         .join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
         .filter(
@@ -907,16 +909,14 @@ def _get_tasks(
         )
     )
 
+    # every assignee of the task for potential_owner_usernames, separate from the current-user join below
+    any_assignment = aliased(HumanTaskUserModel)
     assigned_user = aliased(UserModel)
+    human_tasks_query = human_tasks_query.outerjoin(any_assignment, any_assignment.human_task_id == HumanTaskModel.id).outerjoin(
+        assigned_user, assigned_user.id == any_assignment.user_id
+    )
     if processes_started_by_user:
-        human_tasks_query = (
-            human_tasks_query.filter(ProcessInstanceModel.process_initiator_id == user_id)
-            .outerjoin(
-                HumanTaskUserModel,
-                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
-            )
-            .outerjoin(assigned_user, assigned_user.id == HumanTaskUserModel.user_id)
-        )
+        human_tasks_query = human_tasks_query.filter(ProcessInstanceModel.process_initiator_id == user_id)
     else:
         human_tasks_query = human_tasks_query.filter(ProcessInstanceModel.process_initiator_id != user_id).join(
             HumanTaskUserModel,
@@ -951,8 +951,10 @@ def _get_tasks(
                 )
             )
 
-    potential_owner_usernames_from_group_concat_or_similar = _get_potential_owner_usernames(assigned_user)
-    assigned_group_identifiers = _get_assigned_group_identifiers(lane_group, human_task_group)
+    potential_owner_usernames_from_group_concat_or_similar = ProcessInstanceReportService.potential_owner_usernames_column(
+        assigned_user
+    )
+    assigned_group_identifiers = ProcessInstanceReportService.assigned_group_identifiers_column(lane_group, human_task_group)
 
     process_model_identifier_column = ProcessInstanceModel.process_model_identifier
     process_instance_status_column = ProcessInstanceModel.status.label("process_instance_status")  # type: ignore
@@ -996,51 +998,3 @@ def _get_tasks(
     }
 
     return make_response(jsonify(response_json), 200)
-
-
-def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
-    potential_owner_usernames_from_group_concat_or_similar = func.group_concat(assigned_user.username.distinct()).label(
-        "potential_owner_usernames"
-    )
-    db_type = current_app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE")
-
-    if db_type == "postgres":
-        potential_owner_usernames_from_group_concat_or_similar = func.string_agg(assigned_user.username.distinct(), ", ").label(
-            "potential_owner_usernames"
-        )
-
-    return potential_owner_usernames_from_group_concat_or_similar
-
-
-def _get_assigned_group_identifiers(lane_group: AliasedClass, human_task_group: AliasedClass) -> Any:
-    """Get group identifiers from both legacy lane_assignment_id and new HumanTaskGroupModel.
-
-    Combines group identifiers from both sources into a single comma-separated string.
-    Uses CONCAT_WS or equivalent to combine both sources, filtering out nulls.
-    """
-    db_type = current_app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE")
-
-    if db_type == "postgres":
-        # For postgres, aggregate both columns separately then combine
-        # This ensures we get identifiers from both sources
-        lane_agg = func.string_agg(func.distinct(lane_group.identifier), ", ")
-        htg_agg = func.string_agg(func.distinct(human_task_group.identifier), ", ")
-        # Use concat_ws to combine, which handles nulls gracefully
-        return func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label("assigned_user_group_identifier")
-    elif db_type == "mysql":
-        # For mysql, aggregate both columns separately then combine
-        lane_agg = func.group_concat(func.distinct(lane_group.identifier))
-        htg_agg = func.group_concat(func.distinct(human_task_group.identifier))
-        # Use concat_ws to combine, which handles nulls gracefully
-        return func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label("assigned_user_group_identifier")
-    else:
-        # For sqlite, which doesn't support concat_ws, manually concatenate
-        lane_agg = func.group_concat(func.distinct(lane_group.identifier))
-        htg_agg = func.group_concat(func.distinct(human_task_group.identifier))
-        # Manually concatenate with separator, handling NULLs
-        combined = (
-            func.coalesce(lane_agg, "")
-            + case((and_(lane_agg.isnot(None), htg_agg.isnot(None)), ", "), else_="")  # type: ignore
-            + func.coalesce(htg_agg, "")
-        )
-        return func.nullif(combined, "").label("assigned_user_group_identifier")
