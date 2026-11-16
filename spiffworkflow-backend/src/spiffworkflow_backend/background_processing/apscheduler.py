@@ -6,6 +6,8 @@ from apscheduler.schedulers.base import BaseScheduler  # type: ignore
 
 from spiffworkflow_backend.background_processing.background_processing_service import BackgroundProcessingService
 
+REMOVE_STALE_LOCKS_INTERVAL_IN_SECONDS = 60
+
 
 def should_start_apscheduler(app: flask.app.Flask) -> bool:
     if not app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP"]:
@@ -113,5 +115,5 @@ def _add_jobs_that_should_run_regardless_of_celery_config(app: flask.app.Flask, 
         "interval",
         id="remove_stale_locks",
         name="remove stale process instance locks",
-        seconds=app.config["MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"],
+        seconds=REMOVE_STALE_LOCKS_INTERVAL_IN_SECONDS,
     )

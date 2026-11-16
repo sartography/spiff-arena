@@ -22,7 +22,7 @@ MarkupSafe==3.0.4
 mdit-py-plugins==0.6.1
 mdurl==0.1.2
 myst-parser==5.1.0
-packaging==25.0
+packaging==26.3
 pygls==2.1.1
 Pygments==2.21.0
 pyspellchecker==0.9.0
@@ -32,7 +32,7 @@ six==1.17.0
 snowballstemmer==2.2.0
 soupsieve==2.9.2
 Sphinx==8.2.3
-sphinx-autoapi==3.6.0
+sphinx-autoapi==3.9.0
 sphinx-autobuild==2025.8.25
 sphinx-basic-ng==1.0.0b2
 sphinx-click==6.2.0

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import time
 from typing import cast
 
 from flask import current_app
@@ -25,15 +24,9 @@ from spiffworkflow_backend.background_processing.process_instance_operations imp
 from spiffworkflow_backend.background_processing.process_instance_operations import start_reserved_process_from_message
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
-# A run that finds its process instance locked retries with backoff (1, 2, 4 ... 60 seconds), but only
-# while the lock it saw is younger than MAX_INSTANCE_LOCK_DURATION_IN_SECONDS. remove_stale_locks
-# releases older locks by age alone, even if their holder is still running, so a retry after that point
-# could run the instance alongside it. A holder that is a queued run requeues itself when it leaves READY
-# tasks behind.
+# A run that finds its process instance locked retries with backoff (1, 2, 4 ... 60 seconds).
 LOCKED_RUN_MAX_RETRIES = 15
 LOCKED_RUN_MAX_RETRY_DELAY_IN_SECONDS = 60
-# Room for clock skew between hosts and for the broker delivering a countdown late.
-LOCKED_RUN_STALE_LOCK_MARGIN_IN_SECONDS = 10
 
 
 class UnsupportedBackgroundJobError(Exception):
@@ -91,7 +84,7 @@ def _execute_process_instance_run(
             result = run_queued_process_instance(process_instance_id, task_guid, instrumentation=instrumentation)
             if result.should_requeue and result.outcome == BackgroundOperationOutcome.locked:
                 with instrumentation.phase("requeue"):
-                    _retry_locked_run(envelope, process_instance_id, result.requeue_task_guid, result.locked_at_in_seconds)
+                    _retry_locked_run(envelope, process_instance_id, result.requeue_task_guid)
             elif result.should_requeue:
                 with instrumentation.phase("requeue"):
                     process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).one()
@@ -107,7 +100,6 @@ def _retry_locked_run(
     envelope: BackgroundJobEnvelope,
     process_instance_id: int,
     task_guid: str | None,
-    locked_at_in_seconds: int | None,
 ) -> None:
     lock_retry_count = envelope.lock_retry_count + 1
     countdown = locked_run_retry_delay(lock_retry_count)
@@ -117,14 +109,6 @@ def _retry_locked_run(
             "giving up on this run. Its ready tasks wait until something else queues it."
         )
         return
-    if locked_at_in_seconds is not None:
-        lock_expires_at = locked_at_in_seconds + current_app.config["MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"]
-        if time.time() + countdown + LOCKED_RUN_STALE_LOCK_MARGIN_IN_SECONDS >= lock_expires_at:
-            current_app.logger.warning(
-                f"Process instance ({process_instance_id}) has been locked since {locked_at_in_seconds}; not retrying "
-                "its run past the point where that lock can be removed as stale while its holder may still run."
-            )
-            return
     queue_locked_process_instance_run_retry(
         process_instance_id,
         task_guid,

@@ -1,9 +1,13 @@
 from typing import Any
 
+import pytest
 from celery import _state
 from flask import Flask
 
+from spiffworkflow_backend.background_processing import CELERY_TASK_TIME_LIMIT_IN_SECONDS
 from spiffworkflow_backend.background_processing.celery import celery_init_app
+from spiffworkflow_backend.config import ConfigurationError
+from spiffworkflow_backend.config import _check_instance_lock_outlasts_celery_jobs
 
 
 def test_celery_enables_task_events_for_flower() -> None:
@@ -28,3 +32,19 @@ def test_celery_enables_task_events_for_flower() -> None:
             del celery_state._tls.current_app
         if celery_app is not None:
             celery_app.close()
+
+
+def test_instance_lock_must_outlast_celery_jobs() -> None:
+    app = Flask("spiffworkflow_backend")
+    app.config["SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"] = True
+    app.config["MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"] = CELERY_TASK_TIME_LIMIT_IN_SECONDS
+    with pytest.raises(ConfigurationError, match="must be greater than 270"):
+        _check_instance_lock_outlasts_celery_jobs(app)
+
+    app.config["MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"] = CELERY_TASK_TIME_LIMIT_IN_SECONDS + 1
+    _check_instance_lock_outlasts_celery_jobs(app)
+
+    # without celery nothing is run again when a lock goes stale, so any duration is fine
+    app.config["SPIFFWORKFLOW_BACKEND_CELERY_ENABLED"] = False
+    app.config["MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"] = 60
+    _check_instance_lock_outlasts_celery_jobs(app)

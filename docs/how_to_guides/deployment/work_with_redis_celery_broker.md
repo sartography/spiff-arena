@@ -39,6 +39,16 @@ The Celery worker entrypoint is:
 
 For more on splitting backend containers in a deployment, see [Deploy](/how_to_guides/deployment/deploy).
 
+## Time Limits and Lost Jobs
+
+A background job that runs for 270 seconds has its worker killed.
+
+A job can be lost without recording anything this way, or when the database goes down mid-run.
+Its process instance stays locked until the lock is 300 seconds old (`SPIFFWORKFLOW_BACKEND_MAX_INSTANCE_LOCK_DURATION_IN_SECONDS`).
+The background scheduler then removes the lock, adds a `process_instance_lock_expired` event, and queues the process instance again.
+Work that the lost job did after its last save runs again, including calls to other systems.
+A process instance that loses its job three times within an hour is put into the error state instead of being queued again.
+
 ## Redis Broker and Result Backend
 
 Redis can be used as the broker for Celery.

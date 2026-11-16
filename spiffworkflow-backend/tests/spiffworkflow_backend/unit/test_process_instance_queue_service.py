@@ -5,7 +5,9 @@ import pytest
 from flask.app import Flask
 from pytest_mock.plugin import MockerFixture
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
@@ -147,3 +149,50 @@ class TestProcessInstanceQueueService(BaseTest):
             with ProcessInstanceQueueService.dequeued(process_instance):
                 pass
         assert dequeue_mocker.call_count == 6
+
+    def _queue_entry(self, process_instance: ProcessInstanceModel) -> ProcessInstanceQueueModel:
+        db.session.expire_all()
+        queue_entry: ProcessInstanceQueueModel = ProcessInstanceQueueModel.query.filter_by(
+            process_instance_id=process_instance.id
+        ).one()
+        return queue_entry
+
+    def _age_lock(self, process_instance: ProcessInstanceModel, seconds: int) -> None:
+        ProcessInstanceQueueModel.query.filter_by(process_instance_id=process_instance.id).update(
+            {"locked_at_in_seconds": round(time.time()) - seconds}
+        )
+        db.session.commit()
+
+    def test_does_not_remove_a_stale_lock_that_was_released_and_taken_again_after_it_was_found(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_instance = self._create_process_instance()
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            self._age_lock(process_instance, app.config["MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"] + 1)
+            [stale_lock] = ProcessInstanceLockService.stale_locks()
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            assert ProcessInstanceLockService.remove_stale_lock(stale_lock) is False
+            db.session.commit()
+            assert self._queue_entry(process_instance).locked_by == ProcessInstanceLockService.locked_by()
+            assert ProcessInstanceLockService.stale_locks() == []
+
+    def test_releasing_a_lock_that_was_removed_as_stale_leaves_the_next_lock_alone(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_instance = self._create_process_instance()
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            self._age_lock(process_instance, app.config["MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"] + 1)
+            [stale_lock] = ProcessInstanceLockService.stale_locks()
+            assert ProcessInstanceLockService.remove_stale_lock(stale_lock) is True
+            # another run takes the process instance
+            ProcessInstanceQueueModel.query.filter_by(process_instance_id=process_instance.id).update(
+                {"locked_by": "another_run", "locked_at_in_seconds": round(time.time())}
+            )
+            db.session.commit()
+
+        assert not ProcessInstanceLockService.has_lock(process_instance.id)
+        assert self._queue_entry(process_instance).locked_by == "another_run"

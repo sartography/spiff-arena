@@ -21,6 +21,7 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_group import HumanTaskGroupModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+from spiffworkflow_backend.models.human_task_user_waiting import HumanTaskUserWaitingModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.process_instance_report import FilterValue
@@ -305,43 +306,20 @@ class ProcessInstanceReportService:
                     HumanTaskModel.id == HumanTaskUserModel.human_task_id,
                 )
                 .outerjoin(assigned_user, assigned_user.id == HumanTaskUserModel.user_id)
+                .outerjoin(HumanTaskUserWaitingModel, HumanTaskUserWaitingModel.human_task_id == HumanTaskModel.id)
                 .outerjoin(lane_group, lane_group.id == HumanTaskModel.lane_assignment_id)
                 .outerjoin(human_task_group_model, human_task_group_model.human_task_id == HumanTaskModel.id)
                 .outerjoin(human_task_group, human_task_group.id == human_task_group_model.group_id)
             )
             if restrict_human_tasks_to_user is not None:
                 human_task_query = human_task_query.filter(HumanTaskUserModel.user_id == restrict_human_tasks_to_user.id)
-            potential_owner_usernames_from_group_concat_or_similar = cls._get_potential_owner_usernames(assigned_user)
-            db_type = current_app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE")
-            if db_type == "postgres":
-                lane_agg = func.string_agg(func.distinct(lane_group.identifier), ", ")
-                htg_agg = func.string_agg(func.distinct(human_task_group.identifier), ", ")
-                assigned_group_identifier = func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label(
-                    "assigned_user_group_identifier"
-                )
-            elif db_type == "mysql":
-                lane_agg = func.group_concat(func.distinct(lane_group.identifier))
-                htg_agg = func.group_concat(func.distinct(human_task_group.identifier))
-                assigned_group_identifier = func.nullif(func.concat_ws(", ", lane_agg, htg_agg), "").label(
-                    "assigned_user_group_identifier"
-                )
-            else:
-                # For sqlite, which doesn't support concat_ws, manually concatenate
-                lane_agg = func.group_concat(func.distinct(lane_group.identifier))
-                htg_agg = func.group_concat(func.distinct(human_task_group.identifier))
-                combined = (
-                    func.coalesce(lane_agg, "")
-                    + case((and_(lane_agg.isnot(None), htg_agg.isnot(None)), ", "), else_="")  # type: ignore
-                    + func.coalesce(htg_agg, "")
-                )
-                assigned_group_identifier = func.nullif(combined, "").label("assigned_user_group_identifier")
             human_task = (
                 human_task_query.add_columns(
                     HumanTaskModel.task_id,
                     HumanTaskModel.task_name,
                     HumanTaskModel.task_title,
-                    assigned_group_identifier,
-                    potential_owner_usernames_from_group_concat_or_similar,
+                    cls.assigned_group_identifiers_column(lane_group, human_task_group),
+                    cls.potential_owner_usernames_column(assigned_user),
                 )
                 .order_by(HumanTaskModel.id.asc())  # type: ignore
                 .first()
@@ -352,18 +330,39 @@ class ProcessInstanceReportService:
         return process_instance_dicts
 
     @classmethod
-    def _get_potential_owner_usernames(cls, assigned_user: AliasedClass) -> Any:
-        potential_owner_usernames_from_group_concat_or_similar = func.group_concat(assigned_user.username.distinct()).label(
-            "potential_owner_usernames"
+    def potential_owner_usernames_column(cls, assigned_user: AliasedClass) -> Any:
+        """Usernames of the users assigned to a human task and of lane owners who have not signed in yet.
+
+        The query must outer join assigned_user through HumanTaskUserModel and outer join HumanTaskUserWaitingModel.
+        """
+        return cls._combined_distinct_values(
+            assigned_user.username, HumanTaskUserWaitingModel.username, "potential_owner_usernames"
         )
+
+    @classmethod
+    def assigned_group_identifiers_column(cls, lane_group: AliasedClass, human_task_group: AliasedClass) -> Any:
+        """Group identifiers from both the legacy lane_assignment_id and HumanTaskGroupModel."""
+        return cls._combined_distinct_values(lane_group.identifier, human_task_group.identifier, "assigned_user_group_identifier")
+
+    @classmethod
+    def _combined_distinct_values(cls, first: Any, second: Any, label: str) -> Any:
+        """Aggregate the distinct non-null values of two columns into one comma-separated string, or null."""
         db_type = current_app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE")
-
         if db_type == "postgres":
-            potential_owner_usernames_from_group_concat_or_similar = func.string_agg(
-                assigned_user.username.distinct(), ", "
-            ).label("potential_owner_usernames")
-
-        return potential_owner_usernames_from_group_concat_or_similar
+            first_agg = func.string_agg(func.distinct(first), ", ")
+            second_agg = func.string_agg(func.distinct(second), ", ")
+        else:
+            first_agg = func.group_concat(func.distinct(first))
+            second_agg = func.group_concat(func.distinct(second))
+        if db_type in ("postgres", "mysql"):
+            return func.nullif(func.concat_ws(", ", first_agg, second_agg), "").label(label)
+        # sqlite does not support concat_ws
+        combined = (
+            func.coalesce(first_agg, "")
+            + case((and_(first_agg.isnot(None), second_agg.isnot(None)), ", "), else_="")  # type: ignore
+            + func.coalesce(second_agg, "")
+        )
+        return func.nullif(combined, "").label(label)
 
     @classmethod
     def get_column_names_for_model(cls, model: type[SpiffworkflowBaseDBModel]) -> list[str]:

@@ -74,6 +74,9 @@ lane_owners = {
 ```
 
 The dictionary maps Lane names to lists of users who can complete tasks in that Lane.
+A user is listed by username or email.
+A user who has not signed in yet gets the task on first sign-in, when their username (the OpenID `preferred_username` claim) or their email matches the entry.
+Until then, "Waiting for" lists them with the other users, unless the lane also lists a group, in which case it shows the group names.
 
 ```{admonition} Note
 Specifying a user group in the `lane_owners` dictionary in a script task does not require it to previously exist in the database.

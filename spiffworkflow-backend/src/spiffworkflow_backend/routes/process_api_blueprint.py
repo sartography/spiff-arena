@@ -660,7 +660,9 @@ def _get_task_model_for_request(
 
             subset_var = extensions.get("variableName")
             if subset_var:
-                task_model.data = {subset_var: task_model.data.get(subset_var, {})}
+                # a script may have set the variable to None or another non-form value
+                form_data = task_model.data.get(subset_var)
+                task_model.data = {subset_var: form_data if isinstance(form_data, dict | list) else {}}
 
         # it should be safe to add instructions to the task spec here since we are never commiting it back to the db
         extensions["instructionsForEndUser"] = JinjaService.render_instructions_for_end_user(task_model, extensions)

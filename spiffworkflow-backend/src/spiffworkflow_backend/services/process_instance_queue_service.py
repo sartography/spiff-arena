@@ -2,6 +2,9 @@ import contextlib
 import time
 from collections.abc import Generator
 
+from flask import current_app
+from sqlalchemy import case
+
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceCannotBeRunError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -9,7 +12,6 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.process_instance_event_service import ProcessInstanceEventService
-from spiffworkflow_backend.services.process_instance_lock_service import ExpectedLockNotFoundError
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 
@@ -57,14 +59,30 @@ class ProcessInstanceQueueService:
     @classmethod
     def _enqueue(cls, process_instance: ProcessInstanceModel) -> None:
         queue_entry_id = ProcessInstanceLockService.unlock(process_instance.id)
-        queue_entry = ProcessInstanceQueueModel.query.filter_by(id=queue_entry_id).first()
-        if queue_entry is None:
-            raise ExpectedLockNotFoundError(f"Could not find a lock for process instance: {process_instance.id}")
         current_time = round(time.time())
-        if current_time > queue_entry.run_at_in_seconds:
-            queue_entry.run_at_in_seconds = current_time
-        cls._configure_and_save_queue_entry(process_instance, queue_entry)
+        # only if we still hold the lock: it may have been removed as stale and taken by another run
+        lock_released = ProcessInstanceQueueModel.query.filter_by(
+            id=queue_entry_id, locked_by=ProcessInstanceLockService.locked_by()
+        ).update(
+            {
+                "priority": 2,
+                "status": process_instance.status,
+                "locked_by": None,
+                "locked_at_in_seconds": None,
+                "run_at_in_seconds": case(
+                    (ProcessInstanceQueueModel.run_at_in_seconds < current_time, current_time),  # type: ignore
+                    else_=ProcessInstanceQueueModel.run_at_in_seconds,
+                ),
+                "updated_at_in_seconds": current_time,
+            },
+            synchronize_session=False,
+        )
         db.session.commit()
+        if not lock_released:
+            current_app.logger.error(
+                f"{ProcessInstanceLockService.locked_by()} no longer held its lock on process instance "
+                f"{process_instance.id} when it went to release it."
+            )
 
     @classmethod
     def _dequeue(cls, process_instance: ProcessInstanceModel) -> None:

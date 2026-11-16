@@ -10,6 +10,7 @@ from spiffworkflow_backend.config.openid import rsa_keys
 
 
 def _load_keys_in_parallel(cache_dir: str, barrier, results) -> None:
+    """Load a shared key pair in a separate worker process."""
     os.environ["SPIFFWORKFLOW_BACKEND_OPEN_ID_CACHE_DIR"] = cache_dir
     original_generate = rsa_keys.OpenIdConfigsForDevOnly._generate_keys
 
@@ -24,6 +25,7 @@ def _load_keys_in_parallel(cache_dir: str, barrier, results) -> None:
 
 
 def test_parallel_workers_reuse_same_generated_keys(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Concurrent workers must return the same public key from one cache."""
     monkeypatch.setenv("SPIFFWORKFLOW_BACKEND_OPEN_ID_CACHE_DIR", str(tmp_path / "bootstrap"))
     monkeypatch.delenv("SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_KEY", raising=False)
     monkeypatch.delenv("SPIFFWORKFLOW_BACKEND_OPEN_ID_PUBLIC_KEY", raising=False)

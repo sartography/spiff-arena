@@ -97,6 +97,7 @@ class OpenIdConfigsForDevOnly:
 
     @classmethod
     def _load_or_create_file_backed_keys_without_lock(cls) -> tuple[str, str]:
+        """Read cached keys or generate and atomically store a new pair."""
         private_key_path, public_key_path, _lock_path = cls._key_paths()
         private_key_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -111,6 +112,7 @@ class OpenIdConfigsForDevOnly:
 
     @classmethod
     def _load_or_create_file_backed_keys(cls) -> tuple[str, str]:
+        """Initialize the shared key cache while holding the platform file lock."""
         return cls._load_or_create_file_backed_keys_with_lock()
 
     @classmethod

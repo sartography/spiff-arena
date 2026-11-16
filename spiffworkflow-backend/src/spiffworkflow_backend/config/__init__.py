@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 from flask.app import Flask
 from werkzeug.utils import ImportStringError
 
+from spiffworkflow_backend.background_processing import CELERY_TASK_TIME_LIMIT_IN_SECONDS
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.services.logging_service import setup_logger_for_app
 
@@ -104,6 +105,9 @@ def setup_database_configs(app: Flask) -> None:
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {}
     app.config["SQLALCHEMY_ENGINE_OPTIONS"]["pool_size"] = pool_size
     app.config["SQLALCHEMY_ENGINE_OPTIONS"]["pool_pre_ping"] = pool_pre_ping
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"]["hide_parameters"] = bool(
+        app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_HIDE_PARAMETERS")
+    )
 
 
 def load_config_file(app: Flask, env_config_module: str) -> None:
@@ -146,6 +150,16 @@ def _check_configs_dependent_on_celery(app: Flask, config: str) -> None:
             f"{config} is set to true but "
             "SPIFFWORKFLOW_BACKEND_CELERY_ENABLED is set to false. "
             "This feature requires Celery to be enabled."
+        )
+
+
+def _check_instance_lock_outlasts_celery_jobs(app: Flask) -> None:
+    """A lock that can go stale while its celery job is still running would have the process instance run twice at once."""
+    lock_duration = app.config["MAX_INSTANCE_LOCK_DURATION_IN_SECONDS"]
+    if app.config.get("SPIFFWORKFLOW_BACKEND_CELERY_ENABLED") and lock_duration <= CELERY_TASK_TIME_LIMIT_IN_SECONDS:
+        raise ConfigurationError(
+            "SPIFFWORKFLOW_BACKEND_MAX_INSTANCE_LOCK_DURATION_IN_SECONDS must be greater than "
+            f"{CELERY_TASK_TIME_LIMIT_IN_SECONDS}, the time limit of a celery job. It is {lock_duration}."
         )
 
 
@@ -361,6 +375,7 @@ def setup_config(app: Flask) -> None:
     _handle_deprecated_frontend_url_config(app)
     _check_for_incompatible_frontend_and_backend_urls(app)
     _check_extension_api_configs(app)
+    _check_instance_lock_outlasts_celery_jobs(app)
     _check_configs_dependent_on_celery(app, "SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED")
     _check_configs_dependent_on_celery(app, "SPIFFWORKFLOW_BACKEND_EVENT_NOTIFIER_PROCESS_MODEL")
     _setup_cipher(app)

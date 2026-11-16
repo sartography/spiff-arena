@@ -21,6 +21,8 @@ from spiffworkflow_backend.services.http_metrics_service import capture_http_met
 from spiffworkflow_backend.services.http_metrics_service import capture_http_metric_exception
 from spiffworkflow_backend.services.http_metrics_service import http_metrics_for_registry
 
+SENTRY_MAX_REQUEST_BODY_SIZES = ("never", "small", "medium", "always")
+
 
 def get_version_info_data() -> dict[str, Any]:
     version_info_data_dict = {}
@@ -185,6 +187,13 @@ def configure_sentry(app: flask.app.Flask) -> None:
     if app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ENV_IDENTIFIER"):
         sentry_env_identifier = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ENV_IDENTIFIER")
 
+    sentry_max_request_body_size = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_MAX_REQUEST_BODY_SIZE", "medium")
+    if sentry_max_request_body_size not in SENTRY_MAX_REQUEST_BODY_SIZES:
+        raise Exception(
+            f"SPIFFWORKFLOW_BACKEND_SENTRY_MAX_REQUEST_BODY_SIZE must be one of {SENTRY_MAX_REQUEST_BODY_SIZES}, "
+            f"got {sentry_max_request_body_size!r}"
+        )
+
     sentry_configs = {
         "dsn": sentry_dsn,
         "integrations": [
@@ -205,6 +214,8 @@ def configure_sentry(app: flask.app.Flask) -> None:
         # The profiles_sample_rate setting is relative to the traces_sample_rate setting.
         "before_send": filter_sentry_error_event,
         "before_send_transaction": scrub_transaction_event,
+        "include_local_variables": bool(app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_INCLUDE_LOCAL_VARIABLES", True)),
+        "max_request_body_size": sentry_max_request_body_size,
     }
 
     # https://docs.sentry.io/platforms/python/configuration/releases

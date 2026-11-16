@@ -20,6 +20,7 @@ class ProcessInstanceEventType(SpiffEnum):
     process_instance_completed = "process_instance_completed"
     process_instance_error = "process_instance_error"
     process_instance_force_run = "process_instance_force_run"
+    process_instance_lock_expired = "process_instance_lock_expired"
     process_instance_migrated = "process_instance_migrated"
     process_instance_resumed = "process_instance_resumed"
     process_instance_rewound_to_task = "process_instance_rewound_to_task"
