@@ -1,3 +1,4 @@
+import errno
 import hashlib
 import multiprocessing
 import os
@@ -22,6 +23,57 @@ def _load_keys_in_parallel(cache_dir: str, barrier, results) -> None:
     barrier.wait(timeout=20)
     _, public_key = rsa_keys.OpenIdConfigsForDevOnly._load_or_create_file_backed_keys()
     results.put(hashlib.sha256(public_key.encode()).hexdigest())
+
+
+def _hold_windows_cache_lock(cache_dir: str, acquired) -> None:
+    """Keep the lock busy past the runtime's built-in retry window."""
+    os.environ["SPIFFWORKFLOW_BACKEND_OPEN_ID_CACHE_DIR"] = cache_dir
+    _, _, lock_path = rsa_keys.OpenIdConfigsForDevOnly._key_paths()
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+b") as lock_file:
+        lock_file.seek(0)
+        rsa_keys.msvcrt.locking(lock_file.fileno(), rsa_keys.msvcrt.LK_NBLCK, 1)
+        try:
+            acquired.set()
+            time.sleep(12)
+        finally:
+            lock_file.seek(0)
+            rsa_keys.msvcrt.locking(lock_file.fileno(), rsa_keys.msvcrt.LK_UNLCK, 1)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows file locking only")
+def test_windows_lock_waits_past_builtin_retry_window(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """A worker can start once a long-held cache lock is released."""
+    cache_dir = str(tmp_path / "shared")
+    monkeypatch.setenv("SPIFFWORKFLOW_BACKEND_OPEN_ID_CACHE_DIR", cache_dir)
+    context = multiprocessing.get_context("spawn")
+    acquired = context.Event()
+    holder = context.Process(target=_hold_windows_cache_lock, args=(cache_dir, acquired))
+    holder.start()
+    try:
+        assert acquired.wait(timeout=20)
+        private_key, public_key = rsa_keys.OpenIdConfigsForDevOnly._load_or_create_file_backed_keys()
+        assert rsa_keys.OpenIdConfigsForDevOnly._validate_key_pair(private_key, public_key) is not None
+    finally:
+        holder.join(timeout=20)
+        if holder.is_alive():
+            holder.terminate()
+            holder.join()
+    assert holder.exitcode == 0
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows file locking only")
+def test_windows_lock_propagates_unrelated_errors(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Errors other than lock contention must stop startup immediately."""
+
+    def fail_lock(_fd: int, _mode: int, _nbytes: int) -> None:
+        raise OSError(errno.EIO, "I/O error")
+
+    monkeypatch.setattr(rsa_keys.msvcrt, "locking", fail_lock)
+    with (tmp_path / ".lock").open("a+b") as lock_file:
+        with pytest.raises(OSError) as error:
+            rsa_keys.OpenIdConfigsForDevOnly._acquire_windows_lock(lock_file)
+    assert error.value.errno == errno.EIO
 
 
 def test_parallel_workers_reuse_same_generated_keys(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

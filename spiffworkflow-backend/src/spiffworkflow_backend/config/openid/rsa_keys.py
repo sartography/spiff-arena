@@ -1,7 +1,9 @@
 # These configs are specifically for the open id server run from backend.
 # This should only be used for development and demonstration. SHOULD NOT BE USED IN PROD.
+import errno
 import os
 import tempfile
+import time
 from collections.abc import Callable
 from pathlib import Path
 
@@ -19,6 +21,25 @@ else:
 class OpenIdConfigsForDevOnly:
     private_key: str
     public_key: str
+
+    _WINDOWS_LOCK_TIMEOUT_SECONDS = 30
+
+    @classmethod
+    def _acquire_windows_lock(cls, lock_file) -> None:
+        """Wait for a contended cache lock with a bounded startup timeout."""
+        deadline = time.monotonic() + cls._WINDOWS_LOCK_TIMEOUT_SECONDS
+        while True:
+            lock_file.seek(0)
+            try:
+                msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+                return
+            except OSError as error:
+                if error.errno != errno.EACCES:
+                    raise
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise TimeoutError("Timed out waiting for the OpenID key cache lock") from error
+                time.sleep(min(0.1, remaining))
 
     @classmethod
     def _validate_private_key_pem(cls, private_key: str) -> None:
@@ -83,8 +104,7 @@ class OpenIdConfigsForDevOnly:
 
         with lock_path.open("a+b") as lock_file:
             if os.name == "nt":
-                lock_file.seek(0)
-                msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
+                cls._acquire_windows_lock(lock_file)
             else:
                 fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
 
