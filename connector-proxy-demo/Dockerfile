@@ -21,9 +21,10 @@ FROM base AS deployment
 # gunicorn3 for web server
 # default-mysql-client for convenience accessing mysql docker container
 # vim ftw
+# fonts-dejavu-core so connector-archive PDFs can show any characters people type into forms
 RUN apt-get update \
   && apt-get clean -y \
-  && DEBIAN_FRONTEND=noninteractive apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny libkrb5support0 libexpat1 \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y -q git-core curl procps gunicorn3 default-mysql-client vim-tiny libkrb5support0 libexpat1 fonts-dejavu-core \
   && rm -rf /var/lib/apt/lists/*
 
 
