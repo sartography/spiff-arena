@@ -1,9 +1,14 @@
 import base64
 import hashlib
+from collections.abc import Iterator
+from contextlib import contextmanager
+from typing import Any
 
 import pytest
 from flask.app import Flask
+from sqlalchemy import event
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.get_process_instance_files import GetProcessInstanceFiles
 from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
@@ -13,6 +18,21 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 def _data_url(mimetype: str, filename: str, contents: bytes) -> str:
     return f"data:{mimetype};name={filename};base64,{base64.b64encode(contents).decode('ascii')}"
+
+
+@contextmanager
+def _capture_queries() -> Iterator[list[str]]:
+    statements: list[str] = []
+
+    def record(_connection: Any, _cursor: Any, statement: str, _parameters: Any, _context: Any, _executemany: bool) -> None:
+        statements.append(statement)
+
+    connection = db.session.connection()
+    event.listen(connection, "before_cursor_execute", record)
+    try:
+        yield statements
+    finally:
+        event.remove(connection, "before_cursor_execute", record)
 
 
 class TestGetProcessInstanceFiles(BaseTest):
@@ -50,7 +70,11 @@ class TestGetProcessInstanceFiles(BaseTest):
                 process_instance_id=process_instance.id,
                 process_model_identifier=process_model.id,
             )
-            files = GetProcessInstanceFiles().run(context)
+            db.session.expire_all()
+            with _capture_queries() as queries:
+                files = GetProcessInstanceFiles().run(context)
+            assert len(queries) == 1
+            assert "process_instance_file_data.contents" not in queries[0]
             assert [f["filename"] for f in files] == ["calc.txt", "calc final.txt"]
             assert files[0]["id"] < files[1]["id"]
             assert files[0]["digest"] == hashlib.sha256(b"first version").hexdigest()
@@ -60,7 +84,11 @@ class TestGetProcessInstanceFiles(BaseTest):
             assert files[1]["file_reference"] == second_data["attachments"][0]
             assert "data_url" not in files[0]
 
-            files_with_contents = GetProcessInstanceFiles().run(context, include_contents=True)
+            db.session.expire_all()
+            with _capture_queries() as queries:
+                files_with_contents = GetProcessInstanceFiles().run(context, include_contents=True)
+            assert len(queries) == 1
+            assert "process_instance_file_data.contents" in queries[0]
             assert files_with_contents[0]["data_url"] == _data_url("text/plain", "calc.txt", b"first version")
             assert files_with_contents[1]["data_url"] == _data_url("text/plain", "calc%20final.txt", b"second version")
         finally:

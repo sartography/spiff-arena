@@ -2,6 +2,8 @@ import base64
 from typing import Any
 from urllib.parse import quote
 
+from sqlalchemy.orm import defer
+
 from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
@@ -34,11 +36,12 @@ class GetProcessInstanceFiles(Script):
             raise self.get_proces_instance_id_is_missing_error("get_process_instance_files")
         include_contents = bool(kwargs.get("include_contents", args[0] if args else False))
 
-        file_data_models = (
-            ProcessInstanceFileDataModel.query.filter_by(process_instance_id=process_instance_id)
-            .order_by(ProcessInstanceFileDataModel.id)
-            .all()
+        query = ProcessInstanceFileDataModel.query.filter_by(process_instance_id=process_instance_id).order_by(
+            ProcessInstanceFileDataModel.id
         )
+        if not include_contents:
+            query = query.options(defer(ProcessInstanceFileDataModel.contents))
+        file_data_models = query.all()
 
         files = []
         for file_data in file_data_models:
