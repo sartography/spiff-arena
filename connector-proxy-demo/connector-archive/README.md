@@ -9,8 +9,10 @@ Archive one process run for auditors.
 - `manifest.json`: keys, sizes, and SHA-256 values for everything above. It is deleted after the first upload works and written last, so if it is present the archive is complete.
 
 The keys are the same each time for the same `key_prefix`, so you can retry a failed task.
-The command stops starting new uploads after 40 seconds, before the backend stops waiting (45 seconds), and returns an error. Retry the task.
-Each S3 request has a 5 second connect timeout, a 15 second read timeout, and one retry. One slow upload can still go past 45 seconds; the backend then marks the task as failed, and a retry writes the same keys.
+The command runs archive preparation and S3 work in a supervised process with a 40-second deadline, before the backend stops waiting (45 seconds).
+At the deadline it terminates the worker (including any in-flight PUT/DELETE, SDK retry, or retry backoff) and returns an error, allowing up to two seconds for worker cleanup. Retry the task.
+Each S3 request also has a 5 second connect timeout, a 15 second read timeout, and up to two retries; all share the command-wide budget.
+Stopping the worker cannot undo a request S3 has already received: a timed-out request may still have been committed by S3. A retry writes the same keys.
 All files are held in memory while the archive is built. There is no size limit.
 
 The credentials need `s3:PutObject` and `s3:DeleteObject` on the bucket. Turn on bucket versioning, so a retry never loses an earlier copy.

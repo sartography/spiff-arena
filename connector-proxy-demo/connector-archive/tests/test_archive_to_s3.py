@@ -2,6 +2,7 @@ import base64
 import hashlib
 import io
 import json
+import time
 from unittest.mock import patch
 
 import boto3
@@ -55,6 +56,12 @@ def command(**kwargs: object) -> ArchiveToS3:
     return ArchiveToS3(**params)  # type: ignore[arg-type]
 
 
+def run_archive(**kwargs: object) -> dict:
+    # Exercise archive semantics in-process so moto state and injected failures remain visible.
+    # The public execute() supervisor is tested separately with real HTTP requests.
+    return command(**kwargs)._execute(time.monotonic() + 40)
+
+
 @pytest.fixture
 def s3():  # type: ignore[no-untyped-def]
     with mock_aws():
@@ -77,7 +84,7 @@ def test_archives_files_pdf_and_manifest(s3) -> None:  # type: ignore[no-untyped
         {"filename": "calc.xlsx", "data_url": data_url("calc.xlsx", b"second")},
         data_url("notes%20%26%20more.txt", b"plain string input"),
     ]
-    result = command(files=files).execute({}, {})
+    result = run_archive(files=files)
 
     assert result["error"] is None
     body = result["command_response"]["body"]
@@ -131,7 +138,7 @@ def test_unicode_text_survives_with_and_without_unicode_font(monkeypatch: pytest
 
 
 def test_no_files_still_produces_a_complete_archive(s3) -> None:  # type: ignore[no-untyped-def]
-    result = command(files=None).execute({}, {})
+    result = run_archive(files=None)
     assert result["error"] is None
     assert result["command_response"]["body"]["file_count"] == 0
     summary = s3.get_object(Bucket=BUCKET, Key="r2r/project-accounting-provisions/42/summary.pdf")["Body"].read()
@@ -151,7 +158,7 @@ def test_no_files_still_produces_a_complete_archive(s3) -> None:  # type: ignore
     ],
 )
 def test_invalid_input_is_reported_and_nothing_is_written(s3, kwargs: dict, message: str) -> None:  # type: ignore[no-untyped-def]
-    result = command(**kwargs).execute({}, {})
+    result = run_archive(**kwargs)
     assert result["error"] is not None
     assert result["error"]["error_code"] == "ArchiveInvalidInput"
     assert message in result["error"]["message"]
@@ -159,7 +166,7 @@ def test_invalid_input_is_reported_and_nothing_is_written(s3, kwargs: dict, mess
 
 
 def test_upload_failure_is_reported_without_credentials(s3) -> None:  # type: ignore[no-untyped-def]
-    result = command(bucket="bucket-that-does-not-exist", aws_secret_access_key="super-secret-value").execute({}, {})
+    result = run_archive(bucket="bucket-that-does-not-exist", aws_secret_access_key="super-secret-value")
     assert result["error"] is not None
     assert result["error"]["error_code"] == "ArchiveUploadFailed"
     assert "bucket-that-does-not-exist" in result["error"]["message"]
@@ -168,8 +175,8 @@ def test_upload_failure_is_reported_without_credentials(s3) -> None:  # type: ig
 
 def test_retry_writes_the_same_keys(s3) -> None:  # type: ignore[no-untyped-def]
     files = [data_url("a.txt", b"a")]
-    first = command(files=files).execute({}, {})
-    second = command(files=files).execute({}, {})
+    first = run_archive(files=files)
+    second = run_archive(files=files)
     assert [o["key"] for o in first["command_response"]["body"]["objects"]] == [
         o["key"] for o in second["command_response"]["body"]["objects"]
     ]
@@ -178,7 +185,7 @@ def test_retry_writes_the_same_keys(s3) -> None:  # type: ignore[no-untyped-def]
 
 def test_failed_retry_removes_the_manifest_of_an_earlier_archive(s3) -> None:  # type: ignore[no-untyped-def]
     manifest_key = "r2r/project-accounting-provisions/42/manifest.json"
-    assert command(files=[data_url("a.txt", b"a")]).execute({}, {})["error"] is None
+    assert run_archive(files=[data_url("a.txt", b"a")])["error"] is None
     assert s3.head_object(Bucket=BUCKET, Key=manifest_key)
 
     real_put_object = s3.put_object
@@ -189,7 +196,7 @@ def test_failed_retry_removes_the_manifest_of_an_earlier_archive(s3) -> None:  #
         return real_put_object(**kwargs)
 
     with patch.object(ArchiveToS3, "_s3_client", return_value=s3), patch.object(s3, "put_object", put_object_that_fails_on_pdf):
-        result = command(files=[data_url("b.txt", b"b")]).execute({}, {})
+        result = run_archive(files=[data_url("b.txt", b"b")])
 
     assert result["error"] is not None
     assert result["error"]["error_code"] == "ArchiveUploadFailed"
@@ -199,22 +206,22 @@ def test_failed_retry_removes_the_manifest_of_an_earlier_archive(s3) -> None:  #
 
 def test_failure_on_the_first_upload_keeps_an_earlier_complete_archive(s3) -> None:  # type: ignore[no-untyped-def]
     manifest_key = "r2r/project-accounting-provisions/42/manifest.json"
-    assert command(files=[data_url("a.txt", b"a")]).execute({}, {})["error"] is None
+    assert run_archive(files=[data_url("a.txt", b"a")])["error"] is None
 
     def put_object_that_fails(**kwargs):  # type: ignore[no-untyped-def]
         raise ClientError({"Error": {"Code": "AccessDenied", "Message": "denied"}}, "PutObject")
 
     with patch.object(ArchiveToS3, "_s3_client", return_value=s3), patch.object(s3, "put_object", put_object_that_fails):
-        result = command(files=[data_url("b.txt", b"b")]).execute({}, {})
+        result = run_archive(files=[data_url("b.txt", b"b")])
 
     assert result["error"]["error_code"] == "ArchiveUploadFailed"
     assert s3.head_object(Bucket=BUCKET, Key=manifest_key)
 
 
 def test_stops_before_the_backend_times_out(s3, monkeypatch: pytest.MonkeyPatch) -> None:  # type: ignore[no-untyped-def]
-    clock = iter([0.0, 1.0, 41.0, 42.0, 43.0])
+    clock = iter([1.0, 2.0, 41.0])
     monkeypatch.setattr("connector_archive.commands.archive_to_s3.time.monotonic", lambda: next(clock))
-    result = command(files=[data_url("a.txt", b"a"), data_url("b.txt", b"b")]).execute({}, {})
+    result = command(files=[data_url("a.txt", b"a"), data_url("b.txt", b"b")])._execute(40)
 
     assert result["error"] is not None
     assert result["error"]["error_code"] == "ArchiveUploadFailed"

@@ -1,4 +1,6 @@
+import multiprocessing
 import time
+from multiprocessing.connection import Connection
 from typing import Any
 
 import boto3  # type: ignore
@@ -16,6 +18,16 @@ from connector_archive.report_pdf import ReportPdfError
 # The backend waits CONNECTOR_PROXY_COMMAND_TIMEOUT (45 seconds) for a connector response. Stop before that so
 # the backend gets this error and not a timeout while uploads continue in the proxy.
 UPLOAD_DEADLINE_IN_SECONDS = 40
+
+
+def _timeout_message() -> str:
+    return f"Stopped after {UPLOAD_DEADLINE_IN_SECONDS} seconds. The archive is not complete. Retry the task."
+
+
+def _run_archive(command: "ArchiveToS3", deadline: float, connection: Connection) -> None:
+    # A separate process can be stopped even during DNS, a socket write/read, or an SDK retry/backoff.
+    with connection:
+        connection.send(command._execute(deadline))
 
 
 class ArchiveToS3(ConnectorCommand):
@@ -53,25 +65,56 @@ class ArchiveToS3(ConnectorCommand):
             aws_secret_access_key=self.aws_secret_access_key,
             region_name=self.region,
             endpoint_url=self.endpoint_url,
-            # The deadline is only checked between objects, so stop a stalled request well before the backend gives up.
+            # These inactivity timeouts complement the supervisor's hard, command-wide deadline.
             config=Config(connect_timeout=5, read_timeout=15, retries={"max_attempts": 2, "mode": "standard"}),
         )
 
     def execute(self, _config: Any, _task_data: Any) -> ConnectorProxyResponseDict:
+        deadline = time.monotonic() + UPLOAD_DEADLINE_IN_SECONDS
+        # Do not fork a threaded proxy or share its sockets. Unlike a timed-out thread/future, this worker
+        # can actually be stopped, bounding every PUT, DELETE, and SDK retry to the remaining budget.
+        context = multiprocessing.get_context("spawn")
+        receiver, sender = context.Pipe(duplex=False)
+        worker = context.Process(target=_run_archive, args=(self, deadline, sender), daemon=True)
+        message = _timeout_message()
+        try:
+            worker.start()
+            sender.close()
+            if receiver.poll(max(0, deadline - time.monotonic())):
+                try:
+                    return receiver.recv()
+                except EOFError:
+                    message = "Archive worker stopped unexpectedly. The archive is not complete. Retry the task."
+        finally:
+            receiver.close()
+            sender.close()
+            if worker.pid is not None:
+                if worker.is_alive():
+                    worker.terminate()
+                worker.join(timeout=1)
+                if worker.is_alive():
+                    worker.kill()
+                    worker.join(timeout=1)
+            if not worker.is_alive():
+                worker.close()
+        return {
+            "command_response": {"body": {}, "mimetype": "application/json"},
+            "error": {"error_code": "ArchiveUploadFailed", "message": message},
+            "command_response_version": 2,
+            "spiff__logs": [],
+        }
+
+    def _execute(self, deadline: float) -> ConnectorProxyResponseDict:
         error: CommandErrorDict | None = None
         body: dict[str, Any] = {}
         logs: list[str] = []
         try:
-            started_at = time.monotonic()
             entries = build_archive_entries(self.report, self.files, self.key_prefix)
             client = self._s3_client()
             manifest_entry = entries[-1]
             for index, entry in enumerate(entries):
-                if time.monotonic() - started_at > UPLOAD_DEADLINE_IN_SECONDS:
-                    raise TimeoutError(
-                        f"Stopped after {UPLOAD_DEADLINE_IN_SECONDS} seconds before {entry.key}. The archive is not "
-                        "complete. Retry the task."
-                    )
+                if time.monotonic() >= deadline:
+                    raise TimeoutError(_timeout_message())
                 client.put_object(
                     Bucket=self.bucket,
                     Key=entry.key,
@@ -82,6 +125,8 @@ class ArchiveToS3(ConnectorCommand):
                 if index == 0:
                     # A retry can have fewer or different files. Remove the old manifest so it never describes them.
                     # This runs after the first upload works, so a wrong bucket or key keeps an earlier complete archive.
+                    if time.monotonic() >= deadline:
+                        raise TimeoutError(_timeout_message())
                     client.delete_object(Bucket=self.bucket, Key=manifest_entry.key)
                 logs.append(f"archived s3://{self.bucket}/{entry.key} ({entry.size} bytes)")
             body = {
