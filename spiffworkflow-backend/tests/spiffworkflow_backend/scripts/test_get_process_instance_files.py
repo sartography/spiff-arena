@@ -28,11 +28,11 @@ def _capture_queries() -> Iterator[list[str]]:
         statements.append(statement)
 
     connection = db.session.connection()
-    event.listen(connection, "before_cursor_execute", record)
+    event.listen(connection, "before_cursor_execute", record)  # type: ignore[no-untyped-call]
     try:
         yield statements
     finally:
-        event.remove(connection, "before_cursor_execute", record)
+        event.remove(connection, "before_cursor_execute", record)  # type: ignore[no-untyped-call]
 
 
 class TestGetProcessInstanceFiles(BaseTest):
