@@ -8,11 +8,12 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 from unittest.mock import patch
 
-import boto3
+import boto3  # type: ignore[import-untyped]
 import pytest
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError  # type: ignore[import-untyped]
 from moto import mock_aws
 from pypdf import PdfReader
+from spiffworkflow_connector_command.command_interface import ConnectorProxyResponseDict
 
 from connector_archive.archive import build_archive_entries
 from connector_archive.archive import safe_filename
@@ -47,7 +48,7 @@ def pdf_text(pdf_bytes: bytes) -> str:
 
 
 def command(**kwargs: object) -> ArchiveToS3:
-    params = {
+    params: dict[str, Any] = {
         "bucket": BUCKET,
         "key_prefix": "/archives/42/",
         "aws_access_key_id": "testing",
@@ -56,10 +57,10 @@ def command(**kwargs: object) -> ArchiveToS3:
         "files": [],
     }
     params.update(kwargs)
-    return ArchiveToS3(**params)  # type: ignore[arg-type]
+    return ArchiveToS3(**params)
 
 
-def run_archive(**kwargs: object) -> dict:
+def run_archive(**kwargs: object) -> ConnectorProxyResponseDict:
     # Exercise archive semantics in-process so moto state and injected failures remain visible.
     # The public execute() supervisor is tested separately with real HTTP requests.
     return command(**kwargs)._execute(time.monotonic() + 40)
@@ -188,6 +189,20 @@ def test_upload_failure_is_reported_without_credentials(s3) -> None:  # type: ig
     assert "super-secret-value" not in json.dumps(result)
 
 
+def test_denied_manifest_access_does_not_start_uploads(s3: Any) -> None:
+    denied = ClientError({"Error": {"Code": "AccessDenied", "Message": "denied"}}, "GetObject")
+    with (
+        patch.object(ArchiveToS3, "_s3_client", return_value=s3),
+        patch.object(s3, "get_object", side_effect=denied),
+        patch.object(s3, "put_object") as put_object,
+    ):
+        result = run_archive()
+    assert result["error"] is not None
+    assert result["error"]["error_code"] == "ArchiveUploadFailed"
+    assert "AccessDenied" in result["error"]["message"]
+    put_object.assert_not_called()
+
+
 def test_retry_writes_the_same_keys(s3) -> None:  # type: ignore[no-untyped-def]
     files = [data_url("a.txt", b"a")]
     first = run_archive(files=files)
@@ -230,6 +245,7 @@ def test_failure_on_the_first_upload_keeps_an_earlier_complete_archive(s3) -> No
     with patch.object(ArchiveToS3, "_s3_client", return_value=s3), patch.object(s3, "put_object", put_object_that_fails):
         result = run_archive(files=[data_url("b.txt", b"b")])
 
+    assert result["error"] is not None
     assert result["error"]["error_code"] == "ArchiveUploadFailed"
     assert s3.head_object(Bucket=BUCKET, Key=manifest_key)
 
@@ -306,6 +322,7 @@ def test_legacy_manifest_is_pinned_before_a_failed_retry(s3: Any, old_versioning
 
     with patch.object(ArchiveToS3, "_s3_client", return_value=s3), patch.object(s3, "put_object", side_effect=fail_summary):
         result = run_archive(bucket=bucket, key_prefix="archive/42", files=[data_url("same.txt", b"new")])
+    assert result["error"] is not None
     assert result["error"]["error_code"] == "ArchiveUploadFailed"
     manifest = assert_manifest_versions(s3, "archive/42/manifest.json", bucket=bucket)
     assert manifest["files"][0]["sha256"] == hashlib.sha256(b"old").hexdigest()
@@ -323,6 +340,7 @@ def test_inconsistent_legacy_archive_is_not_overwritten(s3: Any) -> None:
     s3.put_object(Bucket=BUCKET, Key=entries[0].key, Body=b"corrupted")
     before = s3.list_object_versions(Bucket=BUCKET)["Versions"]
     result = run_archive(key_prefix="archive/42", files=[data_url("same.txt", b"new")])
+    assert result["error"] is not None
     assert result["error"]["error_code"] == "ArchiveUploadFailed"
     assert "inconsistent" in result["error"]["message"]
     assert s3.list_object_versions(Bucket=BUCKET)["Versions"] == before
@@ -331,6 +349,7 @@ def test_inconsistent_legacy_archive_is_not_overwritten(s3: Any) -> None:
 def test_requires_versioning_before_writing(s3: Any) -> None:
     s3.put_bucket_versioning(Bucket=BUCKET, VersioningConfiguration={"Status": "Suspended"})
     result = run_archive()
+    assert result["error"] is not None
     assert result["error"]["error_code"] == "ArchiveUploadFailed"
     assert "versioning" in result["error"]["message"]
     assert s3.list_objects_v2(Bucket=BUCKET)["KeyCount"] == 0
@@ -346,6 +365,7 @@ def test_rejects_a_put_without_an_immutable_version_id(s3: Any) -> None:
 
     with patch.object(ArchiveToS3, "_s3_client", return_value=s3), patch.object(s3, "put_object", side_effect=unversioned_put):
         result = run_archive(files=[data_url("same.txt", b"new")])
+    assert result["error"] is not None
     assert result["error"]["error_code"] == "ArchiveUploadFailed"
     assert "VersionId" in result["error"]["message"]
     assert not any(obj["Key"].endswith("manifest.json") for obj in s3.list_objects_v2(Bucket=BUCKET)["Contents"])

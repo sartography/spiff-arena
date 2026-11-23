@@ -15,9 +15,10 @@ including on S3-compatible endpoints.
 
 Connector permissions:
 
-- `s3:GetBucketVersioning` on the bucket
+- `s3:GetBucketVersioning` and `s3:ListBucket` on the bucket
 - `s3:GetObject`, `s3:GetObjectVersion`, and `s3:PutObject` on archive objects
 
+`s3:ListBucket` lets S3 distinguish a missing manifest from denied access.
 Readers need `s3:GetObject` for the current manifest and `s3:GetObjectVersion` for referenced versions.
 Do not delete or expire referenced versions; doing so breaks archives.
 

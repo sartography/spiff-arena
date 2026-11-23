@@ -8,6 +8,7 @@ from http.server import ThreadingHTTPServer
 from typing import Any
 
 import pytest
+from spiffworkflow_connector_command.command_interface import ConnectorProxyResponseDict
 
 from connector_archive.commands.archive_to_s3 import ArchiveToS3
 from connector_archive.commands.archive_to_s3 import _receive_response
@@ -44,6 +45,7 @@ def test_incomplete_worker_response_uses_the_command_deadline(mode: str, monkeyp
 
     assert sent.is_set(), "The worker must send partial frame data before the deadline"
     assert budget - 0.1 <= elapsed < budget + 2
+    assert result["error"] is not None
     assert result["error"]["error_code"] == "ArchiveUploadFailed"
     assert "Stopped after" in result["error"]["message"]
     assert result["command_response"]["body"] == {}
@@ -167,7 +169,7 @@ def test_supervisor_bounds_in_flight_requests_and_retries(stall: str | None, mon
             endpoint_url=f"http://127.0.0.1:{server.server_port}",
         )
         # execute must also work from a proxy request thread, where SIGALRM is unavailable.
-        results: list[dict] = []
+        results: list[ConnectorProxyResponseDict] = []
         started = time.monotonic()
         caller = threading.Thread(target=lambda: results.append(command.execute({}, {})))
         caller.start()
@@ -182,6 +184,7 @@ def test_supervisor_bounds_in_flight_requests_and_retries(stall: str | None, mon
             assert [method for method, _ in requests] == ["PUT", "PUT"]
             assert requests[-1][1].endswith("manifest.json")
         else:
+            assert result["error"] is not None
             assert result["error"]["error_code"] == "ArchiveUploadFailed"
             assert "Retry the task" in result["error"]["message"]
             assert budget - 0.1 <= elapsed

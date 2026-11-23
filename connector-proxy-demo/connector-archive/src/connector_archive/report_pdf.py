@@ -20,6 +20,7 @@ import os
 from datetime import UTC
 from datetime import datetime
 from typing import Any
+from typing import cast
 
 from fpdf import FPDF
 from fpdf.fonts import FontFace
@@ -139,7 +140,7 @@ def _render_rows(
         for index, (text, width) in enumerate(zip(values, widths, strict=True)):
             style = bold if is_heading or (bold_first_column and index == 0) else FontFace()
             with document.use_font_face(style):
-                heights.append(float(document.multi_cell(width, line_height, text, dry_run=True, output="HEIGHT")))
+                heights.append(cast(float, document.multi_cell(width, line_height, text, dry_run=True, output="HEIGHT")))
         return max(heights, default=0)
 
     heading_height = row_height(labels, is_heading=True) if labels is not None else 0

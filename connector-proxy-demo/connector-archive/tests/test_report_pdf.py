@@ -1,5 +1,6 @@
 import io
 import re
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -21,7 +22,7 @@ def test_oversized_values_are_fully_rendered(
         monkeypatch.setenv("CONNECTOR_ARCHIVE_FONT_DIR", str(tmp_path))
     tokens = [f"TOKEN{index:04d}" for index in range(1000)]
     value = " ".join(tokens)
-    report = {"title": "Long report", "metadata": [], "sections": []}
+    report: dict[str, Any] = {"title": "Long report", "metadata": [], "sections": []}
     files = []
     if location == "metadata":
         report["metadata"] = [["Before", "before marker"], ["Notes", value], ["After", "after marker"]]
