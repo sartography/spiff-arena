@@ -27,10 +27,10 @@ def data_url(filename: str, contents: bytes, mimetype: str = "text/plain") -> st
 
 def report() -> dict:
     return {
-        "title": "Project Accounting Provisions",
-        "metadata": [["Process instance", 42], ["Submitted by", "Zoë Müller – GL"]],
+        "title": "Process review",
+        "metadata": [["Process instance", 42], ["Submitted by", "Zoë Müller – reviewer"]],
         "sections": [
-            {"heading": "Request", "rows": [["Accrual name", "Q3 provisions"], ["Total accrued", 1234567.5]]},
+            {"heading": "Request", "rows": [["Request type", "Document review"], ["Amount", 1234567.5]]},
             {
                 "heading": "Review history",
                 "columns": ["Step", "Status", "Reviewer", "When", "Comment"],
@@ -49,7 +49,7 @@ def pdf_text(pdf_bytes: bytes) -> str:
 def command(**kwargs: object) -> ArchiveToS3:
     params = {
         "bucket": BUCKET,
-        "key_prefix": "/r2r/project-accounting-provisions/42/",
+        "key_prefix": "/archives/42/",
         "aws_access_key_id": "testing",
         "aws_secret_access_key": "testing",
         "report": report(),
@@ -104,7 +104,7 @@ def test_archives_files_pdf_and_manifest(s3) -> None:  # type: ignore[no-untyped
 
     assert result["error"] is None
     body = result["command_response"]["body"]
-    prefix = "r2r/project-accounting-provisions/42"
+    prefix = "archives/42"
     assert body["manifest_key"] == f"{prefix}/manifest.json"
     assert body["file_count"] == 3
     keys = [o["key"] for o in body["objects"]]
@@ -129,8 +129,8 @@ def test_archives_files_pdf_and_manifest(s3) -> None:  # type: ignore[no-untyped
 
     text = pdf_text(summary_bytes)
     for expected in [
-        "Project Accounting Provisions",
-        "Q3 provisions",
+        "Process review",
+        "Document review",
         "1,234,567.50",
         "Looks good",
         "Free text note.",
@@ -143,13 +143,12 @@ def test_archives_files_pdf_and_manifest(s3) -> None:  # type: ignore[no-untyped
 
 def test_unicode_text_survives_with_and_without_unicode_font(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:  # type: ignore[no-untyped-def]
     entries = build_archive_entries(report(), [], "a/b/1")
-    # DejaVu is on the CI and Docker image; the text keeps its accents.
+    # DejaVu preserves Unicode text; the fallback approximates unsupported punctuation.
     with_font = pdf_text(entries[-2].body)
-    # Without any unicode font, the PDF still renders; latin-1 accents survive and the dash becomes "-".
     monkeypatch.setenv("CONNECTOR_ARCHIVE_FONT_DIR", str(tmp_path))
     without_font = pdf_text(build_archive_entries(report(), [], "a/b/1")[-2].body)
-    assert "Zoë Müller - GL" in without_font
-    if "Zoë Müller – GL" not in with_font:
+    assert "Zoë Müller - reviewer" in without_font
+    if "Zoë Müller – reviewer" not in with_font:
         pytest.skip("DejaVu fonts are not installed here")
 
 
@@ -157,7 +156,7 @@ def test_no_files_still_produces_a_complete_archive(s3) -> None:  # type: ignore
     result = run_archive(files=None)
     assert result["error"] is None
     assert result["command_response"]["body"]["file_count"] == 0
-    summary = s3.get_object(Bucket=BUCKET, Key="r2r/project-accounting-provisions/42/summary.pdf")["Body"].read()
+    summary = s3.get_object(Bucket=BUCKET, Key="archives/42/summary.pdf")["Body"].read()
     assert "No files were uploaded." in pdf_text(summary)
 
 
@@ -200,7 +199,7 @@ def test_retry_writes_the_same_keys(s3) -> None:  # type: ignore[no-untyped-def]
 
 
 def test_failed_retry_keeps_the_version_pinned_manifest_of_an_earlier_archive(s3) -> None:  # type: ignore[no-untyped-def]
-    manifest_key = "r2r/project-accounting-provisions/42/manifest.json"
+    manifest_key = "archives/42/manifest.json"
     assert run_archive(files=[data_url("a.txt", b"a")])["error"] is None
     assert s3.head_object(Bucket=BUCKET, Key=manifest_key)
 
@@ -222,7 +221,7 @@ def test_failed_retry_keeps_the_version_pinned_manifest_of_an_earlier_archive(s3
 
 
 def test_failure_on_the_first_upload_keeps_an_earlier_complete_archive(s3) -> None:  # type: ignore[no-untyped-def]
-    manifest_key = "r2r/project-accounting-provisions/42/manifest.json"
+    manifest_key = "archives/42/manifest.json"
     assert run_archive(files=[data_url("a.txt", b"a")])["error"] is None
 
     def put_object_that_fails(**kwargs):  # type: ignore[no-untyped-def]
@@ -244,7 +243,7 @@ def test_stops_before_the_backend_times_out(s3, monkeypatch: pytest.MonkeyPatch)
     assert result["error"]["error_code"] == "ArchiveUploadFailed"
     assert "Retry the task" in result["error"]["message"]
     keys = [o["Key"] for o in s3.list_objects_v2(Bucket=BUCKET)["Contents"]]
-    assert keys == ["r2r/project-accounting-provisions/42/files/001-a.txt"]
+    assert keys == ["archives/42/files/001-a.txt"]
 
 
 def test_interleaved_workers_publish_only_their_own_versions(s3: Any) -> None:
@@ -283,7 +282,7 @@ def test_interleaved_workers_publish_only_their_own_versions(s3: Any) -> None:
     body = result_first["command_response"]["body"]
     manifest = assert_manifest_versions(s3, body["manifest_key"])
     assert manifest["files"][0]["sha256"] == hashlib.sha256(b"first").hexdigest()
-    # The current fixed file key belongs to the other worker; the manifest must NOT read it without VersionId.
+    # The current key belongs to the other worker; only VersionId selects this manifest's file.
     assert s3.get_object(Bucket=BUCKET, Key=manifest["files"][0]["archive_key"])["Body"].read() == b"second"
 
 

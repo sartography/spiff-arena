@@ -38,8 +38,8 @@ uv run flask run
 
 For this repository's demo, run `uv sync --locked` and
 `./bin/run_server_locally` from `connector-proxy-demo/`. Run tests with
-`uv run --locked pytest`. The demo, `connector-example`, and `connector-archive` share the root
-`uv.lock`; they are installed as editable workspace members.
+`uv run --locked pytest`. The demo and its connectors share `uv.lock`.
+`connector-example` and `connector-archive` are installed as editable workspace members.
 
 ## Optional API key protection
 

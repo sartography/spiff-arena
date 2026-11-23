@@ -1,21 +1,19 @@
 """Render a structured report dict into a PDF.
 
-The report shape is generic so any process model can use it:
+Example report:
 
     {
-        "title": "Project Accounting Provisions",
-        "metadata": [["Process instance", 123], ["Completed", "2026-11-21 10:00 UTC"]],
+        "title": "Process archive",
+        "metadata": [["Process instance", 123]],
         "sections": [
-            {"heading": "Request", "rows": [["Accrual name", "Q3 provisions"], ...]},
-            {"heading": "Reviews", "columns": ["Step", "Status", ...], "rows": [[...], ...], "column_widths": [1, 1, ...]},
-            {"heading": "Notes", "text": "Free text"},
+            {"heading": "Request", "rows": [["Type", "Document review"]]},
+            {"heading": "Reviews", "columns": ["Step", "Status"], "rows": [["Review", "Approved"]]},
+            {"heading": "Notes", "text": "Additional context."},
         ],
     }
 
-A section with "columns" renders as a table with a heading row. Its optional "column_widths" sets the
-relative width of each column. A section with only "rows" renders as a
-label/value table. A section with "text" renders as a paragraph. The connector adds an "Archived files"
-section on its own, so the PDF always lists what is next to it in the archive.
+Sections support column tables (with optional relative "column_widths"), label/value rows, or text paragraphs.
+An "Archived files" section is appended automatically.
 """
 
 import os
@@ -29,8 +27,7 @@ from fpdf.fonts import FontFace
 DEFAULT_FONT_DIRS = ("/usr/share/fonts/truetype/dejavu",)
 FONT_DIR_ENV_VAR = "CONNECTOR_ARCHIVE_FONT_DIR"
 
-# Core PDF fonts only support latin-1. These are the common characters outside latin-1 that people type
-# or paste into forms. Anything else becomes "?" when no unicode font is available.
+# Approximate common Unicode punctuation when only Latin-1 fonts are available.
 LATIN1_REPLACEMENTS = str.maketrans(
     {
         "–": "-",

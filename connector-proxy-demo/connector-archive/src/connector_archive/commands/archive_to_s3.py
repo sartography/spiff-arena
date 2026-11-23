@@ -17,8 +17,7 @@ from connector_archive.archive import ArchiveInputError
 from connector_archive.archive import build_archive_entries
 from connector_archive.report_pdf import ReportPdfError
 
-# The backend waits CONNECTOR_PROXY_COMMAND_TIMEOUT (45 seconds) for a connector response. Stop before that so
-# the backend gets this error and not a timeout while uploads continue in the proxy.
+# Leave time to return an error before the backend's default 45-second connector timeout.
 UPLOAD_DEADLINE_IN_SECONDS = 40
 
 
@@ -31,7 +30,6 @@ def _timeout_message() -> str:
 
 
 def _run_archive(command: "ArchiveToS3", deadline: float, connection: socket.socket) -> None:
-    # A separate process can be stopped even during DNS, a socket write/read, or an SDK retry/backoff.
     with connection:
         payload = json.dumps(command._execute(deadline)).encode("utf-8")
         connection.sendall(len(payload).to_bytes(8, "big") + payload)
@@ -52,8 +50,7 @@ def _receive_response(connection: socket.socket, deadline: float) -> ConnectorPr
             size -= len(chunk)
         return b"".join(chunks)
 
-    # Read both the length prefix and the entire payload within one absolute deadline. Socket readiness
-    # alone is insufficient: even a frame's length prefix can arrive in several writes.
+    # Bound the whole frame: socket readiness may indicate only a partial header or payload.
     size = int.from_bytes(read_exactly(8), "big")
     payload = read_exactly(size)
     if time.monotonic() >= deadline:
@@ -62,13 +59,11 @@ def _receive_response(connection: socket.socket, deadline: float) -> ConnectorPr
 
 
 class ArchiveToS3(ConnectorCommand):
-    """Write a summary PDF, the uploaded files, and a manifest for one process run to an S3 bucket.
+    """Archive a process run to S3, publishing a version-pinned manifest last.
 
-    Credentials come from the parameters, so use secret references (for example 'secret:archive_aws_secret_access_key').
-    The object keys are the same each time for the same key_prefix, so a retry replaces a partial archive.
-    S3 versioning must remain enabled. manifest.json pins exact file/summary versions and is replaced last,
-    so concurrent workers cannot mix archives. Readers must use the manifest's version_id with each key.
-    A failed retry leaves the earlier complete manifest readable; concurrent publications are last-writer-wins.
+    Use secret references for credentials and keep bucket versioning enabled. Retries reuse keys;
+    readers must use the manifest's version IDs. Failed retries preserve the previous complete archive.
+    Concurrent manifest publications are last-writer-wins.
     """
 
     def __init__(
@@ -98,14 +93,13 @@ class ArchiveToS3(ConnectorCommand):
             aws_secret_access_key=self.aws_secret_access_key,
             region_name=self.region,
             endpoint_url=self.endpoint_url,
-            # These inactivity timeouts complement the supervisor's hard, command-wide deadline.
+            # Inactivity timeouts supplement the command-wide deadline.
             config=Config(connect_timeout=5, read_timeout=15, retries={"max_attempts": 2, "mode": "standard"}),
         )
 
     def execute(self, _config: Any, _task_data: Any) -> ConnectorProxyResponseDict:
         deadline = time.monotonic() + UPLOAD_DEADLINE_IN_SECONDS
-        # Do not fork a threaded proxy or share its sockets. Unlike a timed-out thread/future, this worker
-        # can actually be stopped, bounding every S3 call and SDK retry to the remaining budget.
+        # Spawn avoids inheriting proxy sockets and lets the supervisor terminate blocked work.
         context = multiprocessing.get_context("spawn")
         receiver, sender = socket.socketpair()
         worker = context.Process(target=_run_archive, args=(self, deadline, sender), daemon=True)
@@ -139,10 +133,9 @@ class ArchiveToS3(ConnectorCommand):
         }
 
     def _pin_legacy_manifest(self, client: Any, manifest_key: str) -> None:
-        """Pin a pre-versioning-protocol archive before overwriting any of its fixed keys.
+        """Pin checksum-verified versions before overwriting legacy archive keys.
 
-        Concurrent upgraders may publish different snapshots, but each is checksum-verified and immutable.
-        Old connector workers must be stopped before adopting this protocol.
+        Stop old workers before rollout. Concurrent upgrades may select different valid snapshots.
         """
         try:
             stored = client.get_object(Bucket=self.bucket, Key=manifest_key)
@@ -163,8 +156,7 @@ class ArchiveToS3(ConnectorCommand):
                 version_id = obj.get("VersionId")
                 if not version_id:
                     obj["Body"].close()
-                    # Pre-versioning objects can omit the header. Verify that the explicit null version exists;
-                    # never assume a missing header on an S3-compatible service identifies a readable version.
+                    # A missing header may mean a pre-versioning object; verify its explicit null version.
                     obj = client.get_object(Bucket=self.bucket, Key=key, VersionId="null")
                     version_id = "null"
                 with obj["Body"] as stream:
@@ -235,7 +227,7 @@ class ArchiveToS3(ConnectorCommand):
         except (ArchiveInputError, ReportPdfError) as exception:
             error = {"error_code": "ArchiveInvalidInput", "message": str(exception)}
         except ClientError as exception:
-            # ClientError messages hold the S3 error code and the operation, never the credentials.
+            # Include S3's error code and operation for troubleshooting.
             error = {
                 "error_code": "ArchiveUploadFailed",
                 "message": f"S3 rejected the upload to bucket '{self.bucket}': {exception}",
