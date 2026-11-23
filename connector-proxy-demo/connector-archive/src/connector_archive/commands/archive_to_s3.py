@@ -3,12 +3,13 @@ import json
 import multiprocessing
 import socket
 import time
+from typing import TYPE_CHECKING
 from typing import Any
 
-import boto3  # type: ignore
-from botocore.config import Config  # type: ignore
-from botocore.exceptions import BotoCoreError  # type: ignore
-from botocore.exceptions import ClientError  # type: ignore
+import boto3
+from botocore.config import Config
+from botocore.exceptions import BotoCoreError
+from botocore.exceptions import ClientError
 from spiffworkflow_connector_command.command_interface import CommandErrorDict
 from spiffworkflow_connector_command.command_interface import ConnectorCommand
 from spiffworkflow_connector_command.command_interface import ConnectorProxyResponseDict
@@ -16,6 +17,9 @@ from spiffworkflow_connector_command.command_interface import ConnectorProxyResp
 from connector_archive.archive import ArchiveInputError
 from connector_archive.archive import build_archive_entries
 from connector_archive.report_pdf import ReportPdfError
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3 import S3Client
 
 # Leave time to return an error before the backend's default 45-second connector timeout.
 UPLOAD_DEADLINE_IN_SECONDS = 40
@@ -86,7 +90,7 @@ class ArchiveToS3(ConnectorCommand):
         self.region = region
         self.endpoint_url = endpoint_url or None
 
-    def _s3_client(self) -> Any:
+    def _s3_client(self) -> "S3Client":
         return boto3.client(
             "s3",
             aws_access_key_id=self.aws_access_key_id,
@@ -132,7 +136,7 @@ class ArchiveToS3(ConnectorCommand):
             "spiff__logs": [],
         }
 
-    def _pin_legacy_manifest(self, client: Any, manifest_key: str) -> None:
+    def _pin_legacy_manifest(self, client: "S3Client", manifest_key: str) -> None:
         """Pin checksum-verified versions before overwriting legacy archive keys.
 
         Stop old workers before rollout. Concurrent upgrades may select different valid snapshots.

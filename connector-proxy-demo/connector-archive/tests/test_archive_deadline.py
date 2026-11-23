@@ -8,6 +8,7 @@ from http.server import ThreadingHTTPServer
 from typing import Any
 
 import pytest
+from mypy_boto3_s3 import S3Client
 from spiffworkflow_connector_command.command_interface import ConnectorProxyResponseDict
 
 from connector_archive.commands.archive_to_s3 import ArchiveToS3
@@ -85,10 +86,14 @@ def test_incomplete_response_eof_is_reported(frame: bytes) -> None:
 
 
 class BackoffArchiveToS3(ArchiveToS3):
-    def _s3_client(self) -> Any:
+    def _s3_client(self) -> S3Client:
         client = super()._s3_client()
-        # Force an SDK backoff longer than the entire command budget.
-        client.meta.events.register_first("needs-retry.s3.PutObject", lambda **_kwargs: 60)
+
+        def wait_before_retry(**_kwargs: Any) -> None:
+            time.sleep(60)
+
+        # Block in the SDK's retry handler beyond the command budget.
+        client.meta.events.register_first("needs-retry.s3.PutObject", wait_before_retry)
         return client
 
 

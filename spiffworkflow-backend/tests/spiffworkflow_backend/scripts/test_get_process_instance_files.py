@@ -2,11 +2,11 @@ import base64
 import hashlib
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any
+from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from flask.app import Flask
-from sqlalchemy import event
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
@@ -24,15 +24,10 @@ def _data_url(mimetype: str, filename: str, contents: bytes) -> str:
 def _capture_queries() -> Iterator[list[str]]:
     statements: list[str] = []
 
-    def record(_connection: Any, _cursor: Any, statement: str, _parameters: Any, _context: Any, _executemany: bool) -> None:
-        statements.append(statement)
-
     connection = db.session.connection()
-    event.listen(connection, "before_cursor_execute", record)  # type: ignore[no-untyped-call]
-    try:
+    with patch.object(connection, "execute", wraps=connection.execute) as execute:
         yield statements
-    finally:
-        event.remove(connection, "before_cursor_execute", record)  # type: ignore[no-untyped-call]
+        statements.extend(str(call.args[0]) for call in execute.call_args_list)
 
 
 class TestGetProcessInstanceFiles(BaseTest):
@@ -41,7 +36,7 @@ class TestGetProcessInstanceFiles(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        tmp_path: pytest.TempPathFactory,
+        tmp_path: Path,
         use_file_system: bool,
     ) -> None:
         if use_file_system:

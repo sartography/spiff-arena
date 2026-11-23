@@ -14,7 +14,7 @@ dependencies = [
 spiffworkflow-connector-command = { git = "https://github.com/sartography/spiffworkflow-connector-command.git", rev = "7e20603849ee609267ddc97c8433077e09ccd124" }
 
 [dependency-groups]
-dev = ["pytest>=9.0.3,<10", "moto[s3]>=5", "pypdf>=5"]
+dev = ["pytest>=9.0.3,<10", "moto[s3]>=5", "pypdf>=5", "mypy>=1.6,<2", "boto3-stubs[s3]>=1.26"]
 
 [build-system]
 requires = ["hatchling"]

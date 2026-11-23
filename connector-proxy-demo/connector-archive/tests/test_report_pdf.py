@@ -1,5 +1,6 @@
 import io
 import re
+from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
@@ -16,8 +17,8 @@ from connector_archive.report_pdf import render_report_pdf
     "location", ["metadata", "label", "rows", "table", "multiple_values", "heading", "empty_heading", "filename"]
 )
 def test_oversized_values_are_fully_rendered(
-    location: str, fallback_font: bool, monkeypatch: pytest.MonkeyPatch, tmp_path
-) -> None:  # type: ignore[no-untyped-def]
+    location: str, fallback_font: bool, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     if fallback_font:
         monkeypatch.setenv("CONNECTOR_ARCHIVE_FONT_DIR", str(tmp_path))
     tokens = [f"TOKEN{index:04d}" for index in range(1000)]

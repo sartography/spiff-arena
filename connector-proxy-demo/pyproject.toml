@@ -39,4 +39,4 @@ connector-archive = { workspace = true }
 pythonpath = ["."]
 
 [dependency-groups]
-dev = ["pytest>=9.0.3,<10", "pytest-xdist==3.5.0", "moto[s3]>=5", "pypdf>=5"]
+dev = ["pytest>=9.0.3,<10", "pytest-xdist==3.5.0", "moto[s3]>=5", "pypdf>=5", "mypy>=1.6,<2", "boto3-stubs[s3]>=1.26"]
