@@ -120,21 +120,85 @@ def _cell_text(document: _ReportDocument, value: Any) -> str:
     return document.clean(format_value(value))
 
 
+def _render_rows(
+    document: _ReportDocument,
+    rows: list,
+    headings: list | None = None,
+    bold_first_column: bool = False,
+    empty_text: str = "None",
+    **table_options: Any,
+) -> None:
+    """Keep ordinary rows in tables; render oversized rows as page-breakable labeled paragraphs."""
+    texts = [[_cell_text(document, value) for value in row] for row in rows]
+    labels = [_cell_text(document, value) for value in headings] if headings is not None else None
+    weights = table_options.get("col_widths") or [1] * len(headings or rows[0])
+    widths = [document.epw * weight / sum(weights) for weight in weights]
+    line_height = table_options["line_height"]
+    page_height = document.h - document.t_margin - document.b_margin - line_height
+    bold = FontFace(emphasis="BOLD")
+
+    def row_height(values: list[str], is_heading: bool = False) -> float:
+        heights = []
+        for index, (text, width) in enumerate(zip(values, widths, strict=True)):
+            style = bold if is_heading or (bold_first_column and index == 0) else FontFace()
+            with document.use_font_face(style):
+                heights.append(float(document.multi_cell(width, line_height, text, dry_run=True, output="HEIGHT")))
+        return max(heights, default=0)
+
+    heading_height = row_height(labels, is_heading=True) if labels is not None else 0
+
+    def render_table(batch: list[list[str]]) -> None:
+        with document.table(**table_options) as table:
+            if labels is not None:
+                heading_row = table.row()
+                for label in labels:
+                    heading_row.cell(label)
+            for values in batch:
+                table_row = table.row()
+                for index, text in enumerate(values):
+                    table_row.cell(text, style=bold if bold_first_column and index == 0 else None)
+            if not batch and labels is not None:
+                table.row().cell(document.clean(empty_text), colspan=len(labels))
+
+    def paragraph(text: str, is_label: bool = False) -> None:
+        with document.use_font_face(bold if is_label else FontFace()):
+            document.multi_cell(0, line_height, text, new_x="LMARGIN", new_y="NEXT")
+
+    pending: list[list[str]] = []
+    for values in texts:
+        if heading_height + row_height(values) <= page_height:
+            pending.append(values)
+            continue
+        if pending:
+            render_table(pending)
+            pending = []
+        for index, text in enumerate(values):
+            if labels is not None:
+                paragraph(labels[index], is_label=True)
+            paragraph(text, is_label=bold_first_column and index == 0)
+        document.ln(2)
+    if pending or (not texts and heading_height <= page_height):
+        render_table(pending)
+    elif not texts:
+        for label in labels or []:
+            paragraph(label, is_label=True)
+        paragraph(document.clean(empty_text))
+
+
 def _render_label_value_rows(document: _ReportDocument, rows: list) -> None:
-    label_style = FontFace(emphasis="BOLD")
-    with document.table(
+    for row in rows:
+        if not isinstance(row, list | tuple) or len(row) != 2:
+            raise ReportPdfError(f"Each label/value row must be a [label, value] pair. Got: {row!r}")
+    _render_rows(
+        document,
+        rows,
+        bold_first_column=True,
         col_widths=(35, 65),
         first_row_as_headings=False,
         text_align="LEFT",
         line_height=5,
         borders_layout="HORIZONTAL_LINES",
-    ) as table:
-        for row in rows:
-            if not isinstance(row, list | tuple) or len(row) != 2:
-                raise ReportPdfError(f"Each label/value row must be a [label, value] pair. Got: {row!r}")
-            table_row = table.row()
-            table_row.cell(_cell_text(document, row[0]), style=label_style)
-            table_row.cell(_cell_text(document, row[1]))
+    )
 
 
 def _render_table(document: _ReportDocument, columns: list, rows: list, column_widths: list | None = None) -> None:
@@ -143,7 +207,13 @@ def _render_table(document: _ReportDocument, columns: list, rows: list, column_w
         len(column_widths) != len(columns) or not all(isinstance(w, int | float) and w > 0 for w in column_widths)
     ):
         raise ReportPdfError(f"column_widths must have {len(columns)} positive numbers. Got: {column_widths!r}")
-    with document.table(
+    for row in rows:
+        if not isinstance(row, list | tuple) or len(row) != len(columns):
+            raise ReportPdfError(f"Each table row must have {len(columns)} values. Got: {row!r}")
+    _render_rows(
+        document,
+        rows,
+        headings=columns,
         col_widths=tuple(column_widths) if column_widths else None,
         first_row_as_headings=True,
         headings_style=heading_style,
@@ -151,19 +221,7 @@ def _render_table(document: _ReportDocument, columns: list, rows: list, column_w
         line_height=5,
         borders_layout="SINGLE_TOP_LINE",
         repeat_headings=1,
-    ) as table:
-        heading_row = table.row()
-        for column in columns:
-            heading_row.cell(_cell_text(document, column))
-        for row in rows:
-            if not isinstance(row, list | tuple) or len(row) != len(columns):
-                raise ReportPdfError(f"Each table row must have {len(columns)} values. Got: {row!r}")
-            table_row = table.row()
-            for value in row:
-                table_row.cell(_cell_text(document, value))
-        if not rows:
-            empty_row = table.row()
-            empty_row.cell(document.clean("None"), colspan=len(columns))
+    )
 
 
 def _render_section(document: _ReportDocument, section: dict) -> None:
@@ -236,7 +294,11 @@ def render_report_pdf(report: dict, archived_files: list[dict], generated_at: da
     )
     document.use_font(7)
     heading_style = FontFace(emphasis="BOLD", fill_color=(230, 230, 230))
-    with document.table(
+    _render_rows(
+        document,
+        file_rows,
+        headings=["#", "File name", "Uploaded", "Size", "SHA-256"],
+        empty_text="No files were uploaded.",
         col_widths=(6, 30, 18, 11, 35),
         first_row_as_headings=True,
         headings_style=heading_style,
@@ -244,16 +306,6 @@ def render_report_pdf(report: dict, archived_files: list[dict], generated_at: da
         line_height=4,
         borders_layout="SINGLE_TOP_LINE",
         repeat_headings=1,
-    ) as table:
-        heading_row = table.row()
-        for column in ("#", "File name", "Uploaded", "Size", "SHA-256"):
-            heading_row.cell(column)
-        for file_row in file_rows:
-            table_row = table.row()
-            for value in file_row:
-                table_row.cell(_cell_text(document, value))
-        if not file_rows:
-            empty_row = table.row()
-            empty_row.cell(document.clean("No files were uploaded."), colspan=5)
+    )
 
     return bytes(document.output())

@@ -35,9 +35,7 @@ Always read objects using the version IDs in the manifest, not the current keys 
 
 ```python
 for file in manifest["files"]:
-    response = s3.get_object(
-        Bucket=bucket, Key=file["archive_key"], VersionId=file["version_id"]
-    )
+    response = s3.get_object(Bucket=bucket, Key=file["archive_key"], VersionId=file["version_id"])
 ```
 
 For the summary, use `manifest["summary"]["key"]` and its `version_id`.
@@ -67,7 +65,10 @@ version and verifying its size and checksum. Objects created before bucket versi
 version. If the legacy archive is already inconsistent, the command fails without uploading new files. Restore
 that archive before retrying.
 
-## PDF fonts
+## PDF rendering
+
+Short metadata and table rows keep their table layout. Rows too tall to fit on a page are rendered as labeled,
+page-breakable paragraphs so long values are included in full. This also applies to table headings and attachment names.
 
 The PDF uses DejaVu Sans from `/usr/share/fonts/truetype/dejavu` (the `fonts-dejavu-core` package in the Docker image),
 or from the directory in `CONNECTOR_ARCHIVE_FONT_DIR`. Without it, the PDF uses a built-in font, and characters
