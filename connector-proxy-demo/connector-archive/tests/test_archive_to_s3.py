@@ -2,7 +2,10 @@ import base64
 import hashlib
 import io
 import json
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 from unittest.mock import patch
 
 import boto3
@@ -67,7 +70,20 @@ def s3():  # type: ignore[no-untyped-def]
     with mock_aws():
         client = boto3.client("s3", region_name="us-east-1")
         client.create_bucket(Bucket=BUCKET)
+        client.put_bucket_versioning(Bucket=BUCKET, VersioningConfiguration={"Status": "Enabled"})
         yield client
+
+
+def assert_manifest_versions(s3: Any, key: str, version_id: str | None = None, bucket: str = BUCKET) -> dict:
+    version = {"VersionId": version_id} if version_id else {}
+    manifest = json.loads(s3.get_object(Bucket=bucket, Key=key, **version)["Body"].read())
+    assert manifest["manifest_version"] == 2
+    for item in [*manifest["files"], manifest["summary"]]:
+        stored = s3.get_object(Bucket=bucket, Key=item.get("archive_key", item.get("key")), VersionId=item["version_id"])
+        contents = stored["Body"].read()
+        assert len(contents) == item["size"]
+        assert hashlib.sha256(contents).hexdigest() == item["sha256"]
+    return manifest
 
 
 def test_archives_files_pdf_and_manifest(s3) -> None:  # type: ignore[no-untyped-def]
@@ -105,7 +121,7 @@ def test_archives_files_pdf_and_manifest(s3) -> None:  # type: ignore[no-untyped
     assert stored["Metadata"]["sha256"] == hashlib.sha256(b"second").hexdigest()
     assert s3.head_object(Bucket=BUCKET, Key=f"{prefix}/files/001-calc.xlsx")["ContentType"] == "application/vnd.ms-excel"
 
-    manifest = json.loads(s3.get_object(Bucket=BUCKET, Key=f"{prefix}/manifest.json")["Body"].read())
+    manifest = assert_manifest_versions(s3, f"{prefix}/manifest.json", body["manifest_version_id"])
     assert [f["original_filename"] for f in manifest["files"]] == ["calc.xlsx", "calc.xlsx", "notes & more.txt"]
     assert manifest["files"][0]["uploaded_at"] == "2025-11-21 04:40:00 UTC"
     summary_bytes = s3.get_object(Bucket=BUCKET, Key=f"{prefix}/summary.pdf")["Body"].read()
@@ -183,7 +199,7 @@ def test_retry_writes_the_same_keys(s3) -> None:  # type: ignore[no-untyped-def]
     assert s3.list_objects_v2(Bucket=BUCKET)["KeyCount"] == 3
 
 
-def test_failed_retry_removes_the_manifest_of_an_earlier_archive(s3) -> None:  # type: ignore[no-untyped-def]
+def test_failed_retry_keeps_the_version_pinned_manifest_of_an_earlier_archive(s3) -> None:  # type: ignore[no-untyped-def]
     manifest_key = "r2r/project-accounting-provisions/42/manifest.json"
     assert run_archive(files=[data_url("a.txt", b"a")])["error"] is None
     assert s3.head_object(Bucket=BUCKET, Key=manifest_key)
@@ -201,7 +217,8 @@ def test_failed_retry_removes_the_manifest_of_an_earlier_archive(s3) -> None:  #
     assert result["error"] is not None
     assert result["error"]["error_code"] == "ArchiveUploadFailed"
     keys = [o["Key"] for o in s3.list_objects_v2(Bucket=BUCKET)["Contents"]]
-    assert manifest_key not in keys
+    assert manifest_key in keys
+    assert_manifest_versions(s3, manifest_key)
 
 
 def test_failure_on_the_first_upload_keeps_an_earlier_complete_archive(s3) -> None:  # type: ignore[no-untyped-def]
@@ -219,7 +236,7 @@ def test_failure_on_the_first_upload_keeps_an_earlier_complete_archive(s3) -> No
 
 
 def test_stops_before_the_backend_times_out(s3, monkeypatch: pytest.MonkeyPatch) -> None:  # type: ignore[no-untyped-def]
-    clock = iter([1.0, 2.0, 41.0])
+    clock = iter([1.0, 41.0])
     monkeypatch.setattr("connector_archive.commands.archive_to_s3.time.monotonic", lambda: next(clock))
     result = command(files=[data_url("a.txt", b"a"), data_url("b.txt", b"b")])._execute(40)
 
@@ -228,6 +245,111 @@ def test_stops_before_the_backend_times_out(s3, monkeypatch: pytest.MonkeyPatch)
     assert "Retry the task" in result["error"]["message"]
     keys = [o["Key"] for o in s3.list_objects_v2(Bucket=BUCKET)["Contents"]]
     assert keys == ["r2r/project-accounting-provisions/42/files/001-a.txt"]
+
+
+def test_interleaved_workers_publish_only_their_own_versions(s3: Any) -> None:
+    first = command(files=[data_url("same.txt", b"first"), data_url("extra.txt", b"extra")])
+    second = command(files=[data_url("same.txt", b"second")])
+    other_client = boto3.client("s3", region_name="us-east-1")
+    first_uploaded = threading.Event()
+    resume_first = threading.Event()
+    real_put = s3.put_object
+
+    def pause_after_first_file(**kwargs: Any) -> dict:
+        uploaded = real_put(**kwargs)
+        if kwargs["Key"].endswith("same.txt"):
+            first_uploaded.set()
+            assert resume_first.wait(5)
+        return uploaded
+
+    with (
+        patch.object(first, "_s3_client", return_value=s3),
+        patch.object(second, "_s3_client", return_value=other_client),
+        patch.object(s3, "put_object", side_effect=pause_after_first_file),
+        ThreadPoolExecutor(max_workers=1) as pool,
+    ):
+        pending = pool.submit(first._execute, time.monotonic() + 40)
+        try:
+            assert first_uploaded.wait(5)
+            result_second = second._execute(time.monotonic() + 40)
+        finally:
+            resume_first.set()
+        result_first = pending.result(timeout=5)
+
+    for result in (result_first, result_second):
+        assert result["error"] is None
+        body = result["command_response"]["body"]
+        assert_manifest_versions(s3, body["manifest_key"], body["manifest_version_id"])
+    body = result_first["command_response"]["body"]
+    manifest = assert_manifest_versions(s3, body["manifest_key"])
+    assert manifest["files"][0]["sha256"] == hashlib.sha256(b"first").hexdigest()
+    # The current fixed file key belongs to the other worker; the manifest must NOT read it without VersionId.
+    assert s3.get_object(Bucket=BUCKET, Key=manifest["files"][0]["archive_key"])["Body"].read() == b"second"
+
+
+@pytest.mark.parametrize("old_versioning", ["Enabled", "Suspended", None])
+def test_legacy_manifest_is_pinned_before_a_failed_retry(s3: Any, old_versioning: str | None) -> None:
+    bucket = BUCKET if old_versioning else "legacy-unversioned"
+    if old_versioning:
+        s3.put_bucket_versioning(Bucket=bucket, VersioningConfiguration={"Status": old_versioning})
+    else:
+        s3.create_bucket(Bucket=bucket)
+    legacy = build_archive_entries(report(), [data_url("same.txt", b"old")], "archive/42")
+    for entry in legacy:
+        s3.put_object(Bucket=bucket, Key=entry.key, Body=entry.body)
+    s3.put_bucket_versioning(Bucket=bucket, VersioningConfiguration={"Status": "Enabled"})
+    real_put = s3.put_object
+
+    def fail_summary(**kwargs: Any) -> dict:
+        if kwargs["Key"].endswith("summary.pdf"):
+            raise ClientError({"Error": {"Code": "InternalError", "Message": "boom"}}, "PutObject")
+        return real_put(**kwargs)
+
+    with patch.object(ArchiveToS3, "_s3_client", return_value=s3), patch.object(s3, "put_object", side_effect=fail_summary):
+        result = run_archive(bucket=bucket, key_prefix="archive/42", files=[data_url("same.txt", b"new")])
+    assert result["error"]["error_code"] == "ArchiveUploadFailed"
+    manifest = assert_manifest_versions(s3, "archive/42/manifest.json", bucket=bucket)
+    assert manifest["files"][0]["sha256"] == hashlib.sha256(b"old").hexdigest()
+    # A normal retry still uses the same fixed keys and replaces the published archive.
+    retried = run_archive(bucket=bucket, key_prefix="archive/42", files=[data_url("same.txt", b"new")])
+    assert retried["error"] is None
+    manifest = assert_manifest_versions(s3, "archive/42/manifest.json", bucket=bucket)
+    assert manifest["files"][0]["sha256"] == hashlib.sha256(b"new").hexdigest()
+
+
+def test_inconsistent_legacy_archive_is_not_overwritten(s3: Any) -> None:
+    entries = build_archive_entries(report(), [data_url("same.txt", b"old")], "archive/42")
+    for entry in entries:
+        s3.put_object(Bucket=BUCKET, Key=entry.key, Body=entry.body)
+    s3.put_object(Bucket=BUCKET, Key=entries[0].key, Body=b"corrupted")
+    before = s3.list_object_versions(Bucket=BUCKET)["Versions"]
+    result = run_archive(key_prefix="archive/42", files=[data_url("same.txt", b"new")])
+    assert result["error"]["error_code"] == "ArchiveUploadFailed"
+    assert "inconsistent" in result["error"]["message"]
+    assert s3.list_object_versions(Bucket=BUCKET)["Versions"] == before
+
+
+def test_requires_versioning_before_writing(s3: Any) -> None:
+    s3.put_bucket_versioning(Bucket=BUCKET, VersioningConfiguration={"Status": "Suspended"})
+    result = run_archive()
+    assert result["error"]["error_code"] == "ArchiveUploadFailed"
+    assert "versioning" in result["error"]["message"]
+    assert s3.list_objects_v2(Bucket=BUCKET)["KeyCount"] == 0
+
+
+def test_rejects_a_put_without_an_immutable_version_id(s3: Any) -> None:
+    real_put = s3.put_object
+
+    def unversioned_put(**kwargs: Any) -> dict:
+        uploaded = real_put(**kwargs)
+        uploaded.pop("VersionId", None)
+        return uploaded
+
+    with patch.object(ArchiveToS3, "_s3_client", return_value=s3), patch.object(s3, "put_object", side_effect=unversioned_put):
+        result = run_archive(files=[data_url("same.txt", b"new")])
+    assert result["error"]["error_code"] == "ArchiveUploadFailed"
+    assert "VersionId" in result["error"]["message"]
+    assert not any(obj["Key"].endswith("manifest.json") for obj in s3.list_objects_v2(Bucket=BUCKET)["Contents"])
 
 
 @pytest.mark.parametrize(

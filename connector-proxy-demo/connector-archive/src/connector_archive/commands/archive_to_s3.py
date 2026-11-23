@@ -1,3 +1,5 @@
+import hashlib
+import json
 import multiprocessing
 import time
 from multiprocessing.connection import Connection
@@ -20,6 +22,10 @@ from connector_archive.report_pdf import ReportPdfError
 UPLOAD_DEADLINE_IN_SECONDS = 40
 
 
+class ArchiveUploadError(ValueError):
+    pass
+
+
 def _timeout_message() -> str:
     return f"Stopped after {UPLOAD_DEADLINE_IN_SECONDS} seconds. The archive is not complete. Retry the task."
 
@@ -35,7 +41,9 @@ class ArchiveToS3(ConnectorCommand):
 
     Credentials come from the parameters, so use secret references (for example 'secret:archive_aws_secret_access_key').
     The object keys are the same each time for the same key_prefix, so a retry replaces a partial archive.
-    manifest.json is deleted after the first upload and written last. If it is present, the archive is complete.
+    S3 versioning must remain enabled. manifest.json pins exact file/summary versions and is replaced last,
+    so concurrent workers cannot mix archives. Readers must use the manifest's version_id with each key.
+    A failed retry leaves the earlier complete manifest readable; concurrent publications are last-writer-wins.
     """
 
     def __init__(
@@ -72,7 +80,7 @@ class ArchiveToS3(ConnectorCommand):
     def execute(self, _config: Any, _task_data: Any) -> ConnectorProxyResponseDict:
         deadline = time.monotonic() + UPLOAD_DEADLINE_IN_SECONDS
         # Do not fork a threaded proxy or share its sockets. Unlike a timed-out thread/future, this worker
-        # can actually be stopped, bounding every PUT, DELETE, and SDK retry to the remaining budget.
+        # can actually be stopped, bounding every S3 call and SDK retry to the remaining budget.
         context = multiprocessing.get_context("spawn")
         receiver, sender = context.Pipe(duplex=False)
         worker = context.Process(target=_run_archive, args=(self, deadline, sender), daemon=True)
@@ -104,6 +112,52 @@ class ArchiveToS3(ConnectorCommand):
             "spiff__logs": [],
         }
 
+    def _pin_legacy_manifest(self, client: Any, manifest_key: str) -> None:
+        """Pin a pre-versioning-protocol archive before overwriting any of its fixed keys.
+
+        Concurrent upgraders may publish different snapshots, but each is checksum-verified and immutable.
+        Old connector workers must be stopped before adopting this protocol.
+        """
+        try:
+            stored = client.get_object(Bucket=self.bucket, Key=manifest_key)
+        except ClientError as exception:
+            if exception.response["Error"]["Code"] in ("NoSuchKey", "404"):
+                return
+            raise
+        try:
+            with stored["Body"] as stream:
+                manifest = json.loads(stream.read())
+            if manifest["manifest_version"] == 2:
+                return
+            if manifest["manifest_version"] != 1:
+                raise ArchiveUploadError("Unsupported existing archive manifest version.")
+            for item in [*manifest["files"], manifest["summary"]]:
+                key = item.get("archive_key", item.get("key"))
+                obj = client.get_object(Bucket=self.bucket, Key=key)
+                version_id = obj.get("VersionId")
+                if not version_id:
+                    obj["Body"].close()
+                    # Pre-versioning objects can omit the header. Verify that the explicit null version exists;
+                    # never assume a missing header on an S3-compatible service identifies a readable version.
+                    obj = client.get_object(Bucket=self.bucket, Key=key, VersionId="null")
+                    version_id = "null"
+                with obj["Body"] as stream:
+                    contents = stream.read()
+                if len(contents) != item["size"] or hashlib.sha256(contents).hexdigest() != item["sha256"]:
+                    raise ArchiveUploadError("The existing archive is inconsistent; restore it before retrying.")
+                item["version_id"] = version_id
+            manifest["manifest_version"] = 2
+            contents = json.dumps(manifest, indent=2, sort_keys=True).encode("utf-8")
+        except (KeyError, TypeError, ValueError) as exception:
+            raise ArchiveUploadError(f"Could not pin the existing archive: {exception}") from exception
+        client.put_object(
+            Bucket=self.bucket,
+            Key=manifest_key,
+            Body=contents,
+            ContentType="application/json",
+            Metadata={"sha256": hashlib.sha256(contents).hexdigest()},
+        )
+
     def _execute(self, deadline: float) -> ConnectorProxyResponseDict:
         error: CommandErrorDict | None = None
         body: dict[str, Any] = {}
@@ -112,30 +166,45 @@ class ArchiveToS3(ConnectorCommand):
             entries = build_archive_entries(self.report, self.files, self.key_prefix)
             client = self._s3_client()
             manifest_entry = entries[-1]
-            for index, entry in enumerate(entries):
+            if client.get_bucket_versioning(Bucket=self.bucket).get("Status") != "Enabled":
+                raise ArchiveUploadError("S3 bucket versioning must be enabled and remain enabled for archive retries.")
+            self._pin_legacy_manifest(client, manifest_entry.key)
+            versions: list[str] = []
+            for entry in entries:
+                if entry is manifest_entry:
+                    manifest = json.loads(entry.body)
+                    manifest["manifest_version"] = 2
+                    for item, version_id in zip(manifest["files"], versions[:-1], strict=True):
+                        item["version_id"] = version_id
+                    manifest["summary"]["version_id"] = versions[-1]
+                    entry.body = json.dumps(manifest, indent=2, sort_keys=True).encode("utf-8")
+                    entry.sha256 = hashlib.sha256(entry.body).hexdigest()
                 if time.monotonic() >= deadline:
                     raise TimeoutError(_timeout_message())
-                client.put_object(
+                uploaded = client.put_object(
                     Bucket=self.bucket,
                     Key=entry.key,
                     Body=entry.body,
                     ContentType=entry.content_type,
                     Metadata={"sha256": entry.sha256},
                 )
-                if index == 0:
-                    # A retry can have fewer or different files. Remove the old manifest so it never describes them.
-                    # This runs after the first upload works, so a wrong bucket or key keeps an earlier complete archive.
-                    if time.monotonic() >= deadline:
-                        raise TimeoutError(_timeout_message())
-                    client.delete_object(Bucket=self.bucket, Key=manifest_entry.key)
+                version_id = uploaded.get("VersionId")
+                if not version_id or version_id == "null":
+                    raise ArchiveUploadError("S3 did not return an immutable VersionId. Keep bucket versioning enabled.")
+                versions.append(version_id)
                 logs.append(f"archived s3://{self.bucket}/{entry.key} ({entry.size} bytes)")
             body = {
                 "bucket": self.bucket,
                 "key_prefix": manifest_entry.key.rsplit("/", 1)[0],
                 "manifest_key": manifest_entry.key,
                 "summary_key": entries[-2].key,
+                "manifest_version_id": versions[-1],
+                "summary_version_id": versions[-2],
                 "file_count": len(entries) - 2,
-                "objects": [{"key": e.key, "size": e.size, "sha256": e.sha256} for e in entries],
+                "objects": [
+                    {"key": e.key, "size": e.size, "sha256": e.sha256, "version_id": v}
+                    for e, v in zip(entries, versions, strict=True)
+                ],
             }
         except (ArchiveInputError, ReportPdfError) as exception:
             error = {"error_code": "ArchiveInvalidInput", "message": str(exception)}
@@ -145,7 +214,7 @@ class ArchiveToS3(ConnectorCommand):
                 "error_code": "ArchiveUploadFailed",
                 "message": f"S3 rejected the upload to bucket '{self.bucket}': {exception}",
             }
-        except TimeoutError as exception:
+        except (TimeoutError, ArchiveUploadError) as exception:
             error = {"error_code": "ArchiveUploadFailed", "message": str(exception)}
         except BotoCoreError as exception:
             error = {"error_code": "ArchiveUploadFailed", "message": f"Could not upload to bucket '{self.bucket}': {exception}"}

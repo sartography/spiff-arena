@@ -14,11 +14,11 @@ class BackoffArchiveToS3(ArchiveToS3):
     def _s3_client(self) -> Any:
         client = super()._s3_client()
         # Force an SDK backoff longer than the entire command budget.
-        client.meta.events.register_first("needs-retry.s3", lambda **_kwargs: 60)
+        client.meta.events.register_first("needs-retry.s3.PutObject", lambda **_kwargs: 60)
         return client
 
 
-@pytest.mark.parametrize("stall", [None, "PUT", "DELETE", "late-delete", "retry", "backoff", "trickle"])
+@pytest.mark.parametrize("stall", [None, "PUT", "manifest", "late-manifest", "retry", "backoff", "trickle"])
 def test_supervisor_bounds_in_flight_requests_and_retries(stall: str | None, monkeypatch: pytest.MonkeyPatch) -> None:
     requests: list[tuple[str, str]] = []
     disconnected = threading.Event()
@@ -35,20 +35,26 @@ def test_supervisor_bounds_in_flight_requests_and_retries(stall: str | None, mon
         def do_PUT(self) -> None:  # noqa: N802
             self.handle_s3()
 
-        def do_DELETE(self) -> None:  # noqa: N802
-            self.handle_s3()
+        def do_GET(self) -> None:  # noqa: N802
+            versioning = self.path.endswith("?versioning")
+            body = b"<VersioningConfiguration><Status>Enabled</Status></VersioningConfiguration>" if versioning else b""
+            self.send_response(200 if versioning else 404)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
 
         def handle_s3(self) -> None:
             self.rfile.read(int(self.headers.get("Content-Length", 0)))
             requests.append((self.command, self.path))
-            if stall == "late-delete" and self.command == "PUT":
+            is_manifest = self.path.endswith("manifest.json")
+            if stall == "late-manifest" and not is_manifest:
                 time.sleep(max(0, started + budget - 0.4 - time.monotonic()))
             if stall in ("retry", "backoff") and len(requests) == 1:
                 self.send_response(500)
                 self.send_header("Content-Length", "0")
                 self.end_headers()
                 return
-            if stall == self.command or stall == "retry" or (stall == "late-delete" and self.command == "DELETE"):
+            if stall == "PUT" or stall == "retry" or (stall in ("manifest", "late-manifest") and is_manifest):
                 # A stalled response must be interrupted by the supervisor, not by the 15s read timeout.
                 self.connection.settimeout(5)
                 if self.connection.recv(1) == b"":
@@ -69,7 +75,8 @@ def test_supervisor_bounds_in_flight_requests_and_retries(stall: str | None, mon
                         break
                 self.close_connection = True
                 return
-            self.send_response(200 if self.command == "PUT" else 204)
+            self.send_response(200)
+            self.send_header("x-amz-version-id", f"version-{len(requests)}")
             self.send_header("Content-Length", "0")
             self.end_headers()
 
@@ -100,7 +107,7 @@ def test_supervisor_bounds_in_flight_requests_and_retries(stall: str | None, mon
         result = results[0]
         if stall is None:
             assert result["error"] is None
-            assert [method for method, _ in requests] == ["PUT", "DELETE", "PUT"]
+            assert [method for method, _ in requests] == ["PUT", "PUT"]
             assert requests[-1][1].endswith("manifest.json")
         else:
             assert result["error"]["error_code"] == "ArchiveUploadFailed"
@@ -111,9 +118,11 @@ def test_supervisor_bounds_in_flight_requests_and_retries(stall: str | None, mon
             count = len(requests)
             time.sleep(0.2)
             assert len(requests) == count, "No upload or retry may continue after execute returns"
-            assert not any(path.endswith("manifest.json") and method == "PUT" for method, path in requests)
-            if stall in ("DELETE", "late-delete"):
-                assert [method for method, _ in requests] == ["PUT", "DELETE"]
+            if stall in ("manifest", "late-manifest"):
+                assert [method for method, _ in requests] == ["PUT", "PUT"]
+                assert requests[-1][1].endswith("manifest.json")
+            else:
+                assert not any(path.endswith("manifest.json") for _, path in requests)
             if stall == "retry":
                 assert [method for method, _ in requests] == ["PUT", "PUT"]
             if stall == "backoff":
