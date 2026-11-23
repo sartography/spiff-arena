@@ -1,4 +1,6 @@
+import json
 import multiprocessing
+import socket
 import threading
 import time
 from http.server import BaseHTTPRequestHandler
@@ -8,6 +10,76 @@ from typing import Any
 import pytest
 
 from connector_archive.commands.archive_to_s3 import ArchiveToS3
+from connector_archive.commands.archive_to_s3 import _receive_response
+
+
+def _send_incomplete_response(command: ArchiveToS3, _deadline: float, connection: socket.socket) -> None:
+    with connection:
+        frame = (100_000).to_bytes(8, "big") + b"{"
+        connection.sendall(frame[:3] if command.report["mode"] == "header" else frame)
+        command.report["sent"].set()
+        for _ in range(200):
+            if command.report["mode"] == "trickle":
+                connection.sendall(b" ")
+            time.sleep(0.05)
+
+
+@pytest.mark.parametrize("mode", ["header", "payload", "trickle"])
+def test_incomplete_worker_response_uses_the_command_deadline(mode: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    budget = 3
+    monkeypatch.setattr("connector_archive.commands.archive_to_s3.UPLOAD_DEADLINE_IN_SECONDS", budget)
+    monkeypatch.setattr("connector_archive.commands.archive_to_s3._run_archive", _send_incomplete_response)
+    sent = multiprocessing.get_context("spawn").Event()
+    command = ArchiveToS3(
+        bucket="unused",
+        key_prefix="archive/42",
+        aws_access_key_id="testing",
+        aws_secret_access_key="testing",
+        report={"mode": mode, "sent": sent},
+    )
+    children_before = {child.pid for child in multiprocessing.active_children()}
+    started = time.monotonic()
+    result = command.execute({}, {})
+    elapsed = time.monotonic() - started
+
+    assert sent.is_set(), "The worker must send partial frame data before the deadline"
+    assert budget - 0.1 <= elapsed < budget + 2
+    assert result["error"]["error_code"] == "ArchiveUploadFailed"
+    assert "Stopped after" in result["error"]["message"]
+    assert result["command_response"]["body"] == {}
+    assert {child.pid for child in multiprocessing.active_children()} == children_before
+
+
+def test_receives_a_complete_fragmented_large_response_before_the_deadline() -> None:
+    expected = {"command_response": {"body": {"value": "x" * 200_000}}, "error": None}
+    payload = json.dumps(expected).encode("utf-8")
+    frame = len(payload).to_bytes(8, "big") + payload
+    # Keep the sender open after the frame: completion must not depend on EOF or worker exit.
+    receiver, sender = socket.socketpair()
+    with receiver, sender:
+
+        def send_fragments() -> None:
+            for fragment in (frame[:2], frame[2:7], frame[7:30], frame[30:]):
+                sender.sendall(fragment)
+                time.sleep(0.01)
+
+        writer = threading.Thread(target=send_fragments, daemon=True)
+        writer.start()
+        try:
+            assert _receive_response(receiver, time.monotonic() + 2) == expected
+        finally:
+            writer.join(timeout=1)
+        assert not writer.is_alive()
+
+
+@pytest.mark.parametrize("frame", [b"\x00", (100).to_bytes(8, "big") + b"{"])
+def test_incomplete_response_eof_is_reported(frame: bytes) -> None:
+    receiver, sender = socket.socketpair()
+    with receiver, sender:
+        sender.sendall(frame)
+        sender.close()
+        with pytest.raises(EOFError):
+            _receive_response(receiver, time.monotonic() + 1)
 
 
 class BackoffArchiveToS3(ArchiveToS3):

@@ -1,8 +1,8 @@
 import hashlib
 import json
 import multiprocessing
+import socket
 import time
-from multiprocessing.connection import Connection
 from typing import Any
 
 import boto3  # type: ignore
@@ -30,10 +30,35 @@ def _timeout_message() -> str:
     return f"Stopped after {UPLOAD_DEADLINE_IN_SECONDS} seconds. The archive is not complete. Retry the task."
 
 
-def _run_archive(command: "ArchiveToS3", deadline: float, connection: Connection) -> None:
+def _run_archive(command: "ArchiveToS3", deadline: float, connection: socket.socket) -> None:
     # A separate process can be stopped even during DNS, a socket write/read, or an SDK retry/backoff.
     with connection:
-        connection.send(command._execute(deadline))
+        payload = json.dumps(command._execute(deadline)).encode("utf-8")
+        connection.sendall(len(payload).to_bytes(8, "big") + payload)
+
+
+def _receive_response(connection: socket.socket, deadline: float) -> ConnectorProxyResponseDict:
+    def read_exactly(size: int) -> bytes:
+        chunks = []
+        while size:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError(_timeout_message())
+            connection.settimeout(remaining)
+            chunk = connection.recv(min(size, 64 * 1024))
+            if not chunk:
+                raise EOFError("Archive worker closed an incomplete response.")
+            chunks.append(chunk)
+            size -= len(chunk)
+        return b"".join(chunks)
+
+    # Read both the length prefix and the entire payload within one absolute deadline. Socket readiness
+    # alone is insufficient: even a frame's length prefix can arrive in several writes.
+    size = int.from_bytes(read_exactly(8), "big")
+    payload = read_exactly(size)
+    if time.monotonic() >= deadline:
+        raise TimeoutError(_timeout_message())
+    return json.loads(payload)
 
 
 class ArchiveToS3(ConnectorCommand):
@@ -82,17 +107,18 @@ class ArchiveToS3(ConnectorCommand):
         # Do not fork a threaded proxy or share its sockets. Unlike a timed-out thread/future, this worker
         # can actually be stopped, bounding every S3 call and SDK retry to the remaining budget.
         context = multiprocessing.get_context("spawn")
-        receiver, sender = context.Pipe(duplex=False)
+        receiver, sender = socket.socketpair()
         worker = context.Process(target=_run_archive, args=(self, deadline, sender), daemon=True)
         message = _timeout_message()
         try:
             worker.start()
             sender.close()
-            if receiver.poll(max(0, deadline - time.monotonic())):
-                try:
-                    return receiver.recv()
-                except EOFError:
-                    message = "Archive worker stopped unexpectedly. The archive is not complete. Retry the task."
+            try:
+                return _receive_response(receiver, deadline)
+            except EOFError:
+                message = "Archive worker stopped unexpectedly. The archive is not complete. Retry the task."
+            except TimeoutError:
+                pass
         finally:
             receiver.close()
             sender.close()
