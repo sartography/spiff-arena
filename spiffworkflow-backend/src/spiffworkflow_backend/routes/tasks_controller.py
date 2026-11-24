@@ -150,6 +150,7 @@ def task_list_my_tasks(
         func.max(ProcessInstanceModel.status).label("process_instance_status"),
         func.max(ProcessInstanceModel.summary).label("process_instance_summary"),
         func.max(ProcessInstanceModel.last_milestone_bpmn_name).label("last_milestone_bpmn_name"),
+        func.max(ProcessInstanceModel.last_milestone_bpmn_identifier).label("last_milestone_bpmn_identifier"),
         func.max(process_initiator_user.username).label("process_initiator_username"),
         assigned_group_identifiers,
         potential_owner_usernames,

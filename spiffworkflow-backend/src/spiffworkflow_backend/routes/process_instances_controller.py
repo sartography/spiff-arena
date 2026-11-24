@@ -239,9 +239,11 @@ def process_instance_report_column_list(
     process_model_identifier: str | None = None,
 ) -> flask.wrappers.Response:
     table_columns = ProcessInstanceReportService.builtin_column_options()
+    optional_column_options = ProcessInstanceReportService.optional_column_options()
     system_report_column_options = ProcessInstanceReportService.system_report_column_options()
     columns_for_metadata_strings = ProcessInstanceReportService.process_instance_metadata_as_columns(process_model_identifier)
-    return make_response(jsonify(table_columns + system_report_column_options + columns_for_metadata_strings), 200)
+    all_columns = table_columns + optional_column_options + system_report_column_options + columns_for_metadata_strings
+    return make_response(jsonify(all_columns), 200)
 
 
 def process_instance_show_for_me(

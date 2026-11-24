@@ -105,6 +105,9 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     # this could also be a blank string for older instances since we were putting blank strings in here as well
     bpmn_version_control_identifier: str | None = db.Column(db.String(255))
     last_milestone_bpmn_name: str | None = db.Column(db.String(255), index=True)
+    # bpmn id of the element that set last_milestone_bpmn_name. unique only within its bpmn file.
+    # null for instances that have not reached a milestone since this column was added; not backfilled.
+    last_milestone_bpmn_identifier: str | None = db.Column(db.String(255))
 
     bpmn_xml_file_contents: str | None = None
     bpmn_xml_file_contents_retrieval_error: str | None = None
@@ -148,6 +151,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             "bpmn_xml_file_contents": self.bpmn_xml_file_contents,
             "created_at_in_seconds": self.created_at_in_seconds,
             "end_in_seconds": self.end_in_seconds,
+            "last_milestone_bpmn_identifier": self.last_milestone_bpmn_identifier,
             "last_milestone_bpmn_name": self.last_milestone_bpmn_name,
             "process_initiator_id": self.process_initiator_id,
             "process_initiator_username": self.process_initiator.username,

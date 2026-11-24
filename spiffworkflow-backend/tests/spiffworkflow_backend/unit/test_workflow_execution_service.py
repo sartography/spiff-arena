@@ -7,7 +7,9 @@ import pytest
 from flask import Flask
 from SpiffWorkflow.util.task import TaskState  # type: ignore
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.future_task import FutureTaskModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.services.process_instance_runtime import ProcessInstanceRuntime
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -94,14 +96,23 @@ class TestWorkflowExecutionService(BaseTest):
         runtime = ProcessInstanceRuntime(process_instance)
         runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
         assert process_instance.last_milestone_bpmn_name == "Started"
+        assert process_instance.last_milestone_bpmn_identifier == "StartEvent_1"
 
         self.complete_next_manual_task(runtime)
         assert process_instance.last_milestone_bpmn_name == "In Call Activity"
+        assert process_instance.last_milestone_bpmn_identifier == "in_call_activity"
         self.complete_next_manual_task(runtime)
         assert process_instance.last_milestone_bpmn_name == "Done with call activity"
+        assert process_instance.last_milestone_bpmn_identifier == "Event_00alhkl"
         self.complete_next_manual_task(runtime)
         assert process_instance.last_milestone_bpmn_name == "Completed"
+        assert process_instance.last_milestone_bpmn_identifier == "Event_12t9aet"
         assert process_instance.status == "complete"
+
+        db.session.expire_all()
+        reloaded_process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        assert reloaded_process_instance.last_milestone_bpmn_name == "Completed"
+        assert reloaded_process_instance.last_milestone_bpmn_identifier == "Event_12t9aet"
 
     def test_boundary_event_priority(
         self,

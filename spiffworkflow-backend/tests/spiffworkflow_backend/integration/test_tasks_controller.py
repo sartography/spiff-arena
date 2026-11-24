@@ -818,6 +818,29 @@ class TestTasksController(BaseTest):
         response = client.get("/v1.0/tasks?sort=created_at", headers=headers)
         assert response.status_code == 400
 
+    def test_task_list_my_tasks_includes_last_milestone(
+        self,
+        app: Flask,
+        client: TestClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = load_test_spec(
+            "test_group/test-last-milestone",
+            process_model_source_directory="test-last-milestone",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model, user=with_super_admin_user)
+        runtime = ProcessInstanceRuntime(process_instance)
+        runtime.do_engine_steps(save=True, execution_strategy_name="greedy")
+
+        response = client.get("/v1.0/tasks", headers=self.logged_in_headers(with_super_admin_user))
+        assert response.status_code == 200
+        assert response.json() is not None
+        results = response.json()["results"]
+        assert len(results) == 1
+        assert results[0]["last_milestone_bpmn_name"] == "Started"
+        assert results[0]["last_milestone_bpmn_identifier"] == "StartEvent_1"
+
     def test_task_list_my_tasks_returns_multiple_potential_owners(
         self,
         app: Flask,

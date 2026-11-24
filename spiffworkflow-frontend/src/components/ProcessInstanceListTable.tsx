@@ -72,6 +72,7 @@ type OwnProps = {
 const SORTABLE_ACCESSORS = new Set([
   'end_in_seconds',
   'id',
+  'last_milestone_bpmn_identifier',
   'last_milestone_bpmn_name',
   'process_initiator_username',
   'process_model_display_name',

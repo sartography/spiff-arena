@@ -4737,6 +4737,12 @@ components:
           type: string
           nullable: true
           description: Name of the last milestone reached
+        last_milestone_bpmn_identifier:
+          type: string
+          nullable: true
+          description: >-
+            BPMN element id of the last milestone reached. Unique only within the BPMN file that defines the element.
+            Null for process instances that have not reached a milestone since this field was added; existing rows are not backfilled.
         potential_owner_usernames:
           type: string
           description: Comma-separated list of potential owner usernames

@@ -378,7 +378,10 @@ class ProcessInstanceReportService:
 
     @classmethod
     def builtin_column_options(cls) -> list[ReportMetadataColumn]:
-        """Columns that are actually in the process instance table."""
+        """Default columns for reports. Adding one here changes the default columns of existing reports.
+
+        Process instance columns that should be selectable but not shown by default go in optional_column_options.
+        """
         return_value: list[ReportMetadataColumn] = [
             {"Header": "Id", "accessor": "id", "filterable": False},
             {
@@ -395,6 +398,14 @@ class ProcessInstanceReportService:
             },
             {"Header": "Last milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
             {"Header": "Status", "accessor": "status", "filterable": False},
+        ]
+        return return_value
+
+    @classmethod
+    def optional_column_options(cls) -> list[ReportMetadataColumn]:
+        """Columns that can be added to a report but are not in the default reports."""
+        return_value: list[ReportMetadataColumn] = [
+            {"Header": "Last milestone id", "accessor": "last_milestone_bpmn_identifier", "filterable": False},
         ]
         return return_value
 

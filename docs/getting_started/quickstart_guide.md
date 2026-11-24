@@ -484,6 +484,19 @@ It provides a high-level overview of the progress made in the process.
 In BPMN, if you draw an intermediate event and do not specify its type (like message, signal, timer, or conditional) but give it a name, it becomes a milestone.
 Essentially, a milestone is a named, untyped intermediate throw event.
 
+Named start and end events also count as milestones.
+If the top-level process reaches an unnamed start or end event, the last milestone is shown as "Started" or "Completed".
+
+The API returns the last milestone as two fields on process instances, process instance reports, and task lists:
+
+- `last_milestone_bpmn_name`: the name of the last milestone reached.
+- `last_milestone_bpmn_identifier`: the BPMN element id of the same milestone. For "Started" and "Completed", this is the id of the unnamed start or end event.
+  An element id is unique only within its BPMN file. If the milestone is in a called process, the id refers to an element in that process's file.
+
+`last_milestone_bpmn_identifier` is empty for process instances that have not reached a milestone since this field was added.
+Existing values are not backfilled, so process instances that completed before this field was added keep an empty value.
+To show it in a process instance report, add the "Last milestone id" column.
+
 ### Events
 
 Events provide a detailed log of everything that happens in a process.

@@ -137,6 +137,7 @@ export interface ProcessInstanceTask {
   form_schema: any;
   form_ui_schema: any;
   lane_assignment_id: string;
+  last_milestone_bpmn_identifier: string | null;
   last_milestone_bpmn_name: string;
   name: string; // bpmn_identifier
   process_identifier: string;
@@ -217,6 +218,7 @@ export interface ProcessInstance {
   bpmn_xml_file_contents_retrieval_error?: string;
   created_at_in_seconds: number;
   end_in_seconds: number | null;
+  last_milestone_bpmn_identifier?: string | null;
   last_milestone_bpmn_name?: string;
   process_initiator_username: string;
   process_metadata?: ProcessInstanceMetadata[];

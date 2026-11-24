@@ -3061,6 +3061,7 @@ class TestProcessApi(BaseTest):
         assert response.json()["results"][0]["key1"] == "value1"
         assert response.json()["results"][0]["key2"] == "value2"
         assert response.json()["results"][0]["last_milestone_bpmn_name"] == "Completed"
+        assert response.json()["results"][0]["last_milestone_bpmn_identifier"] == "Event_1s123jg"
         assert response.json()["pagination"]["count"] == 1
         assert response.json()["pagination"]["pages"] == 1
         assert response.json()["pagination"]["total"] == 1
@@ -3402,6 +3403,7 @@ class TestProcessApi(BaseTest):
             },
             {"Header": "Last milestone", "accessor": "last_milestone_bpmn_name", "filterable": False},
             {"Header": "Status", "accessor": "status", "filterable": False},
+            {"Header": "Last milestone id", "accessor": "last_milestone_bpmn_identifier", "filterable": False},
             {"Header": "Task", "accessor": "task_title", "filterable": False},
             {"Header": "Waiting for", "accessor": "waiting_for", "filterable": False},
             {"Header": "awesome_var", "accessor": "awesome_var", "filterable": True},
@@ -3421,6 +3423,7 @@ class TestProcessApi(BaseTest):
             "process_initiator_username",
             "last_milestone_bpmn_name",
             "status",
+            "last_milestone_bpmn_identifier",
             "task_title",
             "waiting_for",
         ]

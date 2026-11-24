@@ -465,6 +465,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             and spiff_task.task_spec.bpmn_name is not None
         ):
             self.process_instance.last_milestone_bpmn_name = spiff_task.task_spec.bpmn_name
+            self.process_instance.last_milestone_bpmn_identifier = spiff_task.task_spec.name
             log_extras["milestone"] = spiff_task.task_spec.bpmn_name
             if current_app.config.get("SPIFFWORKFLOW_BACKEND_LOG_MILESTONES"):
                 current_app.logger.info(f"Milestone completed: {spiff_task.task_spec.bpmn_name}", extra={"extras": log_extras})
@@ -472,8 +473,10 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             # if parent_task_id is None then this should be the top level process
             if spiff_task.task_spec.__class__.__name__ == "EndEvent":
                 self.process_instance.last_milestone_bpmn_name = "Completed"
+                self.process_instance.last_milestone_bpmn_identifier = spiff_task.task_spec.name
             elif spiff_task.task_spec.__class__.__name__ == "StartEvent":
                 self.process_instance.last_milestone_bpmn_name = "Started"
+                self.process_instance.last_milestone_bpmn_identifier = spiff_task.task_spec.name
 
         LoggingService.log_event(ProcessInstanceEventType.task_completed.value, log_extras)
         self.process_instance.task_updated_at_in_seconds = round(time.time())
