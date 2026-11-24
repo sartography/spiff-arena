@@ -178,6 +178,7 @@ Please see the [implementing files themselves](https://github.com/sartography/sp
 | get_last_user_completing_task          | Returns the last user who completed the given task.                                                                                                            |
 | get_localtime                          | Converts a Datetime object into a Datetime object for a specific timezone.                                                                                     |
 | get_process_initiator_user             | Returns the user that initiated the process instance.                                                                                                          |
+| get_process_instance_files             | Returns every file uploaded to the current process instance, including files that task data no longer references. Pass `include_contents=True` to also get each file as a data url. That is expensive. |
 | get_secret                             | Returns the value for a previously configured secret.                                                                                                          |
 | get_task_data_value                    | Checks if a given value is in task data and returns its value. If it does not exist or is None, it returns the default value.                                  |
 | get_toplevel_process_info              | Returns information about the currently running process.                                                                                                       |
