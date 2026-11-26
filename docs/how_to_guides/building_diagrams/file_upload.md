@@ -108,6 +108,13 @@ The same `{{link}}` can be reused in later tasks and after reloading the page. D
 
 Stored references are not base64 file contents. Use `markdown_file_download_link(file)` to generate a download link.
 
+### Getting every file uploaded to a process instance
+
+Task data holds only the files that the current form values reference. If a user replaces a file, or a script deletes a variable, the file is still stored but task data no longer points to it.
+To list every file uploaded to the current process instance, oldest first, call `get_process_instance_files()`. Each item has `id`, `filename`, `mimetype`, `digest`, `created_at_in_seconds`, and `file_reference`. `file_reference` is the value that task data holds, so `markdown_file_download_link()` accepts it.
+
+To send the file contents to a service task, call `get_process_instance_files(include_contents=True)` in the parameter value. Each item then also has `data_url`. Do not assign that result to a variable in a script, because the contents would then be stored in task data.
+
 ### Showing the attachment in a follow-up form
 
 A later user task can reuse the `file` property from the JSON schema above and make it read-only:
