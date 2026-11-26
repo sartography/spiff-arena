@@ -1,8 +1,60 @@
+import importlib
+import os
+
 import pytest
 from flask import Flask
 
 from spiffworkflow_backend.config import detect_database_type_from_uri
 from spiffworkflow_backend.config import setup_database_configs
+from spiffworkflow_backend.config.normalized_environment import normalized_environment
+
+
+def test_uppercase_auth_config_environment_keys_are_normalized(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Windows-style uppercase auth variables load with lowercase nested keys."""
+    from spiffworkflow_backend.config import default
+
+    try:
+        with monkeypatch.context() as patched:
+            for key in list(os.environ):
+                if key.upper().startswith("SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__"):
+                    patched.delenv(key)
+            patched.setenv("SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__IDENTIFIER", "windows-test")
+            patched.setenv("SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__URI", "http://localhost:7000/openid")
+            patched.setenv("SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__CLIENT_ID", "spiffworkflow-backend")
+            importlib.reload(default)
+
+            assert default.SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS == [
+                {
+                    "identifier": "windows-test",
+                    "uri": "http://localhost:7000/openid",
+                    "client_id": "spiffworkflow-backend",
+                }
+            ]
+    finally:
+        importlib.reload(default)
+
+
+def test_auth_config_keys_differing_only_by_case_are_rejected() -> None:
+    """Case variants of the same auth key must not silently overwrite each other."""
+    from spiffworkflow_backend.config import default
+
+    with pytest.raises(ValueError, match="Duplicate authentication config key: URI"):
+        default.lowercase_config_keys([{"uri": "https://first.example/openid", "URI": "https://second.example/openid"}])
+
+
+def test_case_variant_auth_environment_paths_are_rejected() -> None:
+    """The structured environment parser must preserve case variants for validation."""
+    from spiffworkflow_backend.config import default
+
+    structured = normalized_environment(
+        {
+            "SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__uri": "https://first.example/openid",
+            "SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS__0__URI": "https://second.example/openid",
+        }
+    )
+
+    with pytest.raises(ValueError, match="Duplicate authentication config key: URI"):
+        default.lowercase_config_keys(structured["SPIFFWORKFLOW_BACKEND_AUTH_CONFIGS"])
 
 
 def test_mysql_database_type_is_inferred_from_uri() -> None:
