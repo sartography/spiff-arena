@@ -115,7 +115,7 @@ jobs:
 
         # Push the Snyk Code results into GitHub Code Scanning tab
       - name: Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v4.37.7
+        uses: github/codeql-action/upload-sarif@v4.38.2
         with:
           sarif_file: spiffworkflow-backend/snyk-code.sarif
   snyk-frontend:
@@ -190,6 +190,6 @@ jobs:
 
         # Push the Snyk Code results into GitHub Code Scanning tab
       - name: Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v4.37.7
+        uses: github/codeql-action/upload-sarif@v4.38.2
         with:
           sarif_file: spiffworkflow-frontend/snyk-code.sarif
